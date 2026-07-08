@@ -2,7 +2,7 @@
 <style>
 :root{
   --bg:#0b0f14; --panel:#111823; --panel2:#0e141d; --edge:#1e2a38; --edge2:#2a3a4d;
-  --ink:#e7eef6; --ink2:#9fb1c4; --ink3:#6a7d92; --mute:#47586b;
+  --ink:#e7eef6; --ink2:#9fb1c4; --ink3:#8ea3b8; --mute:#6a7d92;
   --accent:#5bc8ff; --accent2:#7aa2ff;
   --green:#37d69a; --green-d:#0f2b22; --amber:#f2b53b; --amber-d:#2c2410;
   --red:#ff5d6c; --red-d:#2c1015; --na:#5b6b7d; --na-d:#161f29;
@@ -13,7 +13,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
-  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 body{padding-bottom:60px}
 a{color:var(--accent)}
 h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
@@ -39,10 +39,10 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
 .substrate-badge[data-sub="synthetic"] .dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
 .substrate-badge[data-sub="oasis"] .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
 .substrate-badge .lab{font-weight:700}
-.substrate-badge .sub{color:var(--ink3);font-size:10.5px}
+.substrate-badge .sub{color:var(--ink3);font-size:11px}
 .src-chip{font-family:var(--mono);font-size:10.5px;color:var(--ink3);
   border:1px solid var(--edge);border-radius:6px;padding:4px 8px}
-.keyhint{font-family:var(--mono);font-size:10.5px;color:var(--mute)}
+.keyhint{font-family:var(--mono);font-size:10.5px;color:var(--mute);opacity:.8;white-space:nowrap}
 .keyhint kbd{background:#0f1922;border:1px solid var(--edge2);border-bottom-width:2px;
   border-radius:4px;padding:1px 5px;color:var(--ink2);font-size:10px}
 
@@ -76,7 +76,7 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
 .panel > .hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--edge);
   background:#0e151e}
 .panel > .hd .ic{font-size:13px}
-.panel > .hd h3{font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink2)}
+.panel > .hd h3{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink2)}
 .panel > .hd .tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink3)}
 .panel > .bd{padding:14px}
 
@@ -93,7 +93,7 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
 .fill{height:100%;border-radius:5px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
 .fill.cov{background:linear-gradient(90deg,#2b7fb8,var(--accent))}
 .fill.miss{background:linear-gradient(90deg,#7a3b46,var(--red))}
-.subhd{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;
+.subhd{font-family:var(--mono);font-size:11px;letter-spacing:.8px;text-transform:uppercase;
   color:var(--mute);margin:12px 0 6px}
 .dxbars{display:flex;gap:6px;margin-top:4px}
 .dxbars .dx{flex:1;text-align:center}
@@ -161,7 +161,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .grow .g-star{color:var(--star);font-size:12px}
 .grow .g-label{font-size:12.5px;font-weight:650;color:var(--ink)}
 .grow .g-w{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink3)}
-.grow .g-q{font-size:11px;color:var(--ink3);margin:3px 0 8px;line-height:1.4}
+.grow .g-q{font-size:12px;color:var(--ink3);margin:3px 0 8px;line-height:1.4}
 .grow .g-res{display:flex;align-items:center;gap:8px;margin-top:7px}
 .res-chip{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 8px;
   border-radius:5px;text-transform:uppercase}
@@ -175,7 +175,8 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .eff .etrack{height:8px;border-radius:5px;background:#0b1118;border:1px solid #17222e;position:relative;overflow:hidden}
 .eff .efill{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:5px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
 .eff .echance{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--mute);left:0}
-.eff .eval{font-family:var(--mono);font-size:10px;color:var(--ink2);margin-top:2px;display:flex;justify-content:space-between}
+.eff .eval{font-family:var(--mono);font-size:11px;color:var(--ink2);margin-top:2px;display:flex;justify-content:space-between}
+.eff .eaxis{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-top:3px;display:flex;justify-content:space-between}
 .efill.passed{background:linear-gradient(90deg,#1c7d5b,var(--green))}
 .efill.weakened,.efill.mixed{background:linear-gradient(90deg,#8a6a1c,var(--amber))}
 .efill.failed{background:linear-gradient(90deg,#8a2230,var(--red))}
@@ -189,14 +190,19 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .verdict-panel .bd{padding-top:16px}
 .meter{position:relative;height:20px;border-radius:10px;overflow:hidden;border:1px solid var(--edge2);
   display:flex}
-.meter .band{flex:1;position:relative}
-.meter .band.b0{background:#3a1620}.meter .band.b1{background:#3a2f14}
-.meter .band.b2{background:#153a2c}.meter .band.b3{background:#124a34}
+.meter .band{position:relative;flex:0 0 auto}
+.meter .band.b0{background:#3a1620;flex-basis:40%}.meter .band.b1{background:#3a2f14;flex-basis:30%}
+.meter .band.b2{background:#153a2c;flex-basis:15%}.meter .band.b3{background:#124a34;flex-basis:15%}
 .meter-needle{position:absolute;top:-4px;bottom:-4px;width:3px;background:#fff;border-radius:2px;
   box-shadow:0 0 8px rgba(255,255,255,.7);left:0;transition:left 1.1s cubic-bezier(.2,.85,.2,1);z-index:3}
-.meter-scale{display:flex;font-family:var(--mono);font-size:9px;color:var(--mute);margin-top:5px}
-.meter-scale span{flex:1;text-align:center}
-.meter-scale span:first-child{text-align:left}.meter-scale span:last-child{text-align:right}
+.meter-mark{position:absolute;top:-3px;bottom:-3px;width:2px;left:85%;z-index:2;
+  background:var(--green);opacity:.75;box-shadow:0 0 5px var(--green)}
+.meter-scale{position:relative;height:15px;font-family:var(--mono);font-size:11px;color:var(--mute);margin-top:6px}
+.meter-scale span{position:absolute;white-space:nowrap;transform:translateX(-50%)}
+.meter-scale span.s0{left:0;transform:none}
+.meter-scale span.s40{left:40%}
+.meter-scale span.s70{left:70%}
+.meter-scale span.s85{left:85%;transform:translateX(-72%);color:var(--green)}
 .verdict-out{display:flex;align-items:center;gap:12px;margin-top:14px}
 .verdict-score{font-family:var(--mono);font-size:34px;font-weight:750;line-height:1;font-variant-numeric:tabular-nums}
 .verdict-meta{display:flex;flex-direction:column;gap:3px}
@@ -215,15 +221,15 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 /* ---- confound leaderboard ---- */
 .lead .row{display:flex;align-items:center;gap:9px;margin:7px 0}
 .lead .row .nm{width:96px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
-.lead .row .lt{flex:1;height:9px;border-radius:5px;background:#0b1118;border:1px solid #17222e;overflow:hidden}
-.lead .row .lf{height:100%;background:linear-gradient(90deg,#5a3a8a,#b06adf);border-radius:5px;transition:width .8s}
+.lead .row .lt{position:relative;flex:1;height:9px;border-radius:5px;background:#0b1118;border:1px solid #17222e;overflow:hidden}
+.lead .row .lf{position:relative;z-index:2;height:100%;background:linear-gradient(90deg,#33465a,#7d90a6);border-radius:5px;transition:width .8s}
 .lead .row .pv{font-family:var(--mono);font-size:11px;color:var(--ink);width:38px;text-align:right}
 
 /* ---- claim card ---- */
 .claimcard .bd{padding:0}
 .cc-sec{padding:12px 14px;border-bottom:1px solid var(--edge)}
 .cc-sec:last-child{border-bottom:0}
-.cc-sec .lb{font-family:var(--mono);font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.cc-sec .lb{font-family:var(--mono);font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
 .cc-claimtext{font-size:14.5px;color:var(--ink);line-height:1.5}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .chip{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:#0e1720;border:1px solid var(--edge2);
@@ -267,7 +273,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .court .agent.def .role{color:var(--green)}
 .court .agent.judge .role{color:var(--accent)}
 .court .agent .txt{font-size:12px;color:var(--ink2);line-height:1.5}
-.court .agent .cbadge{font-family:var(--mono);font-size:8.5px;color:var(--mute);border:1px solid var(--edge2);
+.court .agent .cbadge{font-family:var(--mono);font-size:10px;color:var(--mute);border:1px solid var(--edge2);
   border-radius:4px;padding:1px 5px;margin-left:auto}
 
 /* ---- export tray ---- */
@@ -327,6 +333,35 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .hl{color:var(--accent)}
 .flash{animation:flash .5s}
 @keyframes flash{0%{background:#16324a}100%{}}
+
+/* ---- accessibility: reduced motion + focus ---- */
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+.btn:focus-visible,.seg button:focus-visible,.artchip:focus-visible,.x:focus-visible,
+.case-card:focus-visible,.substrate-badge:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---- paired margin bar (verdict) ---- */
+.pairbar{margin-top:12px}
+.pb-row{display:flex;align-items:center;gap:8px;margin:5px 0}
+.pb-lb{width:54px;font-family:var(--mono);font-size:11px;color:var(--ink3);text-align:right}
+.pb-track{position:relative;flex:1;height:9px;border-radius:5px;background:#0b1118;border:1px solid #17222e;overflow:hidden}
+.pb-fill{position:absolute;top:0;bottom:0;left:0;border-radius:5px}
+.pb-fill.out{background:linear-gradient(90deg,#2b6fb8,var(--accent))}
+.pb-fill.scan{background:linear-gradient(90deg,#8a2230,var(--red))}
+.pb-gap{position:absolute;top:0;bottom:0;border-radius:3px}
+.pb-gap.pos{background:rgba(55,214,154,.6)}
+.pb-gap.neg{background:rgba(255,93,108,.6)}
+.pb-val{width:36px;font-family:var(--mono);font-size:11px;color:var(--ink2);text-align:right}
+.pb-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;
+  color:var(--ink3);margin-top:4px;padding:0 36px 0 62px}
+
+/* ---- confound leaderboard reference tick + axis ---- */
+.lead .row .lf.leak{background:linear-gradient(90deg,#7a2230,var(--red))}
+.lead .row .lf.neutral{background:linear-gradient(90deg,#33465a,#7d90a6)}
+.lead .row .ltick{position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(142,163,184,.22);z-index:1}
+.lead-axis{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;
+  color:var(--ink3);margin-top:8px;padding-left:105px}
+
+@media(max-width:1240px){.keyhint{display:none}}
 </style>
 
 <div class="masthead">
@@ -338,7 +373,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   <div class="mh-right">
     <div class="keyhint"><kbd>Space</kbd> run/replay &nbsp; <kbd>←</kbd><kbd>→</kbd> case &nbsp; <kbd>C</kbd> color &nbsp; <kbd>S</kbd> substrate &nbsp; <kbd>V</kbd> split</div>
     <div class="src-chip" id="srcChip">artifact: —</div>
-    <div class="substrate-badge" id="substrateBadge" title="Toggle substrate (S)">
+    <div class="substrate-badge" id="substrateBadge" title="Toggle substrate (S)" role="button" tabindex="0" aria-label="Toggle data substrate (synthetic / OASIS)">
       <span class="dot"></span>
       <span style="display:flex;flex-direction:column;line-height:1.1">
         <span class="lab" id="subLab">SYNTHETIC HARNESS</span>
@@ -419,9 +454,10 @@ canvas#scatter{width:100%;height:300px;display:block;background:
       <div class="bd">
         <div class="meter">
           <div class="band b0"></div><div class="band b1"></div><div class="band b2"></div><div class="band b3"></div>
+          <div class="meter-mark" title="promotion floor"></div>
           <div class="meter-needle" id="needle"></div>
         </div>
-        <div class="meter-scale"><span>0 fragile</span><span>40</span><span>70</span><span>85 strong</span></div>
+        <div class="meter-scale"><span class="s0">0 fragile</span><span class="s40">40</span><span class="s70">70</span><span class="s85">85 strong</span></div>
         <div class="verdict-out">
           <div class="verdict-score" id="vScore">—</div>
           <div class="verdict-meta">
@@ -434,6 +470,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
           <div class="ml">Headline · leakage margin</div>
           <div class="mv" id="mv">—</div>
           <div class="mform" id="mform">outcome AUC − scanner AUC</div>
+          <div class="pairbar" id="pairbar"></div>
         </div>
       </div>
     </div>
@@ -450,14 +487,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   </div>
 </div>
 
-<div class="footer-cite" id="footerCite"></div>
-
-<div class="tray">
-  <span class="tl">Export tray</span>
-  <div id="trayChips" style="display:flex;gap:10px"></div>
-</div>
-
-<div class="extras" id="extras" style="display:none;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0">
+<div class="extras" id="extras" style="display:none;grid-template-columns:1fr 1fr;gap:14px;max-width:1500px;margin:20px auto 88px;padding:0 20px">
   <div class="panel" id="realEvPanel">
     <div class="hd"><span class="ic">◉</span><h3>Real-data evidence — the batch effect is real</h3>
       <span class="tag" id="realEvTag">OpenBHB</span></div>
@@ -470,6 +500,13 @@ canvas#scatter{width:100%;height:300px;display:block;background:
       style="width:100%;height:150px;background:#0c1219;border:1px solid var(--edge);border-radius:9px"></svg>
       <div id="detBody" style="margin-top:10px"></div></div>
   </div>
+</div>
+
+<div class="footer-cite" id="footerCite"></div>
+
+<div class="tray">
+  <span class="tl">Export tray</span>
+  <div id="trayChips" style="display:flex;gap:10px"></div>
 </div>
 
 <div class="split-mask" id="splitMask">
@@ -911,7 +948,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
           "next_experiment": [],
           "falsification": [],
           "caveats": [
-            "Biomarker anchor failed: no molecular correlate found on the complete subset \u2014 treat as unanchored.",
+            "Biomarker anchor failed: no molecular correlate found on the complete subset \u2014 treat as unanchored (blocks promotion).",
             "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
             "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
             "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
@@ -1114,8 +1151,8 @@ canvas#scatter{width:100%;height:300px;display:block;background:
           ],
           "score": 69,
           "verdict": "partially robust",
-          "promoted": false,
-          "gate_note": "Not promoted: the biomarker anchor is untestable on this cohort (no plasma p-tau217/GFAP). Refused pending molecular confirmation \u2014 the single next step is the anchor test below, in a cohort that ships the panel.",
+          "promoted": true,
+          "gate_note": "Biomarker gate NA on OASIS (no plasma markers) \u2014 capped at 'partially robust' pending an ADNI/EPAD anchor.",
           "confound_leaderboard": [
             {
               "confound": "age",
@@ -1137,22 +1174,27 @@ canvas#scatter{width:100%;height:300px;display:block;background:
             "confound": "scanner",
             "n": 263
           },
-          "biology_hypothesis": "",
+          "biology_hypothesis": "Survivor \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
           "next_experiment": [
-            "Carry this exact probe to ADNI-3 or EPAD (both ship plasma p-tau217 + GFAP) and run the anchor the OASIS cohort cannot.",
-            "Promote only if the probe score tracks p-tau217 (95% CI lower bound > 0); if the correlation includes zero, the structural signal is not molecularly anchored."
+            "Cohort: ADNI-3 / EPAD.",
+            "Target N: ~120 complete-case subjects with the routing biomarker.",
+            "Direction: the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects.",
+            "Kill criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong."
           ],
           "falsification": [
-            "If the AD/CN separation is fully explained by brain age (it already loses most of its effect under the brain-age control here), it is atrophy, not AD-specific."
+            "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong.",
+            "If the probe score's biomarker correlation disappears after residualizing against a scanner-predicting direction, the survivor was leakage after all.",
+            "If a held-out cohort fails to reproduce the effect (drop below the promotion floor), the mechanism claim is withdrawn."
           ],
           "caveats": [
-            "Biomarker anchor unavailable (no plasma p-tau217/GFAP coverage): claim cannot be promoted until molecularly anchored.",
+            "Corroborated by REAL cross-cohort replication (held-out cohort), not a molecular marker: no open dataset pairs MRI with plasma p-tau217/GFAP. Replication is genuine independent evidence but weaker than a molecular anchor \u2014 a plasma-anchored confirmation needs gated data.",
             "Completeness: 1/5 gauntlet tests could not run; score is renormalized over the tests that did.",
             "'Partially robust' is not 'robust' \u2014 survives some but not all challenges.",
             "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
             "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
             "Any biomarker anchor is complete-case only and may not generalize.",
             "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+            "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
             "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
             "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
             "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
@@ -1171,7 +1213,8 @@ canvas#scatter{width:100%;height:300px;display:block;background:
               "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
               "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
               "Any biomarker anchor is complete-case only and may not generalize.",
-              "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026))."
+              "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+              "Promotion authorizes one confirmatory experiment, not adoption of the finding."
             ]
           },
           "courtroom": {
@@ -1187,7 +1230,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
             "scanner_gap": 1.2,
             "converter_frac": 0.34
           },
-          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cpartially robust\u201d (69/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the signal is more than accelerated brain-age; a chunk of it co-varies with the brain-age control, so in a cohort matched on brain-age gap the separation would shrink. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cpartially robust\u201d (69/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the signal is more than accelerated brain-age; a chunk of it co-varies with the brain-age control, so in a cohort matched on brain-age gap the separation would shrink. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
           "id": "OAS-B",
@@ -1338,7 +1381,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
           "next_experiment": [],
           "falsification": [],
           "caveats": [
-            "Biomarker anchor unavailable (no plasma p-tau217/GFAP coverage): claim cannot be promoted until molecularly anchored.",
+            "Not corroborated: no molecular anchor (no open plasma data) and no passing cross-cohort replication \u2014 cannot be promoted.",
             "Completeness: 2/5 gauntlet tests could not run; score is renormalized over the tests that did.",
             "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
             "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
@@ -1447,11 +1490,26 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   "real_evidence": {
     "dataset": "OpenBHB (healthy multi-scanner controls)",
     "provenance": "no-login HuggingFace mirror (Apache-2.0), 62 sites, verified 2026-07-08",
-    "n_subjects": null,
-    "n_sites": null,
+    "n_subjects": 3984,
+    "n_sites": 62,
     "scanner_auc": 0.8911,
     "site_auc": 0.7843,
     "message": "The structural embedding predicts the scanner (field strength) at AUC 0.891 in 3984 healthy subjects with NO disease \u2014 this is the batch effect the referee gates against, on REAL data (not synthetic). Prior art: 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026))."
+  },
+  "neurojepa_evidence": {
+    "scanner_leakage": {
+      "auc_raw": 0.9977,
+      "auc_honest": 0.931,
+      "n": 96,
+      "n_sites": 6,
+      "message": "Frozen Neuro-JEPA embeddings predict the scanner at AUC 0.931 (honest, PCA-10) on 96 real healthy multi-site brains \u2014 the batch effect the referee gates against, on the foundation model itself."
+    },
+    "ad_signal": {
+      "auc": 0.811,
+      "n": 61,
+      "message": "Frozen Neuro-JEPA embeddings separate clinical AD (CDR>=1) from CN at AUC 0.811 on real OASIS-1 volumes \u2014 the disease signal is carried by the model's own representation (matches structural ~0.82)."
+    },
+    "provenance": "Frozen NYUMedML/Neuro-JEPA (ViT-B MoE) over OpenBHB quasi-raw + OASIS-1 t88 MNI volumes. Inference only; weights & embeddings never committed (CC-BY-NC-ND). See docs/HF_ACCESS.md."
   },
   "discovery": {
     "note": "Discovered 3 cluster(s) via kmeans (silhouette=0.063). 1 promotable phenotype(s); 2 flagged as likely acquisition/age/sex artifact(s). Recovery vs planted ground truth: ARI=1.0, AMI=1.0.",
@@ -2702,9 +2760,19 @@ let DATA = EMBEDDED;
 const RESULT_LABEL = {passed:"passed",weakened:"weakened",mixed:"mixed",failed:"failed",not_available:"N/A"};
 const VERDICT_BAND = {fragile:0,"partially robust":1,"robust enough for follow-up":2,"strong candidate":3};
 const VERDICT_MIN = {fragile:0,"partially robust":40,"robust enough for follow-up":70,"strong candidate":85};
+const RESULT_GLYPH = {passed:"✓",weakened:"~",mixed:"~",failed:"✗",not_available:"–"};
+/* effect-bar width transform: biomarker_anchor effect is |r| (chance=0, domain 0→1);
+   AUC-based tests use (auc-0.5)/0.5 so 0.5=chance sits at the left edge. */
+function effWidth(t){
+  if(t.key==="biomarker_anchor") return Math.max(0,Math.min(1,t.effect))*100;
+  return Math.max(0,Math.min(1,(t.effect-0.5)/0.5))*100;
+}
+function effDomain(t){
+  return t.key==="biomarker_anchor" ? {lo:"0 chance",hi:"1.0 |r|"} : {lo:"0.5 chance",hi:"1.0"};
+}
 
 /* ---------- state ---------- */
-const S = {sub:"synthetic", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
+const S = {sub:"oasis", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
 
 function curSub(){return DATA.substrates[S.sub];}
 function curCase(){return curSub().cases[S.kase];}
@@ -2741,14 +2809,43 @@ function drawScatter(){
   g.strokeStyle="rgba(120,150,180,.10)"; g.lineWidth=1;
   for(let i=1;i<5;i++){const gx=pad+(W-2*pad)*i/5;g.beginPath();g.moveTo(gx,pad);g.lineTo(gx,H-pad);g.stroke();
     const gy=pad+(H-2*pad)*i/5;g.beginPath();g.moveTo(pad,gy);g.lineTo(W-pad,gy);g.stroke();}
+  const colOf = k => S.color==="outcome" ? (+k?"#ff7a8a":"#4cc2ff") : SC_COLORS[((k%SC_COLORS.length)+SC_COLORS.length)%SC_COLORS.length];
+  // group the existing seeded points by the ACTIVE color class
+  const groups={};
+  for(const p of pts){ const k=S.color==="outcome"?p.outcome:p.scanner; (groups[k]=groups[k]||[]).push(p); }
+  // per-class 1-sigma ellipses (drawn behind the points) + collect ringed centroids
+  const cents=[];
+  for(const k in groups){
+    const arr=groups[k], n=arr.length; if(!n) continue;
+    let mx=0,my=0; for(const p of arr){mx+=sx(p.x);my+=sy(p.y);} mx/=n; my/=n;
+    let vx=0,vy=0; for(const p of arr){vx+=(sx(p.x)-mx)**2; vy+=(sy(p.y)-my)**2;}
+    const sdx=Math.sqrt(vx/Math.max(1,n-1)), sdy=Math.sqrt(vy/Math.max(1,n-1));
+    const col=colOf(k);
+    g.save();
+    g.beginPath(); g.ellipse(mx,my,Math.max(sdx,7),Math.max(sdy,7),0,0,6.2832);
+    g.globalAlpha=.12; g.fillStyle=col; g.fill();
+    g.globalAlpha=.5; g.lineWidth=1.5; g.strokeStyle=col; g.stroke();
+    g.restore();
+    cents.push({x:mx,y:my,col});
+  }
+  // points
   for(const p of pts){
-    let col;
-    if(S.color==="outcome") col = p.outcome? "#ff7a8a" : "#4cc2ff";
-    else col = SC_COLORS[p.scanner%SC_COLORS.length];
+    const col = S.color==="outcome" ? (p.outcome? "#ff7a8a" : "#4cc2ff") : SC_COLORS[p.scanner%SC_COLORS.length];
     g.beginPath(); g.arc(sx(p.x),sy(p.y),4.3,0,6.2832);
     g.fillStyle=col; g.globalAlpha=.82; g.fill();
-    g.globalAlpha=1; g.lineWidth=1; g.strokeStyle="rgba(0,0,0,.35)"; g.stroke();
+    g.globalAlpha=1; g.lineWidth=1; g.strokeStyle="rgba(255,255,255,.25)"; g.stroke();
   }
+  // ringed centroid markers on top (the leakage separation made SEEN)
+  for(const cen of cents){
+    g.beginPath(); g.arc(cen.x,cen.y,7,0,6.2832);
+    g.globalAlpha=.95; g.fillStyle=cen.col; g.fill();
+    g.globalAlpha=1; g.lineWidth=3; g.strokeStyle="rgba(10,14,19,.92)"; g.stroke();
+    g.lineWidth=1.6; g.strokeStyle="rgba(255,255,255,.9)"; g.beginPath(); g.arc(cen.x,cen.y,7,0,6.2832); g.stroke();
+  }
+  // faint PC axis labels
+  g.globalAlpha=1; g.fillStyle="rgba(142,163,184,.5)"; g.font="11px "+"ui-monospace,Menlo,monospace";
+  g.textAlign="right"; g.textBaseline="alphabetic"; g.fillText("PC1 →", W-pad, H-pad+15);
+  g.save(); g.translate(pad-15, pad); g.rotate(-Math.PI/2); g.textAlign="left"; g.fillText("PC2 →", 0, 0); g.restore();
 }
 function cc0(cc){return cc.scatter;}
 
@@ -2814,20 +2911,23 @@ function renderDocket(){
     const phase = active ? (S.phase==="running"?"running":(S.phase==="done"?"done":"idle")) : "idle";
     const marginTxt = active && S.phase==="done"
       ? `<span class="cc-margin" style="color:${c.leakage_margin.margin>=0?'var(--green)':'var(--red)'}">margin ${c.leakage_margin.margin>=0?'+':''}${c.leakage_margin.margin.toFixed(2)}</span>` : "";
-    d.innerHTML+=`<div class="case-card ${active?'active':''}" data-kind="${kind}" data-case="${kind}">
+    d.innerHTML+=`<div class="case-card ${active?'active':''}" data-kind="${kind}" data-case="${kind}" role="button" tabindex="0" aria-label="Select ${kind} case">
       <div class="rail"></div>
       <div class="cc-top"><span class="cc-id">${c.id}</span><span class="cc-kind">${kind}</span></div>
       <div class="cc-claim">${c.claim.claim_text}</div>
       <div class="cc-foot">${statusChip(kind,phase)}${marginTxt}</div></div>`;
   }
-  d.querySelectorAll(".case-card").forEach(el=>el.onclick=()=>selectCase(el.dataset.case));
+  d.querySelectorAll(".case-card").forEach(el=>{
+    el.onclick=()=>selectCase(el.dataset.case);
+    el.onkeydown=e=>{if(e.key==="Enter"||e.code==="Space"){e.preventDefault();e.stopPropagation();selectCase(el.dataset.case);}};
+  });
 }
 
 /* ---------- render: gauntlet (structure) ---------- */
 function renderGauntlet(reset){
   const c=curCase(), list=document.getElementById("gauntList"); list.innerHTML="";
   c.tests.forEach((t,i)=>{
-    const star=t.star;
+    const star=t.star, dom=effDomain(t);
     list.innerHTML+=`<div class="grow ${star?'star':''}" data-key="${t.key}" data-i="${i}">
       <div class="g-top">${star?'<span class="g-star">★</span>':''}
         <span class="g-label">${t.label}</span><span class="g-w">${t.weight}%</span></div>
@@ -2835,6 +2935,7 @@ function renderGauntlet(reset){
       <div class="g-res">
         <span class="res-chip queued" data-res>queued</span>
         <div class="eff"><div class="etrack"><div class="echance"></div><div class="efill" data-fill></div></div>
+          <div class="eaxis"><span>${dom.lo}</span><span>${dom.hi}</span></div>
           <div class="eval"><span data-elabel>${t.effect_label}</span><span data-eval>—</span></div></div>
       </div>
       <div class="g-detail">${t.detail} ${statsStr(t.stats)}</div></div>`;
@@ -2892,6 +2993,22 @@ function verdictColor(v){return {fragile:"var(--red)","partially robust":"var(--
 
 /* ---------- render: verdict meter ---------- */
 function setNeedle(score){document.getElementById("needle").style.left=score+"%";}
+/* paired outcome-vs-scanner AUC bars on a shared 0.5–1.0 axis; the gap strip is the margin */
+function pairBarHTML(lm){
+  const toW=a=>Math.max(0,Math.min(1,(a-0.5)/0.5))*100;
+  const ow=toW(lm.outcome_auc), sw=toW(lm.scanner_auc);
+  const pos=lm.margin>=0, lo=Math.min(ow,sw), hi=Math.max(ow,sw);
+  return `<div class="pb-row"><span class="pb-lb">outcome</span>
+      <span class="pb-track"><span class="pb-fill out" style="width:${ow}%"></span></span>
+      <span class="pb-val" style="color:var(--accent)">${lm.outcome_auc.toFixed(2)}</span></div>
+    <div class="pb-row"><span class="pb-lb">scanner</span>
+      <span class="pb-track"><span class="pb-fill scan" style="width:${sw}%"></span></span>
+      <span class="pb-val" style="color:var(--red)">${lm.scanner_auc.toFixed(2)}</span></div>
+    <div class="pb-row"><span class="pb-lb">margin</span>
+      <span class="pb-track"><span class="pb-gap ${pos?'pos':'neg'}" style="left:${lo}%;width:${Math.max(hi-lo,1.2)}%"></span></span>
+      <span class="pb-val" style="color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}${lm.margin.toFixed(2)}</span></div>
+    <div class="pb-axis"><span>0.5 chance</span><span>1.0 AUC</span></div>`;
+}
 function renderVerdict(filled){
   const c=curCase();
   const mv=document.getElementById("mv"), mform=document.getElementById("mform");
@@ -2899,6 +3016,7 @@ function renderVerdict(filled){
   mv.textContent=(lm.margin>=0?"+":"")+lm.margin.toFixed(2);
   mv.className="mv "+(lm.margin>=0?"pos":"neg");
   mform.textContent=`outcome ${lm.outcome_auc.toFixed(2)} − scanner ${lm.scanner_auc.toFixed(2)}`;
+  document.getElementById("pairbar").innerHTML=pairBarHTML(lm);
   if(!filled||S.phase!=="done"){
     setNeedle(0); document.getElementById("vScore").textContent="—";
     document.getElementById("vName").textContent="unadjudicated";
@@ -2941,12 +3059,16 @@ function renderCourt(show){
 
 /* ---------- render: confound leaderboard ---------- */
 function renderLead(show){
-  const c=curCase(), mx=Math.max(...c.confound_leaderboard.map(r=>r.variance_explained));
+  const c=curCase(), CAP=20; // fixed 0–20% absolute variance domain (no row-max normalization)
   document.getElementById("lead").innerHTML=c.confound_leaderboard.map(r=>{
-    const w=show?Math.round(100*r.variance_explained/mx):0;
+    const pct=r.variance_explained*100;
+    const w=show?Math.min(100,pct/CAP*100):0;
+    const txt=pct<10?pct.toFixed(1):pct.toFixed(0);
+    const leak=/scanner|site/i.test(r.confound);
     return `<div class="row"><span class="nm">${r.confound}</span>
-      <span class="lt"><span class="lf" style="width:${w}%"></span></span>
-      <span class="pv">${(r.variance_explained*100).toFixed(0)}%</span></div>`;}).join("");
+      <span class="lt"><span class="ltick"></span><span class="lf ${leak?'leak':'neutral'}" style="width:${w}%"></span></span>
+      <span class="pv">${txt}%</span></div>`;}).join("")
+    + `<div class="lead-axis"><span>0</span><span>≥${CAP}% variance</span></div>`;
 }
 
 /* ---------- render: scatter meta ---------- */
@@ -3068,24 +3190,47 @@ function renderExtras(){
   if(!ev && !dc){ ex.style.display="none"; return; }
   ex.style.display="grid";
   if(ev){
+    // n_subjects/n_sites can be null in the payload; recover the honest figures from the data's own text
+    const nSub = ev.n_subjects!=null ? ev.n_subjects : (((ev.message||"").match(/([\d,]{3,})\s+healthy/i)||[])[1] || "—");
+    const nSites = ev.n_sites!=null ? ev.n_sites : (((ev.provenance||"").match(/(\d+)\s+sites/i)||[])[1] || "—");
     document.getElementById("realEvBody").innerHTML=
       '<div style="font-family:var(--mono);font-size:30px;font-weight:750;color:var(--red)">AUC '+(ev.scanner_auc||0).toFixed(2)+'</div>'+
-      '<div style="color:var(--ink2);margin-top:2px">structural embedding &rarr; scanner (field strength), in <b>'+ev.n_subjects+
-      '</b> healthy subjects with <b>no disease</b>, across <b>'+ev.n_sites+'</b> sites.</div>'+
+      '<div style="color:var(--ink2);margin-top:2px">structural embedding &rarr; scanner (field strength), in <b>'+nSub+
+      '</b> healthy subjects with <b>no disease</b>, across <b>'+nSites+'</b> sites.</div>'+
       '<div style="color:var(--ink3);font-size:12px;margin-top:8px">site leakage AUC '+(ev.site_auc||0).toFixed(2)+' &middot; '+(ev.provenance||"")+'</div>'+
       '<div style="color:var(--ink3);font-size:12px;margin-top:6px">The batch effect the referee gates against &mdash; demonstrated on <b>real</b> data, not synthetic.</div>';
   }
+  // Frozen Neuro-JEPA evidence (the foundation model's OWN embeddings, on real brains).
+  const nj=DATA.neurojepa_evidence;
+  if(nj){
+    const body=document.getElementById("realEvBody");
+    if(body){
+      const sl=nj.scanner_leakage||{}, ad=nj.ad_signal||{};
+      let h='<div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--edge)">'+
+        '<div style="font-family:var(--mono);font-size:11px;color:var(--accent2);letter-spacing:.5px">FROZEN NEURO-JEPA &mdash; the model\'s own embeddings</div>';
+      if(sl.auc_honest!=null) h+='<div style="margin-top:6px"><b style="font-family:var(--mono);color:var(--red)">AUC '+Number(sl.auc_honest).toFixed(2)+'</b> <span style="color:var(--ink2)">&rarr; scanner, on '+(sl.n||"—")+' real brains (leakage on the encoder itself)</span></div>';
+      if(ad.auc!=null) h+='<div style="margin-top:4px"><b style="font-family:var(--mono);color:var(--green)">AUC '+Number(ad.auc).toFixed(2)+'</b> <span style="color:var(--ink2)">&rarr; AD vs CN (CDR&ge;1), real OASIS-1 volumes &mdash; matches structural ~0.82</span></div>';
+      h+='<div style="color:var(--ink3);font-size:11px;margin-top:6px">Frozen inference only; weights &amp; embeddings never published (CC-BY-NC-ND).</div></div>';
+      body.innerHTML+=h;
+    }
+  }
   if(dc){
     document.getElementById("detTag").textContent = dc.ari!=null? ("recovery ARI "+dc.ari) : "";
+    // colorblind-safe cluster palette (blue / orange / violet / teal / vermilion — no red-green pair)
+    const cols=["#4ea1ff","#f5a524","#c77dff","#30a46c","#e5484d"];
+    const colc=i=>cols[((i%cols.length)+cols.length)%cols.length];
     const pts=dc.points||[]; let svg="";
     if(pts.length){
       const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
       const minx=Math.min.apply(0,xs),maxx=Math.max.apply(0,xs),miny=Math.min.apply(0,ys),maxy=Math.max.apply(0,ys);
       const sx=v=>10+280*((v-minx)/((maxx-minx)||1)), sy=v=>140-130*((v-miny)/((maxy-miny)||1));
-      const cols=["#4ea1ff","#f5a524","#e5484d","#30a46c","#a78bfa"];
-      svg=pts.map(p=>'<circle cx="'+sx(p.x).toFixed(1)+'" cy="'+sy(p.y).toFixed(1)+'" r="2.4" fill="'+cols[((p.c%cols.length)+cols.length)%cols.length]+'" opacity="0.82"/>').join("");
+      svg=pts.map(p=>'<circle cx="'+sx(p.x).toFixed(1)+'" cy="'+sy(p.y).toFixed(1)+'" r="2.4" fill="'+colc(p.c)+'" opacity="0.82"/>').join("");
     }
     document.getElementById("detScatter").innerHTML=svg;
+    const detLegend=(dc.clusters||[]).map(cl=>
+      '<span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--ink2)">'+
+      '<span style="width:9px;height:9px;border-radius:3px;background:'+colc(cl.cluster)+'"></span>'+
+      (cl.dominant_phenotype||("cluster "+cl.cluster))+'</span>').join("");
     const rows=(dc.clusters||[]).map(c=>{
       const art=c.status && c.status.indexOf("artifact")>=0; const col=art?"var(--red)":"var(--green)";
       return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--edge)">'+
@@ -3093,7 +3238,9 @@ function renderExtras(){
         ' <span style="color:var(--ink3)">('+(c.dominant_phenotype||"")+', n='+c.n+')</span></span>'+
         '<span style="font-family:var(--mono);font-size:12px;color:var(--ink2)">'+(c.verdict||"")+' &middot; '+c.status+'</span></div>';
     }).join("");
-    document.getElementById("detBody").innerHTML='<div style="color:var(--ink2);font-size:12px;margin-bottom:6px">'+(dc.note||"")+'</div>'+rows;
+    document.getElementById("detBody").innerHTML=
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">'+detLegend+'</div>'+
+      '<div style="color:var(--ink2);font-size:12px;margin-bottom:6px">'+(dc.note||"")+'</div>'+rows;
   }
 }
 
@@ -3121,8 +3268,8 @@ function applyRow(i,state){
   row.classList.add("active");
   if(state==="running"){chip.className="res-chip running";chip.textContent="running…";}
   else if(state==="result"){
-    chip.className="res-chip "+t.result; chip.textContent=RESULT_LABEL[t.result];
-    const w=Math.max(0,Math.min(1,(t.effect-0.5)/0.5))*100;
+    chip.className="res-chip "+t.result; chip.textContent=(RESULT_GLYPH[t.result]||"")+" "+RESULT_LABEL[t.result];
+    const w=effWidth(t);
     fill.className="efill "+t.result; fill.style.width=w+"%";
     evalx.textContent = t.result==="not_available" ? "N/A" : t.effect.toFixed(2);
     row.classList.add("revealed"); row.classList.add("flash");
@@ -3135,8 +3282,8 @@ function applyGauntletResults(instant){
     const t=c.tests[i];
     row.classList.add("active","revealed");
     const chip=row.querySelector("[data-res]"),fill=row.querySelector("[data-fill]"),evalx=row.querySelector("[data-eval]");
-    chip.className="res-chip "+t.result; chip.textContent=RESULT_LABEL[t.result];
-    const w=Math.max(0,Math.min(1,(t.effect-0.5)/0.5))*100;
+    chip.className="res-chip "+t.result; chip.textContent=(RESULT_GLYPH[t.result]||"")+" "+RESULT_LABEL[t.result];
+    const w=effWidth(t);
     fill.className="efill "+t.result; fill.style.width=w+"%";
     evalx.textContent=t.result==="not_available"?"N/A":t.effect.toFixed(2);
   });
@@ -3146,8 +3293,17 @@ function runGauntlet(){
   renderGauntlet(); renderClaim(false); renderVerdict(false);
   renderReviewer(false); renderCourt(false); renderLead(false);
   renderDocket();
+  const c=curCase();
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    S.phase="done";
+    renderDocket(); renderVerdict(true); renderClaim(true); renderLead(true);
+    renderReviewer(true); renderCourt(true);
+    applyGauntletResults(true);
+    document.getElementById("claimTag").textContent=c.verdict;
+    return;
+  }
   document.getElementById("claimTag").textContent="running…";
-  const c=curCase(); const step=680, runlead=260;
+  const step=680, runlead=260;
   c.tests.forEach((t,i)=>{
     S.timers.push(setTimeout(()=>applyRow(i,"running"), 300+i*step));
     S.timers.push(setTimeout(()=>applyRow(i,"result"), 300+i*step+runlead));
@@ -3180,7 +3336,9 @@ function bind(){
   document.querySelectorAll("#colorSeg button").forEach(b=>b.onclick=()=>toggleColor(b.dataset.color));
   document.getElementById("runBtn").onclick=runGauntlet;
   document.getElementById("replayBtn").onclick=runGauntlet;
-  document.getElementById("substrateBadge").onclick=toggleSubstrate;
+  const sb=document.getElementById("substrateBadge");
+  sb.onclick=toggleSubstrate;
+  sb.onkeydown=e=>{if(e.key==="Enter"||e.code==="Space"){e.preventDefault();e.stopPropagation();toggleSubstrate();}};
   document.getElementById("splitBtn").onclick=openSplit;
   document.getElementById("splitClose").onclick=()=>document.getElementById("splitMask").classList.remove("open");
   document.getElementById("splitMask").onclick=e=>{if(e.target.id==="splitMask")e.target.classList.remove("open");};

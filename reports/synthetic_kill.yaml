@@ -127,6 +127,19 @@ evidence_ledger:
   n_used: 65
   n_missing: null
   detail: held-out cohort AUC=0.83 (train 0.73); n_test=65
+double_dissociation:
+  auc_before: 0.8234
+  auc_after: 0.8286
+  retained: 1.016
+  confound: scanner
+  n: 137
+confound_leaderboard:
+- confound: age
+  variance_explained: 0.6381
+- confound: sex
+  variance_explained: 0.0127
+- confound: scanner
+  variance_explained: 0.0
 narration: "The claim \u201CMCI patients who convert to AD show a distinct structural-MRI\
   \ signature in their frozen embeddings versus non-converters.\u201D lands at \u201C\
   fragile\u201D (15/100). The naive effect (AUC 0.82 separating MCI converters from\
@@ -138,5 +151,27 @@ narration: "The claim \u201CMCI patients who convert to AD show a distinct struc
   \ the leakage margin is only -0.13 AUC, so a different scanner distribution could\
   \ erase the effect. That the same frozen embeddings can predict scanner/site as\
   \ well as outcome is documented prior art (\u201CBatch Effects in Brain Foundation\
-  \ Model Embeddings,\u201D arXiv:2604.14441 (2026)); NeuroAD Referee only runs the\
-  \ audit and issues the verdict."
+  \ Model Embeddings,\u201D arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only\
+  \ runs the audit and issues the verdict."
+reviewer:
+  critique:
+  - 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
+    (this cohort''s fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can
+    survive the adjustment and masquerade as disease-specific.'
+  - The biomarker anchor likely rests on a partial complete-case subset; with realistic
+    p-tau217 missingness the correlation is estimated on far fewer subjects than the
+    headline cohort.
+  - "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy\
+    \ can dominate \u2014 treat effect sizes as wide-interval estimates."
+  - "The leakage test audits the embeddings with the same linear-probe family it uses\
+    \ for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared\
+    \ confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still\
+    \ Leaking\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  revised_caveats:
+  - Verdict is provisional and conditional on the scanner/site distribution of any
+    replication cohort.
+  - Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.
+  - Any biomarker anchor is complete-case only and may not generalize.
+  - "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits\
+    \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
+    \ (2026))."
