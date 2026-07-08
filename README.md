@@ -118,6 +118,14 @@ We are explicit about what is real and what is a harness:
   demonstrated on *real* multi-scanner data (not synthetic). Healthy-only, so it
   is the leakage/brain-age control cohort, not an AD-signal source. Run it:
   `neuroad scanner-leakage`.
+- **Real, frozen Neuro-JEPA embeddings — `openbhb:neurojepa`:** 96 OpenBHB subjects
+  across 6 real sites, embedded by the **actual frozen Neuro-JEPA ViT-B MoE** over
+  their MNI152 T1w volumes (run on a Colab T4; see `scripts/openbhb_embed.py`). The
+  foundation model's **own 768-d representation** predicts scanner field strength at
+  **AUC 0.93** (PCA-10, honest) / 0.998 (raw) and brain age at **R² 0.83** on healthy
+  brains with no disease — the leakage the referee gates against, measured on the
+  encoder itself. Weights are gated/frozen and **never committed**; see
+  `docs/HF_ACCESS.md`.
 - **The Detective (`neuroad discover`):** unsupervised phenotype discovery
   (reduce-then-cluster, bootstrap-Jaccard stability as the primary quality gate)
   with the gauntlet run **per cluster**. On a planted-phenotype synthetic cohort
@@ -133,12 +141,18 @@ We are explicit about what is real and what is a harness:
   swappable. See **`docs/DATA_ACCESS.md`** for the exact steps to obtain each
   (OASIS-3's ~1-week DUA is the one worth doing: FreeSurfer + AD labels +
   multi-scanner, i.e. a real scanner-leakage test *with* disease signal).
-  Producing real Neuro-JEPA embeddings needs institutional HuggingFace access
-  (the weights auto-deny personal emails) — documented as a future Colab path in
-  `notebooks/neurojepa_embeddings.ipynb`, not shipped.
+  Real Neuro-JEPA embeddings are now **shipped** for OpenBHB (`openbhb:neurojepa`,
+  above); gated access requires your own HuggingFace grant (`docs/HF_ACCESS.md`).
 
 Neuro-JEPA (hyphenated) weights, if used, are used **frozen** (CC BY-NC-ND):
 no fine-tuning, no derivative.
+
+**Prefer real data.** We use real cohorts wherever they exist and reserve synthetic
+strictly for signals no open dataset carries (chiefly the plasma-biomarker gate). By
+volume the substrate is ≈ **87% real / 13% synthetic**; every synthetic artifact is
+badged as a harness, never shown as evidence. Full breakdown, honest assessment, and
+the roadmap to replace remaining synthetic beats with real data:
+**`docs/DATA_PROVENANCE.md`**.
 
 ---
 
