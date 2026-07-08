@@ -857,6 +857,43 @@ def _try_engine() -> dict | None:
                 {"x": round(float(coords[i, 0]), 3), "y": round(float(coords[i, 1]), 3),
                  "c": int(labels[i])} for i in idx]
         print(f"[build_demo_data]   discovery: ARI={res.get('ari')} clusters={len(res.get('clusters', []))}")
+
+        # REAL beat: the SAME Detective on the model's OWN frozen 768-d embeddings
+        # (OpenBHB, healthy). No planted structure — an honest real-data run. Baked
+        # in at build time so the demo stays offline (no CSV needed at runtime).
+        try:
+            from neuroad.data import loaders
+            import numpy as _np
+            rdf = loaders.load("openbhb:neurojepa")
+            rres = discovery.discover_and_referee(rdf)
+            rdet = rres.get("discovery", {}) or {}
+            emb_dim = len([c for c in rdf.columns if str(c).startswith("emb")]) or None
+            real_block = {
+                "substrate": "OpenBHB · frozen Neuro-JEPA",
+                "real": True, "embedding_dim": emb_dim, "n": int(len(rdf)),
+                "dx_mix": {str(k): int(v) for k, v in rdf["dx"].value_counts().items()},
+                "n_scanners": int(rdf["scanner"].nunique()),
+                "n_sites": int(rdf["site"].nunique()),
+                "note": rres.get("note"), "ari": rres.get("ari"), "ami": rres.get("ami"),
+                "method": rdet.get("method"), "k": rdet.get("k"),
+                "silhouette": rdet.get("silhouette"),
+                "trustworthiness": rdet.get("trustworthiness"),
+                "clusters": [_cluster_payload(c) for c in rres.get("clusters", [])],
+            }
+            rc, rl = rdet.get("coords_2d"), rdet.get("labels")
+            if rc is not None and rl is not None:
+                rc = _np.asarray(rc); rl = _np.asarray(rl)
+                ridx = _np.arange(len(rc))
+                if len(ridx) > 240:
+                    ridx = _np.linspace(0, len(rc) - 1, 240).astype(int)
+                real_block["points"] = [
+                    {"x": round(float(rc[i, 0]), 3), "y": round(float(rc[i, 1]), 3),
+                     "c": int(rl[i])} for i in ridx]
+            data["discovery_real"] = real_block
+            print(f"[build_demo_data]   discovery_real: OpenBHB NeuroJEPA "
+                  f"n={len(rdf)} k={rdet.get('k')} clusters={len(rres.get('clusters', []))}")
+        except Exception as exc:
+            print(f"[build_demo_data]   discovery_real skipped ({exc})")
     except Exception as exc:
         print(f"[build_demo_data]   discovery skipped ({exc})")
 

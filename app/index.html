@@ -538,7 +538,10 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   </div>
   <div class="panel" id="detectivePanel">
     <div class="hd"><span class="ic">❖</span><h3>The Detective — unsupervised phenotype discovery</h3>
-      <span class="tag" id="detTag"></span></div>
+      <span class="seg" id="detSeg" style="margin-left:auto">
+        <button data-view="planted" class="on">PLANTED HARNESS</button>
+        <button data-view="real">REAL NEURO-JEPA</button>
+      </span></div>
     <div class="bd">
       <div class="det-pills" id="detPills"></div>
       <div class="det-main">
@@ -2942,6 +2945,622 @@ canvas#scatter{width:100%;height:300px;display:block;background:
         "c": 2
       }
     ]
+  },
+  "discovery_real": {
+    "substrate": "OpenBHB \u00b7 frozen Neuro-JEPA",
+    "real": true,
+    "embedding_dim": 768,
+    "n": 96,
+    "dx_mix": {
+      "CN": 96,
+      "MCI": 0,
+      "AD": 0
+    },
+    "n_scanners": 2,
+    "n_sites": 6,
+    "note": "Discovered 2 cluster(s) via kmeans (silhouette=0.078). 0 promotable phenotype(s); 2 flagged as likely acquisition/age/sex artifact(s).",
+    "ari": null,
+    "ami": null,
+    "method": "kmeans",
+    "k": 2,
+    "silhouette": 0.078,
+    "trustworthiness": 0.699,
+    "clusters": [
+      {
+        "cluster": 0,
+        "n": 19,
+        "stability": 0.226,
+        "unstable": true,
+        "dominant_phenotype": null,
+        "status": "likely artifact (scanner/site)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.5,
+          "target": "conversion",
+          "n": 0
+        },
+        "score": 0,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "not_available",
+          "site_scanner": "failed",
+          "brain_age": "not_available",
+          "biomarker_anchor": "not_available",
+          "replication": "not_available"
+        },
+        "conversion": {
+          "rate": null,
+          "ci": [
+            null,
+            null
+          ],
+          "n_mci": 0
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": null,
+            "ci": [
+              null,
+              null
+            ]
+          },
+          "gfap": {
+            "d": null,
+            "ci": [
+              null,
+              null
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "scanner/site",
+          "scanner_site": 0.781,
+          "age_eta2": 0.271,
+          "sex_cramers_v": 0.036
+        },
+        "coords_2d": null
+      },
+      {
+        "cluster": 1,
+        "n": 77,
+        "stability": 0.576,
+        "unstable": true,
+        "dominant_phenotype": null,
+        "status": "likely artifact (scanner/site)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.5,
+          "target": "conversion",
+          "n": 0
+        },
+        "score": 0,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "not_available",
+          "site_scanner": "failed",
+          "brain_age": "not_available",
+          "biomarker_anchor": "not_available",
+          "replication": "not_available"
+        },
+        "conversion": {
+          "rate": null,
+          "ci": [
+            null,
+            null
+          ],
+          "n_mci": 0
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": null,
+            "ci": [
+              null,
+              null
+            ]
+          },
+          "gfap": {
+            "d": null,
+            "ci": [
+              null,
+              null
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "scanner/site",
+          "scanner_site": 0.781,
+          "age_eta2": 0.271,
+          "sex_cramers_v": 0.036
+        },
+        "coords_2d": null
+      }
+    ],
+    "points": [
+      {
+        "x": -6.347,
+        "y": 14.483,
+        "c": 0
+      },
+      {
+        "x": 2.305,
+        "y": -12.904,
+        "c": 1
+      },
+      {
+        "x": -6.999,
+        "y": -6.681,
+        "c": 1
+      },
+      {
+        "x": 13.904,
+        "y": 8.254,
+        "c": 1
+      },
+      {
+        "x": 21.621,
+        "y": -0.735,
+        "c": 1
+      },
+      {
+        "x": 2.468,
+        "y": -1.415,
+        "c": 1
+      },
+      {
+        "x": -18.748,
+        "y": 10.129,
+        "c": 0
+      },
+      {
+        "x": 15.724,
+        "y": 8.963,
+        "c": 1
+      },
+      {
+        "x": 12.237,
+        "y": 5.116,
+        "c": 1
+      },
+      {
+        "x": 22.068,
+        "y": -5.534,
+        "c": 1
+      },
+      {
+        "x": 10.411,
+        "y": 2.571,
+        "c": 1
+      },
+      {
+        "x": 2.819,
+        "y": -12.799,
+        "c": 1
+      },
+      {
+        "x": 19.991,
+        "y": -2.821,
+        "c": 1
+      },
+      {
+        "x": -8.948,
+        "y": -6.399,
+        "c": 1
+      },
+      {
+        "x": -12.4,
+        "y": -13.676,
+        "c": 1
+      },
+      {
+        "x": -7.333,
+        "y": 17.005,
+        "c": 0
+      },
+      {
+        "x": -11.385,
+        "y": 10.714,
+        "c": 1
+      },
+      {
+        "x": -17.764,
+        "y": 8.554,
+        "c": 0
+      },
+      {
+        "x": -9.914,
+        "y": -12.457,
+        "c": 1
+      },
+      {
+        "x": -4.426,
+        "y": -2.77,
+        "c": 1
+      },
+      {
+        "x": -12.347,
+        "y": -4.941,
+        "c": 1
+      },
+      {
+        "x": 15.309,
+        "y": 4.403,
+        "c": 1
+      },
+      {
+        "x": -8.137,
+        "y": -7.652,
+        "c": 1
+      },
+      {
+        "x": -0.01,
+        "y": -6.232,
+        "c": 1
+      },
+      {
+        "x": -7.597,
+        "y": 3.292,
+        "c": 1
+      },
+      {
+        "x": 8.073,
+        "y": 14.82,
+        "c": 1
+      },
+      {
+        "x": -7.935,
+        "y": -4.338,
+        "c": 1
+      },
+      {
+        "x": 2.29,
+        "y": -12.491,
+        "c": 1
+      },
+      {
+        "x": -8.026,
+        "y": 5.334,
+        "c": 1
+      },
+      {
+        "x": 20.192,
+        "y": -5.832,
+        "c": 1
+      },
+      {
+        "x": 9.982,
+        "y": 14.397,
+        "c": 1
+      },
+      {
+        "x": 20.075,
+        "y": -7.909,
+        "c": 1
+      },
+      {
+        "x": 2.004,
+        "y": -3.169,
+        "c": 1
+      },
+      {
+        "x": -0.252,
+        "y": -10.764,
+        "c": 1
+      },
+      {
+        "x": 11.704,
+        "y": 18.274,
+        "c": 1
+      },
+      {
+        "x": -18.9,
+        "y": 9.678,
+        "c": 0
+      },
+      {
+        "x": -19.697,
+        "y": 9.839,
+        "c": 0
+      },
+      {
+        "x": 18.017,
+        "y": 2.446,
+        "c": 1
+      },
+      {
+        "x": 11.241,
+        "y": 6.364,
+        "c": 1
+      },
+      {
+        "x": 17.228,
+        "y": -7.286,
+        "c": 1
+      },
+      {
+        "x": -11.362,
+        "y": 3.333,
+        "c": 1
+      },
+      {
+        "x": 13.601,
+        "y": 13.591,
+        "c": 1
+      },
+      {
+        "x": -3.694,
+        "y": 5.625,
+        "c": 1
+      },
+      {
+        "x": -5.801,
+        "y": -4.385,
+        "c": 1
+      },
+      {
+        "x": -9.492,
+        "y": -2.703,
+        "c": 0
+      },
+      {
+        "x": -12.512,
+        "y": -6.962,
+        "c": 1
+      },
+      {
+        "x": -21.204,
+        "y": 6.475,
+        "c": 0
+      },
+      {
+        "x": -5.31,
+        "y": -1.314,
+        "c": 1
+      },
+      {
+        "x": -10.897,
+        "y": -9.698,
+        "c": 0
+      },
+      {
+        "x": -12.837,
+        "y": -5.736,
+        "c": 1
+      },
+      {
+        "x": 0.931,
+        "y": -14.324,
+        "c": 1
+      },
+      {
+        "x": 10.821,
+        "y": 3.057,
+        "c": 1
+      },
+      {
+        "x": -9.882,
+        "y": -11.874,
+        "c": 1
+      },
+      {
+        "x": -11.324,
+        "y": -4.877,
+        "c": 1
+      },
+      {
+        "x": -16.217,
+        "y": 1.041,
+        "c": 0
+      },
+      {
+        "x": 9.001,
+        "y": 17.407,
+        "c": 1
+      },
+      {
+        "x": -4.499,
+        "y": -9.947,
+        "c": 1
+      },
+      {
+        "x": -6.347,
+        "y": -4.243,
+        "c": 0
+      },
+      {
+        "x": -14.413,
+        "y": 8.951,
+        "c": 0
+      },
+      {
+        "x": 5.998,
+        "y": 20.723,
+        "c": 1
+      },
+      {
+        "x": -7.959,
+        "y": -3.887,
+        "c": 1
+      },
+      {
+        "x": -7.427,
+        "y": 14.162,
+        "c": 1
+      },
+      {
+        "x": -1.644,
+        "y": -9.191,
+        "c": 1
+      },
+      {
+        "x": 8.097,
+        "y": 15.348,
+        "c": 1
+      },
+      {
+        "x": 21.556,
+        "y": -8.978,
+        "c": 1
+      },
+      {
+        "x": -5.153,
+        "y": -11.677,
+        "c": 1
+      },
+      {
+        "x": -6.734,
+        "y": -3.725,
+        "c": 1
+      },
+      {
+        "x": -10.974,
+        "y": -7.539,
+        "c": 0
+      },
+      {
+        "x": 18.89,
+        "y": -2.247,
+        "c": 1
+      },
+      {
+        "x": -9.056,
+        "y": 9.439,
+        "c": 0
+      },
+      {
+        "x": -13.834,
+        "y": 14.085,
+        "c": 0
+      },
+      {
+        "x": 7.209,
+        "y": 20.104,
+        "c": 1
+      },
+      {
+        "x": 2.478,
+        "y": -3.106,
+        "c": 1
+      },
+      {
+        "x": 0.857,
+        "y": -9.886,
+        "c": 1
+      },
+      {
+        "x": 19.559,
+        "y": -0.475,
+        "c": 1
+      },
+      {
+        "x": -11.412,
+        "y": 17.139,
+        "c": 0
+      },
+      {
+        "x": -3.628,
+        "y": 0.911,
+        "c": 1
+      },
+      {
+        "x": 21.383,
+        "y": -8.732,
+        "c": 1
+      },
+      {
+        "x": 16.337,
+        "y": -0.167,
+        "c": 1
+      },
+      {
+        "x": -11.949,
+        "y": -0.722,
+        "c": 0
+      },
+      {
+        "x": -13.409,
+        "y": -8.057,
+        "c": 1
+      },
+      {
+        "x": -11.687,
+        "y": -1.153,
+        "c": 1
+      },
+      {
+        "x": -7.493,
+        "y": -5.157,
+        "c": 0
+      },
+      {
+        "x": 19.441,
+        "y": -2.35,
+        "c": 1
+      },
+      {
+        "x": 15.715,
+        "y": 3.621,
+        "c": 1
+      },
+      {
+        "x": -6.173,
+        "y": -17.014,
+        "c": 1
+      },
+      {
+        "x": 17.721,
+        "y": 0.536,
+        "c": 1
+      },
+      {
+        "x": -5.85,
+        "y": -8.508,
+        "c": 1
+      },
+      {
+        "x": -11.276,
+        "y": 20.221,
+        "c": 0
+      },
+      {
+        "x": -3.03,
+        "y": 0.123,
+        "c": 1
+      },
+      {
+        "x": -1.519,
+        "y": -14.404,
+        "c": 1
+      },
+      {
+        "x": -0.459,
+        "y": 1.306,
+        "c": 1
+      },
+      {
+        "x": 15.508,
+        "y": 2.46,
+        "c": 1
+      },
+      {
+        "x": 19.928,
+        "y": -8.238,
+        "c": 1
+      },
+      {
+        "x": -7.125,
+        "y": -7.197,
+        "c": 1
+      },
+      {
+        "x": -3.947,
+        "y": -7.015,
+        "c": 1
+      }
+    ]
   }
 }</script>
 <script>
@@ -2965,7 +3584,7 @@ function effDomain(t){
 }
 
 /* ---------- state ---------- */
-const S = {sub:"synthetic", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
+const S = {sub:"oasis", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
 
 function curSub(){return DATA.substrates[S.sub];}
 function curCase(){return curSub().cases[S.kase];}
@@ -3406,8 +4025,25 @@ function renderExtras(){
     }
   }
   if(dc){
-    renderDetective(dc);
+    renderDetToggle();
+    renderDetective(detBlock(), DET_VIEW==="real");
   }
+}
+
+/* which discovery substrate the Detective is showing */
+let DET_VIEW="planted";
+function detBlock(){return DET_VIEW==="real" ? DATA.discovery_real : DATA.discovery;}
+function renderDetToggle(){
+  const seg=document.getElementById("detSeg"); if(!seg) return;
+  const hasReal=!!DATA.discovery_real;
+  const realBtn=seg.querySelector('[data-view="real"]');
+  if(realBtn) realBtn.style.display = hasReal ? "" : "none";
+  if(!hasReal) DET_VIEW="planted";
+  seg.querySelectorAll("button").forEach(b=>{
+    b.classList.toggle("on", b.dataset.view===DET_VIEW);
+    b.onclick=()=>{ DET_VIEW=b.dataset.view; renderDetToggle();
+      renderDetective(detBlock(), DET_VIEW==="real"); };
+  });
 }
 
 /* ---------- render: The Detective (unsupervised discovery, first-class) ---------- */
@@ -3462,18 +4098,32 @@ function detCard(c){
     <div class="dc-why">${detWhy(c)}</div></div>`;
 }
 
-function renderDetective(dc){
+function renderDetective(dc, real){
+  if(!dc){document.getElementById("detClusters").innerHTML=
+     '<div style="color:var(--ink3);font-size:12px">No real-embedding run baked into this demo.</div>';
+     document.getElementById("detPills").innerHTML=document.getElementById("detStory").innerHTML="";
+     document.getElementById("detScatter").innerHTML="";document.getElementById("detLegend").innerHTML="";return;}
   const clusters=dc.clusters||[];
-  document.getElementById("detTag").textContent="no labels used";
 
-  // pills — the unsupervised quality signals
+  // pills — the unsupervised quality signals (differ for planted vs real)
   const pills=[];
-  pills.push(`<span class="det-pill hero">🔍 <b>NO LABELS</b> used</span>`);
-  if(dc.method) pills.push(`<span class="det-pill">method <b>${dc.method}</b></span>`);
-  if(dc.k!=null) pills.push(`<span class="det-pill">clusters <b>k=${dc.k}</b></span>`);
-  if(dc.silhouette!=null) pills.push(`<span class="det-pill">silhouette <b>${Number(dc.silhouette).toFixed(2)}</b></span>`);
-  if(dc.trustworthiness!=null) pills.push(`<span class="det-pill">2-D trust <b>${Number(dc.trustworthiness).toFixed(2)}</b></span>`);
-  if(dc.ari!=null) pills.push(`<span class="det-pill">recovery <b>ARI ${dc.ari}</b>${dc.ami!=null?` · AMI ${dc.ami}`:""}</span>`);
+  if(real){
+    pills.push(`<span class="det-pill hero">🧠 <b>REAL</b> frozen embeddings</span>`);
+    if(dc.embedding_dim) pills.push(`<span class="det-pill">dim <b>${dc.embedding_dim}-d</b></span>`);
+    if(dc.n!=null) pills.push(`<span class="det-pill">subjects <b>n=${dc.n}</b></span>`);
+    if(dc.method) pills.push(`<span class="det-pill">method <b>${dc.method}</b></span>`);
+    if(dc.k!=null) pills.push(`<span class="det-pill">clusters <b>k=${dc.k}</b></span>`);
+    if(dc.silhouette!=null) pills.push(`<span class="det-pill">silhouette <b>${Number(dc.silhouette).toFixed(2)}</b></span>`);
+    if(dc.trustworthiness!=null) pills.push(`<span class="det-pill">2-D trust <b>${Number(dc.trustworthiness).toFixed(2)}</b></span>`);
+    pills.push(`<span class="det-pill">${dc.substrate||"real cohort"} · healthy · no disease labels</span>`);
+  } else {
+    pills.push(`<span class="det-pill hero">🔍 <b>NO LABELS</b> used</span>`);
+    if(dc.method) pills.push(`<span class="det-pill">method <b>${dc.method}</b></span>`);
+    if(dc.k!=null) pills.push(`<span class="det-pill">clusters <b>k=${dc.k}</b></span>`);
+    if(dc.silhouette!=null) pills.push(`<span class="det-pill">silhouette <b>${Number(dc.silhouette).toFixed(2)}</b></span>`);
+    if(dc.trustworthiness!=null) pills.push(`<span class="det-pill">2-D trust <b>${Number(dc.trustworthiness).toFixed(2)}</b></span>`);
+    if(dc.ari!=null) pills.push(`<span class="det-pill">recovery <b>ARI ${dc.ari}</b>${dc.ami!=null?` · AMI ${dc.ami}`:""}</span>`);
+  }
   document.getElementById("detPills").innerHTML=pills.join("");
 
   // scatter with per-cluster 1-sigma ellipse + centroid (deterministic; from the emitted points)
@@ -3504,12 +4154,17 @@ function renderDetective(dc){
   // story: headline tally + note
   const nProm=clusters.filter(c=>!isArtifact(c)).length;
   const nArt=clusters.filter(c=>isArtifact(c)).length;
+  // strongest confound association across clusters (for the real headline)
+  const topV=clusters.reduce((m,c)=>Math.max(m,(c.artifact&&c.artifact.scanner_site)||0),0);
+  const lede = real
+    ? `<div>The <b class="hl">same Detective</b>, now on the encoder's <b class="hl">own real ${dc.embedding_dim||768}-d embeddings</b> (${dc.substrate||"real cohort"}, healthy — <b class="hl">no planted structure</b>). With no labels it recovers the <b class="hl">acquisition scanner</b> (Cramér's V ${topV.toFixed(2)}), not biology — and the referee flags <b class="hl">every</b> cluster as an artifact. This is the batch effect the whole tool gates against, seen in the raw embedding space, on real brains.</div>`
+    : `<div>The Detective clusters the <b class="hl">frozen embeddings with no diagnosis labels</b>, then runs the <b class="hl">same referee gauntlet on each subgroup</b>. Only a cluster that survives its own leakage / brain-age / anchor challenges — and carries a molecular signal — is promoted. Everything else is named as acquisition, aging, or demographic structure the encoder happened to learn.</div>`;
   document.getElementById("detStory").innerHTML=
     `<div class="tally">
        <div class="tb good"><div class="n">${nProm}</div><div class="l">promotable phenotype${nProm===1?"":"s"}</div></div>
        <div class="tb bad"><div class="n">${nArt}</div><div class="l">caught as artifact${nArt===1?"":"s"}</div></div>
      </div>
-     <div>The Detective clusters the <b class="hl">frozen embeddings with no diagnosis labels</b>, then runs the <b class="hl">same referee gauntlet on each subgroup</b>. Only a cluster that survives its own leakage / brain-age / anchor challenges — and carries a molecular signal — is promoted. Everything else is named as acquisition, aging, or demographic structure the encoder happened to learn.</div>
+     ${lede}
      <div style="margin-top:8px;color:var(--ink3);font-size:11.5px">${dc.note||""}</div>`;
 
   document.getElementById("detClusters").innerHTML=clusters.map(detCard).join("");
