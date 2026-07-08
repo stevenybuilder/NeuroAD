@@ -76,7 +76,7 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
   border:1px solid var(--edge);border-radius:12px;overflow:hidden}
 .panel > .hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--edge);
   background:#0e151e}
-.panel > .hd .ic{font-size:13px}
+.panel > .hd .ic{font-size:12px;color:var(--mute);opacity:.6}
 .panel > .hd h3{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink2)}
 .panel > .hd .tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink3)}
 .panel > .bd{padding:14px}
@@ -429,7 +429,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   </div>
   <div class="mh-spacer"></div>
   <div class="mh-right">
-    <div class="keyhint"><kbd>Space</kbd> run/replay &nbsp; <kbd>←</kbd><kbd>→</kbd> case &nbsp; <kbd>C</kbd> color &nbsp; <kbd>S</kbd> substrate &nbsp; <kbd>V</kbd> split</div>
+    <div class="keyhint" title="Space run/replay · ←→ switch case · C color by outcome/scanner · S switch substrate · V split view"><kbd>Space</kbd> run &nbsp; <kbd>S</kbd> data</div>
     <div class="src-chip" id="srcChip">artifact: —</div>
     <div class="substrate-badge" id="substrateBadge" title="Toggle substrate (S)" role="button" tabindex="0" aria-label="Toggle data substrate (synthetic / OASIS)">
       <span class="dot"></span>
@@ -3699,26 +3699,37 @@ function renderCohort(){
     const col=k==="AD"?"var(--red)":k==="MCI"?"var(--amber)":"var(--green)";
     return `<div class="dx"><div class="b"><i style="height:${h}px;background:${col};opacity:.55"></i></div>
       <div class="n">${v}</div><div class="lab">${k}</div></div>`;}).join("");
-  let bio="";
-  for(const [k,v] of Object.entries(co.biomarker_coverage)){
-    const isPtau=k==="p_tau217";
-    bio+=`<div class="barrow"><div class="top"><span>${k}${isPtau?' <span class="dim3">(anchor)</span>':''}</span>
-      <span class="pct">${Math.round(v*100)}%</span></div>
-      <div class="track"><div class="fill ${v<0.5?'miss':'cov'}" style="width:${Math.max(v*100,2)}%"></div></div></div>`;
+  // Molecular markers: show the coverage bars ONLY when the cohort actually has
+  // them. On a structural cohort (OASIS) every value is 0 — five "0%" bars are pure
+  // noise, so collapse to one calm line. (Simplicity in a complex domain — surface
+  // what's there, not what's absent.)
+  const bioVals=Object.values(co.biomarker_coverage);
+  const hasBio=bioVals.some(v=>v>0);
+  let bioBlock;
+  if(hasBio){
+    let bio="";
+    for(const [k,v] of Object.entries(co.biomarker_coverage)){
+      const isPtau=k==="p_tau217";
+      bio+=`<div class="barrow"><div class="top"><span>${k}${isPtau?' <span class="dim3">(anchor)</span>':''}</span>
+        <span class="pct">${Math.round(v*100)}%</span></div>
+        <div class="track"><div class="fill ${v<0.5?'miss':'cov'}" style="width:${Math.max(v*100,2)}%"></div></div></div>`;
+    }
+    const miss=Math.round((1-co.biomarker_coverage.p_tau217)*100);
+    bioBlock=`<div class="subhd">molecular anchor coverage</div>${bio}
+      <div class="note">p-tau217 is ${miss}% missing — the anchor runs on the complete subset only.</div>`;
+  }else{
+    bioBlock=`<div class="subhd">molecular anchor</div>
+      <div class="note">No plasma markers here — promotion is corroborated by real held-out cross-cohort replication instead.</div>`;
   }
-  const miss=Math.round((1-co.biomarker_coverage.p_tau217)*100);
+  // Keep the essentials; fold acquisition + demographics onto single calm lines.
+  const convCov=co.label_coverage&&co.label_coverage.conversion;
   document.getElementById("cohortBody").innerHTML=`
-    <div class="kv"><span class="k">subjects (n)</span><span class="v">${co.n_subjects}</span></div>
-    <div class="kv"><span class="k">sites</span><span class="v">${co.n_sites}</span></div>
-    <div class="kv"><span class="k">scanners</span><span class="v">${co.n_scanners}${co.n_scanners===1?' <span class="dim3" style="font-size:9px">single</span>':''}</span></div>
-    <div class="kv"><span class="k">embedding dim</span><span class="v">${co.embedding_dim}</span></div>
-    <div class="kv"><span class="k">age (mean)</span><span class="v">${co.age_mean}</span></div>
-    <div class="kv"><span class="k">female</span><span class="v">${co.pct_female}%</span></div>
+    <div class="kv"><span class="k">subjects</span><span class="v">${co.n_subjects}</span></div>
+    <div class="kv"><span class="k">acquisition</span><span class="v">${co.n_sites} site${co.n_sites===1?'':'s'} · ${co.n_scanners} scanner${co.n_scanners===1?'':'s'}</span></div>
+    <div class="kv"><span class="k">age (mean)</span><span class="v">${co.age_mean} · ${co.pct_female}% F</span></div>
     <div class="subhd">diagnosis mix</div><div class="dxbars">${dx}</div>
-    <div class="subhd">label coverage</div>
-    ${pctbar("conversion label",co.label_coverage.conversion,"cov")}
-    <div class="subhd">biomarker missingness</div>${bio}
-    <div class="note">p-tau217 is ${miss}% missing — the anchor runs on the complete subset only. ${co.note}</div>`;
+    ${convCov?('<div class="subhd">label coverage</div>'+pctbar("conversion label",convCov,"cov")):''}
+    ${bioBlock}`;
 }
 
 /* ---------- render: docket ---------- */
