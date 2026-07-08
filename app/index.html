@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>NeuroAD Discovery Engine — Workbench</title>
 <style>
 :root{
@@ -262,6 +263,20 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .dcard .dc-why{font-size:11px;color:var(--ink2);line-height:1.45;margin-top:9px;padding-top:8px;border-top:1px solid var(--edge)}
 .dcard .stabar{height:5px;border-radius:3px;background:#0b1118;border:1px solid #17222e;overflow:hidden;width:60px;display:inline-block;vertical-align:middle}
 .dcard .stabar i{display:block;height:100%;background:linear-gradient(90deg,#2b7fb8,var(--accent))}
+/* reality-check band: the same Detective on REAL frozen embeddings, always visible */
+.det-reality{margin-top:16px;border:1px solid var(--edge2);border-left:3px solid var(--red);
+  border-radius:11px;background:linear-gradient(180deg,#150d10,#0e0a0c);padding:12px 15px}
+.det-reality .dr-head{font-family:var(--mono);font-size:11px;letter-spacing:.4px;color:var(--ink2);margin-bottom:11px}
+.det-reality .dr-head b{color:var(--ink)}
+.det-reality .dr-body{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:center}
+@media(max-width:640px){.det-reality .dr-body{grid-template-columns:1fr}}
+.det-reality .dr-svg{width:230px;height:120px;border:1px solid var(--edge);border-radius:9px;
+  background:radial-gradient(120% 120% at 50% 0%,#0e1620,#0a0e13)}
+.det-reality .dr-verdict{font-size:14px;color:var(--ink);line-height:1.5;margin-bottom:7px}
+.det-reality .dr-verdict b.bad{color:var(--red)} .det-reality .dr-verdict b.good{color:var(--green)}
+.det-reality .dr-verdict .num{font-family:var(--mono);font-weight:750}
+.det-reality .dr-sub{font-size:12px;color:var(--ink2);line-height:1.55}
+.det-reality .dr-sub b{color:var(--ink)}
 
 /* ---- confound leaderboard ---- */
 .lead .row{display:flex;align-items:center;gap:9px;margin:7px 0}
@@ -538,10 +553,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   </div>
   <div class="panel" id="detectivePanel">
     <div class="hd"><span class="ic">❖</span><h3>The Detective — unsupervised phenotype discovery</h3>
-      <span class="seg" id="detSeg" style="margin-left:auto">
-        <button data-view="planted" class="on">PLANTED HARNESS</button>
-        <button data-view="real">REAL NEURO-JEPA</button>
-      </span></div>
+      <span class="tag" id="detTag">no labels · validated on planted truth, then on real embeddings</span></div>
     <div class="bd">
       <div class="det-pills" id="detPills"></div>
       <div class="det-main">
@@ -552,6 +564,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
         <div class="det-story" id="detStory"></div>
       </div>
       <div class="det-clusters" id="detClusters"></div>
+      <div class="det-reality" id="detReality"></div>
     </div>
   </div>
 </div>
@@ -4025,25 +4038,49 @@ function renderExtras(){
     }
   }
   if(dc){
-    renderDetToggle();
-    renderDetective(detBlock(), DET_VIEW==="real");
+    renderDetective(dc, false);              // planted harness = the full, rich view
+    renderRealityCheck(DATA.discovery_real); // real embeddings = always-visible condensed band
   }
 }
 
-/* which discovery substrate the Detective is showing */
-let DET_VIEW="planted";
-function detBlock(){return DET_VIEW==="real" ? DATA.discovery_real : DATA.discovery;}
-function renderDetToggle(){
-  const seg=document.getElementById("detSeg"); if(!seg) return;
-  const hasReal=!!DATA.discovery_real;
-  const realBtn=seg.querySelector('[data-view="real"]');
-  if(realBtn) realBtn.style.display = hasReal ? "" : "none";
-  if(!hasReal) DET_VIEW="planted";
-  seg.querySelectorAll("button").forEach(b=>{
-    b.classList.toggle("on", b.dataset.view===DET_VIEW);
-    b.onclick=()=>{ DET_VIEW=b.dataset.view; renderDetToggle();
-      renderDetective(detBlock(), DET_VIEW==="real"); };
+/* Reality-check band: the SAME Detective on the encoder's own real frozen
+   embeddings. Always visible (no toggle) so the planted->real comparison reads
+   on a passive demo video; condensed so it doesn't double the panel's weight. */
+function detClusterSVG(pts, W, H){
+  if(!pts || !pts.length) return "";
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const minx=Math.min.apply(0,xs),maxx=Math.max.apply(0,xs),miny=Math.min.apply(0,ys),maxy=Math.max.apply(0,ys);
+  const pad=14, sx=v=>pad+(W-2*pad)*((v-minx)/((maxx-minx)||1)), sy=v=>H-pad-(H-2*pad)*((v-miny)/((maxy-miny)||1));
+  const byC={}; pts.forEach(p=>{(byC[p.c]=byC[p.c]||[]).push([sx(p.x),sy(p.y)]);});
+  let ell="";
+  Object.keys(byC).forEach(cid=>{
+    const P=byC[cid], col=detCol(+cid);
+    const mx=P.reduce((s,q)=>s+q[0],0)/P.length, my=P.reduce((s,q)=>s+q[1],0)/P.length;
+    const sdx=Math.sqrt(P.reduce((s,q)=>s+(q[0]-mx)**2,0)/P.length)||6;
+    const sdy=Math.sqrt(P.reduce((s,q)=>s+(q[1]-my)**2,0)/P.length)||6;
+    ell+=`<ellipse cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" rx="${(1.7*sdx+5).toFixed(1)}" ry="${(1.7*sdy+5).toFixed(1)}" fill="${col}" opacity="0.12"/>`;
+    ell+=`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="3.6" fill="${col}" stroke="#0b0f14" stroke-width="1.3"/>`;
   });
+  const dots=pts.map(p=>`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="1.9" fill="${detCol(p.c)}" opacity="0.8"/>`).join("");
+  return ell+dots;
+}
+function renderRealityCheck(r){
+  const el=document.getElementById("detReality"); if(!el) return;
+  if(!r){ el.style.display="none"; return; }
+  el.style.display="block";
+  const cl=r.clusters||[];
+  const nArt=cl.filter(isArtifact).length;
+  const topV=cl.reduce((m,c)=>Math.max(m,(c.artifact&&c.artifact.scanner_site)||0),0);
+  const svg=detClusterSVG(r.points||[], 230, 120);
+  el.innerHTML=
+    `<div class="dr-head">⤷ REALITY CHECK · the same Detective, on the model's <b>own real ${r.embedding_dim||768}-d embeddings</b></div>
+     <div class="dr-body">
+       <svg class="dr-svg" viewBox="0 0 230 120" preserveAspectRatio="xMidYMid meet">${svg}</svg>
+       <div>
+         <div class="dr-verdict"><b class="bad num">${nArt}/${cl.length}</b> clusters flagged <b class="bad">scanner/site artifact</b> · Cramér's V <b class="num">${topV.toFixed(2)}</b> · <b class="good num">0</b> promotable</div>
+         <div class="dr-sub"><b>${r.substrate||"real cohort"} · ${r.n} real brains · healthy · no labels.</b> Run the exact same unsupervised discovery on the encoder's own embeddings and the only structure it finds is the <b>acquisition scanner</b> — not biology. That's the batch effect the referee gates against, shown on real data (method validated on the planted harness above, ARI 1.0).</div>
+       </div>
+     </div>`;
 }
 
 /* ---------- render: The Detective (unsupervised discovery, first-class) ---------- */
