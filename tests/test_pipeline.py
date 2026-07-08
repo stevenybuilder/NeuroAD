@@ -91,6 +91,47 @@ def test_run_referee_end_to_end():
     # narration is attached as a side artifact for the UI/exporter.
     assert isinstance(getattr(card, "narration", ""), str)
 
+    # GAP 1: the two STAR trust features are computed in the referee path and
+    # surface in the exported dict (not demo-only).
+    d = card.to_dict()
+    assert "double_dissociation" in d and "confound_leaderboard" in d
+    assert isinstance(d["double_dissociation"], dict)
+    assert isinstance(d["confound_leaderboard"], list)
+    # Non-empty: the tiny cohort has two scanners/sites, so both compute.
+    assert {"auc_before", "auc_after", "retained", "confound"} <= set(
+        d["double_dissociation"])
+    assert card.double_dissociation is d["double_dissociation"] \
+        or card.double_dissociation == d["double_dissociation"]
+
+
+def test_write_reports_emits_reviewer_and_biology_and_star(tmp_path, monkeypatch):
+    """GAP 1 + GAP 2: the CLI report payload carries the STAR trust features and
+    the structured reviewer / biology blocks — not just narration/adjudication."""
+    pytest.importorskip("neuroad.probe")
+    pytest.importorskip("neuroad.gauntlet")
+    pytest.importorskip("neuroad.scoring")
+    import json
+
+    from neuroad import cli, pipeline
+
+    df = _tiny_cohort(seed=2)
+    card = pipeline.run_referee(df, "a hunch about converters")
+    # Reviewer always runs; assert the side artifact is present so the export has
+    # something structured to write.
+    assert isinstance(getattr(card, "reviewer", None), dict)
+
+    monkeypatch.setattr(cli, "_REPORTS", tmp_path)
+    written = cli._write_reports("synthetic:TEST", card)
+    jp = next(p for p in written if p.suffix == ".json")
+    payload = json.loads(jp.read_text())
+
+    # GAP 2: structured reviewer block written (mirrors adjudication).
+    assert "reviewer" in payload
+    assert "critique" in payload["reviewer"]
+    # GAP 1: STAR trust features carried into the written report.
+    assert "double_dissociation" in payload
+    assert "confound_leaderboard" in payload
+
 
 def test_run_referee_accepts_raw_string_claim():
     pytest.importorskip("neuroad.probe")

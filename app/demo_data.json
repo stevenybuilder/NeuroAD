@@ -987,35 +987,177 @@
     "note": "Discovered 3 cluster(s) via kmeans (silhouette=0.063). 1 promotable phenotype(s); 2 flagged as likely acquisition/age/sex artifact(s). Recovery vs planted ground truth: ARI=1.0, AMI=1.0.",
     "ari": 1.0,
     "ami": 1.0,
+    "method": "kmeans",
+    "k": 3,
+    "silhouette": 0.063,
+    "trustworthiness": 0.652,
     "clusters": [
       {
         "cluster": 0,
         "n": 150,
         "stability": 0.899,
-        "verdict": "strong candidate",
-        "status": "promotable phenotype",
+        "unstable": false,
         "dominant_phenotype": "tau_hot",
-        "artifact_driver": "scanner/site",
+        "status": "promotable phenotype",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.761,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 90,
+        "verdict": "strong candidate",
+        "promoted": true,
+        "tests": {
+          "age_sex": "passed",
+          "site_scanner": "passed",
+          "brain_age": "passed",
+          "biomarker_anchor": "weakened",
+          "replication": "passed"
+        },
+        "conversion": {
+          "rate": 0.5,
+          "ci": [
+            0.377,
+            0.623
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": 2.241,
+            "ci": [
+              1.913,
+              2.569
+            ]
+          },
+          "gfap": {
+            "d": 1.424,
+            "ci": [
+              1.207,
+              1.641
+            ]
+          }
+        },
+        "artifact": {
+          "flag": false,
+          "driver": "scanner/site",
+          "scanner_site": 0.505,
+          "age_eta2": 0.126,
+          "sex_cramers_v": 0.05
+        },
         "coords_2d": null
       },
       {
         "cluster": 1,
         "n": 150,
         "stability": 0.873,
-        "verdict": "partially robust",
-        "status": "likely artifact (age/atrophy)",
+        "unstable": false,
         "dominant_phenotype": "age_atrophy",
-        "artifact_driver": "age/atrophy",
+        "status": "likely artifact (age/atrophy)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.81,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 65,
+        "verdict": "partially robust",
+        "promoted": false,
+        "tests": {
+          "age_sex": "failed",
+          "site_scanner": "passed",
+          "brain_age": "passed",
+          "biomarker_anchor": "failed",
+          "replication": "passed"
+        },
+        "conversion": {
+          "rate": 0.55,
+          "ci": [
+            0.425,
+            0.669
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": -0.723,
+            "ci": [
+              -1.005,
+              -0.44
+            ]
+          },
+          "gfap": {
+            "d": -0.617,
+            "ci": [
+              -0.817,
+              -0.417
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "age/atrophy",
+          "scanner_site": 0.505,
+          "age_eta2": 0.61,
+          "sex_cramers_v": 0.063
+        },
         "coords_2d": null
       },
       {
         "cluster": 2,
         "n": 150,
         "stability": 0.889,
-        "verdict": "fragile",
-        "status": "likely artifact (scanner/site)",
+        "unstable": false,
         "dominant_phenotype": "scanner_artifact",
-        "artifact_driver": "scanner/site",
+        "status": "likely artifact (scanner/site)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.5,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 0,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "failed",
+          "site_scanner": "failed",
+          "brain_age": "failed",
+          "biomarker_anchor": "failed",
+          "replication": "not_available"
+        },
+        "conversion": {
+          "rate": 0.567,
+          "ci": [
+            0.441,
+            0.684
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": -0.953,
+            "ci": [
+              -1.222,
+              -0.683
+            ]
+          },
+          "gfap": {
+            "d": -0.613,
+            "ci": [
+              -0.813,
+              -0.413
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "scanner/site",
+          "scanner_site": 1.0,
+          "age_eta2": 0.181,
+          "sex_cramers_v": 0.013
+        },
         "coords_2d": null
       }
     ],

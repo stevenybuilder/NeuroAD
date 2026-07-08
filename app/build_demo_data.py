@@ -800,18 +800,51 @@ def _try_engine() -> dict | None:
         from neuroad import discovery
         from neuroad.data import synthetic
         res = discovery.discover_and_referee(synthetic.generate_phenotype_cohort(seed=0))
+        det = res.get("discovery", {}) or {}
+
+        def _cluster_payload(c):
+            g = c.get("gauntlet") if isinstance(c.get("gauntlet"), dict) else {}
+            ch = c.get("characterization", {}) or {}
+            conv = ch.get("conversion", {}) or {}
+            bio = ch.get("biomarker", {}) or {}
+            art = c.get("artifact", {}) or {}
+            return {
+                "cluster": c["cluster"], "n": c["n"], "stability": c["stability"],
+                "unstable": bool(c.get("unstable")),
+                "dominant_phenotype": c.get("dominant_phenotype"),
+                "status": c["status"],
+                # per-cluster referee (the SAME gauntlet, re-run with no labels)
+                "naive_effect": c.get("naive_effect"),
+                "score": g.get("score"), "verdict": g.get("verdict"),
+                "promoted": bool(g.get("promoted")), "tests": g.get("tests"),
+                # characterization (all computed by the engine, not fabricated)
+                "conversion": {"rate": conv.get("rate"), "ci": conv.get("ci"),
+                               "n_mci": conv.get("n_mci")},
+                "biomarker": {
+                    "p_tau217": {"d": (bio.get("p_tau217") or {}).get("d"),
+                                 "ci": (bio.get("p_tau217") or {}).get("ci")},
+                    "gfap": {"d": (bio.get("gfap") or {}).get("d"),
+                             "ci": (bio.get("gfap") or {}).get("ci")},
+                },
+                # artifact adjudication (why a cluster is a phenotype vs. acquisition)
+                "artifact": {
+                    "flag": bool(art.get("flag")), "driver": art.get("driver"),
+                    "scanner_site": art.get("scanner_site"),
+                    "age_eta2": art.get("age_eta2"),
+                    "sex_cramers_v": art.get("sex_cramers_v"),
+                },
+                "coords_2d": None,
+            }
+
         data["discovery"] = {
             "note": res.get("note"), "ari": res.get("ari"), "ami": res.get("ami"),
-            "clusters": [{
-                "cluster": c["cluster"], "n": c["n"], "stability": c["stability"],
-                "verdict": (c["gauntlet"].get("verdict") if isinstance(c.get("gauntlet"), dict) else None),
-                "status": c["status"], "dominant_phenotype": c.get("dominant_phenotype"),
-                "artifact_driver": (c.get("artifact", {}) or {}).get("driver"),
-                "coords_2d": None,
-            } for c in res.get("clusters", [])],
+            # discovery-level quality: unsupervised, so these ARE the trust signals
+            "method": det.get("method"), "k": det.get("k"),
+            "silhouette": det.get("silhouette"),
+            "trustworthiness": det.get("trustworthiness"),
+            "clusters": [_cluster_payload(c) for c in res.get("clusters", [])],
         }
         # 2-D scatter coords + labels for a UI cluster plot (downsampled).
-        det = res.get("discovery", {})
         coords = det.get("coords_2d")
         labels = det.get("labels")
         if coords is not None and labels is not None:

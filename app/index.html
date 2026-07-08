@@ -218,6 +218,51 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .margin-box .mv.pos{color:var(--green)}.margin-box .mv.neg{color:var(--red)}
 .margin-box .mform{font-family:var(--mono);font-size:11px;color:var(--ink2);margin-top:4px}
 
+/* ---- the detective (unsupervised discovery) ---- */
+#detScatter{width:100%;height:220px;background:radial-gradient(120% 120% at 50% 0%,#0e1620,#0a0e13);
+  border:1px solid var(--edge);border-radius:10px}
+.det-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.det-pill{display:inline-flex;align-items:baseline;gap:6px;font-family:var(--mono);font-size:11px;
+  color:var(--ink2);background:#0e1720;border:1px solid var(--edge2);border-radius:7px;padding:5px 10px}
+.det-pill b{color:var(--ink);font-variant-numeric:tabular-nums}
+.det-pill.hero{background:linear-gradient(180deg,#101c2a,#0c1520);border-color:#2a4a63;color:var(--accent)}
+.det-pill.hero b{color:#dff2ff}
+.det-main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:820px){.det-main{grid-template-columns:1fr}}
+.det-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.det-legend .li{display:inline-flex;align-items:center;gap:6px}
+.det-legend .sw{width:10px;height:10px;border-radius:3px}
+.det-story{font-size:12.5px;color:var(--ink2);line-height:1.55}
+.det-story .hl{color:var(--ink)}
+.det-story .tally{display:flex;gap:10px;margin:2px 0 10px}
+.det-story .tb{flex:1;border:1px solid var(--edge);border-radius:9px;padding:9px 11px;background:#0c1219}
+.det-story .tb .n{font-family:var(--mono);font-size:22px;font-weight:750;line-height:1}
+.det-story .tb .l{font-size:10.5px;color:var(--ink3);margin-top:3px;line-height:1.3}
+.det-story .tb.good .n{color:var(--green)} .det-story .tb.bad .n{color:var(--red)}
+.det-clusters{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.dcard{border:1px solid var(--edge2);border-radius:11px;padding:12px;background:#0e151e;position:relative;overflow:hidden}
+.dcard .rail{position:absolute;left:0;top:0;bottom:0;width:3px}
+.dcard.good{border-color:#164a38}.dcard.good .rail{background:var(--green)}
+.dcard.bad{border-color:#4a1620}.dcard.bad .rail{background:var(--red)}
+.dcard .dc-top{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.dcard .dc-dot{width:10px;height:10px;border-radius:3px;flex:none}
+.dcard .dc-name{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink)}
+.dcard .dc-n{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink3)}
+.dcard .dc-status{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;
+  font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:20px;margin:6px 0 10px}
+.dcard.good .dc-status{background:var(--green-d);color:var(--green)}
+.dcard.bad .dc-status{background:var(--red-d);color:var(--red)}
+.dcard .dc-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-size:11.5px;padding:4px 0;border-bottom:1px dashed #16202b}
+.dcard .dc-row:last-child{border-bottom:0}
+.dcard .dc-row .k{color:var(--ink3)}
+.dcard .dc-row .v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
+.dcard .dc-row .v.pos{color:var(--green)}.dcard .dc-row .v.neg{color:var(--red)}
+.dcard .dc-row .v.warn{color:var(--amber)}
+.dcard .dc-why{font-size:11px;color:var(--ink2);line-height:1.45;margin-top:9px;padding-top:8px;border-top:1px solid var(--edge)}
+.dcard .stabar{height:5px;border-radius:3px;background:#0b1118;border:1px solid #17222e;overflow:hidden;width:60px;display:inline-block;vertical-align:middle}
+.dcard .stabar i{display:block;height:100%;background:linear-gradient(90deg,#2b7fb8,var(--accent))}
+
 /* ---- confound leaderboard ---- */
 .lead .row{display:flex;align-items:center;gap:9px;margin:7px 0}
 .lead .row .nm{width:96px;font-family:var(--mono);font-size:11px;color:var(--ink2)}
@@ -266,12 +311,10 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .court .agent{border:1px solid var(--edge);border-radius:9px;padding:10px;background:#0c1219;
   opacity:0;transform:translateY(6px);transition:.45s}
 .court .agent.show{opacity:1;transform:none}
-.court .agent.judge{grid-column:1/-1;border-color:#2a3a4d;background:linear-gradient(180deg,#0e1622,#0b1017)}
 .court .agent .role{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;
   font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px}
 .court .agent.pros .role{color:var(--red)}
 .court .agent.def .role{color:var(--green)}
-.court .agent.judge .role{color:var(--accent)}
 .court .agent .txt{font-size:12px;color:var(--ink2);line-height:1.5}
 .court .agent .cbadge{font-family:var(--mono);font-size:10px;color:var(--mute);border:1px solid var(--edge2);
   border-radius:4px;padding:1px 5px;margin-left:auto}
@@ -436,8 +479,8 @@ canvas#scatter{width:100%;height:300px;display:block;background:
     </div>
 
     <div class="panel">
-      <div class="hd"><span class="ic">§</span><h3>Courtroom — Claude adjudication</h3>
-        <span class="tag">prosecution · defense · judge</span></div>
+      <div class="hd"><span class="ic">§</span><h3>Courtroom — Claude argues both sides</h3>
+        <span class="tag">prosecution vs defense · the verdict meter rules</span></div>
       <div class="bd"><div class="court" id="court"></div></div>
     </div>
   </div>
@@ -487,7 +530,7 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   </div>
 </div>
 
-<div class="extras" id="extras" style="display:none;grid-template-columns:1fr 1fr;gap:14px;max-width:1500px;margin:20px auto 88px;padding:0 20px">
+<div class="extras" id="extras" style="display:none;grid-template-columns:1fr;gap:16px;max-width:1500px;margin:20px auto 88px;padding:0 20px">
   <div class="panel" id="realEvPanel">
     <div class="hd"><span class="ic">◉</span><h3>Real-data evidence — the batch effect is real</h3>
       <span class="tag" id="realEvTag">OpenBHB</span></div>
@@ -496,9 +539,17 @@ canvas#scatter{width:100%;height:300px;display:block;background:
   <div class="panel" id="detectivePanel">
     <div class="hd"><span class="ic">❖</span><h3>The Detective — unsupervised phenotype discovery</h3>
       <span class="tag" id="detTag"></span></div>
-    <div class="bd"><svg id="detScatter" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"
-      style="width:100%;height:150px;background:#0c1219;border:1px solid var(--edge);border-radius:9px"></svg>
-      <div id="detBody" style="margin-top:10px"></div></div>
+    <div class="bd">
+      <div class="det-pills" id="detPills"></div>
+      <div class="det-main">
+        <div class="det-plot">
+          <svg id="detScatter" viewBox="0 0 300 150" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="det-legend" id="detLegend"></div>
+        </div>
+        <div class="det-story" id="detStory"></div>
+      </div>
+      <div class="det-clusters" id="detClusters"></div>
+    </div>
   </div>
 </div>
 
@@ -1515,35 +1566,177 @@ canvas#scatter{width:100%;height:300px;display:block;background:
     "note": "Discovered 3 cluster(s) via kmeans (silhouette=0.063). 1 promotable phenotype(s); 2 flagged as likely acquisition/age/sex artifact(s). Recovery vs planted ground truth: ARI=1.0, AMI=1.0.",
     "ari": 1.0,
     "ami": 1.0,
+    "method": "kmeans",
+    "k": 3,
+    "silhouette": 0.063,
+    "trustworthiness": 0.652,
     "clusters": [
       {
         "cluster": 0,
         "n": 150,
         "stability": 0.899,
-        "verdict": "strong candidate",
-        "status": "promotable phenotype",
+        "unstable": false,
         "dominant_phenotype": "tau_hot",
-        "artifact_driver": "scanner/site",
+        "status": "promotable phenotype",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.761,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 90,
+        "verdict": "strong candidate",
+        "promoted": true,
+        "tests": {
+          "age_sex": "passed",
+          "site_scanner": "passed",
+          "brain_age": "passed",
+          "biomarker_anchor": "weakened",
+          "replication": "passed"
+        },
+        "conversion": {
+          "rate": 0.5,
+          "ci": [
+            0.377,
+            0.623
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": 2.241,
+            "ci": [
+              1.913,
+              2.569
+            ]
+          },
+          "gfap": {
+            "d": 1.424,
+            "ci": [
+              1.207,
+              1.641
+            ]
+          }
+        },
+        "artifact": {
+          "flag": false,
+          "driver": "scanner/site",
+          "scanner_site": 0.505,
+          "age_eta2": 0.126,
+          "sex_cramers_v": 0.05
+        },
         "coords_2d": null
       },
       {
         "cluster": 1,
         "n": 150,
         "stability": 0.873,
-        "verdict": "partially robust",
-        "status": "likely artifact (age/atrophy)",
+        "unstable": false,
         "dominant_phenotype": "age_atrophy",
-        "artifact_driver": "age/atrophy",
+        "status": "likely artifact (age/atrophy)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.81,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 65,
+        "verdict": "partially robust",
+        "promoted": false,
+        "tests": {
+          "age_sex": "failed",
+          "site_scanner": "passed",
+          "brain_age": "passed",
+          "biomarker_anchor": "failed",
+          "replication": "passed"
+        },
+        "conversion": {
+          "rate": 0.55,
+          "ci": [
+            0.425,
+            0.669
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": -0.723,
+            "ci": [
+              -1.005,
+              -0.44
+            ]
+          },
+          "gfap": {
+            "d": -0.617,
+            "ci": [
+              -0.817,
+              -0.417
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "age/atrophy",
+          "scanner_site": 0.505,
+          "age_eta2": 0.61,
+          "sex_cramers_v": 0.063
+        },
         "coords_2d": null
       },
       {
         "cluster": 2,
         "n": 150,
         "stability": 0.889,
-        "verdict": "fragile",
-        "status": "likely artifact (scanner/site)",
+        "unstable": false,
         "dominant_phenotype": "scanner_artifact",
-        "artifact_driver": "scanner/site",
+        "status": "likely artifact (scanner/site)",
+        "naive_effect": {
+          "metric": "AUC",
+          "value": 0.5,
+          "target": "conversion",
+          "n": 60
+        },
+        "score": 0,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "failed",
+          "site_scanner": "failed",
+          "brain_age": "failed",
+          "biomarker_anchor": "failed",
+          "replication": "not_available"
+        },
+        "conversion": {
+          "rate": 0.567,
+          "ci": [
+            0.441,
+            0.684
+          ],
+          "n_mci": 60
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": -0.953,
+            "ci": [
+              -1.222,
+              -0.683
+            ]
+          },
+          "gfap": {
+            "d": -0.613,
+            "ci": [
+              -0.813,
+              -0.413
+            ]
+          }
+        },
+        "artifact": {
+          "flag": true,
+          "driver": "scanner/site",
+          "scanner_site": 1.0,
+          "age_eta2": 0.181,
+          "sex_cramers_v": 0.013
+        },
         "coords_2d": null
       }
     ],
@@ -2772,7 +2965,7 @@ function effDomain(t){
 }
 
 /* ---------- state ---------- */
-const S = {sub:"oasis", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
+const S = {sub:"synthetic", kase:"SURVIVOR", color:"outcome", timers:[], phase:"idle"};
 
 function curSub(){return DATA.substrates[S.sub];}
 function curCase(){return curSub().cases[S.kase];}
@@ -3052,9 +3245,7 @@ function renderCourt(show){
     <div class="agent pros ${show?'show':''}"><div class="role">⚖ Prosecution<span class="cbadge">argues: artifact</span></div>
       <div class="txt">${ct.prosecution||""}</div></div>
     <div class="agent def ${show?'show':''}"><div class="role">🛡 Defense<span class="cbadge">argues: real biology</span></div>
-      <div class="txt">${ct.defense||""}</div></div>
-    <div class="agent judge ${show?'show':''}"><div class="role">§ Judge — verdict &amp; reasoning<span class="cbadge">consequential</span></div>
-      <div class="txt">${ct.judge_reasoning||""}</div></div>`;
+      <div class="txt">${ct.defense||""}</div></div>`;
 }
 
 /* ---------- render: confound leaderboard ---------- */
@@ -3215,33 +3406,113 @@ function renderExtras(){
     }
   }
   if(dc){
-    document.getElementById("detTag").textContent = dc.ari!=null? ("recovery ARI "+dc.ari) : "";
-    // colorblind-safe cluster palette (blue / orange / violet / teal / vermilion — no red-green pair)
-    const cols=["#4ea1ff","#f5a524","#c77dff","#30a46c","#e5484d"];
-    const colc=i=>cols[((i%cols.length)+cols.length)%cols.length];
-    const pts=dc.points||[]; let svg="";
-    if(pts.length){
-      const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
-      const minx=Math.min.apply(0,xs),maxx=Math.max.apply(0,xs),miny=Math.min.apply(0,ys),maxy=Math.max.apply(0,ys);
-      const sx=v=>10+280*((v-minx)/((maxx-minx)||1)), sy=v=>140-130*((v-miny)/((maxy-miny)||1));
-      svg=pts.map(p=>'<circle cx="'+sx(p.x).toFixed(1)+'" cy="'+sy(p.y).toFixed(1)+'" r="2.4" fill="'+colc(p.c)+'" opacity="0.82"/>').join("");
-    }
-    document.getElementById("detScatter").innerHTML=svg;
-    const detLegend=(dc.clusters||[]).map(cl=>
-      '<span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--ink2)">'+
-      '<span style="width:9px;height:9px;border-radius:3px;background:'+colc(cl.cluster)+'"></span>'+
-      (cl.dominant_phenotype||("cluster "+cl.cluster))+'</span>').join("");
-    const rows=(dc.clusters||[]).map(c=>{
-      const art=c.status && c.status.indexOf("artifact")>=0; const col=art?"var(--red)":"var(--green)";
-      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--edge)">'+
-        '<span><b style="color:'+col+'">'+(art?"✕":"✓")+'</b> cluster '+c.cluster+
-        ' <span style="color:var(--ink3)">('+(c.dominant_phenotype||"")+', n='+c.n+')</span></span>'+
-        '<span style="font-family:var(--mono);font-size:12px;color:var(--ink2)">'+(c.verdict||"")+' &middot; '+c.status+'</span></div>';
-    }).join("");
-    document.getElementById("detBody").innerHTML=
-      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">'+detLegend+'</div>'+
-      '<div style="color:var(--ink2);font-size:12px;margin-bottom:6px">'+(dc.note||"")+'</div>'+rows;
+    renderDetective(dc);
   }
+}
+
+/* ---------- render: The Detective (unsupervised discovery, first-class) ---------- */
+// colorblind-safe cluster palette (blue / orange / violet / teal / vermilion — no red-green pair)
+const DET_COLS=["#4ea1ff","#f5a524","#c77dff","#30a46c","#e5484d"];
+function detCol(i){return DET_COLS[((i%DET_COLS.length)+DET_COLS.length)%DET_COLS.length];}
+function pctStr(x){return x==null?"—":Math.round(x*100)+"%";}
+function dStr(x){return x==null?"—":(x>=0?"+":"")+Number(x).toFixed(2);}
+function isArtifact(c){return (c.status||"").indexOf("artifact")>=0;}
+
+function detWhy(c){
+  if(!isArtifact(c)){
+    const d=(c.biomarker&&c.biomarker.p_tau217&&c.biomarker.p_tau217.d);
+    const anchor = d!=null ? `p-tau217 d=${dStr(d)} anchors it to molecular pathology` : "clears the biomarker gate";
+    return `Survives its <b class="hl">own</b> gauntlet (score ${c.score??"—"}) and ${anchor} — a real subtype, not acquisition. Discovered with <b class="hl">no labels</b>.`;
+  }
+  const drv=c.artifact&&c.artifact.driver, a=c.artifact||{};
+  if(drv==="scanner/site") return `Membership is <b class="hl">${pctStr(a.scanner_site)}</b> explained by the acquisition scanner/site (Cramér's V ${Number(a.scanner_site||0).toFixed(2)}) — this subgroup is the <b class="hl">machine</b>, not biology.`;
+  if(drv==="age/atrophy") return `Membership tracks <b class="hl">age</b> (η²=${Number(a.age_eta2||0).toFixed(2)}) — generic aging / atrophy, not an AD-specific phenotype.`;
+  return `Membership best explained by ${drv} — a demographic confound, not a phenotype. It also fails its own gauntlet.`;
+}
+
+function detCard(c){
+  const art=isArtifact(c), cls=art?"bad":"good", col=detCol(c.cluster);
+  const stab=c.stability;
+  const stabPct=stab==null?0:Math.round(Math.min(1,stab)*100);
+  const stabWarn=c.unstable?' <span class="v warn" style="font-size:10px">unstable</span>':'';
+  const conv=c.conversion||{}, ci=conv.ci||[null,null];
+  const convStr = conv.rate==null?"—":`${pctStr(conv.rate)} <span class="dim3" style="font-size:10px">[${pctStr(ci[0])}–${pctStr(ci[1])}], n=${conv.n_mci??0}</span>`;
+  const pt=(c.biomarker&&c.biomarker.p_tau217)||{}, gf=(c.biomarker&&c.biomarker.gfap)||{};
+  const ptCls=pt.d==null?"":(pt.d>0?"pos":"neg"), gfCls=gf.d==null?"":(gf.d>0?"pos":"neg");
+  const drv=c.artifact&&c.artifact.driver;
+  const assocRow=(label,key,val,fmt)=>{
+    // "driver" only means something on an artifact — it's what explains the cluster
+    // instead of biology. On a promotable phenotype the associations are shown plainly.
+    const dominant = art && drv===key;
+    return `<div class="dc-row"><span class="k">${label}${dominant?' ◂ driver':''}</span><span class="v ${dominant?"neg":""}">${fmt(val)}</span></div>`;
+  };
+  return `<div class="dcard ${cls}"><div class="rail"></div>
+    <div class="dc-top"><span class="dc-dot" style="background:${col}"></span>
+      <span class="dc-name">${c.dominant_phenotype||("cluster "+c.cluster)}</span>
+      <span class="dc-n">n=${c.n}</span></div>
+    <span class="dc-status">${art?"✕ likely artifact":"✓ promotable phenotype"}</span>
+    <div class="dc-row"><span class="k">per-cluster verdict</span><span class="v">${c.verdict||"—"} · ${c.score??"—"}</span></div>
+    <div class="dc-row"><span class="k">stability (Jaccard)</span><span class="v"><span class="stabar"><i style="width:${stabPct}%"></i></span> ${stab==null?"—":Number(stab).toFixed(2)}${stabWarn}</span></div>
+    <div class="dc-row"><span class="k">MCI→AD conversion</span><span class="v">${convStr}</span></div>
+    <div class="dc-row"><span class="k">p-tau217 (Cohen's d)</span><span class="v ${ptCls}">${dStr(pt.d)}</span></div>
+    <div class="dc-row"><span class="k">GFAP (Cohen's d)</span><span class="v ${gfCls}">${dStr(gf.d)}</span></div>
+    ${assocRow("scanner/site (V)","scanner/site",c.artifact&&c.artifact.scanner_site,v=>v==null?"—":Number(v).toFixed(2))}
+    ${assocRow("age (η²)","age/atrophy",c.artifact&&c.artifact.age_eta2,v=>v==null?"—":Number(v).toFixed(2))}
+    ${assocRow("sex (V)","sex",c.artifact&&c.artifact.sex_cramers_v,v=>v==null?"—":Number(v).toFixed(2))}
+    <div class="dc-why">${detWhy(c)}</div></div>`;
+}
+
+function renderDetective(dc){
+  const clusters=dc.clusters||[];
+  document.getElementById("detTag").textContent="no labels used";
+
+  // pills — the unsupervised quality signals
+  const pills=[];
+  pills.push(`<span class="det-pill hero">🔍 <b>NO LABELS</b> used</span>`);
+  if(dc.method) pills.push(`<span class="det-pill">method <b>${dc.method}</b></span>`);
+  if(dc.k!=null) pills.push(`<span class="det-pill">clusters <b>k=${dc.k}</b></span>`);
+  if(dc.silhouette!=null) pills.push(`<span class="det-pill">silhouette <b>${Number(dc.silhouette).toFixed(2)}</b></span>`);
+  if(dc.trustworthiness!=null) pills.push(`<span class="det-pill">2-D trust <b>${Number(dc.trustworthiness).toFixed(2)}</b></span>`);
+  if(dc.ari!=null) pills.push(`<span class="det-pill">recovery <b>ARI ${dc.ari}</b>${dc.ami!=null?` · AMI ${dc.ami}`:""}</span>`);
+  document.getElementById("detPills").innerHTML=pills.join("");
+
+  // scatter with per-cluster 1-sigma ellipse + centroid (deterministic; from the emitted points)
+  const pts=dc.points||[]; let svg="";
+  if(pts.length){
+    const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+    const minx=Math.min.apply(0,xs),maxx=Math.max.apply(0,xs),miny=Math.min.apply(0,ys),maxy=Math.max.apply(0,ys);
+    const sx=v=>16+268*((v-minx)/((maxx-minx)||1)), sy=v=>134-118*((v-miny)/((maxy-miny)||1));
+    const byC={};
+    pts.forEach(p=>{(byC[p.c]=byC[p.c]||[]).push([sx(p.x),sy(p.y)]);});
+    let ell="";
+    Object.keys(byC).forEach(cid=>{
+      const P=byC[cid], col=detCol(+cid);
+      const mx=P.reduce((s,q)=>s+q[0],0)/P.length, my=P.reduce((s,q)=>s+q[1],0)/P.length;
+      const sdx=Math.sqrt(P.reduce((s,q)=>s+(q[0]-mx)**2,0)/P.length)||6;
+      const sdy=Math.sqrt(P.reduce((s,q)=>s+(q[1]-my)**2,0)/P.length)||6;
+      ell+=`<ellipse cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" rx="${(1.7*sdx+6).toFixed(1)}" ry="${(1.7*sdy+6).toFixed(1)}" fill="${col}" opacity="0.12"/>`;
+      ell+=`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="4.5" fill="${col}" stroke="#0b0f14" stroke-width="1.5"/>`;
+    });
+    const dots=pts.map(p=>`<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="2.3" fill="${detCol(p.c)}" opacity="0.8"/>`).join("");
+    svg=ell+dots+`<text x="284" y="146" text-anchor="end" font-family="monospace" font-size="8" fill="#6a7d92">frozen-embedding space · PCA 2-D</text>`;
+  }
+  document.getElementById("detScatter").innerHTML=svg;
+
+  document.getElementById("detLegend").innerHTML=clusters.map(c=>
+    `<span class="li"><span class="sw" style="background:${detCol(c.cluster)}"></span>${c.dominant_phenotype||("cluster "+c.cluster)}</span>`).join("");
+
+  // story: headline tally + note
+  const nProm=clusters.filter(c=>!isArtifact(c)).length;
+  const nArt=clusters.filter(c=>isArtifact(c)).length;
+  document.getElementById("detStory").innerHTML=
+    `<div class="tally">
+       <div class="tb good"><div class="n">${nProm}</div><div class="l">promotable phenotype${nProm===1?"":"s"}</div></div>
+       <div class="tb bad"><div class="n">${nArt}</div><div class="l">caught as artifact${nArt===1?"":"s"}</div></div>
+     </div>
+     <div>The Detective clusters the <b class="hl">frozen embeddings with no diagnosis labels</b>, then runs the <b class="hl">same referee gauntlet on each subgroup</b>. Only a cluster that survives its own leakage / brain-age / anchor challenges — and carries a molecular signal — is promoted. Everything else is named as acquisition, aging, or demographic structure the encoder happened to learn.</div>
+     <div style="margin-top:8px;color:var(--ink3);font-size:11.5px">${dc.note||""}</div>`;
+
+  document.getElementById("detClusters").innerHTML=clusters.map(detCard).join("");
 }
 
 /* ---------- render everything (static state) ---------- */

@@ -85,6 +85,15 @@ def _write_reports(name: str, card) -> list[Path]:
     adjudication = getattr(card, "adjudication", None)
     if adjudication:
         payload["adjudication"] = adjudication
+    # Structured reviewer critique + biology blocks (set by pipeline.run_referee
+    # as read-only side artifacts). Without these the reviewer's critique survives
+    # only flattened into caveats and the biology dict is dropped entirely.
+    reviewer = getattr(card, "reviewer", None)
+    if reviewer:
+        payload["reviewer"] = reviewer
+    biology = getattr(card, "biology", None)
+    if biology:
+        payload["biology"] = biology
     written: list[Path] = []
     slug = name.replace(":", "_").lower()
     jp = _REPORTS / f"{slug}.json"

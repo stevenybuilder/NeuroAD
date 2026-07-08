@@ -88,16 +88,23 @@ well on a 3-minute video.
 
 **Reposition (novelty is now published prior art):** cite arXiv:2604.14441 /
 2606.09189 / PathoROB; own the *tool + closed loop + biomarker gate + Claude
-adjudicator*. Never say "we discovered leakage." Never say "co-scientist."
+adversary*. Never say "we discovered leakage." Never say "co-scientist."
 Import citations/positioning from `src/neuroad/calibration.py`.
 
-**Claude as ADJUDICATOR (M3, the Claude-Use score-mover):**
+**Claude as ADVERSARY (M3, the Claude-Use score-mover):**
 - `courtroom.py`: Prosecution subagent (argue artifact) + Defense subagent
-  (argue real biology) + Judge subagent (render verdict + reasoning). Each makes
-  a *consequential* decision that can change the verdict. Live API when
-  `ANTHROPIC_API_KEY` set; deterministic template fallback otherwise.
+  (argue real biology) — Claude argues *both sides* of the artifact-vs-biology
+  question. The verdict itself is deterministic arithmetic (`robustness_score`),
+  so the courtroom frames the tension while the verdict meter rules — no separate
+  judge. Live API when `ANTHROPIC_API_KEY` set; deterministic template fallback
+  otherwise.
 - `reviewer.py` argues AGAINST the final verdict (proxy brain-age control,
   p-tau217 missingness, "partially robust ≠ robust").
+
+**Removed: the Judge.** An earlier draft had a Judge subagent "render the verdict."
+It was inconsequential — the verdict is fixed arithmetic and the Judge only
+restated it — so it was dropped from the product and spec. Effort re-pointed to
+the self-supervised discovery + clustering track (the Detective) below.
 
 **Science/trust (M1):**
 - Headline metric = subject-disjoint **leakage margin = outcome_AUC − scanner_AUC**.

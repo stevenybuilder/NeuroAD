@@ -183,4 +183,30 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     # any case — including refused ones — without re-running the gauntlet.
     card.tests_evidence = tests
 
+    # 8. STAR trust features — double dissociation + confound leaderboard.
+    #    Pure pandas/numpy (leakage.py), no API; guarded so the deterministic
+    #    offline referee path never breaks. These populate card.to_dict() and the
+    #    written reports, so all four headline trust features ship (not demo-only).
+    _attach_leakage_features(card, df, claim)
+
     return card
+
+
+def _attach_leakage_features(card: ClaimCard, df: pd.DataFrame,
+                             claim: Claim) -> None:
+    """Compute double_dissociation + confound_leaderboard for the claim's target
+    and attach them to the card. Failure degrades to the empty defaults."""
+    from neuroad import leakage
+    target = claim.target if claim.target in contract.LABEL_TARGETS else "conversion"
+    try:
+        dd = leakage.double_dissociation(df, target)
+        if isinstance(dd, dict):
+            card.double_dissociation = dd
+    except Exception:
+        pass
+    try:
+        board = leakage.confound_leaderboard(df, target)
+        if isinstance(board, list):
+            card.confound_leaderboard = board
+    except Exception:
+        pass

@@ -238,6 +238,10 @@ class ClaimCard:
     falsification: list[str] = field(default_factory=list)
     caveats: list[str] = field(default_factory=list)
     evidence_ledger: list[dict] = field(default_factory=list)
+    #: STAR trust features computed in the referee path (leakage.py). Empty until
+    #: run_referee wires them in; both are pure pandas/numpy (no API).
+    double_dissociation: dict = field(default_factory=dict)
+    confound_leaderboard: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -259,6 +263,8 @@ class ClaimCard:
             "falsification": self.falsification,
             "caveats": self.caveats,
             "evidence_ledger": self.evidence_ledger,
+            "double_dissociation": self.double_dissociation,
+            "confound_leaderboard": self.confound_leaderboard,
         }
 
 
