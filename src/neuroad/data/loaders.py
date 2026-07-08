@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from neuroad.data import synthetic, real, openbhb
+from neuroad.data import synthetic, real, openbhb, openbhb_jepa
 
 
 def load(name: str, *, seed: int = 0) -> pd.DataFrame:
@@ -32,11 +32,13 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
 
     if low == "openbhb":
         return openbhb.load_openbhb()
+    if low in ("openbhb:neurojepa", "openbhb:jepa"):
+        return openbhb_jepa.load_openbhb_neurojepa()
 
     raise ValueError(
         f"unknown dataset {name!r}; try "
         "'synthetic:SURVIVOR', 'synthetic:KILL', 'oasis', 'oasis:oasis1', "
-        "'oasis:oasis2', 'openbhb'"
+        "'oasis:oasis2', 'openbhb', 'openbhb:neurojepa'"
     )
 
 
@@ -48,4 +50,5 @@ AVAILABLE = [
     "oasis:oasis1",
     "oasis:oasis2",
     "openbhb",
+    "openbhb:neurojepa",
 ]

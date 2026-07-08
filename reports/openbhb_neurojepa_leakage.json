@@ -1,0 +1,32 @@
+{
+  "dataset": "openbhb_neurojepa",
+  "substrate": "frozen Neuro-JEPA (ViT-B MoE) 768-d embeddings of OpenBHB quasi-raw MNI152 T1w volumes",
+  "n_subjects": 96,
+  "n_sites": 6,
+  "scanners": [
+    "1.5T",
+    "3T"
+  ],
+  "healthy_controls_only": true,
+  "scanner_leakage": {
+    "raw_768d_referee_machinery_auc": 0.9977,
+    "site_768d_auc": 0.9616,
+    "pca10_honest_auc": [
+      0.931,
+      0.073
+    ],
+    "pca20_honest_auc": [
+      0.977,
+      0.022
+    ],
+    "binary_scanner_classes": [
+      "3T",
+      "1.5T"
+    ],
+    "n_binary": 96
+  },
+  "interpretation": "The frozen Neuro-JEPA representation ITSELF predicts scanner field strength on real healthy multi-site brains with no disease signal. Even reduced to 10 PCA components (no p>>n overfitting), AUC stays ~0.93 \u2014 the batch effect the referee gates against, measured on the foundation model's own embeddings.",
+  "honesty_note": "Raw 768-d AUC (~0.998) is inflated by p>>n (768 features, 96 subjects); the PCA-reduced numbers are the defensible estimate. Reported both.",
+  "compliance": "Frozen inference only (no fine-tuning; not a derivative of the CC-BY-NC-ND weights). Weights never stored in repo; embedding table git-ignored, not redistributed.",
+  "provenance": "Neuro-JEPA NYUMedML/Neuro-JEPA (gated, CC-BY-NC-ND) over benoit-dufumier/openBHB quasi-raw MNI152 (Apache-2.0); metadata from OpenBHB participants.tsv."
+}

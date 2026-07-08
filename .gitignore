@@ -13,3 +13,24 @@ reports/*.pdf
 *.egg-info/
 build/
 dist/
+
+# --- NeuroJEPA compliance: never commit weights, volumes, or raw embedding dumps ---
+# Weights are gated CC-BY-NC-ND (non-derivative); keep them out of git entirely.
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.nii
+*.nii.gz
+*.mgz
+# Derived NeuroJEPA embedding tables: keep LOCAL only. Redistributing a large
+# table of embeddings could be argued a derivative of the CC-BY-NC-ND weights.
+# Result numbers (AUCs) in reports/ are fine to commit; the raw vectors are not.
+*embeddings*.csv
+*_emb.csv
+*.npy
+*.nii
+*.nii.gz
+.env
+.env.*
+!.env.example
