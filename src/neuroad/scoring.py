@@ -65,20 +65,48 @@ def build_claim_card(claim: Claim, naive_effect: dict, tests: list[TestEvidence]
     verdict = verdict_for(score)
     promoted = is_promoted(verdict)
 
-    # HARD GATE: no biomarker anchor -> cannot be promoted to biology.
+    # HARD GATE: a promoted finding must be CORROBORATED by an independent line
+    # of evidence, not just score high. Two accepted corroboration paths:
+    #   (1) MOLECULAR (strongest): a passing plasma p-tau217/GFAP anchor. Requires
+    #       gated cohorts (no open dataset pairs MRI with plasma markers).
+    #   (2) REPLICATION (open-data): when no molecular marker exists (anchor NA),
+    #       a PASSED held-out cross-cohort replication corroborates the finding on
+    #       real, open data. This is weaker than a molecular anchor but is genuine
+    #       independent evidence — not synthetic, not gated. CRUCIAL GUARD: it only
+    #       counts if the finding also PASSED the scanner/site leakage test — a
+    #       scanner artifact "replicates" too (the confound is in both cohorts), so
+    #       replication corroborates only a signal that is not a batch artifact.
+    # A FAILED molecular anchor is a real refutation and always blocks promotion.
     anchor = results.get("biomarker_anchor", TestResult.NA)
-    if anchor in (TestResult.FAILED, TestResult.NA):
+    replication = results.get("replication", TestResult.NA)
+    leakage_ok = results.get("site_scanner") == TestResult.PASSED
+    # Molecular corroboration = a usable plasma anchor (PASSED or WEAKENED, i.e.
+    # anything that isn't a hard FAILED or an unavailable NA) — matches the
+    # original hard gate.
+    molecular_ok = anchor not in (TestResult.FAILED, TestResult.NA)
+    replication_ok = (anchor == TestResult.NA
+                      and replication == TestResult.PASSED
+                      and leakage_ok)
+    corroboration = ("molecular" if molecular_ok
+                     else "replication" if replication_ok else None)
+    if not (molecular_ok or replication_ok):
         promoted = False
 
     caveats: list[str] = []
-    if anchor == TestResult.NA:
-        caveats.append(
-            "Biomarker anchor unavailable (no plasma p-tau217/GFAP coverage): "
-            "claim cannot be promoted until molecularly anchored.")
-    elif anchor == TestResult.FAILED:
+    if anchor == TestResult.FAILED:
         caveats.append(
             "Biomarker anchor failed: no molecular correlate found on the "
-            "complete subset — treat as unanchored.")
+            "complete subset — treat as unanchored (blocks promotion).")
+    elif corroboration == "replication":
+        caveats.append(
+            "Corroborated by REAL cross-cohort replication (held-out cohort), not "
+            "a molecular marker: no open dataset pairs MRI with plasma p-tau217/"
+            "GFAP. Replication is genuine independent evidence but weaker than a "
+            "molecular anchor — a plasma-anchored confirmation needs gated data.")
+    elif anchor == TestResult.NA and not replication_ok:
+        caveats.append(
+            "Not corroborated: no molecular anchor (no open plasma data) and no "
+            "passing cross-cohort replication — cannot be promoted.")
     n_na = sum(1 for r in results.values() if r == TestResult.NA)
     if n_na:
         caveats.append(
