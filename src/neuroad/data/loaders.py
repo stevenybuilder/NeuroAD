@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from neuroad.data import synthetic, real, openbhb, openbhb_jepa
+from neuroad.data import synthetic, real, openbhb, openbhb_jepa, oasis_jepa
 
 
 def load(name: str, *, seed: int = 0) -> pd.DataFrame:
@@ -24,6 +24,8 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
         preset = key.split(":", 1)[1]
         return synthetic.generate_cohort(preset, seed=seed)
 
+    if low in ("oasis:neurojepa", "oasis:jepa"):
+        return oasis_jepa.load_oasis_neurojepa()
     if low == "oasis":
         return real.load_oasis("both")
     if low.startswith("oasis:"):
@@ -51,4 +53,5 @@ AVAILABLE = [
     "oasis:oasis2",
     "openbhb",
     "openbhb:neurojepa",
+    "oasis:neurojepa",
 ]

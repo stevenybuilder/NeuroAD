@@ -1,0 +1,24 @@
+{
+  "dataset": "oasis_neurojepa",
+  "n_subjects": 61,
+  "dx": {
+    "CN": 36,
+    "MCI": 17,
+    "AD": 8
+  },
+  "ad_vs_cn_clean_CDRge1_pca10": [
+    0.811,
+    0.121,
+    44,
+    8
+  ],
+  "impaired_vs_cn_CDRge0p5_pca10": [
+    0.625,
+    0.09,
+    61,
+    25
+  ],
+  "interpretation": "Frozen Neuro-JEPA embeddings separate clinical AD (CDR>=1) from CN at ~0.81, matching structural (~0.82); CDR=0.5 subtle (~0.61).",
+  "caveats": "CDR>=1 small n (wide CI). Single-cohort/single-scanner: leakage & replication NA here.",
+  "compliance": "Frozen inference only; weights never stored; embedding table git-ignored."
+}

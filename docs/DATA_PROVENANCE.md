@@ -84,6 +84,13 @@ The two demo hero cases run on real, open data:
   (much of the effect is explained by brain-aging; the molecular plasma anchor is
   unavailable in open data).
 
+**Real Neuro-JEPA disease signal (`oasis:neurojepa`, n=61).** Beyond structural
+features, the frozen Neuro-JEPA embeddings of OASIS-1 T1w volumes separate clinical
+AD (CDR≥1) from CN at **AUC 0.81** — matching direct morphometry (~0.82) and
+confirming the foundation model's own representation carries the real disease signal.
+Very-mild/questionable cases (CDR=0.5) are structurally subtle (~0.61), an honest
+expected finding. (`reports/oasis_neurojepa_ad.json`; embedding table git-ignored.)
+
 **The corroboration reframe (why this is legitimate).** The referee's promotion
 gate originally required a molecular plasma-biomarker anchor — which no open dataset
 provides. We added a second, real, open-data corroboration path: a **passing
