@@ -1,0 +1,37 @@
+[project]
+name = "neuroad-referee"
+version = "0.1.0"
+description = "An Alzheimer's structural-MRI imaging referee: finds a candidate signal, stress-tests it to throw out artifacts, anchors survivors to a fluid biomarker, and names the likely mechanism and next experiment."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "NeuroAD Referee team" }]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.1",
+    "scikit-learn>=1.4",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+    "matplotlib>=3.8",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+claude = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+neuroad = "neuroad.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

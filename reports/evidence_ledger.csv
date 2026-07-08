@@ -1,0 +1,6 @@
+test,result,effect,effect_label,detail
+age_sex,passed,0.682,"outcome AUC after covariates","effect retained 86% after age/sex adjustment (AUC 0.71 -> 0.68)"
+site_scanner,weakened,0.712,"outcome AUC, scanner-scrubbed","outcome only narrowly exceeds scanner (margin +0.04)"
+brain_age,passed,0.692,"outcome AUC, brain-age regressed","brain-age R2=0.78, MAE=2.9yr; effect retained 91% after brain-age-gap control"
+biomarker_anchor,passed,0.904,"anchor strength |r|","p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77)"
+replication,passed,0.762,"held-out cohort AUC","held-out cohort AUC=0.76 (train 0.78); n_test=62"

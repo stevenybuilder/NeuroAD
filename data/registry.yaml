@@ -1,0 +1,194 @@
+# NeuroAD Referee — dataset registry
+#
+# Access tiering for every structural-MRI cohort the referee can be pointed at.
+# The contract (src/neuroad/contract.py) is the only interface, so any of these
+# becomes a feeder by mapping its structural-derived features to emb_0..emb_k.
+#
+# access tiers:
+#   download-now         genuinely open, no login (VENDORED into this repo)
+#   registration         free account / registration + click-through DUA
+#   gated-application    formal data-use agreement or credentialed application
+#
+# 'notation' is the honest one-line status shown in the UI / docs.
+
+contract_version: "1.0.0"
+
+datasets:
+
+  - name: OASIS-1
+    long_name: "Open Access Series of Imaging Studies, cross-sectional"
+    access: download-now
+    vendored: true
+    local_path: data/real/oasis_cross-sectional.csv
+    direct_url: "https://sites.wustl.edu/oasisbrains/"
+    subjects: 436
+    labeled_subjects: 235
+    age_range: [18, 96]
+    tabular_features: [nWBV, eTIV, ASF]
+    labels: [CDR, MMSE]
+    modality: structural-MRI
+    scanners: single-scanner (Siemens 1.5T)
+    unlocks: brain_age control cohort (wide age) + cohort/batch-leakage reframe
+    notation: >
+      REAL, vendored, no login. Wide age range (18-96) -> the brain-age control
+      cohort. Single-scanner, so its leakage star is the cohort/batch reframe.
+
+  - name: OASIS-2
+    long_name: "Open Access Series of Imaging Studies, longitudinal"
+    access: download-now
+    vendored: true
+    local_path: data/real/oasis_longitudinal.csv
+    direct_url: "https://sites.wustl.edu/oasisbrains/"
+    subjects: 150
+    sessions: 373
+    tabular_features: [nWBV, eTIV, ASF]
+    labels: [CDR, MMSE, Group]
+    group_values: [Nondemented, Demented, Converted]
+    converters: 37
+    modality: structural-MRI
+    scanners: single-scanner (Siemens 1.5T)
+    unlocks: real MCI->AD conversion label + longitudinal replication split
+    notation: >
+      REAL, vendored, no login. Real converters (Group==Converted) -> genuine
+      MCI->AD conversion label + longitudinal replication split.
+
+  - name: OASIS-3
+    long_name: "OASIS-3 multimodal (MR + PET) longitudinal"
+    access: registration
+    vendored: false
+    stub_path: data/real/_stubs/oasis3_stub.csv
+    direct_url: "https://central.xnat.org/ (project OASIS3)"
+    subjects: 1378
+    tabular_features: [FreeSurfer volumes, cortical thickness, PET SUVR]
+    labels: [CDR, clinical diagnosis]
+    modality: structural-MRI + PET
+    scanners: multi-scanner (Siemens 1.5T Vision, 3T TIM Trio, 3T BioGraph)
+    unlocks: real scanner-leakage star WITH AD labels + FreeSurfer clustering
+    drop_in: 'gated.load_gated(csv_path, "oasis3")'
+    notation: >
+      Sign the OASIS Data Use Agreement at sites.wustl.edu/oasisbrains (name /
+      email / institution / intended-use, no committee); ~1 week to an XNAT
+      Central invite, then export FreeSurfer volumetric spreadsheets + clinical
+      CDR/MMSE CSVs (bulk via github.com/NrgXnat/oasis-scripts). The single most
+      valuable gated set: multi-scanner + AD labels, the combo OpenBHB/IXI lack.
+      No lawful no-login mirror exists. STUB pending access; drop-in replaces
+      with zero code change.
+
+  - name: ADNI
+    long_name: "Alzheimer's Disease Neuroimaging Initiative"
+    access: gated-application
+    vendored: false
+    stub_path: data/real/_stubs/adni_stub.csv
+    direct_url: "https://adni.loni.usc.edu/ (LONI IDA)"
+    subjects: 2000+
+    tabular_features: [FreeSurfer volumes, hippocampal volume, cortical thickness]
+    labels: [diagnosis (CN/MCI/AD), conversion]
+    biomarkers: [amyloid-PET, p_tau217, gfap, nfl, apoe4]
+    modality: structural-MRI + PET + plasma
+    scanners: multi-vendor / multi-site (real scanner heterogeneity)
+    unlocks: the plasma p-tau217 biomarker anchor on real AD data (richest cohort)
+    drop_in: 'gated.load_gated(csv_path, "adni")'
+    notation: >
+      Slowest tier. LONI IDA application + committee review (~2 wk) + an
+      institutional affiliation (unaffiliated/personal-email applicants are
+      usually denied). Export the UCSF Cross-Sectional FreeSurfer table + plasma
+      biomarker tables. The reference AD cohort WITH plasma p-tau217/GFAP -> the
+      intended real biomarker-anchor gate. STUB pending access.
+
+  - name: NACC
+    long_name: "National Alzheimer's Coordinating Center — UDS + MRI"
+    access: gated-application
+    vendored: false
+    stub_path: data/real/_stubs/nacc_stub.csv
+    direct_url: "https://naccdata.org/ (data request)"
+    subjects: 45000+
+    tabular_features: [FreeSurfer volumes, structural-derived]
+    labels: [clinical diagnosis, conversion]
+    biomarkers: [p_tau217, gfap, nfl, apoe4]
+    modality: structural-MRI + plasma
+    scanners: many centers (strongest real site/scanner heterogeneity)
+    unlocks: ground-truth site-leakage star on real multi-center data
+    drop_in: 'gated.load_gated(csv_path, "nacc")'
+    notation: >
+      Data-request form at naccdata.org (~3 business days). UDS tabular +
+      optional MRI. Multi-center -> the strongest FUTURE substrate for the
+      ground-truth site-leakage star on real data. STUB pending access.
+
+  - name: EPAD
+    long_name: "European Prevention of Alzheimer's Dementia, Longitudinal Cohort"
+    access: gated-application
+    vendored: false
+    stub_path: data/real/_stubs/epad_stub.csv
+    direct_url: "https://ep-ad.org/ (via Alzheimer's Disease Data Initiative)"
+    subjects: 2000+
+    tabular_features: [structural-derived volumes]
+    labels: [preclinical/prodromal status]
+    biomarkers: [amyloid, p_tau217, gfap, nfl, apoe4]
+    modality: structural-MRI + plasma
+    unlocks: biomarker anchor for early-stage (preclinical/prodromal) survivors
+    drop_in: 'gated.load_gated(csv_path, "epad")'
+    notation: >
+      Gated application via the Alzheimer's Disease Data Initiative / AD
+      Workbench. CSF + plasma + MRI with prodromal staging. Preclinical/prodromal
+      cohort WITH plasma markers -> biomarker anchor for early-stage survivors.
+      STUB pending access.
+
+  - name: MIRIAD
+    long_name: "Minimal Interval Resonance Imaging in Alzheimer's Disease"
+    access: registration
+    vendored: false
+    direct_url: "https://miriad.drc.ion.ucl.ac.uk/atrophychallenge"
+    subjects: 69
+    scans: 708
+    dx_counts: {AD: 46, CN: 23}
+    tabular_features: [whole-brain volume, ventricular volume]
+    labels: [diagnosis (AD/HC)]
+    modality: structural-MRI (serial)
+    scanners: single-scanner (no leakage-star help)
+    unlocks: compact external replication check on real AD/HC data
+    notation: >
+      Self-serve registration at miriad.drc.ion.ucl.ac.uk/atrophychallenge. 708
+      serial T1 scans (46 AD / 23 CN), single-scanner, raw NIfTI only. A compact
+      external replication check. No plasma markers. No stub (small, optional).
+
+  - name: IXI
+    long_name: "Information eXtraction from Images — healthy brain MRI"
+    access: download-now
+    vendored: false
+    license: CC BY-SA 3.0
+    direct_url: "https://brain-development.org/ixi-dataset/"
+    subjects: 600
+    age_range: [20, 86]
+    tabular_features: [structural volumes derivable from T1/T2/PD]
+    labels: [none (healthy only)]
+    modality: structural-MRI
+    scanners: 3 sites / 3 scanners (real multi-site)
+    unlocks: honest brain-age + site-leakage substrate (no disease label)
+    notation: >
+      No-login raw download (biomedic.doc.ic.ac.uk, CC BY-SA), BUT the host 403s
+      automated fetches — a human browser download is required — and it ships raw
+      NIfTI only (no derived volume table; you must run FreeSurfer/CAT12
+      yourself). Healthy-only, wide age, genuine 3-scanner split. Not vendored
+      (large NIfTI + 403 on automation); listed for the brain-age extension.
+
+  - name: OpenBHB
+    long_name: "Open Big Healthy Brains — multi-site healthy T1 MRI"
+    access: download-now
+    vendored: true
+    local_path: data/real/openbhb_participants.tsv
+    license: Apache-2.0
+    direct_url: "https://huggingface.co/datasets/benoit-dufumier/openBHB"
+    subjects: 3984
+    age_range: [6, 88]
+    tabular_features: [tiv, csfv, gmv, wmv]
+    labels: [none (healthy only)]
+    modality: structural-MRI
+    scanners: 60+ sites / multi-acquisition (large multi-site, siteXacq column)
+    healthy_only: true
+    unlocks: real scanner/site-leakage benchmark NOW (no login) + brain-age control
+    notation: >
+      REAL, vendored, no login (Apache-2.0 HF mirror by benoit-dufumier). Large
+      multi-site HEALTHY cohort explicitly built for site-effect / brain-age
+      benchmarking -> the ideal external leakage + brain-age substrate available
+      TODAY with zero access wait. No disease label (healthy-only), so it powers
+      the leakage/brain-age stars, not the conversion probe.

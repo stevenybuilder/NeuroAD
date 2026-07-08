@@ -1,0 +1,9 @@
+# PLACEHOLDER STUB - hardcoded, NOT real EPAD LCS data. Pending data-access approval (ep-ad.org / Alzheimer's Disease Data Initiative). See STUBS.md.
+# Columns match src/neuroad/contract.py exactly. Load with: pandas.read_csv(path, comment='#')
+# EPAD is a preclinical/prodromal cohort WITH plasma p-tau217/GFAP -> the intended real biomarker-anchor substrate for promoted survivors.
+subject_id,dx,conversion,age,sex,site,scanner,amyloid,p_tau217,gfap,nfl,apoe4,emb_0,emb_1,emb_2,emb_3
+EPAD_STUB_0001,CN,,64.2,F,EPAD_Edinburgh,Siemens_Prisma_3T,0,0.14,72.5,9.8,0,-0.95,-0.30,0.07,-0.31
+EPAD_STUB_0002,CN,,61.8,M,EPAD_Barcelona,Siemens_Prisma_3T,0,0.17,84.1,11.4,1,-0.67,0.02,-0.21,0.33
+EPAD_STUB_0003,MCI,0,69.5,F,EPAD_Edinburgh,Siemens_Prisma_3T,1,0.29,133.7,18.2,1,0.05,0.20,0.26,-0.12
+EPAD_STUB_0004,MCI,1,73.4,M,EPAD_Toulouse,GE_Discovery_3T,1,0.45,177.9,25.6,2,0.57,0.64,-0.09,0.25
+EPAD_STUB_0005,AD,,76.9,F,EPAD_Barcelona,Siemens_Prisma_3T,1,0.53,199.3,29.1,2,1.02,0.85,0.36,0.49

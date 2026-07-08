@@ -1,0 +1,26 @@
+{
+  "badge": "SYNTHETIC HARNESS",
+  "substrate_line": "frozen Neuro-JEPA structural embeddings (contract feeder)",
+  "n_subjects": 360,
+  "embedding_dim": 48,
+  "n_sites": 2,
+  "n_scanners": 2,
+  "dx_counts": {
+    "CN": 137,
+    "MCI": 130,
+    "AD": 93
+  },
+  "age_mean": 73.5,
+  "pct_female": 48.1,
+  "label_coverage": {
+    "conversion": 0.3611111111111111
+  },
+  "biomarker_coverage": {
+    "amyloid": 1.0,
+    "p_tau217": 0.525,
+    "gfap": 1.0,
+    "nfl": 1.0,
+    "apoe4": 1.0
+  },
+  "note": "Ground-truth scanner-confound KILL + p-tau217 anchor live here (no open cohort has plasma markers). Guaranteed offline path."
+}

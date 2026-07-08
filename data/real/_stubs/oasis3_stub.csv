@@ -1,0 +1,9 @@
+# PLACEHOLDER STUB - hardcoded, NOT real OASIS-3 data. Pending data-access approval (NITRC/central.xnat.org). See STUBS.md.
+# Columns match src/neuroad/contract.py exactly. Load with: pandas.read_csv(path, comment='#')
+# OASIS-3 has structural MRI + PET but NO plasma p-tau217/GFAP/NfL -> those columns are <NA> here (empty), like the vendored OASIS-1/2.
+subject_id,dx,conversion,age,sex,site,scanner,amyloid,p_tau217,gfap,nfl,apoe4,emb_0,emb_1,emb_2,emb_3
+OAS3_STUB_0001,CN,,69.5,F,OASIS3,Siemens_TrioTim_3T,0,,,,0,-0.71,-0.22,0.14,-0.40
+OAS3_STUB_0002,CN,,73.1,M,OASIS3,Siemens_TrioTim_3T,,,,,1,-0.48,0.08,-0.19,0.31
+OAS3_STUB_0003,MCI,0,78.2,F,OASIS3,Siemens_BioGraph_3T,1,,,,1,0.22,0.35,0.27,-0.09
+OAS3_STUB_0004,MCI,1,81.0,M,OASIS3,Siemens_BioGraph_3T,,,,,2,0.59,0.66,-0.11,0.24
+OAS3_STUB_0005,AD,,84.3,F,OASIS3,Siemens_TrioTim_3T,1,,,,2,1.05,0.88,0.39,0.52

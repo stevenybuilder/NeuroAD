@@ -1,0 +1,11 @@
+# PLACEHOLDER STUB - hardcoded, NOT real NACC data. Pending data-request approval (naccdata.org). See STUBS.md.
+# Columns match src/neuroad/contract.py exactly. Load with: pandas.read_csv(path, comment='#')
+# NACC UDS is multi-center (real site/scanner heterogeneity) -> strongest future substrate for the site-leakage star.
+subject_id,dx,conversion,age,sex,site,scanner,amyloid,p_tau217,gfap,nfl,apoe4,emb_0,emb_1,emb_2,emb_3
+NACC_STUB_0001,CN,,70.0,F,NACC_ADRC_04,Siemens_Skyra_3T,0,0.16,79.0,10.9,0,-0.90,-0.33,0.02,-0.28
+NACC_STUB_0002,CN,,66.4,M,NACC_ADRC_12,GE_SignaPET_3T,0,0.19,95.2,13.0,0,-0.61,0.05,-0.24,0.36
+NACC_STUB_0003,MCI,0,75.9,F,NACC_ADRC_04,Siemens_Skyra_3T,1,0.31,150.6,21.1,1,0.09,0.24,0.30,-0.15
+NACC_STUB_0004,MCI,1,79.3,M,NACC_ADRC_27,Philips_Ingenia_3T,1,0.49,193.4,28.7,2,0.63,0.69,-0.10,0.27
+NACC_STUB_0005,AD,,82.7,F,NACC_ADRC_12,GE_SignaPET_3T,1,0.58,208.1,31.5,2,1.09,0.91,0.41,0.55
+NACC_STUB_0006,AD,,77.5,M,NACC_ADRC_27,Philips_Ingenia_3T,1,0.55,197.8,30.2,1,0.94,0.60,-0.35,0.20
+NACC_STUB_0007,CN,,72.1,F,NACC_ADRC_27,Philips_Ingenia_3T,0,0.20,90.4,12.2,1,-0.44,0.18,0.11,-0.05

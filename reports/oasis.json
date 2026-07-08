@@ -1,0 +1,144 @@
+{
+  "claim_id": "claim-mri-embeddings-predict-ad-vs-cn",
+  "claim_text": "MRI embeddings predict AD vs CN",
+  "substrate": "frozen Neuro-JEPA structural embeddings",
+  "head": "linear probe",
+  "population": {
+    "group_a": "AD",
+    "group_b": "CN"
+  },
+  "naive_effect": {
+    "metric": "AUC",
+    "value": 0.824,
+    "target": "dx_binary",
+    "n": 263,
+    "head": "linear probe",
+    "substrate": "frozen Neuro-JEPA structural embeddings"
+  },
+  "robustness": {
+    "age_sex": "passed",
+    "site_scanner": "passed",
+    "brain_age": "failed",
+    "biomarker_anchor": "not_available",
+    "replication": "passed"
+  },
+  "robustness_detail": {
+    "age_sex": {
+      "detail": "effect retained 92% after age/sex adjustment (AUC 0.82 -> 0.80)",
+      "stats": {
+        "auc_before": 0.8238,
+        "auc_after": 0.7978,
+        "retained": 0.92,
+        "n": 263
+      }
+    },
+    "site_scanner": {
+      "detail": "outcome clearly exceeds scanner (margin +0.25)",
+      "stats": {
+        "outcome_auc": 0.8238,
+        "scanner_auc": 0.5713,
+        "margin": 0.2525,
+        "confound": "scanner"
+      }
+    },
+    "brain_age": {
+      "detail": "brain-age R2=0.57, MAE=6.4yr; effect retained 1% after brain-age-gap control",
+      "stats": {
+        "r2": 0.566,
+        "mae_yr": 6.35,
+        "auc_before": 0.8238,
+        "auc_after": 0.5039,
+        "retained": 0.012,
+        "n_healthy": 220
+      }
+    },
+    "biomarker_anchor": {
+      "detail": "no plasma p-tau217 / GFAP coverage at usable n \u2014 cannot anchor (route to ADNI/EPAD)",
+      "stats": {
+        "ptau217_r": null,
+        "ptau217_n": 0,
+        "ptau217_ci_lo": null,
+        "gfap_r": null,
+        "gfap_n": 0,
+        "gfap_ci_lo": null
+      }
+    },
+    "replication": {
+      "detail": "held-out cohort AUC=0.79 (train 0.85); n_test=98",
+      "stats": {
+        "train_auc": 0.8533,
+        "test_auc": 0.7864,
+        "n_train": 165,
+        "n_test": 98
+      }
+    }
+  },
+  "robustness_score": 69,
+  "verdict": "partially robust",
+  "promoted": false,
+  "biology_hypothesis": "",
+  "next_experiment": [],
+  "falsification": [],
+  "caveats": [
+    "Biomarker anchor unavailable (no plasma p-tau217/GFAP coverage): claim cannot be promoted until molecularly anchored.",
+    "Completeness: 1/5 gauntlet tests could not run; score is renormalized over the tests that did.",
+    "'Partially robust' is not 'robust' \u2014 survives some but not all challenges.",
+    "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+    "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+    "Any biomarker anchor is complete-case only and may not generalize.",
+    "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+    "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
+    "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+    "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
+    "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+    "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  ],
+  "evidence_ledger": [
+    {
+      "test": "age_sex",
+      "metric": "effect retained (age/sex)",
+      "value": 0.92,
+      "result": "passed",
+      "n_used": 263,
+      "n_missing": null,
+      "detail": "effect retained 92% after age/sex adjustment (AUC 0.82 -> 0.80)"
+    },
+    {
+      "test": "site_scanner",
+      "metric": "leakage margin (outcome-scanner AUC)",
+      "value": 0.2525,
+      "result": "passed",
+      "n_used": null,
+      "n_missing": null,
+      "detail": "outcome clearly exceeds scanner (margin +0.25)"
+    },
+    {
+      "test": "brain_age",
+      "metric": "effect retained (brain-age)",
+      "value": 0.012,
+      "result": "failed",
+      "n_used": 220,
+      "n_missing": null,
+      "detail": "brain-age R2=0.57, MAE=6.4yr; effect retained 1% after brain-age-gap control"
+    },
+    {
+      "test": "biomarker_anchor",
+      "metric": "p-tau217 correlation r",
+      "value": null,
+      "result": "not_available",
+      "n_used": 0,
+      "n_missing": null,
+      "detail": "no plasma p-tau217 / GFAP coverage at usable n \u2014 cannot anchor (route to ADNI/EPAD)"
+    },
+    {
+      "test": "replication",
+      "metric": "held-out cohort AUC",
+      "value": 0.7864,
+      "result": "passed",
+      "n_used": 98,
+      "n_missing": null,
+      "detail": "held-out cohort AUC=0.79 (train 0.85); n_test=98"
+    }
+  ],
+  "narration": "The claim \u201cMRI embeddings predict AD vs CN\u201d lands at \u201cpartially robust\u201d (69/100). The naive effect (AUC 0.82 separating AD from CN) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the signal is more than accelerated brain-age; a chunk of it co-varies with the brain-age control, so in a cohort matched on brain-age gap the separation would shrink. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Referee only runs the audit and issues the verdict."
+}

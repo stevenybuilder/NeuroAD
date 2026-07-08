@@ -1,0 +1,142 @@
+{
+  "claim_id": "claim-mci-patients-who-convert-to-ad-s",
+  "claim_text": "MCI patients who convert to AD show a distinct structural-MRI signature in their frozen embeddings versus non-converters.",
+  "substrate": "frozen Neuro-JEPA structural embeddings",
+  "head": "linear probe",
+  "population": {
+    "group_a": "MCI converters",
+    "group_b": "MCI non-converters"
+  },
+  "naive_effect": {
+    "metric": "AUC",
+    "value": 0.823,
+    "target": "conversion",
+    "n": 137,
+    "head": "linear probe",
+    "substrate": "frozen Neuro-JEPA structural embeddings"
+  },
+  "robustness": {
+    "age_sex": "failed",
+    "site_scanner": "failed",
+    "brain_age": "failed",
+    "biomarker_anchor": "failed",
+    "replication": "passed"
+  },
+  "robustness_detail": {
+    "age_sex": {
+      "detail": "effect retained 0% after age/sex adjustment (AUC 0.82 -> 0.43)",
+      "stats": {
+        "auc_before": 0.8234,
+        "auc_after": 0.4271,
+        "retained": 0.0,
+        "n": 137
+      }
+    },
+    "site_scanner": {
+      "detail": "scanner predicted as well as outcome (margin -0.13); likely acquisition artifact",
+      "stats": {
+        "outcome_auc": 0.8234,
+        "scanner_auc": 0.9492,
+        "margin": -0.1258,
+        "confound": "scanner"
+      }
+    },
+    "brain_age": {
+      "detail": "brain-age R2=0.87, MAE=1.6yr; effect retained 0% after brain-age-gap control",
+      "stats": {
+        "r2": 0.869,
+        "mae_yr": 1.63,
+        "auc_before": 0.8234,
+        "auc_after": 0.4875,
+        "retained": 0.0,
+        "n_healthy": 144
+      }
+    },
+    "biomarker_anchor": {
+      "detail": "p-tau217 correlation r=-0.09 (95% CI lower -0.30, n=79)",
+      "stats": {
+        "ptau217_r": -0.085,
+        "ptau217_n": 79,
+        "ptau217_ci_lo": -0.301,
+        "gfap_r": 0.021,
+        "gfap_n": 137,
+        "gfap_ci_lo": -0.147
+      }
+    },
+    "replication": {
+      "detail": "held-out cohort AUC=0.83 (train 0.73); n_test=65",
+      "stats": {
+        "train_auc": 0.7297,
+        "test_auc": 0.8267,
+        "n_train": 72,
+        "n_test": 65
+      }
+    }
+  },
+  "robustness_score": 15,
+  "verdict": "fragile",
+  "promoted": false,
+  "biology_hypothesis": "",
+  "next_experiment": [],
+  "falsification": [],
+  "caveats": [
+    "Biomarker anchor failed: no molecular correlate found on the complete subset \u2014 treat as unanchored.",
+    "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+    "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+    "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+    "Any biomarker anchor is complete-case only and may not generalize.",
+    "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+    "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+    "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+    "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
+    "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  ],
+  "evidence_ledger": [
+    {
+      "test": "age_sex",
+      "metric": "effect retained (age/sex)",
+      "value": 0.0,
+      "result": "failed",
+      "n_used": 137,
+      "n_missing": null,
+      "detail": "effect retained 0% after age/sex adjustment (AUC 0.82 -> 0.43)"
+    },
+    {
+      "test": "site_scanner",
+      "metric": "leakage margin (outcome-scanner AUC)",
+      "value": -0.1258,
+      "result": "failed",
+      "n_used": null,
+      "n_missing": null,
+      "detail": "scanner predicted as well as outcome (margin -0.13); likely acquisition artifact"
+    },
+    {
+      "test": "brain_age",
+      "metric": "effect retained (brain-age)",
+      "value": 0.0,
+      "result": "failed",
+      "n_used": 144,
+      "n_missing": null,
+      "detail": "brain-age R2=0.87, MAE=1.6yr; effect retained 0% after brain-age-gap control"
+    },
+    {
+      "test": "biomarker_anchor",
+      "metric": "p-tau217 correlation r",
+      "value": -0.085,
+      "result": "failed",
+      "n_used": 79,
+      "n_missing": null,
+      "detail": "p-tau217 correlation r=-0.09 (95% CI lower -0.30, n=79)"
+    },
+    {
+      "test": "replication",
+      "metric": "held-out cohort AUC",
+      "value": 0.8267,
+      "result": "passed",
+      "n_used": 65,
+      "n_missing": null,
+      "detail": "held-out cohort AUC=0.83 (train 0.73); n_test=65"
+    }
+  ],
+  "narration": "The claim \u201cMCI patients who convert to AD show a distinct structural-MRI signature in their frozen embeddings versus non-converters.\u201d lands at \u201cfragile\u201d (15/100). The naive effect (AUC 0.82 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.13 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Referee only runs the audit and issues the verdict."
+}

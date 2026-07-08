@@ -1,0 +1,24 @@
+claim:
+  claim_id: SYN-A
+  claim_text: MCI->AD conversion is decodable from frozen structural embeddings beyond
+    scanner and aging.
+  target: conversion
+  group_a: MCI converters
+  group_b: MCI non-converters
+  substrate: frozen Neuro-JEPA structural embeddings
+  head: linear probe
+naive_effect:
+  metric: AUC
+  value: 0.711
+  target: conversion
+  n: 130
+  head: linear probe
+  substrate: frozen Neuro-JEPA structural embeddings
+leakage_margin:
+  outcome_auc: 0.712
+  scanner_auc: 0.676
+  margin: 0.036
+  confound: scanner
+verdict: strong candidate
+score: 88
+promoted: true

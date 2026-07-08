@@ -1,0 +1,49 @@
+{
+  "n_subjects": 3984,
+  "n_field_strengths": 2,
+  "n_sites": 62,
+  "dx_counts": {
+    "CN": 3984,
+    "MCI": 0,
+    "AD": 0
+  },
+  "dataset": "openbhb",
+  "healthy_controls_only": true,
+  "scanner_auc": 0.8911,
+  "site_auc": 0.7843,
+  "detail": {
+    "scanner": {
+      "auc": 0.8911,
+      "n": 3984,
+      "n_classes": 2
+    },
+    "site": {
+      "auc": 0.7843,
+      "n": 3984,
+      "n_classes": 62
+    }
+  },
+  "prior_art": [
+    {
+      "title": "Batch Effects in Brain Foundation Model Embeddings",
+      "cite": "arXiv:2604.14441 (2026)",
+      "note": "Quantifies that brain-FM embeddings predict acquisition site/scanner as well as biological outcome \u2014 the same 'star' mechanic. We cite it, we don't claim it."
+    },
+    {
+      "title": "Pretrained, Frozen, Still Leaking",
+      "cite": "arXiv:2606.09189 (2026)",
+      "note": "Audits attribute leakage from FROZEN foundation-model embeddings with subject-disjoint lower bounds (leakage margin ~0.16-0.37)."
+    },
+    {
+      "title": "PathoROB",
+      "cite": "Nature Communications (2026)",
+      "note": "Digital-pathology robustness benchmark: biological vs non-biological variation across medical centers. Same genre, different modality."
+    },
+    {
+      "title": "REFUTE / AI-Scientist-v2 falsification agents",
+      "cite": "2024-2026",
+      "note": "Automated scientific-claim falsification is an established sub-genre; our novelty is the closed AD-specific loop, not falsification per se."
+    }
+  ],
+  "message": "The structural embedding predicts the scanner (field strength) at AUC 0.891 in 3984 healthy subjects with NO disease \u2014 this is the batch effect the referee gates against, on REAL data (not synthetic). Prior art: 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026))."
+}
