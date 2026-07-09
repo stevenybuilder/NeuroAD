@@ -57,7 +57,7 @@ subject-disjoint AUC. The headline metric is the
 
 > **leakage margin = outcome_AUC − scanner_AUC**
 
-expressed in the frontier's currency (cf. arXiv:2606.09189, margin ~0.16–0.37).
+expressed in the frontier's currency (cf. arXiv:2606.09189).
 A KILL shows scanner AUC ≈ **0.92** (`site_auc_kill`, 0.88–0.96) — leakage meets
 or exceeds the outcome, so the margin is near zero or negative and the test
 *fails*. A SURVIVOR shows scanner AUC ≈ **0.64** (`site_auc_survivor`, 0.58–0.70),
