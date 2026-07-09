@@ -80,6 +80,15 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
 .panel > .hd h3{font-size:13px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink2)}
 .panel > .hd .tag{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink3)}
 .panel > .bd{padding:14px}
+/* Progressive disclosure: secondary panels collapse behind a chevron so the
+   primary narrative (docket -> scatter -> gauntlet -> verdict) leads. */
+.panel.collapsible > .hd{cursor:pointer;user-select:none}
+.panel.collapsible > .hd:hover{background:#111a25}
+.panel.collapsible > .hd .chev{margin-left:auto;color:var(--mute);font-size:15px;line-height:1;
+  transition:transform .16s ease;transform:rotate(0deg)}
+.panel.collapsible > .hd .tag + .chev{margin-left:10px}
+.panel.collapsible.collapsed > .hd .chev{transform:rotate(-90deg)}
+.panel.collapsible.collapsed > .bd{display:none}
 
 /* ---- cohort card ---- */
 .kv{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;
@@ -488,14 +497,14 @@ canvas#scatter{width:100%;height:300px;display:block;background:
       </div>
     </div>
 
-    <div class="panel claimcard">
-      <div class="hd"><span class="ic">▣</span><h3>Claim Card</h3><span class="tag" id="claimTag">unadjudicated</span></div>
+    <div class="panel claimcard collapsible">
+      <div class="hd"><span class="ic">▣</span><h3>Claim Card</h3><span class="tag" id="claimTag">unadjudicated</span><span class="chev">⌄</span></div>
       <div class="bd" id="claimBody"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel collapsible">
       <div class="hd"><span class="ic">§</span><h3>Courtroom — Claude argues both sides</h3>
-        <span class="tag">prosecution vs defense · the verdict meter rules</span></div>
+        <span class="tag">prosecution vs defense · the verdict meter rules</span><span class="chev">⌄</span></div>
       <div class="bd"><div class="court" id="court"></div></div>
     </div>
   </div>
@@ -533,13 +542,13 @@ canvas#scatter{width:100%;height:300px;display:block;background:
       </div>
     </div>
 
-    <div class="panel reviewer">
-      <div class="hd"><div class="who"><span class="rb">CLAUDE</span><h3 style="text-transform:none;letter-spacing:.3px;color:var(--ink)">Reviewer — peer-review margin note</h3></div></div>
+    <div class="panel reviewer collapsible collapsed">
+      <div class="hd"><div class="who"><span class="rb">CLAUDE</span><h3 style="text-transform:none;letter-spacing:.3px;color:var(--ink)">Reviewer — peer-review margin note</h3></div><span class="chev">⌄</span></div>
       <div class="bd" id="reviewerBody"></div>
     </div>
 
-    <div class="panel">
-      <div class="hd"><span class="ic">≣</span><h3>Confound Leaderboard</h3><span class="tag">variance explained</span></div>
+    <div class="panel collapsible collapsed">
+      <div class="hd"><span class="ic">≣</span><h3>Confound Leaderboard</h3><span class="tag">variance explained</span><span class="chev">⌄</span></div>
       <div class="bd"><div class="lead" id="lead"></div></div>
     </div>
   </div>
@@ -4314,6 +4323,10 @@ function bind(){
   sb.onclick=toggleSubstrate;
   sb.onkeydown=e=>{if(e.key==="Enter"||e.code==="Space"){e.preventDefault();e.stopPropagation();toggleSubstrate();}};
   document.getElementById("splitBtn").onclick=openSplit;
+  // Progressive disclosure: click a secondary panel's header to expand/collapse it.
+  document.querySelectorAll(".panel.collapsible > .hd").forEach(hd=>{
+    hd.addEventListener("click",()=>hd.parentElement.classList.toggle("collapsed"));
+  });
   document.getElementById("splitClose").onclick=()=>document.getElementById("splitMask").classList.remove("open");
   document.getElementById("splitMask").onclick=e=>{if(e.target.id==="splitMask")e.target.classList.remove("open");};
   document.getElementById("modalClose").onclick=()=>document.getElementById("modalMask").classList.remove("open");
