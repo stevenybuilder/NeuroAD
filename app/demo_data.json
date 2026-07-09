@@ -311,6 +311,56 @@
             "scanner_gap": 0.6,
             "converter_frac": 0.42
           },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "MCI->AD conversion is decodable from frozen structural embeddings beyond scanner and aging.",
+            "dataset": "synthetic:SURVIVOR",
+            "novelty_class": "known",
+            "honesty_rung": "severity_anchored",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "frozen Neuro-JEPA structural embeddings",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "passed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": 0.197,
+              "gfap_ci_lo": 0.18
+            }
+          },
           "narration": "The claim \u201cMCI->AD conversion is decodable from frozen structural embeddings beyond scanner and aging.\u201d lands at \u201crobust enough for follow-up\u201d (80/100). The naive effect (AUC 0.74 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only +0.06 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
@@ -545,6 +595,56 @@
             "outcome_gap": 0.6,
             "scanner_gap": 3.0,
             "converter_frac": 0.42
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "A structural embedding signature separates MCI converters from non-converters.",
+            "dataset": "synthetic:KILL",
+            "novelty_class": "adjacent",
+            "honesty_rung": "stable_cluster",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "frozen Neuro-JEPA structural embeddings",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "failed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": -0.301,
+              "gfap_ci_lo": -0.147
+            }
           },
           "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
@@ -827,6 +927,56 @@
             "scanner_gap": 1.2,
             "converter_frac": 0.34
           },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "AD vs CN diagnosis is decodable from OASIS structural-derived features.",
+            "dataset": "oasis",
+            "novelty_class": "adjacent",
+            "honesty_rung": "confound_survivor",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "dx_binary",
+              "population": {
+                "group_a": "AD",
+                "group_b": "CN"
+              },
+              "features": "OASIS structural-derived features (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "not_available",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": null,
+              "gfap_ci_lo": null
+            }
+          },
           "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cstrong candidate\u201d (100/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
@@ -1051,6 +1201,56 @@
             "outcome_gap": 0.7,
             "scanner_gap": 1.3,
             "converter_frac": 0.4
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "MCI->AD conversion is decodable from OASIS-2 structural features.",
+            "dataset": "oasis",
+            "novelty_class": "adjacent",
+            "honesty_rung": "raw_pattern",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "OASIS structural-derived features (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "not_available",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": null,
+              "gfap_ci_lo": null
+            }
           },
           "narration": "The claim \u201cMCI->AD conversion is decodable from OASIS-2 structural features.\u201d lands at \u201cfragile\u201d (38/100). The naive effect (AUC 0.52 separating Converted from Nondemented) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.05 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }

@@ -319,6 +319,55 @@ canvas#scatter{width:100%;height:300px;display:block;background:
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .chip{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:#0e1720;border:1px solid var(--edge2);
   border-radius:6px;padding:3px 8px}
+/* ---- Investigate: hypothesis entry + plan-out card ---- */
+.panel.investigate > .hd .ic{color:var(--accent)}
+.inv-label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;
+  color:var(--mute);margin:0 0 6px}
+.inv-input{width:100%;box-sizing:border-box;resize:vertical;min-height:44px;
+  background:#0c141d;border:1px solid var(--edge2);border-radius:9px;color:var(--ink);
+  font-family:var(--mono);font-size:13px;line-height:1.5;padding:10px 12px;transition:border-color .15s}
+.inv-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px rgba(91,200,255,.25)}
+.inv-actions{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.inv-presets{display:flex;gap:8px;flex-wrap:wrap;flex:1 1 auto}
+.inv-preset{font-family:var(--mono);font-size:10.5px;color:var(--ink2);background:#0e1720;
+  border:1px solid var(--edge2);border-radius:20px;padding:4px 11px;cursor:pointer;transition:.15s}
+.inv-preset:hover{border-color:var(--accent);color:#fff}
+.inv-preset.on[data-kind="SURVIVOR"]{border-color:var(--green);color:var(--green);background:var(--green-d)}
+.inv-preset.on[data-kind="KILL"]{border-color:var(--red);color:var(--red);background:var(--red-d)}
+.inv-actions .btn.primary{flex:0 0 auto}
+.planout{margin-top:14px;border:1px solid var(--edge2);border-radius:11px;background:#0c131c;overflow:hidden}
+.po-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 13px;border-bottom:1px solid var(--edge)}
+.po-title{font-family:var(--mono);font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--accent)}
+.po-title .pre{color:var(--mute)}
+.po-badge{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;color:var(--ink3);
+  border:1px solid var(--edge2);border-radius:20px;padding:2px 8px}
+.nov-chip{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.5px;border-radius:6px;padding:3px 8px;
+  border:1px solid var(--edge2);color:var(--ink2);background:#0e1720}
+.nov-chip.known{color:var(--accent);border-color:#245} .nov-chip.novel{color:var(--amber);border-color:#4a3c12}
+.nov-chip.adjacent{color:var(--accent2);border-color:#2b3a63}
+.po-body{padding:12px 13px}
+.po-sec{margin-bottom:13px}.po-sec:last-child{margin-bottom:0}
+.po-lb{font-family:var(--mono);font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--mute);margin-bottom:7px}
+/* honesty ladder */
+.rung-ladder{display:flex;gap:5px;flex-wrap:wrap}
+.rung-step{flex:1 1 0;min-width:78px;font-family:var(--mono);font-size:9.5px;letter-spacing:.2px;color:var(--ink3);
+  background:#0e1720;border:1px solid var(--edge2);border-radius:6px;padding:5px 7px;text-align:center;line-height:1.25;opacity:.5}
+.rung-step .rn{display:block;font-size:8.5px;color:var(--mute)}
+.rung-step.reached{opacity:1;color:var(--ink2);border-color:var(--edge2)}
+.rung-step.cur{opacity:1;color:#dff2ff;border-color:var(--accent);background:#123245;box-shadow:0 0 0 1px rgba(91,200,255,.3)}
+.rung-note{font-size:11px;color:var(--ink3);margin-top:7px;line-height:1.45}
+/* spec grid */
+.po-spec{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12px}
+.po-spec dt{font-family:var(--mono);font-size:10.5px;color:var(--mute)}
+.po-spec dd{margin:0;color:var(--ink);line-height:1.4}
+/* kill criteria */
+.po-kill{list-style:none;margin:0;padding:0}
+.po-kill li{position:relative;padding:6px 0 6px 20px;font-size:12px;color:var(--ink2);line-height:1.45;border-top:1px solid var(--edge)}
+.po-kill li:first-child{border-top:0}
+.po-kill li::before{content:"✗";position:absolute;left:2px;top:6px;color:var(--red);font-family:var(--mono);font-size:11px}
+.po-kill .km{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.3px}
+.po-dir{font-size:11.5px;color:var(--ink3);line-height:1.5;font-style:italic}
+.po-foot{font-size:10.5px;color:var(--mute);margin-top:10px;padding-top:9px;border-top:1px solid var(--edge);line-height:1.4}
 .naive{display:flex;align-items:baseline;gap:10px}
 .naive .big{font-family:var(--mono);font-size:26px;font-weight:750;font-variant-numeric:tabular-nums}
 .naive .lbl{font-size:11.5px;color:var(--ink3)}
@@ -587,8 +636,23 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
     </div>
   </div>
 
-  <!-- CENTER: docket + scatter + claim + court -->
+  <!-- CENTER: investigate + docket + scatter + claim + court -->
   <div class="col">
+    <div class="panel investigate hero" id="investigatePanel">
+      <div class="hd"><span class="ic">✎</span><h3>Investigate — hypothesis in</h3>
+        <span class="tag">Claude parses the hunch → plan-out before any math</span>
+        <span class="claude-badge offline" id="claudeBadgeInv"><span class="cdot"></span></span></div>
+      <div class="bd">
+        <label class="inv-label" for="hypInput">Researcher hypothesis</label>
+        <textarea id="hypInput" class="inv-input" rows="2" spellcheck="false" aria-label="Researcher hypothesis"></textarea>
+        <div class="inv-actions">
+          <div class="inv-presets" id="hypPresets"></div>
+          <button class="btn primary" id="investigateBtn" title="Parse the hypothesis and run the gauntlet (⌘/Ctrl+Enter)">▶ Investigate</button>
+        </div>
+        <div class="planout" id="planOut"></div>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="hd"><span class="ic">▦</span><h3>Docket</h3><span class="tag">2 cases · same head, different label</span></div>
       <div class="bd"><div class="docket" id="docket"></div></div>
@@ -1039,6 +1103,56 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "scanner_gap": 0.6,
             "converter_frac": 0.42
           },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "MCI->AD conversion is decodable from frozen structural embeddings beyond scanner and aging.",
+            "dataset": "synthetic:SURVIVOR",
+            "novelty_class": "known",
+            "honesty_rung": "severity_anchored",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "frozen Neuro-JEPA structural embeddings",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "passed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": 0.197,
+              "gfap_ci_lo": 0.18
+            }
+          },
           "narration": "The claim \u201cMCI->AD conversion is decodable from frozen structural embeddings beyond scanner and aging.\u201d lands at \u201crobust enough for follow-up\u201d (80/100). The naive effect (AUC 0.74 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only +0.06 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
@@ -1273,6 +1387,56 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "outcome_gap": 0.6,
             "scanner_gap": 3.0,
             "converter_frac": 0.42
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "A structural embedding signature separates MCI converters from non-converters.",
+            "dataset": "synthetic:KILL",
+            "novelty_class": "adjacent",
+            "honesty_rung": "stable_cluster",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "frozen Neuro-JEPA structural embeddings",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "failed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": -0.301,
+              "gfap_ci_lo": -0.147
+            }
           },
           "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
@@ -1555,6 +1719,56 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "scanner_gap": 1.2,
             "converter_frac": 0.34
           },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "AD vs CN diagnosis is decodable from OASIS structural-derived features.",
+            "dataset": "oasis",
+            "novelty_class": "adjacent",
+            "honesty_rung": "confound_survivor",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "dx_binary",
+              "population": {
+                "group_a": "AD",
+                "group_b": "CN"
+              },
+              "features": "OASIS structural-derived features (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "not_available",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": null,
+              "gfap_ci_lo": null
+            }
+          },
           "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cstrong candidate\u201d (100/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
@@ -1779,6 +1993,56 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "outcome_gap": 0.7,
             "scanner_gap": 1.3,
             "converter_frac": 0.4
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "MCI->AD conversion is decodable from OASIS-2 structural features.",
+            "dataset": "oasis",
+            "novelty_class": "adjacent",
+            "honesty_rung": "raw_pattern",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "conversion",
+              "population": {
+                "group_a": "MCI converters",
+                "group_b": "MCI non-converters"
+              },
+              "features": "OASIS structural-derived features (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "not_available",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": null,
+              "gfap_ci_lo": null
+            }
           },
           "narration": "The claim \u201cMCI->AD conversion is decodable from OASIS-2 structural features.\u201d lands at \u201cfragile\u201d (38/100). The naive effect (AUC 0.52 separating Converted from Nondemented) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.05 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
@@ -4255,6 +4519,115 @@ function statusChip(kind,phase){
     : `<span class="status-chip done-k"><span class="sd"></span>ADJUDICATED</span>`;
   return `<span class="status-chip unadj"><span class="sd"></span>UNADJUDICATED</span>`;
 }
+/* ---------- Investigate: hypothesis entry + plan-out (Claude on the critical path) ---------- */
+/* The 5-rung calibrated-honesty ladder — the honest vocabulary from the engine.
+   NO rung asserts a settled/validated result; each says how far a finding is DEFENDED. */
+const RUNG_ORDER=["raw_pattern","stable_cluster","confound_survivor","severity_anchored","externally_replicated"];
+const RUNG_LABEL={raw_pattern:"raw pattern",stable_cluster:"stable cluster",confound_survivor:"confound survivor",
+  severity_anchored:"severity-anchored",externally_replicated:"externally replicated"};
+const RUNG_GLOSS={
+  raw_pattern:"a naive effect exists — no controls yet",
+  stable_cluster:"the pattern reproduces (stable / above chance)",
+  confound_survivor:"survives the STAR confound gauntlet",
+  severity_anchored:"clears the biomarker-anchor gate and is promoted",
+  externally_replicated:"reproduces on a genuinely independent external cohort"};
+const NOVELTY_GLOSS={known:"published prior art we re-measure",adjacent:"a known mechanism extended",
+  novel:"asks the data for structure with no clean precedent",unclassified:"not yet classified"};
+
+function curInv(){return curCase().investigate||null;}
+function esc(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+/* set the hypothesis textarea to the active case's registered hunch (case-switch only) */
+function setHypInput(){
+  const ta=document.getElementById("hypInput"), inv=curInv(); if(!ta||!inv) return;
+  ta.value=inv.hypothesis||curCase().claim.claim_text||"";
+}
+function renderPresets(){
+  const box=document.getElementById("hypPresets"); if(!box) return;
+  const sub=curSub(); box.innerHTML="";
+  for(const kind of ["SURVIVOR","KILL"]){
+    const c=sub.cases[kind]; if(!c) continue;
+    const b=document.createElement("button");
+    b.className="inv-preset"+(kind===S.kase?" on":""); b.dataset.kind=kind; b.dataset.case=kind;
+    b.textContent=(kind==="SURVIVOR"?"◆ ":"◇ ")+kind.toLowerCase()+" hunch";
+    b.title=(c.investigate&&c.investigate.hypothesis)||c.claim.claim_text;
+    b.onclick=()=>{ selectCase(kind); };
+    box.appendChild(b);
+  }
+}
+/* map free-typed text -> the demo case it most resembles (deterministic word overlap) */
+function matchHypothesisToCase(text){
+  const sub=curSub(), toks=s=>new Set(String(s||"").toLowerCase().match(/[a-z0-9]+/g)||[]);
+  const q=toks(text); let best=S.kase, bestScore=-1;
+  for(const kind of ["SURVIVOR","KILL"]){
+    const c=sub.cases[kind]; if(!c) continue;
+    const ref=toks((c.investigate&&c.investigate.hypothesis)||c.claim.claim_text);
+    let inter=0; q.forEach(w=>{if(ref.has(w))inter++;});
+    const score=inter/((q.size+ref.size-inter)||1);   // Jaccard
+    if(score>bestScore){bestScore=score;best=kind;}
+  }
+  return best;
+}
+function renderPlanOut(){
+  const el=document.getElementById("planOut"); if(!el) return;
+  const inv=curInv();
+  if(!inv){ el.innerHTML=""; return; }
+  const nov=(inv.novelty_class||"unclassified").toLowerCase();
+  const rung=inv.honesty_rung||"raw_pattern";
+  const curIdx=Math.max(0,RUNG_ORDER.indexOf(rung));
+  const sp=inv.spec||{}, pop=sp.population||{};
+  const ladder=RUNG_ORDER.map((k,i)=>{
+    const cls=i===curIdx?"cur":(i<curIdx?"reached":"");
+    return `<div class="rung-step ${cls}"><span class="rn">rung ${i+1}</span>${esc(RUNG_LABEL[k]||k)}</div>`;
+  }).join("");
+  const kills=(inv.kill_criteria||[]).map(k=>
+    `<li><span class="km">${esc(k.metric)}</span> — ${esc(k.rule)}</li>`).join("");
+  const badge=inv.source==="engine"?"engine · orchestrator.investigate":"deterministic template";
+  el.innerHTML=`
+    <div class="po-head">
+      <span class="po-title"><span class="pre">plan-out ·</span> pre-registered before the gauntlet</span>
+      <span class="nov-chip ${nov}">novelty: ${esc(nov)}</span>
+      <span class="po-badge">${esc(badge)}</span>
+    </div>
+    <div class="po-body">
+      <div class="po-sec">
+        <div class="po-lb">calibrated-honesty ceiling · ${esc(RUNG_LABEL[rung]||rung)}</div>
+        <div class="rung-ladder">${ladder}</div>
+        <div class="rung-note">Rung reached: <b>${esc(RUNG_LABEL[rung]||rung)}</b> — ${esc(RUNG_GLOSS[rung]||"")}. Cumulative: a card never rises above a rung whose evidence it lacks.</div>
+      </div>
+      <div class="po-sec">
+        <div class="po-lb">structured spec</div>
+        <dl class="po-spec">
+          <dt>target</dt><dd>${esc(sp.target||"—")}</dd>
+          <dt>population</dt><dd>${esc(pop.group_a||"—")} <span style="color:var(--mute)">vs</span> ${esc(pop.group_b||"—")}</dd>
+          <dt>features</dt><dd>${esc(sp.features||"—")}</dd>
+          <dt>confounds</dt><dd>${(sp.confounds||[]).map(esc).join(" · ")||"—"}</dd>
+          <dt>novelty</dt><dd>${esc(nov)} — ${esc(NOVELTY_GLOSS[nov]||"")}</dd>
+        </dl>
+      </div>
+      <div class="po-sec">
+        <div class="po-lb">pre-registered kill criteria · reject if ANY fires</div>
+        <ul class="po-kill">${kills}</ul>
+      </div>
+      <div class="po-sec">
+        <div class="po-lb">expected direction (routed: ${esc(inv.routed_mechanism||"—")})</div>
+        <div class="po-dir">${esc(inv.expected_direction||"—")}</div>
+      </div>
+      <div class="po-foot">This spec + falsifiers are fixed BEFORE any math — Claude parses the hunch into a testable claim; the gauntlet then adjudicates it. Honesty rungs describe how far a finding is defended, never that it is a settled result.</div>
+    </div>`;
+}
+
+function doInvestigate(){
+  const ta=document.getElementById("hypInput");
+  const text=ta?ta.value:"";
+  const kind=matchHypothesisToCase(text);
+  if(kind!==S.kase){ S.kase=kind; }
+  S.phase="idle"; clearTimers();
+  renderPresets(); renderPlanOut();
+  renderAll();
+  runGauntlet();
+}
+
 function renderDocket(){
   const sub=curSub(), d=document.getElementById("docket"); d.innerHTML="";
   for(const kind of ["SURVIVOR","KILL"]){
@@ -4334,6 +4707,7 @@ function renderClaim(filled){
     <div class="cc-sec"><div class="lb">verdict</div>
       <div class="naive"><span class="big" id="claimVerdictScore" style="color:${verdictColor(c.verdict)}">${done?c.score:"—"}</span>
         <span class="lbl" style="text-transform:capitalize">${done?c.verdict:"pending"} ${done?`· <span class="promo ${promoted?'yes':'no'}" style="display:inline-flex">${promoted?'PROMOTED':'NOT PROMOTED'}</span>`:''}</span></div></div>
+    ${honestyBlock(c)}
     ${gate}
     ${bio}
     <div class="cc-sec"><div class="lb">caveats</div>
@@ -4341,6 +4715,20 @@ function renderClaim(filled){
 }
 function verdictColor(v){return {fragile:"var(--red)","partially robust":"var(--amber)",
   "robust enough for follow-up":"var(--green)","strong candidate":"var(--green)"}[v]||"var(--ink)";}
+/* novelty_class + honesty_rung on the claim card — the engine's honest vocabulary,
+   never a settled/validated-result claim. */
+function honestyBlock(c){
+  const inv=c.investigate; if(!inv) return "";
+  const nov=(inv.novelty_class||"unclassified").toLowerCase();
+  const rung=inv.honesty_rung||"raw_pattern";
+  const idx=Math.max(0,RUNG_ORDER.indexOf(rung));
+  return `<div class="cc-sec"><div class="lb">novelty class · honesty rung</div>
+    <div class="chips">
+      <span class="nov-chip ${nov}">novelty: ${esc(nov)}</span>
+      <span class="chip">rung ${idx+1}/5 · ${esc(RUNG_LABEL[rung]||rung)}</span>
+    </div>
+    <div class="dim3" style="font-size:11px;margin-top:7px;line-height:1.45">${esc(RUNG_GLOSS[rung]||"")} — calibrated honesty: how far this is <b>defended</b>, not that it is true.</div></div>`;
+}
 
 /* ---------- render: verdict meter ---------- */
 function setNeedle(score){document.getElementById("needle").style.left=score+"%";}
@@ -4739,7 +5127,7 @@ function renderDetective(dc, real){
 /* ---------- render everything (static state) ---------- */
 function renderAll(){
   renderExtras();
-  renderSubstrate(); renderCohort(); renderDocket();
+  renderSubstrate(); renderCohort(); renderPresets(); renderPlanOut(); renderDocket();
   renderGauntlet(); renderScatterMeta(); drawScatter();
   const done=S.phase==="done";
   renderClaim(done); renderVerdict(done); renderReviewer(done);
@@ -4819,6 +5207,7 @@ function runGauntlet(){
 function selectCase(kind){
   if(kind===S.kase && S.phase!=="idle") return;
   S.kase=kind; S.phase="idle"; clearTimers();
+  setHypInput();
   renderAll();
 }
 function togglePresent(){
@@ -5000,7 +5389,7 @@ function entryState(sub,kase,color){
   if(sub&&DATA.substrates[sub]) S.sub=sub;
   if(kase&&curSub().cases[kase]) S.kase=kase;
   if(color) S.color=color;
-  S.phase="idle"; hideVerdictWow(); renderAll();
+  S.phase="idle"; hideVerdictWow(); setHypInput(); renderAll();
 }
 
 /* ================= WAVE 3: deterministic autopilot ================= */
@@ -5048,13 +5437,18 @@ function endAutopilot(){
   const lt=document.getElementById("lowerThird"); if(lt)lt.classList.remove("on");
 }
 function toggleSubstrate(){S.sub=S.sub==="synthetic"?"oasis":"synthetic"; S.phase="idle"; clearTimers();
-  if(!curSub().cases[S.kase]) S.kase="SURVIVOR"; renderAll();}
+  if(!curSub().cases[S.kase]) S.kase="SURVIVOR"; setHypInput(); renderAll();}
 
 function bind(){
   document.querySelectorAll("#caseSeg button").forEach(b=>b.onclick=()=>selectCase(b.dataset.case));
   document.querySelectorAll("#colorSeg button").forEach(b=>b.onclick=()=>toggleColor(b.dataset.color));
   document.getElementById("runBtn").onclick=runGauntlet;
   document.getElementById("replayBtn").onclick=runGauntlet;
+  const invBtn=document.getElementById("investigateBtn"); if(invBtn) invBtn.onclick=doInvestigate;
+  const hyp=document.getElementById("hypInput");
+  if(hyp){ hyp.addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&(e.metaKey||e.ctrlKey)){ e.preventDefault(); doInvestigate(); }
+  }); }
   const sb=document.getElementById("substrateBadge");
   sb.onclick=toggleSubstrate;
   sb.onkeydown=e=>{if(e.key==="Enter"||e.code==="Space"){e.preventDefault();e.stopPropagation();toggleSubstrate();}};
@@ -5070,7 +5464,7 @@ function bind(){
   document.getElementById("modalClose").onclick=()=>document.getElementById("modalMask").classList.remove("open");
   document.getElementById("modalMask").onclick=e=>{if(e.target.id==="modalMask")e.target.classList.remove("open");};
   window.addEventListener("keydown",e=>{
-    if(e.target.tagName==="INPUT")return;
+    if(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"||e.target.isContentEditable)return;
     // autopilot: Esc or Space cancels back to manual at the current frame
     if(S.auto){ if(e.code==="Space"||e.key==="Escape"){e.preventDefault();endAutopilot();} else if(e.key==="Escape"){endAutopilot();} return; }
     if(e.code==="Space"){e.preventDefault();runGauntlet();}
@@ -5099,6 +5493,7 @@ async function boot(){
   if(qcase) S.kase=qcase;
   if(qcolor==="outcome"||qcolor==="scanner") S.color=qcolor;
   if(!curSub().cases[S.kase]) S.kase="SURVIVOR";
+  setHypInput();
   renderAll();
   renderClaudeBadge();
   snapRealCI();

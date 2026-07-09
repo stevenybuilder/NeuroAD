@@ -483,9 +483,162 @@ def _claude_badge() -> dict:
                 "path": "deterministic offline template (no ANTHROPIC_API_KEY)"}
 
 
+# ---------------------------------------------------------------------------
+# Stage-2 INVESTIGATE / plan-out block — the plain-language hypothesis entry
+# point. The plan-out spec, pre-registered kill criteria, novelty_class and
+# honesty_rung are REAL harness output (harness.orchestrator.investigate) so the
+# workbench can show "hypothesis in -> plan out (before any math) -> verdict".
+# When the engine is not importable, _static_investigate derives the SAME schema
+# from the calibrated case fields (deterministic, offline) so the block is always
+# present and the UI never sees a missing key.
+# ---------------------------------------------------------------------------
+_STABILITY_FLOOR = 0.60  # detective.STABILITY_FLOOR — bootstrap-Jaccard cluster stability floor
+_ROUTING_KILL_DEFAULT = (
+    "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case "
+    "subset, the amyloid-cascade routing is wrong")
+_EXPECTED_DIR_DEFAULT = (
+    "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, "
+    "modest not redundant) and be enriched in amyloid-positive subjects")
+
+# The 5-rung calibrated-honesty ladder (mirrors experiment_card.HONESTY_LADDER) —
+# lowest -> highest independent corroboration; NO rung asserts "proven/validated".
+HONESTY_LADDER = ["raw_pattern", "stable_cluster", "confound_survivor",
+                  "severity_anchored", "externally_replicated"]
+
+
+def _confounds_for(claim_covariates) -> list[str]:
+    """Spec confounds: the parsed covariates + the two STAR leakage confounds the
+    gauntlet always adjudicates (scanner/site and structural brain-age)."""
+    base = [c for c in (claim_covariates or ["age", "sex"]) if isinstance(c, str)]
+    if not base:
+        base = ["age", "sex"]
+    return base + ["acquisition scanner / site (STAR)", "structural brain-age (proxy)"]
+
+
+def _kill_criteria(ci_pass, routing_kill: str,
+                   stability_floor: float = _STABILITY_FLOOR) -> list[dict]:
+    """Pre-registered falsifiers, phrased with REAL policy thresholds — fixed
+    BEFORE the confirmatory experiment runs (the honesty ladder rests on these)."""
+    try:
+        ci_pass = float(ci_pass)
+    except Exception:
+        ci_pass = 0.12
+    return [
+        {"metric": "scanner leakage margin",
+         "rule": ("REJECT if scanner-AUC ≥ outcome-AUC (leakage margin ≤ 0) "
+                  "— the head is reading the machine, not the biology")},
+        {"metric": "bootstrap stability (Jaccard)",
+         "rule": f"REJECT if bootstrap-Jaccard cluster stability < {stability_floor:.2f}"},
+        {"metric": "biomarker-anchor CI",
+         "rule": (f"REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops "
+                  f"≤ {ci_pass:.2f} (present but unanchored — no molecular support)")},
+        {"metric": "pre-registered routing kill",
+         "rule": routing_kill or _ROUTING_KILL_DEFAULT},
+    ]
+
+
+def _novelty_guess(text: str) -> str:
+    """Deterministic novelty_class (mirrors claim_parser._novelty_class fallback)."""
+    low = f" {(text or '').lower()} "
+    known = ("scanner", "site", "leak", "batch", "field strength", "acquisition", "prior art")
+    novel = ("novel", "hidden", "unknown", "undiscovered", "latent", "emergent",
+             "phenotype", "subtype", "sub-type", "subgroup", "cluster", "stratif")
+    if any(h in low for h in known):
+        return "known"
+    if any(h in low for h in novel):
+        return "novel"
+    return "adjacent"
+
+
+def _rung_from_case(case: dict) -> str:
+    """Conservative honesty rung from the case verdict + promotion (mirrors
+    experiment_card.default_honesty_rung); caps at severity_anchored."""
+    if case.get("promoted"):
+        return "severity_anchored"
+    v = case.get("verdict", "")
+    if v == "robust enough for follow-up":
+        return "confound_survivor"
+    if v == "partially robust":
+        return "stable_cluster"
+    return "raw_pattern"
+
+
+def _static_investigate(case: dict, hypothesis: str, dataset: str) -> dict:
+    """Deterministic offline plan-out block from a calibrated case (no engine)."""
+    claim = case.get("claim", {}) or {}
+    text = hypothesis or claim.get("claim_text", "")
+    anchor_status = next((t.get("result") for t in case.get("tests", [])
+                          if t.get("key") == "biomarker_anchor"), None)
+    return {
+        "source": "static",
+        "hypothesis": text,
+        "dataset": dataset,
+        "novelty_class": _novelty_guess(text),
+        "honesty_rung": _rung_from_case(case),
+        "expected_direction": _EXPECTED_DIR_DEFAULT,
+        "kill_criterion": _ROUTING_KILL_DEFAULT,
+        "routed_mechanism": "amyloid_cascade",
+        "spec": {
+            "target": claim.get("target", ""),
+            "population": {"group_a": claim.get("group_a", ""),
+                           "group_b": claim.get("group_b", "")},
+            "features": claim.get("substrate", ""),
+            "confounds": _confounds_for(["age", "sex"]),
+        },
+        "kill_criteria": _kill_criteria(0.12, _ROUTING_KILL_DEFAULT),
+        "anchor_gate": {"status": anchor_status, "ci_pass": 0.12, "ci_weak": 0.0,
+                        "min_n": 20.0, "ptau217_ci_lo": None, "gfap_ci_lo": None},
+    }
+
+
+def _investigate_block(hypothesis: str, dataset: str, seed: int, case: dict) -> dict:
+    """REAL harness plan-out: parse+enrich the hypothesis, referee it, and capture
+    novelty_class / honesty_rung / pre-registered kill criteria via
+    orchestrator.investigate (offline-deterministic). Falls back to the calibrated
+    static block on any failure so the schema is guaranteed present."""
+    try:
+        from neuroad.harness import orchestrator
+        x = orchestrator.investigate(hypothesis, dataset, seed=seed)
+        d = x.to_dict()
+        prov = d.get("discovery_provenance", {}) or {}
+        gate = prov.get("anchor_gate", {}) or {}
+        claim = x.card.claim
+        routing_kill = prov.get("kill_criterion") or _ROUTING_KILL_DEFAULT
+        # Prefer the honestly-labelled substrate the case already carries.
+        features = ((case.get("claim", {}) or {}).get("substrate")
+                    or getattr(claim, "substrate", ""))
+        return {
+            "source": "engine",
+            "hypothesis": hypothesis,
+            "dataset": dataset,
+            "novelty_class": d.get("novelty_class") or "unclassified",
+            "honesty_rung": d.get("honesty_rung") or "raw_pattern",
+            "expected_direction": prov.get("expected_direction") or _EXPECTED_DIR_DEFAULT,
+            "kill_criterion": routing_kill,
+            "routed_mechanism": gate.get("routed_mechanism") or "amyloid_cascade",
+            "spec": {
+                "target": claim.target,
+                "population": {"group_a": claim.group_a, "group_b": claim.group_b},
+                "features": features,
+                "confounds": _confounds_for(getattr(claim, "covariates", None)),
+            },
+            "kill_criteria": _kill_criteria(gate.get("ci_pass", 0.12), routing_kill),
+            "anchor_gate": {
+                "status": gate.get("status"),
+                "ci_pass": gate.get("ci_pass"), "ci_weak": gate.get("ci_weak"),
+                "min_n": gate.get("min_n"),
+                "ptau217_ci_lo": gate.get("ptau217_ci_lo"),
+                "gfap_ci_lo": gate.get("gfap_ci_lo"),
+            },
+        }
+    except Exception as exc:
+        print(f"[build_demo_data]     investigate engine call failed ({exc}); static block.")
+        return _static_investigate(case, hypothesis, dataset)
+
+
 def fallback_demo_data() -> dict:
     """The calibrated, deterministic, guaranteed-offline payload."""
-    return {
+    data = {
         "meta": {
             "product": "NeuroAD Discovery Engine",
             "tagline": "falsify before you believe",
@@ -522,6 +675,14 @@ def fallback_demo_data() -> dict:
             {"name": "reviewer_report.md", "kind": "md"},
         ],
     }
+    # Stamp a deterministic plan-out (investigate) block onto every case so the
+    # hypothesis-entry surface always has something to render, even offline.
+    for sub_key, sub in data["substrates"].items():
+        for kind, case in sub["cases"].items():
+            dataset = f"synthetic:{kind}" if sub_key == "synthetic" else "oasis"
+            case["investigate"] = _static_investigate(
+                case, case["claim"]["claim_text"], dataset)
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -726,8 +887,14 @@ def _try_engine() -> dict | None:
             fb = data["substrates"][sub]["cases"][kind]
             data["substrates"][sub]["cases"][kind] = _real_case(fb, card, df, promoted_cap=cap)
             c = data["substrates"][sub]["cases"][kind]
+            # REAL plan-out: parse the same hypothesis into a structured Claim,
+            # referee it, and stamp novelty_class / honesty_rung / pre-registered
+            # kill criteria (harness.orchestrator.investigate).
+            inv = _investigate_block(text, loader, seed, c)
+            c["investigate"] = inv
             print(f"[build_demo_data]   {sub}/{kind} ({loader}, {target}): "
-                  f"verdict={c['verdict']} score={c['score']} promoted={c['promoted']}")
+                  f"verdict={c['verdict']} score={c['score']} promoted={c['promoted']} "
+                  f"| investigate: novelty={inv['novelty_class']} rung={inv['honesty_rung']}")
         except Exception as exc:
             import traceback
             print(f"[build_demo_data]   {sub}/{kind} failed ({exc}); keeping fallback case.")
