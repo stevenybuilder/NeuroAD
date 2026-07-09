@@ -142,3 +142,24 @@ def test_run_referee_accepts_raw_string_claim():
     df = _tiny_cohort(seed=1)
     card = pipeline.run_referee(df, "a hunch about converters")
     assert isinstance(card, contract.ClaimCard)
+
+
+def test_claimcard_stage2_fields_default_in_to_dict():
+    """Stage-2 optional fields (novelty_class / atn_profile / honesty_rung)
+    appear in to_dict() with safe defaults and don't break existing behavior."""
+    card = contract.ClaimCard(
+        claim=contract.Claim(claim_id="c1", claim_text="x", target="conversion"),
+        naive_effect={"metric": "AUC", "value": 0.5},
+        tests=[],
+        score=0,
+        verdict=contract.Verdict.FRAGILE,
+        promoted=False,
+    )
+    assert card.novelty_class == ""
+    assert card.atn_profile == {}
+    assert card.honesty_rung == ""
+    d = card.to_dict()
+    assert d["novelty_class"] == ""
+    assert d["atn_profile"] == {}
+    assert d["honesty_rung"] == ""
+    assert contract.CONTRACT_VERSION == "1.1.0"

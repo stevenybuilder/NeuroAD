@@ -1,0 +1,102 @@
+# biomarker_routing.yaml
+# L3 POLICY LAYER — dominant plasma marker -> mechanism -> confirmatory cohort.
+#
+# DUAL-CONSUMPTION: the Bridge's deterministic fallback (bridge._fallback) reads
+# this table to build the survivor's mechanism + one killer experiment when the
+# live API is unavailable; Claude reads the same rows as routing guidance in the
+# BRIDGE prompt.
+#
+# This file MIRRORS src/neuroad/claude/bridge.py _MECHANISMS EXACTLY. The label,
+# markers, cohort, n, direction and kill strings below are transcribed verbatim
+# from that dict — if they drift, the deterministic fallback and the doc disagree
+# and that is a bug. Only survivors that cleared the promotion floor ever route.
+meta:
+  policy: biomarker_routing
+  layer: L3
+  kind: table
+  consumers: [code, claude]
+  version: 1.0.0
+  schema_version: 1
+  last_verified: "2026-07-08"
+  mirrors:
+    - src/neuroad/claude/bridge.py            # _MECHANISMS, _route
+    - src/neuroad/calibration.py              # FACTS, CAL targets
+
+# ---------------------------------------------------------------------------
+# Routing rule. Source: bridge._route.
+# The dominant marker is chosen by the LARGEST standardized mean difference
+# (Cohen's-d-like) across the disease pole of the contrast; amyloid prevalence
+# difference is ADDED to the p_tau217 (tau/amyloid) pole. If no marker separates
+# (max score <= 0) OR the table/disease-mask is unavailable, default to
+# amyloid_cascade.
+routing:
+  dominance_metric: >-
+    absolute standardized mean difference of the marker across the disease mask
+    (bridge._effect_size); amyloid prevalence difference is added to the
+    p_tau217 pole.
+  disease_pole: >-
+    conversion==1 if conversion coverage exists, else dx=="AD" (bridge._disease_mask).
+  default_mechanism: amyloid_cascade          # when no marker separates or df is None
+  marker_to_mechanism:                        # source: bridge._route return map
+    p_tau217: amyloid_cascade
+    gfap: glial
+    nfl: vascular
+
+# ---------------------------------------------------------------------------
+# Mechanisms. Source: bridge._MECHANISMS (verbatim).
+mechanisms:
+
+  amyloid_cascade:
+    label: "amyloid-cascade (tau-driven)"
+    markers: "p-tau217 and amyloid positivity"
+    cohort: "ADNI-3 / EPAD"
+    n: 120
+    expected_direction: >-
+      the structural probe score should track plasma p-tau217 (expected
+      r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive
+      subjects
+    kill_criterion: >-
+      if the probe score shows no p-tau217 correlation (r<0.2) on the
+      complete-case subset, the amyloid-cascade routing is wrong
+    fact_key: ptau217                          # calibration.FACTS["ptau217"]
+
+  glial:
+    label: "neuroinflammatory / glial (reactive astrogliosis)"
+    markers: "plasma GFAP with only weak amyloid coupling"
+    cohort: "ADNI-3 (GFAP subset) / a memory-clinic cohort with plasma GFAP"
+    n: 100
+    expected_direction: >-
+      the probe score should track plasma GFAP more strongly than p-tau217,
+      implicating early astrocyte reactivity rather than a tau-first cascade
+    kill_criterion: >-
+      if GFAP association is no stronger than p-tau217, or vanishes after
+      adjusting for amyloid, the glial routing is wrong
+    fact_key: gfap                             # calibration.FACTS["gfap"]
+
+  vascular:
+    label: "vascular / axonal"
+    markers: "plasma NfL (axonal injury), ideally alongside WMH burden"
+    cohort: "a cohort with plasma NfL and FLAIR-derived WMH (e.g. NACC/EPAD)"
+    n: 100
+    expected_direction: >-
+      the probe score should track plasma NfL and white-matter hyperintensity
+      burden, pointing to axonal/vascular rather than amyloid-first pathology
+    kill_criterion: >-
+      if NfL and WMH show no association with the probe score, the
+      vascular/axonal routing is wrong
+    fact: "Plasma NfL indexes axonal injury; WMH indexes small-vessel disease."
+
+# ---------------------------------------------------------------------------
+# Calibration anchors the BRIDGE prompt is told (bridge._prompt). Source: CAL.
+calibration_anchors:
+  conversion_auc_target: 0.74                  # CAL["conversion_auc"][2]
+  ptau217_r_target: 0.43                       # CAL["ptau217_r"][2]
+  gfap_r_target: 0.35                          # CAL["gfap_r"][2]
+
+# ---------------------------------------------------------------------------
+# Gate reminder: propose_biology fires ONLY for card.promoted == True (verdict at
+# or above PARTIALLY_ROBUST). A non-promoted claim returns the "biology speaks
+# only for survivors" stub, never a mechanism.
+gate:
+  fires_only_if: "card.promoted == True"
+  non_survivor_response: "Biology speaks only for survivors — no mechanism proposed."

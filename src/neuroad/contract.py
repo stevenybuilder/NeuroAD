@@ -6,7 +6,7 @@ Once the schema exists, downstream is data-source-independent: swapping real
 embeddings in later changes one thing — the table, not the code.
 
 Design stance (from the master brief):
-  "Imaging finds it. Proteins confirm it. The system tells you what to do next."
+  "Imaging finds it. Confounds try to fake it. The referee tells you what to do next."
   Build against the embedding-table CONTRACT, not against any specific encoder.
 
 Three interchangeable feeders satisfy this contract:
@@ -242,6 +242,11 @@ class ClaimCard:
     #: run_referee wires them in; both are pure pandas/numpy (no API).
     double_dissociation: dict = field(default_factory=dict)
     confound_leaderboard: list[dict] = field(default_factory=list)
+    #: Stage-2 harness annotations (optional, safe defaults). Populated by the
+    #: L3 policy layer / L5 investigate() path; empty on the frozen demo path.
+    novelty_class: str = ""                 # e.g. "known" | "adjacent" | "novel"
+    atn_profile: dict = field(default_factory=dict)   # A/T/N staging summary
+    honesty_rung: str = ""                  # calibrated-honesty rung label
 
     def to_dict(self) -> dict:
         return {
@@ -265,6 +270,9 @@ class ClaimCard:
             "evidence_ledger": self.evidence_ledger,
             "double_dissociation": self.double_dissociation,
             "confound_leaderboard": self.confound_leaderboard,
+            "novelty_class": self.novelty_class,
+            "atn_profile": self.atn_profile,
+            "honesty_rung": self.honesty_rung,
         }
 
 
@@ -321,4 +329,4 @@ def cohort_summary(df: pd.DataFrame) -> dict:
 
 
 # Contract version — bump if the schema changes so cached tables can be checked.
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"

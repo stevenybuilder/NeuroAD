@@ -37,6 +37,30 @@ MAX_TOKENS = 4096
 
 USING_LIVE_API: bool = bool(os.environ.get("ANTHROPIC_API_KEY"))
 
+#: Updated by ``complete`` to record whether the most recent call actually
+#: reached the live API (vs fell through to the deterministic template). Lets the
+#: CLI/report print a truthful live-vs-offline badge rather than assuming the key
+#: alone means Claude ran.
+LAST_CALL_LIVE: bool = False
+
+
+def model_badge() -> dict:
+    """A truthful, JSON-safe descriptor of which reasoning path is in use.
+
+    ``configured_live`` reflects whether an API key is present; ``model`` and
+    ``path`` name what actually produces the reasoning text so a viewer can see
+    on camera whether Claude ran live or the deterministic offline template did.
+    """
+    live = bool(USING_LIVE_API)
+    return {
+        "live": live,
+        "configured_live": live,
+        "model": PRIMARY_MODEL if live else "offline-template",
+        "path": ("live Anthropic API (claude-fable-5)" if live
+                 else "deterministic offline template (no ANTHROPIC_API_KEY)"),
+        "last_call_live": bool(LAST_CALL_LIVE),
+    }
+
 #: The house system framing shared by every Claude call in the referee. Kept as
 #: a module constant so it reads as deliberate prompt engineering, not an inline
 #: string. Individual modules prepend their own persona instructions.
@@ -60,12 +84,15 @@ def complete(system: str, prompt: str, schema: Optional[dict] = None):
     Never raises for expected failure modes; falls back to a deterministic
     template so the referee pipeline always completes.
     """
+    global LAST_CALL_LIVE
     if USING_LIVE_API:
         try:
-            return _live_complete(system, prompt, schema)
+            out = _live_complete(system, prompt, schema)
+            LAST_CALL_LIVE = True
+            return out
         except Exception:
             # Transport, parse, or refusal-chain failure — degrade gracefully.
-            pass
+            LAST_CALL_LIVE = False
     return _template_complete(system, prompt, schema)
 
 
@@ -74,11 +101,34 @@ def complete(system: str, prompt: str, schema: Optional[dict] = None):
 # ---------------------------------------------------------------------------
 
 
+def _house_system() -> str:
+    """The house system framing for every live Claude call.
+
+    Composes ``REFEREE_SYSTEM`` with the L3 policy layer's verdict + novelty
+    briefs (``harness.policy.brief`` — the same declarative docs deterministic
+    code reads) so the live judge and the offline scorer share one rulebook.
+    ``REFEREE_SYSTEM`` is the fallback: any import/read failure, or a policy
+    layer that yields no brief, leaves the house framing exactly as it is today.
+    Only the live path calls this, so the offline demo stays byte-identical."""
+    briefs: list[str] = []
+    try:
+        from ..harness import policy  # lazy: keep the offline path dependency-free
+        for name in ("verdict_rubric", "novelty_rubric"):
+            body = policy.brief(name)
+            if isinstance(body, str) and body.strip():
+                briefs.append(body.strip())
+    except Exception:
+        briefs = []
+    if not briefs:
+        return REFEREE_SYSTEM
+    return REFEREE_SYSTEM + "\n\n" + "\n\n".join(briefs)
+
+
 def _live_complete(system: str, prompt: str, schema: Optional[dict]):
     import anthropic  # imported lazily so the offline path has no dependency
 
     client = anthropic.Anthropic()
-    full_system = f"{REFEREE_SYSTEM}\n\n{system}".strip()
+    full_system = f"{_house_system()}\n\n{system}".strip()
 
     def _call(model: str, use_fallback: bool):
         kwargs: dict = {

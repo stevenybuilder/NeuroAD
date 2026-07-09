@@ -21,6 +21,7 @@ import pandas as pd
 
 from ..contract import ClaimCard, BIOMARKER_COLUMNS
 from ..calibration import FACTS, target
+from ..harness import policy
 from . import _client
 
 SYSTEM = (
@@ -96,6 +97,37 @@ _MECHANISMS = {
         "fact": "Plasma NfL indexes axonal injury; WMH indexes small-vessel disease.",
     },
 }
+
+
+def _mechanisms() -> dict:
+    """Biomarker->mechanism table, routed from the L3 policy layer
+    (policy.table("biomarker_routing")) with _MECHANISMS as the exact offline
+    fallback. The policy loader already guarantees that fallback when policy/ is
+    missing or malformed; we mirror the doc's ("expected_direction",
+    "kill_criterion", "fact_key") shape back to this module's field names and
+    fall back locally if any routing target is missing, so behavior is identical
+    to _MECHANISMS whenever the doc matches it."""
+    try:
+        raw = policy.table("biomarker_routing").get("mechanisms") or {}
+        out = {}
+        for key, m in raw.items():
+            fact = m.get("fact")
+            if fact is None and m.get("fact_key"):
+                fact = FACTS.get(m["fact_key"])
+            out[key] = {
+                "label": m.get("label"),
+                "markers": m.get("markers"),
+                "cohort": m.get("cohort"),
+                "n": m.get("n"),
+                "direction": m.get("expected_direction"),
+                "kill": m.get("kill_criterion"),
+                "fact": fact,
+            }
+        if all(k in out for k in _MECHANISMS):       # only trust a full table
+            return out
+    except Exception:
+        pass
+    return _MECHANISMS
 
 
 def propose_biology(card: ClaimCard, df: Optional[pd.DataFrame] = None) -> dict:
@@ -191,7 +223,7 @@ def _route(df: Optional[pd.DataFrame]) -> str:
 
 
 def _fallback(card: ClaimCard, mech_key: str) -> dict:
-    m = _MECHANISMS[mech_key]
+    m = _mechanisms()[mech_key]
     hypothesis = (
         f"Survivor “{card.claim.claim_text}” routes to a {m['label']} mechanism, "
         f"keyed on {m['markers']}. {m['fact']} The structural probe is read as a "
@@ -234,7 +266,7 @@ def _prompt(card: ClaimCard, df: Optional[pd.DataFrame], mech_key: str) -> str:
         f"{card.score}/100).\n"
         f"Populations: {card.claim.group_a} vs {card.claim.group_b}.\n"
         f"Biomarker coverage in the table: {cov}.\n"
-        f"Suggested routing from marker dominance: {_MECHANISMS[mech_key]['label']}.\n"
+        f"Suggested routing from marker dominance: {_mechanisms()[mech_key]['label']}.\n"
         f"Calibration anchors: conversion AUC target ~{target('conversion_auc')}, "
         f"p-tau217 correlation target ~{target('ptau217_r')}.\n"
         "Give the mechanism hypothesis, one falsifiable next experiment, and the "

@@ -1,0 +1,186 @@
+# confound_priors.yaml
+# L3 POLICY LAYER — per-confound prior + flag threshold + mitigation.
+#
+# DUAL-CONSUMPTION: deterministic code loads the `confounds` table (thresholds,
+# CAL keys) as the fallback if the live values ever go missing; Claude prompts
+# read the `prior` / `mitigation` prose to reason about which artifact to blame.
+#
+# EVERY threshold below is the SAME value the running gauntlet uses. They are
+# transcribed, not invented — if you change one here without changing the code
+# it is a bug. Provenance is stamped inline (`source:` on each threshold).
+#   - retained bands ...... src/neuroad/gauntlet.py  _SURVIVOR_RETAINED / _KILL_RETAINED
+#   - CAL ranges .......... src/neuroad/calibration.py  CAL{...}
+#   - margin/CI rule ...... src/neuroad/gauntlet.py  test_site_scanner + leakage.py
+meta:
+  policy: confound_priors
+  layer: L3
+  kind: table                       # code-consumed YAML table
+  consumers: [code, claude]
+  version: 1.0.0
+  schema_version: 1
+  last_verified: "2026-07-08"
+  mirrors:
+    - src/neuroad/gauntlet.py
+    - src/neuroad/calibration.py
+    - src/neuroad/leakage.py
+    - src/neuroad/contract.py
+
+# ---------------------------------------------------------------------------
+# Shared retained-fraction bands (age/sex + brain-age tests both use these).
+# `retained` = fraction of the naive effect (AUC-0.5) that survives the control.
+#   PASSED   if retained >= survivor_retained
+#   WEAKENED if kill_retained <= retained < survivor_retained
+#   FAILED   if retained <  kill_retained
+# These MUST equal gauntlet.py: _SURVIVOR_RETAINED = CAL["survivor_retained"][0],
+#                               _KILL_RETAINED     = CAL["kill_retained"][1].
+retained_bands:
+  survivor_retained: 0.70          # source: CAL["survivor_retained"][0]  -> PASSED at/above
+  kill_retained: 0.40              # source: CAL["kill_retained"][1]      -> FAILED below
+  result_credit:                   # source: contract.RESULT_CREDIT
+    passed: 1.0
+    weakened: 0.5
+    mixed: 0.5
+    failed: 0.0
+    not_available: 0.0
+
+# ---------------------------------------------------------------------------
+# Per-confound table. `gauntlet_test` names the function in gauntlet.py that
+# operationalizes this confound; `weight` mirrors contract.GAUNTLET.
+confounds:
+
+  scanner_site:
+    label: Site / scanner leakage
+    gauntlet_test: test_site_scanner
+    weight: 25                       # source: contract.GAUNTLET  (STAR)
+    star: true
+    question: >-
+      Is it disease signal, or just which machine acquired the scan?
+    prior: >-
+      Scanner/site is a well-documented confound in multi-site AD MRI ML
+      (hardware, field strength, coil, protocol). Frozen brain-foundation-model
+      embeddings can predict acquisition site/scanner as well as biological
+      outcome — this is published prior art, we ship the measurement, we do not
+      claim it. (calibration.FACTS["site_confound"]; PRIOR_ART arXiv:2604.14441,
+      arXiv:2606.09189 leakage margin ~0.16-0.37.)
+    statistic: >-
+      leakage margin = outcome_AUC - scanner_AUC (outcome measured site-disjoint;
+      scanner measured with plain stratified CV so it is a conservative lower
+      bound on the outcome's edge), with a bootstrap 95% CI on the margin.
+    # This test is NOT scored on the retained band; it is a margin + CI rule.
+    flag:                            # source: gauntlet.py test_site_scanner
+      failed_if: "margin <= 0"                     # scanner predicts as well as outcome -> artifact
+      passed_if: "margin > 0 AND margin_ci_excludes_zero"
+      weakened_if: "margin > 0 AND NOT margin_ci_excludes_zero"
+      na_if: "single scanner AND single site (no acquisition confound to test)"
+    calibration_refs:               # source: calibration.CAL (demo plausibility ranges only)
+      site_auc_kill: [0.88, 0.96, 0.92]       # KILL: leakage >= outcome (the punchline)
+      site_auc_survivor: [0.58, 0.70, 0.64]   # SURVIVOR: outcome clearly exceeds confound
+    mitigation: >-
+      ComBat / ComBat-GAM harmonization is the standard field mitigation. In this
+      engine the operational scrub is double_dissociation(): project the embedding
+      out of the top scanner-discriminating LDA direction(s) and re-measure the
+      outcome AUC — a survivor retains most of its effect, a kill collapses toward
+      chance. See leakage.double_dissociation / confound_leaderboard.
+
+  age:
+    label: Age adjustment (component of age_sex)
+    gauntlet_test: test_age_sex
+    weight_shared_with: sex          # age+sex are ONE gauntlet dimension (age_sex)
+    weight: 15                       # source: contract.GAUNTLET (whole age_sex dim)
+    star: false
+    question: >-
+      Does the signal survive adjusting for chronological age?
+    prior: >-
+      Age is the dominant axis of structural brain variation and the primary
+      nuisance direction an atrophy probe can ride. Adjust before crediting any
+      disease signal. (Generic-aging vs disease-specific change is the same
+      concern the brain-age control formalizes.)
+    statistic: >-
+      residualize the embedding against standardized age (and sex), re-measure
+      the outcome AUC, report retained fraction.
+    flag:                            # source: retained_bands above
+      passed_if: "retained >= 0.70"
+      weakened_if: "0.40 <= retained < 0.70"
+      failed_if: "retained < 0.40"
+      na_if: "no age variation (fewer than 3 finite ages or zero age std)"
+    calibration_refs:
+      survivor_retained: [0.70, 0.90, 0.80]   # loses only 10-30%
+      kill_retained: [0.10, 0.40, 0.25]       # loses 60-90%, collapses
+    mitigation: >-
+      Linear residualization of every embedding column against standardized age
+      (gauntlet._residualize). ComBat-GAM covers age nonlinearity in the field.
+
+  sex:
+    label: Sex adjustment (component of age_sex)
+    gauntlet_test: test_age_sex
+    weight_shared_with: age
+    weight: 15                       # source: contract.GAUNTLET (whole age_sex dim)
+    star: false
+    question: >-
+      Does the signal survive adjusting for sex?
+    prior: >-
+      Sex differences in brain morphometry (total intracranial volume,
+      regional volumes) can masquerade as a group effect when the contrast is
+      sex-imbalanced. Adjust alongside age.
+    statistic: >-
+      residualize against a sex indicator (F=1) jointly with age; retained
+      fraction as above.
+    flag:                            # source: retained_bands above (same dimension as age)
+      passed_if: "retained >= 0.70"
+      weakened_if: "0.40 <= retained < 0.70"
+      failed_if: "retained < 0.40"
+      na_if: "sex does not vary in the outcome-kept subset"
+    calibration_refs:
+      survivor_retained: [0.70, 0.90, 0.80]
+      kill_retained: [0.10, 0.40, 0.25]
+    mitigation: >-
+      Include a sex indicator in the covariate design matrix C passed to
+      gauntlet._residualize (default covariates: [age, sex]).
+
+  brain_age:
+    label: Brain-age control
+    gauntlet_test: test_brain_age
+    weight: 25                       # source: contract.GAUNTLET  (STAR)
+    star: true
+    question: >-
+      More than generic aging / atrophy?
+    prior: >-
+      The brain-age GAP (predicted - chronological, BrainAGE / brain-PAD) is a
+      recognized control for generic aging vs disease-specific change; Franke &
+      Gaser 2013 links it to MCI->AD conversion. Reported as a proxy control.
+      (calibration.FACTS["brain_age_gap"]; brain-age model R2~0.85, MAE~3yr is
+      the honest range, R2~0.89 is the optimistic wide-age-cohort end.)
+    statistic: >-
+      fit a brain-age regressor on CN subjects only (out-of-fold for the CN rows),
+      then residualize the outcome embedding against the Franke/Gaser brain-age
+      GAP (primary verdict) AND, as a stricter secondary view, against predicted
+      brain age. Report retained fraction under each.
+    flag:                            # source: retained_bands (primary = GAP control)
+      passed_if: "retained_gap >= 0.70"
+      weakened_if: "0.40 <= retained_gap < 0.70"
+      failed_if: "retained_gap < 0.40"
+      na_if: "fewer than 8 healthy (CN) subjects with age, or zero age std among them"
+      secondary_view: >-
+        retained_pred (predicted-brain-age control) is reported alongside as a
+        conservative lower bound; the verdict is taken on retained_gap so an
+        over-aggressive residualization cannot silently kill a real signal.
+    calibration_refs:
+      brain_age_r2: [0.80, 0.90, 0.85]
+      brain_age_mae_yr: [2.5, 4.0, 3.0]
+      survivor_retained: [0.70, 0.90, 0.80]
+      kill_retained: [0.10, 0.40, 0.25]
+    mitigation: >-
+      Residualize against the brain-age GAP (age-independent deviation), not
+      against predicted brain age, so chronological age is not double-scrubbed
+      and disease-specific atrophy is not removed together with generic aging.
+
+# ---------------------------------------------------------------------------
+# Variance-attribution helper (not a gauntlet test): ranks how much probe-score
+# variance each of {scanner/site, age, sex} explains, so the scientist sees which
+# artifact to fix first. Source: leakage.confound_leaderboard.
+confound_leaderboard:
+  considers: [scanner_or_site, age, sex]
+  statistic: >-
+    eta^2 (one-way ANOVA) for categorical confounds, R^2 of a linear fit for age;
+    fraction of in-sample probe-score variance explained, sorted descending.
+  purpose: diagnostic ranking only — does not change the verdict.

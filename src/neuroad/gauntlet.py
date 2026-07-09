@@ -8,9 +8,12 @@ Each test returns a `contract.TestEvidence(key, result, detail, stats)`:
   4. biomarker_anchor — backed by molecular pathology (p-tau217 / GFAP)? HARD GATE.
   5. replication      — reproduces on a held-out site / cohort?
 
-Thresholds come from `calibration.CAL` (retained-fraction bands), never from
-free-floating constants. Where the data cannot support a test, its result is
-`TestResult.NA` (dropped from the score, surfaced as a completeness caveat).
+The confound flag thresholds (retained-fraction bands) come from the L3
+`confound_priors` policy doc via `harness.policy.thresholds`, never from
+free-floating constants; those policy values are transcriptions of
+`calibration.CAL`, which stays the exact fallback if `policy/` is absent or
+malformed. Where the data cannot support a test, its result is `TestResult.NA`
+(dropped from the score, surfaced as a completeness caveat).
 """
 from __future__ import annotations
 
@@ -26,12 +29,23 @@ from sklearn.preprocessing import StandardScaler
 from . import contract
 from .calibration import CAL
 from .contract import TestEvidence, TestResult
+from .harness import policy
 from .leakage import leakage_margin
-from .probe import LinearProbe, cross_val_auc, point_head
+from .probe import LinearProbe, N_BOOT, N_PERM, cross_val_auc, point_head
 
-# Retained-fraction bands (fraction of the naive effect that survives a control).
-_SURVIVOR_RETAINED = CAL["survivor_retained"][0]   # 0.70 -> PASSED at/above
-_KILL_RETAINED = CAL["kill_retained"][1]            # 0.40 -> FAILED below
+# Retained-fraction bands (fraction of the naive effect that survives a control) —
+# the flag thresholds for the confound tests (age/sex, brain-age). Read from the
+# L3 `confound_priors` policy doc, whose `retained_bands` transcribe
+# CAL["survivor_retained"][0] / CAL["kill_retained"][1]. policy.thresholds already
+# overlays policy onto that hardcoded CAL fallback key-by-key; the outer guard
+# keeps the demo byte-identical even if the loader import itself ever fails.
+try:
+    _CONFOUND_BANDS = policy.thresholds("retained")     # from policy/confound_priors.yaml
+    _SURVIVOR_RETAINED = _CONFOUND_BANDS["survivor_retained"]  # 0.70 -> PASSED at/above
+    _KILL_RETAINED = _CONFOUND_BANDS["kill_retained"]          # 0.40 -> FAILED below
+except Exception:                                       # pragma: no cover - defensive
+    _SURVIVOR_RETAINED = CAL["survivor_retained"][0]    # 0.70 -> PASSED at/above
+    _KILL_RETAINED = CAL["kill_retained"][1]            # 0.40 -> FAILED below
 # Biomarker-anchor gating on the 95% CI LOWER BOUND of the correlation (not raw
 # r), so a lucky small-n correlation on noise cannot pass and a real anchor is
 # not failed by seed. PASS => CI lower bound confidently positive.
@@ -106,22 +120,35 @@ def test_age_sex(df: pd.DataFrame, target: str) -> TestEvidence:
 # ---------------------------------------------------------------------------
 # 2. Site / scanner leakage  (STAR)
 # ---------------------------------------------------------------------------
-def test_site_scanner(df: pd.DataFrame, target: str) -> TestEvidence:
+def test_site_scanner(df: pd.DataFrame, target: str,
+                      n_boot: int = N_BOOT, n_perm: int = N_PERM) -> TestEvidence:
     if df["scanner"].nunique(dropna=True) <= 1 and df["site"].nunique(dropna=True) <= 1:
         return TestEvidence("site_scanner", TestResult.NA,
                             "single scanner/site — no acquisition confound to test")
-    m = leakage_margin(df, target=target)
+    m = leakage_margin(df, target=target, n_boot=n_boot, n_perm=n_perm)
     margin = m["margin"]
+    ci_lo = m.get("margin_ci_lo")
+    ci_hi = m.get("margin_ci_hi")
+    excludes_zero = m.get("margin_ci_excludes_zero", False)
+    ci_txt = "" if ci_lo is None else f" [95% CI {ci_lo:+.2f}, {ci_hi:+.2f}]"
+
+    # Reframe the star as a TEST, not a bare point cutoff: the outcome must beat
+    # the scanner by more than noise (margin CI excludes zero), not merely have a
+    # positive point estimate. This directly answers "is that margin significant?"
     if margin <= 0:
         res = TestResult.FAILED
-        detail = (f"scanner predicted as well as outcome (margin {margin:+.2f}); "
-                  f"likely acquisition artifact")
-    elif margin < 0.10:
-        res = TestResult.WEAKENED
-        detail = f"outcome only narrowly exceeds scanner (margin {margin:+.2f})"
-    else:
+        detail = (f"scanner predicted as well as outcome (margin {margin:+.2f}"
+                  f"{ci_txt}); likely acquisition artifact")
+    elif excludes_zero:
         res = TestResult.PASSED
-        detail = f"outcome clearly exceeds scanner (margin {margin:+.2f})"
+        detail = (f"outcome exceeds scanner and the margin CI excludes zero "
+                  f"(margin {margin:+.2f}{ci_txt})")
+    else:
+        # Point estimate positive but the CI still includes zero -> not
+        # defensibly better than the machine.
+        res = TestResult.WEAKENED
+        detail = (f"outcome only narrowly exceeds scanner; margin CI includes "
+                  f"zero (margin {margin:+.2f}{ci_txt})")
     return TestEvidence("site_scanner", res, detail, m)
 
 
@@ -151,13 +178,11 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
     r2 = float(1 - ss_res / ss_tot) if ss_tot > 0 else 0.0
     mae = float(np.mean(np.abs(age_all[train] - yhat_cv)))
 
-    # Predicted brain age for every outcome subject. We control the outcome for
-    # the brain's *apparent age* (the embedding-derived brain-age estimate), not
-    # merely the residual gap: residualizing against the gap leaves the aging
-    # component itself in the embedding, so a signal that is generic atrophy in
-    # disguise would spuriously survive. Regressing out predicted brain age
-    # removes the aging-aligned direction, so only age-independent disease signal
-    # is left to be re-detected.
+    # Predicted brain age for every outcome subject. We compute BOTH the
+    # embedding-derived apparent brain age (the strict control) and the
+    # Franke/Gaser brain-age GAP (predicted - chronological), and report the
+    # effect retained under each — see the two-way rationale below where the
+    # controls are applied.
     reg.fit(Xall[train], age_all[train])
     keep = _outcome_keep_mask(df, target)
     # Predicted brain age for every subject: in-sample fit for subjects the
@@ -169,20 +194,46 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
     brain_age_all[train] = yhat_cv
     brain_age = brain_age_all[keep]
     age_kept = age_all[keep]
-    gap = brain_age - age_kept                      # reported as brain-age gap
+    gap = brain_age - age_kept                      # Franke/Gaser brain-age GAP
     gap = np.nan_to_num(gap, nan=0.0)
-    control = np.nan_to_num(brain_age, nan=float(np.nanmean(brain_age)))
+    control_pred = np.nan_to_num(brain_age, nan=float(np.nanmean(brain_age)))
 
+    # We report the brain-age control BOTH ways so one over-aggressive
+    # residualization cannot silently kill a real signal:
+    #   * PREDICTED brain age (control_pred): removes the whole aging-aligned
+    #     direction. This is the STRICT control — but for a dx_binary outcome the
+    #     disease atrophy loads on the same axis, so it can over-remove the signal
+    #     by construction (removes generic aging AND AD-specific atrophy together).
+    #   * brain-age GAP (gap = predicted - chronological): the Franke/Gaser
+    #     BrainAGE standard — residualize against the age-INDEPENDENT deviation,
+    #     leaving age itself out of the scrub. This is the cited-standard control
+    #     and the one the verdict is based on; the strict predicted-brain-age
+    #     retained fraction is reported alongside as a secondary, conservative view.
     auc_before = cross_val_auc(Xo, yo, groups=go)
-    auc_after = cross_val_auc(_residualize(Xo, control), yo, groups=go)
-    retained = _retained_fraction(auc_before, auc_after)
+    auc_after_gap = cross_val_auc(_residualize(Xo, gap), yo, groups=go)
+    auc_after_pred = cross_val_auc(_residualize(Xo, control_pred), yo, groups=go)
+    retained_gap = _retained_fraction(auc_before, auc_after_gap)
+    retained_pred = _retained_fraction(auc_before, auc_after_pred)
+
+    # Verdict on the standard (gap) control; keep the primary "retained"/
+    # "auc_after" keys pointing at it for the ledger's backward compatibility.
+    retained = retained_gap
     res = _result_from_retained(retained)
     detail = (f"brain-age R2={r2:.2f}, MAE={mae:.1f}yr; effect retained "
-              f"{retained:.0%} after brain-age-gap control")
+              f"{retained_gap:.0%} after brain-age-GAP control "
+              f"(Franke/Gaser standard), {retained_pred:.0%} under the stricter "
+              f"predicted-brain-age control")
     return TestEvidence("brain_age", res, detail, {
         "r2": round(r2, 3), "mae_yr": round(mae, 2),
-        "auc_before": round(auc_before, 4), "auc_after": round(auc_after, 4),
-        "retained": round(retained, 3), "n_healthy": int(train.sum()),
+        "auc_before": round(auc_before, 4),
+        "auc_after": round(auc_after_gap, 4),
+        "retained": round(retained_gap, 3),
+        # both adjustments, explicitly labelled:
+        "auc_after_gap": round(auc_after_gap, 4),
+        "retained_gap": round(retained_gap, 3),
+        "auc_after_pred": round(auc_after_pred, 4),
+        "retained_pred": round(retained_pred, 3),
+        "n_healthy": int(train.sum()),
     })
 
 
@@ -218,15 +269,17 @@ def _anchor_corr(score: np.ndarray, marker: np.ndarray) -> tuple[Optional[float]
 
 def _oof_scores(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     """Out-of-fold P(positive) so the anchor cannot correlate with overfit
-    in-sample residuals — a spurious anchor is exactly what we must not credit."""
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import StandardScaler
-    from .probe import _n_splits
+    in-sample residuals — a spurious anchor is exactly what we must not credit.
+
+    Uses the SAME automatic PCA front-end as the rest of the probe path so the
+    anchor correlation on a p >> n cohort is computed on the defensible reduced
+    representation, not the inflated raw 768-d one.
+    """
+    from .probe import _n_splits, build_probe_pipeline
+    X = np.asarray(X, dtype=float)
     y_codes = np.searchsorted(np.unique(y), y)
     k = _n_splits(y_codes, None)
-    pipe = Pipeline([("scale", StandardScaler()),
-                     ("clf", LogisticRegression(max_iter=2000, class_weight="balanced"))])
+    pipe, _ = build_probe_pipeline(X.shape[0], X.shape[1])
     proba = cross_val_predict(pipe, X, y_codes, cv=k, method="predict_proba")
     return proba[:, 1] if proba.shape[1] == 2 else proba.max(axis=1)
 
@@ -254,10 +307,19 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
     ptau_r, ptau_n, ptau_lo = _anchor_corr(score, sub["p_tau217"].to_numpy(float))
     gfap_r, gfap_n, gfap_lo = _anchor_corr(score, sub["gfap"].to_numpy(float))
 
+    # Provenance: on a synthetic cohort the plasma markers are CALIBRATION TARGETS
+    # drawn to sit inside a literature range (calibration.CAL), NOT measured plasma.
+    # Badge them so no downstream artifact can present a fabricated r as a
+    # measurement. No open MRI+plasma cohort exists, so this is always synthetic today.
+    synthetic_anchor = bool(df.attrs.get("synthetic_biomarkers"))
     stats = {"ptau217_r": None if ptau_r is None else round(ptau_r, 3), "ptau217_n": ptau_n,
              "ptau217_ci_lo": None if ptau_lo is None else round(ptau_lo, 3),
              "gfap_r": None if gfap_r is None else round(gfap_r, 3), "gfap_n": gfap_n,
-             "gfap_ci_lo": None if gfap_lo is None else round(gfap_lo, 3)}
+             "gfap_ci_lo": None if gfap_lo is None else round(gfap_lo, 3),
+             "synthetic": synthetic_anchor,
+             "provenance": ("SYNTHETIC HARNESS — p-tau217/GFAP are calibration "
+                            "targets (calibration.CAL), not measured plasma"
+                            if synthetic_anchor else "measured")}
 
     # Pick the primary anchor (p-tau217 preferred, GFAP secondary).
     if ptau_r is not None:
@@ -280,6 +342,8 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
         res = TestResult.FAILED            # data present but unanchored -> gate fails
     detail = (f"{marker} correlation r={primary:+.2f} "
               f"(95% CI lower {ci_lo:+.2f}, n={n_used})")
+    if synthetic_anchor:
+        detail += " [SYNTHETIC HARNESS: calibration target, not measured plasma]"
     return TestEvidence("biomarker_anchor", res, detail, stats)
 
 
@@ -316,37 +380,82 @@ def test_replication(df: pd.DataFrame, target: str) -> TestEvidence:
     train_auc = cross_val_auc(Xo[tr], yo[tr], groups=None)
     probe = LinearProbe().fit(Xo[tr], yo[tr])
     from sklearn.metrics import roc_auc_score
-    test_auc = float(roc_auc_score(yo[te], probe.decision_scores(Xo[te])))
+    from .probe import _fast_binary_auc
 
-    if test_auc >= 0.65:
-        res = TestResult.PASSED
-    elif test_auc >= 0.58:
-        res = TestResult.WEAKENED
+    y_te = np.asarray(yo[te])
+    scores_te = np.asarray(probe.decision_scores(Xo[te]))
+    binary = len(np.unique(y_te)) == 2
+    test_auc = float(roc_auc_score(y_te, scores_te))
+
+    # Bootstrap a 95% CI on the held-out-site AUC instead of trusting a single
+    # small-n point estimate (the bare-cutoff antipattern the tool rejects for the
+    # other two stars). Gate PASS on the CI lower bound clearing the PASS
+    # threshold; WEAKENED when the CI excludes chance (lower bound > 0.5) but does
+    # not clear the threshold; FAILED when the CI includes chance. A lucky small-n
+    # site whose CI straddles the threshold can therefore no longer be PASSED.
+    REPL_PASS = 0.65        # AUC the CI lower bound must clear to PASS
+    n_boot = 1000
+    rng = np.random.default_rng(0)
+    n_te = int(te.sum())
+    idx = np.arange(n_te)
+    boot = []
+    for _ in range(n_boot):
+        b = rng.choice(idx, size=n_te, replace=True)
+        yb = y_te[b]
+        if len(np.unique(yb)) < 2:
+            continue
+        if binary:
+            a = _fast_binary_auc(yb, scores_te[b])
+        else:
+            try:
+                a = float(roc_auc_score(yb, scores_te[b]))
+            except Exception:
+                a = None
+        if a is not None:
+            boot.append(a)
+    boot = np.asarray(boot, dtype=float)
+    if boot.size:
+        ci_lo, ci_hi = (float(v) for v in np.percentile(boot, [2.5, 97.5]))
     else:
+        ci_lo = ci_hi = None
+
+    if ci_lo is None:
+        res = TestResult.NA
+    elif ci_lo >= REPL_PASS:               # CI lower bound clears the threshold
+        res = TestResult.PASSED
+    elif ci_lo > 0.5:                      # excludes chance but not the threshold
+        res = TestResult.WEAKENED
+    else:                                  # CI includes chance
         res = TestResult.FAILED
-    detail = (f"held-out cohort AUC={test_auc:.2f} (train {train_auc:.2f}); "
-              f"n_test={int(te.sum())}")
+    ci_txt = "" if ci_lo is None else f" [95% CI {ci_lo:.2f}, {ci_hi:.2f}]"
+    detail = (f"held-out cohort AUC={test_auc:.2f}{ci_txt} (train {train_auc:.2f}); "
+              f"n_test={n_te}")
     return TestEvidence("replication", res, detail, {
         "train_auc": round(train_auc, 4), "test_auc": round(test_auc, 4),
-        "n_train": int(tr.sum()), "n_test": int(te.sum()),
+        "test_auc_ci_lo": None if ci_lo is None else round(ci_lo, 4),
+        "test_auc_ci_hi": None if ci_hi is None else round(ci_hi, 4),
+        "n_train": int(tr.sum()), "n_test": n_te,
     })
 
 
 # ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
-def run_gauntlet(df: pd.DataFrame, claim) -> list[TestEvidence]:
+def run_gauntlet(df: pd.DataFrame, claim,
+                 n_boot: int = N_BOOT, n_perm: int = N_PERM) -> list[TestEvidence]:
     """Run all five gauntlet tests for a claim; NA where data is insufficient.
 
     `claim` may be a `contract.Claim` or anything with a `.target` attribute;
-    a bare string target is also accepted.
+    a bare string target is also accepted. ``n_boot``/``n_perm`` control the
+    leakage-star bootstrap/permutation budget — callers that run many times
+    (e.g. the seed-stability sweep) can lower them for speed.
     """
     target = getattr(claim, "target", claim)
     if target not in contract.LABEL_TARGETS:
         target = "conversion"
     return [
         test_age_sex(df, target),
-        test_site_scanner(df, target),
+        test_site_scanner(df, target, n_boot=n_boot, n_perm=n_perm),
         test_brain_age(df, target),
         test_biomarker_anchor(df, target),
         test_replication(df, target),

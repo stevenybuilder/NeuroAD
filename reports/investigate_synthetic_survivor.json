@@ -1,0 +1,281 @@
+{
+  "claim_id": "claim-mri-embeddings-separate-mci-conv",
+  "claim_text": "MRI embeddings separate MCI converters from non-converters",
+  "substrate": "frozen Neuro-JEPA structural embeddings",
+  "head": "linear probe",
+  "population": {
+    "group_a": "MCI converters",
+    "group_b": "MCI non-converters"
+  },
+  "naive_effect": {
+    "metric": "AUC",
+    "value": 0.739,
+    "target": "conversion",
+    "n": 130,
+    "head": "linear probe",
+    "substrate": "frozen Neuro-JEPA structural embeddings"
+  },
+  "robustness": {
+    "age_sex": "passed",
+    "site_scanner": "weakened",
+    "brain_age": "passed",
+    "biomarker_anchor": "passed",
+    "replication": "weakened"
+  },
+  "robustness_detail": {
+    "age_sex": {
+      "detail": "effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)",
+      "stats": {
+        "auc_before": 0.7387,
+        "auc_after": 0.7631,
+        "retained": 1.102,
+        "n": 130
+      }
+    },
+    "site_scanner": {
+      "detail": "outcome only narrowly exceeds scanner; margin CI includes zero (margin +0.06 [95% CI -0.04, +0.16])",
+      "stats": {
+        "outcome_auc": 0.7387,
+        "scanner_auc": 0.6757,
+        "margin": 0.063,
+        "confound": "scanner",
+        "outcome_ci": [
+          0.6534,
+          0.8185
+        ],
+        "scanner_ci": [
+          0.6243,
+          0.7305
+        ],
+        "outcome_p_perm": 0.001,
+        "scanner_p_perm": 0.001,
+        "scanner_ci_excludes_chance": true,
+        "margin_ci_lo": -0.0353,
+        "margin_ci_hi": 0.1606,
+        "margin_p": 0.001,
+        "margin_ci_excludes_zero": false
+      }
+    },
+    "brain_age": {
+      "detail": "brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control (Franke/Gaser standard), 102% under the stricter predicted-brain-age control",
+      "stats": {
+        "r2": 0.776,
+        "mae_yr": 2.94,
+        "auc_before": 0.7387,
+        "auc_after": 0.747,
+        "retained": 1.035,
+        "auc_after_gap": 0.747,
+        "retained_gap": 1.035,
+        "auc_after_pred": 0.7434,
+        "retained_pred": 1.02,
+        "n_healthy": 137
+      }
+    },
+    "biomarker_anchor": {
+      "detail": "p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS: calibration target, not measured plasma]",
+      "stats": {
+        "ptau217_r": 0.404,
+        "ptau217_n": 77,
+        "ptau217_ci_lo": 0.197,
+        "gfap_r": 0.342,
+        "gfap_n": 130,
+        "gfap_ci_lo": 0.18,
+        "synthetic": true,
+        "provenance": "SYNTHETIC HARNESS \u2014 p-tau217/GFAP are calibration targets (calibration.CAL), not measured plasma"
+      }
+    },
+    "replication": {
+      "detail": "held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62",
+      "stats": {
+        "train_auc": 0.7316,
+        "test_auc": 0.7229,
+        "test_auc_ci_lo": 0.5989,
+        "test_auc_ci_hi": 0.8408,
+        "n_train": 68,
+        "n_test": 62
+      }
+    }
+  },
+  "robustness_score": 80,
+  "verdict": "robust enough for follow-up",
+  "promoted": true,
+  "biology_hypothesis": "Survivor \u201cMRI embeddings separate MCI converters from non-converters\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+  "next_experiment": [
+    "Cohort: ADNI-3 / EPAD.",
+    "Target N: ~120 complete-case subjects with the routing biomarker.",
+    "Direction: the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects.",
+    "Kill criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong."
+  ],
+  "falsification": [
+    "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong.",
+    "If the probe score's biomarker correlation disappears after residualizing against a scanner-predicting direction, the survivor was leakage after all.",
+    "If a held-out cohort fails to reproduce the effect (drop below the promotion floor), the mechanism claim is withdrawn."
+  ],
+  "caveats": [
+    "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET (drawn to sit inside a literature range in calibration.CAL), not a measured plasma value \u2014 no open cohort pairs MRI with plasma markers. The molecular anchor demonstrates the gate MECHANIC, not a real result.",
+    "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+    "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+    "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+    "Any biomarker anchor is complete-case only and may not generalize.",
+    "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+    "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
+    "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+    "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.78, MAE=2.9yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+    "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+    "N is small (~130); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
+    "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  ],
+  "evidence_ledger": [
+    {
+      "test": "age_sex",
+      "metric": "effect retained (age/sex)",
+      "value": 1.102,
+      "result": "passed",
+      "n_used": 130,
+      "n_missing": null,
+      "detail": "effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)"
+    },
+    {
+      "test": "site_scanner",
+      "metric": "leakage margin (outcome-scanner AUC)",
+      "value": 0.063,
+      "result": "weakened",
+      "n_used": null,
+      "n_missing": null,
+      "detail": "outcome only narrowly exceeds scanner; margin CI includes zero (margin +0.06 [95% CI -0.04, +0.16])"
+    },
+    {
+      "test": "brain_age",
+      "metric": "effect retained (brain-age)",
+      "value": 1.035,
+      "result": "passed",
+      "n_used": 137,
+      "n_missing": null,
+      "detail": "brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control (Franke/Gaser standard), 102% under the stricter predicted-brain-age control"
+    },
+    {
+      "test": "biomarker_anchor",
+      "metric": "p-tau217 correlation r",
+      "value": 0.404,
+      "result": "passed",
+      "n_used": 77,
+      "n_missing": null,
+      "detail": "p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS: calibration target, not measured plasma]",
+      "ci_lo": 0.197,
+      "synthetic": true,
+      "source": "synthetic (calibration target)"
+    },
+    {
+      "test": "replication",
+      "metric": "held-out cohort AUC",
+      "value": 0.7229,
+      "result": "weakened",
+      "n_used": 62,
+      "n_missing": null,
+      "detail": "held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62"
+    }
+  ],
+  "double_dissociation": {
+    "auc_before": 0.7387,
+    "auc_after": 0.7472,
+    "retained": 1.036,
+    "confound": "scanner",
+    "n": 130
+  },
+  "confound_leaderboard": [
+    {
+      "confound": "age",
+      "variance_explained": 0.0625
+    },
+    {
+      "confound": "scanner",
+      "variance_explained": 0.0028
+    },
+    {
+      "confound": "sex",
+      "variance_explained": 0.0008
+    }
+  ],
+  "novelty_class": "adjacent",
+  "atn_profile": {
+    "T_ptau217_r": 0.404,
+    "T_ptau217_ci_lo": 0.197,
+    "I_gfap_r": 0.342,
+    "I_gfap_ci_lo": 0.18,
+    "anchor_status": "passed",
+    "routed_mechanism": "amyloid_cascade",
+    "synthetic": true
+  },
+  "honesty_rung": "severity_anchored",
+  "discovery_provenance": {
+    "mode": "supervised",
+    "engine": "neuroad.pipeline.run_referee",
+    "target": "conversion",
+    "rationale": "Named-contrast hypothesis (matched: converter, separate) -> supervised probe/gauntlet points the head at 'conversion'.",
+    "signals": [
+      "converter",
+      "separate"
+    ],
+    "dataset": "synthetic:SURVIVOR",
+    "novelty_class": "adjacent",
+    "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+    "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+    "anchor_gate": {
+      "gate": "biomarker_anchor",
+      "status": "passed",
+      "passed": true,
+      "blocked_promotion": false,
+      "ci_pass": 0.12,
+      "ci_weak": 0.0,
+      "min_n": 20.0,
+      "ptau217_ci_lo": 0.197,
+      "gfap_ci_lo": 0.18,
+      "routed_mechanism": "amyloid_cascade",
+      "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+      "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+    }
+  },
+  "narration": "The claim \u201cMRI embeddings separate MCI converters from non-converters\u201d lands at \u201crobust enough for follow-up\u201d (80/100). The naive effect (AUC 0.74 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only +0.06 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict.",
+  "adjudication": {
+    "prosecution": "The claim that frozen Neuro-JEPA structural embeddings separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only +0.06 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (weakened), Replication split (weakened). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+    "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Age / sex adjustment, Brain-age control, Biomarker anchor. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.40) \u2014 molecular pathology, not pixels.",
+    "judge_reasoning": "Robustness score 80/100 places this finding at 'robust enough for follow-up'. The +0.06 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
+  },
+  "reviewer": {
+    "critique": [
+      "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+      "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.78, MAE=2.9yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+      "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+      "N is small (~130); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
+      "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+    ],
+    "revised_caveats": [
+      "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+      "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+      "Any biomarker anchor is complete-case only and may not generalize.",
+      "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+      "Promotion authorizes one confirmatory experiment, not adoption of the finding."
+    ]
+  },
+  "biology": {
+    "hypothesis": "Survivor \u201cMRI embeddings separate MCI converters from non-converters\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+    "next_experiment": [
+      "Cohort: ADNI-3 / EPAD.",
+      "Target N: ~120 complete-case subjects with the routing biomarker.",
+      "Direction: the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects.",
+      "Kill criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong."
+    ],
+    "falsification": [
+      "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong.",
+      "If the probe score's biomarker correlation disappears after residualizing against a scanner-predicting direction, the survivor was leakage after all.",
+      "If a held-out cohort fails to reproduce the effect (drop below the promotion floor), the mechanism claim is withdrawn."
+    ]
+  },
+  "claude": {
+    "live": false,
+    "configured_live": false,
+    "model": "offline-template",
+    "path": "deterministic offline template (no ANTHROPIC_API_KEY)",
+    "last_call_live": false
+  }
+}

@@ -1,0 +1,116 @@
+# hypothesis_schema.yaml
+# L3 POLICY LAYER — the PARSE CONTRACT: free-text hunch -> structured Claim.
+#
+# DUAL-CONSUMPTION: the claim parser's live path validates Claude's JSON against
+# `claim.fields` (mirrors claim_parser._SCHEMA); the offline path uses
+# `discovery_mode.named_contrast.router` (mirrors claim_parser._infer_target).
+# Claude reads `kill_criterion_format` when it must pre-register a falsifiable test.
+#
+# MIRRORS: src/neuroad/claude/claim_parser.py (_SCHEMA, _GROUPS, _infer_target)
+#          src/neuroad/contract.py (Claim, LABEL_TARGETS)
+meta:
+  policy: hypothesis_schema
+  layer: L3
+  kind: table
+  consumers: [code, claude]
+  version: 1.0.0
+  schema_version: 1
+  last_verified: "2026-07-08"
+  mirrors:
+    - src/neuroad/claude/claim_parser.py
+    - src/neuroad/contract.py
+
+# ---------------------------------------------------------------------------
+# The structured Claim. Required fields mirror claim_parser._SCHEMA.required
+# and contract.Claim. `target` MUST be one of label_targets.
+claim:
+  required_fields: [claim_text, target, group_a, group_b, covariates]
+  fields:
+    claim_text:
+      type: string
+      note: "one falsifiable sentence; do not invent numbers"
+    target:
+      type: string
+      enum_ref: label_targets            # must be a key of label_targets below
+    group_a:
+      type: string
+      note: "the disease / positive pole of the contrast"
+    group_b:
+      type: string
+      note: "the comparison / negative pole"
+    covariates:
+      type: array
+      items: string
+      default: [age, sex]                # claim_parser default
+  # Non-parsed Claim defaults (contract.Claim dataclass).
+  fixed_defaults:
+    substrate: "frozen Neuro-JEPA structural embeddings"
+    head: "linear probe"
+    claim_id_rule: "claim-<slug of claim_text, [a-z0-9-], max 32 chars>"
+
+# ---------------------------------------------------------------------------
+# Allowed target label columns. Source: contract.LABEL_TARGETS.
+# `default_groups` mirrors claim_parser._GROUPS.
+label_targets:
+  conversion:
+    meaning: "MCI->AD conversion (or AD-vs-CN diagnosis on open data)"
+    default_groups: ["MCI converters", "MCI non-converters"]
+  dx_binary:
+    meaning: "AD vs CN diagnosis (derived from dx)"
+    default_groups: ["AD", "CN"]
+  site:
+    meaning: "acquisition site (STAR leakage test — same head, label=site)"
+    default_groups: ["site A", "site B"]
+  scanner:
+    meaning: "scanner model (STAR leakage test — same head, label=scanner)"
+    default_groups: ["scanner A", "scanner B"]
+fallback_target: conversion            # claim_parser falls back here on invalid/absent target
+
+# ---------------------------------------------------------------------------
+# Discovery-mode selector. Two ways a claim enters the loop.
+discovery_mode:
+  values: [novel_pattern, named_contrast]
+
+  named_contrast:
+    when: >-
+      the scientist names the two populations / the contrast up front; the parser
+      routes the hunch text directly to a target label.
+    # Offline keyword router. Source: claim_parser._infer_target (order matters).
+    router:
+      - { match: "conver|progress|mci.?to.?ad|declin", target: conversion }
+      - { match: "scanner|field strength",             target: scanner }
+      - { match: "\\bsite\\b|acquisit",                target: site }
+      - { match: "diagnos|ad.?vs.?cn|dementia|alzheimer|patients?\\b", target: dx_binary }
+    table_fallback: >-
+      if no keyword matches: conversion if the table has conversion coverage,
+      else dx_binary, else conversion.
+
+  novel_pattern:
+    when: >-
+      no named contrast — the pattern is surfaced by unsupervised clustering
+      (the Detective) as a coherent sub-cohort, then reified into a Claim whose
+      target is the label that best separates the discovered cluster.
+    note: >-
+      novel_pattern claims enter the honesty ladder at rung 2 (stable cluster)
+      once the cluster reproduces; see novelty_rubric.honesty_rung.
+
+# ---------------------------------------------------------------------------
+# Pre-registered kill-criterion format. Every promoted claim advances with ONE
+# falsifiable next experiment whose kill criterion is fixed BEFORE the experiment
+# is run (mirrors the bridge mechanism `kill` strings in biomarker_routing.yaml).
+kill_criterion_format:
+  required: true
+  registered_before_experiment: true
+  fields:
+    metric: "the single number the experiment turns on (e.g. p-tau217 correlation r, held-out AUC)"
+    threshold: "the value that, if not met, kills the hypothesis (e.g. r < 0.2)"
+    cohort: "the named confirmatory cohort the test runs in (e.g. ADNI-3 / EPAD)"
+    n: "target complete-case N with the routing biomarker"
+    direction: "the expected sign/direction of the effect"
+  template: >-
+    "In {cohort} (target N ~{n}, complete-case with {marker}), if {metric}
+    {threshold}, the {mechanism} routing is wrong."
+  example: >-
+    "In ADNI-3 / EPAD (target N ~120, complete-case with p-tau217), if the probe
+    score shows no p-tau217 correlation (r < 0.2), the amyloid-cascade routing is
+    wrong."
