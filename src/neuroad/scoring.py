@@ -35,10 +35,21 @@ def _ledger_row(t: TestEvidence) -> dict:
     n_used = t.stats.get("n") or t.stats.get("n_test") or t.stats.get("ptau217_n") \
         or t.stats.get("n_healthy")
     n_missing = None
+    row_extra: dict = {}
     if t.key == "biomarker_anchor":
         used = t.stats.get("ptau217_n") or 0
         # completeness gap is informational; total isn't carried here
         n_used = used
+        # Report r with its Fisher-z CI lower bound + provenance, so a downloaded
+        # ledger never presents a calibrated correlation as a measurement.
+        row_extra = {
+            "ci_lo": t.stats.get("ptau217_ci_lo") if t.stats.get("ptau217_r") is not None
+            else t.stats.get("gfap_ci_lo"),
+            "synthetic": bool(t.stats.get("synthetic")),
+            "source": ("synthetic (calibration target)" if t.stats.get("synthetic")
+                       else ("measured" if t.stats.get("ptau217_r") is not None
+                             or t.stats.get("gfap_r") is not None else "unavailable")),
+        }
     return {
         "test": key,
         "metric": label,
@@ -47,6 +58,7 @@ def _ledger_row(t: TestEvidence) -> dict:
         "n_used": n_used,
         "n_missing": n_missing,
         "detail": t.detail,
+        **row_extra,
     }
 
 
@@ -113,6 +125,12 @@ def build_claim_card(claim: Claim, naive_effect: dict, tests: list[TestEvidence]
             f"Completeness: {n_na}/5 gauntlet tests could not run; score is "
             "renormalized over the tests that did.")
     anchor_stats = next((t.stats for t in tests if t.key == "biomarker_anchor"), {})
+    if anchor_stats.get("synthetic"):
+        caveats.append(
+            "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET "
+            "(drawn to sit inside a literature range in calibration.CAL), not a "
+            "measured plasma value — no open cohort pairs MRI with plasma markers. "
+            "The molecular anchor demonstrates the gate MECHANIC, not a real result.")
     if anchor_stats.get("ptau217_r") is not None:
         caveats.append(
             f"p-tau217 measured on a partial subset (~{PTAU217_MISSINGNESS:.0%} "

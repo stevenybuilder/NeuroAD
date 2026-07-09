@@ -7,9 +7,10 @@ build in parallel without collisions.
 ## The one-line product
 An Alzheimer's structural-MRI referee: finds a candidate signal in brain MRI,
 stress-tests it to throw out artifacts (age/sex → site/scanner leakage →
-brain-age → biomarker anchor → replication), anchors survivors to a fluid
-biomarker, and — only for what survives — names the likely mechanism and the
-next experiment. **Imaging finds it. Proteins confirm it. It tells you what to do next.**
+brain-age → biomarker anchor → replication), requires independent
+corroboration, and — only for what survives — names the likely mechanism and the
+next experiment. **Imaging finds it. Confounds try to fake it. It tells you what
+to do next.**
 
 ## Track: Builder ("Build Beyond the Bench")
 Named user: a computational/translational AD researcher with imaging + partial
@@ -87,7 +88,7 @@ well on a 3-minute video.
 ## FINAL DELTAS (research-informed — build these in)
 
 **Reposition (novelty is now published prior art):** cite arXiv:2604.14441 /
-2606.09189 / PathoROB; own the *tool + closed loop + biomarker gate + Claude
+2606.09189 / PathoROB; own the *tool + closed loop + corroboration gate + Claude
 adversary*. Never say "we discovered leakage." Never say "co-scientist."
 Import citations/positioning from `src/neuroad/calibration.py`.
 
@@ -108,8 +109,11 @@ the self-supervised discovery + clustering track (the Detective) below.
 
 **Science/trust (M1):**
 - Headline metric = subject-disjoint **leakage margin = outcome_AUC − scanner_AUC**.
-- **Biomarker anchor is a hard GATE:** a promoted claim MUST show a p-tau217/GFAP
-  correlation on the complete subset, else it cannot reach "robust enough".
+- **Independent corroboration gate:** a promoted claim should show a p-tau217/GFAP
+  correlation on the complete subset when plasma markers are present. If plasma
+  is unavailable, a held-out replication may substitute only when the
+  site/scanner leakage test also passes. A failed biomarker anchor always blocks
+  promotion.
 - **Double dissociation:** residualize the embedding against a scanner-predicting
   direction; survivor still predicts outcome, kill collapses.
 - **Confound leaderboard:** rank variance each confound (scanner, age, sex)

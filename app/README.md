@@ -25,8 +25,8 @@ open app/index.html          # macOS
 ## Regenerate the data
 ```
 cd <repo root>
-PYTHONPATH=src ./.venv/bin/python app/build_demo_data.py            # calibrated fallback (default)
-PYTHONPATH=src ./.venv/bin/python app/build_demo_data.py --engine   # overlay a live referee run
+PYTHONPATH=src ./.venv/bin/python app/build_demo_data.py            # live engine default
+PYTHONPATH=src ./.venv/bin/python app/build_demo_data.py --fallback # calibrated scaffold only
 ```
 `build_demo_data.py` writes `app/demo_data.json` and six artifacts into
 `reports/` (`cohort_card.json`, `claim.yaml`, `evidence_ledger.csv`,
@@ -40,20 +40,20 @@ standalone identical to the emitted JSON):
 The page also `fetch()`es `demo_data.json` at load when served over `http(s)://`,
 so a fresh engine run shows up without re-embedding when hosted.
 
-### Why the default is the calibrated fallback (not the live engine)
-The demo must be **deterministic and identical every take**, and it must tell
-the clean SURVIVOR-vs-KILL story regardless of how tuned the parallel-built
-engine currently is. So `build_demo_data.py` defaults to the calibrated fallback
-(every number pinned to `src/neuroad/calibration.py`) and only overlays a live
-`pipeline.run_referee()` run when you pass `--engine` (or `NEUROAD_ENGINE=1`).
-All engine imports are guarded: if M1/M2/M3 are missing or a case fails, it
-degrades to the fallback for that case and prints a clear message.
+### Engine-first generation
+`build_demo_data.py` now defaults to a live engine run and writes
+`meta.source = "engine"` when the referee imports cleanly. Pass `--fallback` (or
+set `NEUROAD_FALLBACK=1`) to force the calibrated offline scaffold. All engine
+imports are guarded: if a case fails, the generator keeps a clearly labeled
+fallback case and prints a warning.
 
 ## What the demo shows (choreography)
-- **Substrate badge** (top-right, press `S`): `SYNTHETIC HARNESS` ⇄ `REAL OASIS`.
-  Synthetic carries the ground-truth scanner-confound KILL and the p-tau217
-  anchor; OASIS is real, vendored, single-scanner (so the ★ leakage test is an
-  honest **cohort/batch** reframe) with the biomarker gate marked N/A.
+- **Substrate badge** (top-right, press `S`): `REAL OASIS` ⇄ `SYNTHETIC HARNESS`.
+  The app boots on real OASIS. Synthetic carries the ground-truth
+  scanner-confound KILL and the p-tau217 anchor mechanic; OASIS is real,
+  vendored, single-scanner (so the ★ leakage test is an honest **cohort/batch**
+  reframe) with the biomarker gate marked N/A and promotion allowed only through
+  leakage-clean held-out replication.
 - **Docket** — two cases: **A · SURVIVOR** and **B · KILL**. Status chip goes
   `UNADJUDICATED → RUNNING → ADJUDICATED`.
 - **Embedding scatter** (PCA 2-D) — toggle **color: outcome / color: scanner**
@@ -63,10 +63,11 @@ degrades to the fallback for that case and prints a clear message.
   effect-size bar (0.5 = chance … 1.0). The two ★ tests (site/scanner leakage,
   brain-age) have a thick border.
 - **Verdict meter** animates `fragile → partially robust → robust`; the headline
-  is the subject-disjoint **leakage margin = outcome AUC − scanner AUC**
-  (+0.10 survivor, −0.20 kill).
+  is the subject-disjoint **leakage margin = outcome AUC − scanner AUC**.
 - **Claim card** fills live; biology is **gated** — only a promoted survivor gets
-  a mechanism hypothesis + one falsifiable next experiment.
+  a mechanism hypothesis + one falsifiable next experiment. Promotion requires
+  either a molecular anchor or, when plasma is unavailable, leakage-clean
+  held-out replication.
 - **Courtroom (Claude)** — prosecution / defense / judge, each consequential.
 - **Reviewer (Claude)** margin note argues *against* the verdict ("partially
   robust ≠ robust", proxy brain-age control, p-tau217 missingness).

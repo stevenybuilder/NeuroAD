@@ -12,16 +12,24 @@ from __future__ import annotations
 
 # --- Prior art we CITE (we did not discover embedding leakage; we ship the tool) ---
 PRIOR_ART = [
-    ("Batch Effects in Brain Foundation Model Embeddings", "arXiv:2604.14441 (2026)",
-     "Quantifies that brain-FM embeddings predict acquisition site/scanner as well "
-     "as biological outcome — the same 'star' mechanic. We cite it, we don't claim it."),
-    ("Pretrained, Frozen, Still Leaking", "arXiv:2606.09189 (2026)",
-     "Audits attribute leakage from FROZEN foundation-model embeddings with "
-     "subject-disjoint lower bounds (leakage margin ~0.16-0.37)."),
-    ("PathoROB", "Nature Communications (2026)",
-     "Digital-pathology robustness benchmark: biological vs non-biological "
-     "variation across medical centers. Same genre, different modality."),
-    ("REFUTE / AI-Scientist-v2 falsification agents", "2024-2026",
+    ("Batch Effects in Brain Foundation Model Embeddings",
+     "arXiv:2604.14441 (2026)",
+     "Tao et al. show brain-FM embeddings (BrainLM, SwiFT) encode substantial batch/"
+     "site variability that often dominates diagnosis-related signal — the same 'star' "
+     "mechanic. We cite it, we don't claim it. https://arxiv.org/abs/2604.14441"),
+    ("Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in "
+     "EEG Foundation Models",
+     "arXiv:2606.09189 (2026)",
+     "Tai audits attribute leakage from FROZEN foundation-model embeddings with "
+     "subject-disjoint lower bounds. Same-genre evidence (EEG modality) that frozen "
+     "embeddings leak protected attributes. https://arxiv.org/abs/2606.09189"),
+    ("Towards Robust Foundation Models for Digital Pathology (PathoROB)",
+     "Nature Communications 2026, doi:10.1038/s41467-026-73923-2",
+     "Digital-pathology robustness benchmark (PathoROB): biological vs non-biological "
+     "variation across 34 medical centers. Same genre, different modality. "
+     "https://www.nature.com/articles/s41467-026-73923-2"),
+    ("REFUTE (Can Language Models Falsify?) / The AI Scientist-v2",
+     "arXiv:2502.19414 (2025) / arXiv:2504.08066 (2025)",
      "Automated scientific-claim falsification is an established sub-genre; our "
      "novelty is the closed AD-specific loop, not falsification per se."),
 ]
@@ -40,7 +48,8 @@ POSITIONING = (
 # --- Verified scientific facts (verdicts from the grounding pass) ---
 FACTS = {
     "neurojepa": (
-        "Neuro-JEPA (hyphenated; NYU/NYUMedML, arXiv:2606.14957): self-supervised "
+        "Neuro-JEPA — 'Learning Sparse Latent Predictive Foundation Model for Multimodal "
+        "Neuroimaging' (Huang et al., NYU Langone/MGH, arXiv:2606.14957): self-supervised "
         "foundation model for 3D structural brain MRI (T1w/T2w/FLAIR), ~1.55M scans, "
         "JEPA + Mixture-of-Experts. Code MIT; weights CC BY-NC-ND 4.0 (non-commercial, "
         "NoDerivatives) -> used frozen, no fine-tuning. SUPPORTED."),

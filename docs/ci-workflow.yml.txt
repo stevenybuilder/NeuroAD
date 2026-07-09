@@ -1,0 +1,60 @@
+name: CI
+
+# Green-build trust signal for the open-source referee: install from a clean
+# checkout, run the full pytest suite, and smoke both offline CLI entrypoints
+# (`neuroad demo` and `neuroad reproduce-finding`) so the "runs in one command,
+# reproducible from a clean clone" claim is guarded against regressions.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: pytest + CLI smoke (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install (offline core + dev, no anthropic extra)
+        # The demo path is fully offline; `anthropic` lives in the optional
+        # [claude] extra and is intentionally NOT installed here so CI proves
+        # the referee runs with Claude calls degrading to deterministic
+        # fallbacks (the shipped-demo guarantee).
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Smoke — neuroad demo (offline)
+        # Hard gate: the one-command SURVIVOR-vs-KILL punchline must run with no
+        # network and no API key. USING_LIVE_API stays False -> template
+        # fallbacks; a nonzero exit here is a real regression.
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: neuroad demo
+
+      - name: Smoke — neuroad reproduce-finding (offline)
+        # Hard gate: regenerates the ~0.93 PCA-10 scanner-leakage AUC from the
+        # checked-in fixture. The command is wired (backend WAVE-2), so a missing
+        # fixture or broken reproduction on a clean clone MUST fail the job red —
+        # no exit-code skip branch. Any nonzero exit is a real regression.
+        env:
+          ANTHROPIC_API_KEY: ""
+        run: neuroad reproduce-finding

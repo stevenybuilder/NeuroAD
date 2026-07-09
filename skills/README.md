@@ -1,11 +1,8 @@
 # NeuroAD Discovery Engine — Drop-in Adversarial Skills
 
 Each subfolder here is a **self-contained Agent Skill** wrapping one stage of the
-NeuroAD Discovery Engine gauntlet — the five ways a structural-MRI "finding" can turn out
-to be an artifact instead of biology. A scientist (or Claude, acting as the
-adjudicator) can read a `SKILL.md` to understand exactly what adversarial
-question a stage answers, then run its `run.py` to execute that single test on a
-loaded cohort — no need to boot the whole pipeline.
+NeuroAD Discovery Engine gauntlet — the five ways a structural-MRI "finding" can
+turn out to be an artifact instead of biology.
 
 This is the "built to outlast the week" story: the referee is not a monolith, it
 is a **composable set of falsification tests**, and adding a sixth is dropping in
@@ -18,7 +15,7 @@ a sixth folder that satisfies one small contract.
 | `age_sex/` | Age / sex adjustment | Survives demographic covariates? | 15 | `test_age_sex` |
 | `site_scanner_leakage/` | Site / scanner leakage ⭐ | Disease signal, or which machine took the scan? | 25 | `test_site_scanner` |
 | `brain_age_control/` | Brain-age control ⭐ | More than generic aging / atrophy? | 25 | `test_brain_age` |
-| `biomarker_anchor/` | Biomarker anchor (HARD GATE) | Backed by molecular pathology (p-tau217 / GFAP)? | 20 | `test_biomarker_anchor` |
+| `biomarker_anchor/` | Biomarker anchor | Backed by molecular pathology (p-tau217 / GFAP) when available? | 20 | `test_biomarker_anchor` |
 | `replication/` | Replication split | Reproduces on a held-out site / cohort? | 15 | `test_replication` |
 
 Weights sum to 100 (asserted in `src/neuroad/contract.py`). The two ⭐ tests carry
@@ -40,8 +37,9 @@ in order and returns a `list[TestEvidence]`. Each `TestEvidence` carries a
 - `verdict_for(score)` maps the score to a `Verdict` via `VERDICT_BANDS`
   (≥85 strong, ≥70 robust-enough-for-follow-up, ≥40 partially robust, else
   fragile). Only claims at or above `PROMOTION_FLOOR` (partially robust) may reach
-  the biology step — and the biomarker anchor is an additional **hard gate** on
-  top of the score.
+  the biology step, and promotion still requires independent corroboration:
+  molecular anchor when available, or leakage-clean replication when plasma is
+  unavailable.
 
 Run any single stage in isolation:
 

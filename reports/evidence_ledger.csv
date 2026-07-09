@@ -1,6 +1,7 @@
-test,result,effect,effect_label,detail
-age_sex,passed,0.682,"outcome AUC after covariates","effect retained 86% after age/sex adjustment (AUC 0.71 -> 0.68)"
-site_scanner,weakened,0.712,"outcome AUC, scanner-scrubbed","outcome only narrowly exceeds scanner (margin +0.04)"
-brain_age,passed,0.692,"outcome AUC, brain-age regressed","brain-age R2=0.78, MAE=2.9yr; effect retained 91% after brain-age-gap control"
-biomarker_anchor,passed,0.904,"anchor strength |r|","p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77)"
-replication,passed,0.762,"held-out cohort AUC","held-out cohort AUC=0.76 (train 0.78); n_test=62"
+# NeuroAD evidence ledger — SYNTHETIC HARNESS (calibrated demo cohort). The p-tau217/GFAP anchor is a CALIBRATION TARGET, not a measured plasma value; no open cohort pairs MRI with plasma markers.
+test,result,metric,value,ci_lo,n,dataset,seed,source,synthetic,detail
+age_sex,passed,"effect retained (age/sex)",1.102,,130,synthetic:SURVIVOR,0,engine,true,"effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)"
+site_scanner,weakened,"leakage margin (outcome-scanner AUC)",0.063,-0.0353,,synthetic:SURVIVOR,0,engine,true,"outcome only narrowly exceeds scanner; margin CI includes zero (margin +0.06 [95% CI -0.04, +0.16])"
+brain_age,passed,"effect retained (brain-age)",1.035,,137,synthetic:SURVIVOR,0,engine,true,"brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control (Franke/Gaser standard), 102% under the stricter predicted-brain-age control"
+biomarker_anchor,passed,"p-tau217 correlation r (Fisher-z CI)",0.404,0.197,77,synthetic:SURVIVOR,0,engine,true,"p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS: calibration target, not measured plasma]"
+replication,weakened,"held-out cohort AUC",0.7229,,62,synthetic:SURVIVOR,0,engine,true,"held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62"

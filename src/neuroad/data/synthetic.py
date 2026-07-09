@@ -240,6 +240,11 @@ def generate_cohort(preset: str, seed: int = 0) -> pd.DataFrame:
     frame["apoe4"] = pd.array(apoe4.astype("int64"), dtype="Int8")
 
     contract.validate_table(frame)
+    # Provenance: mark the whole cohort synthetic so downstream (the biomarker
+    # anchor especially) can badge p-tau217/GFAP as CALIBRATION TARGETS, never as
+    # measurements. df.attrs survives most pandas ops; treated as best-effort.
+    frame.attrs["source"] = "synthetic"
+    frame.attrs["synthetic_biomarkers"] = True
     return frame
 
 

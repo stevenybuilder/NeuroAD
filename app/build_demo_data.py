@@ -138,10 +138,12 @@ def _synthetic_survivor():
               f"regressing structural brain-age (proxy control).",
               {"retained": T("survivor_retained", 0.80), "post_auc": 0.71,
                "brain_age_r2": T("brain_age_r2", 0.85), "brain_age_mae_yr": T("brain_age_mae_yr", 3.0)}),
-        _test("biomarker_anchor", "passed", round(0.5 + ptau_r, 2), "anchor strength |r|",
-              f"Anchored to plasma p-tau217 (r={ptau_r:.2f}, n=44 complete). "
-              f"Molecular corroboration a pure artifact cannot fake.",
-              {"ptau217_r": ptau_r, "gfap_r": T("gfap_r", 0.35), "n_complete": 44}),
+        _test("biomarker_anchor", "passed", round(0.5 + ptau_r, 2), "anchor bar (0.5 + r)",
+              f"Anchored to p-tau217 (r={ptau_r:.2f}, n=44 complete) "
+              f"[SYNTHETIC HARNESS: calibration target, not measured plasma].",
+              {"ptau217_r": ptau_r, "ptau217_n": 44, "gfap_r": T("gfap_r", 0.35),
+               "n_complete": 44, "synthetic": True,
+               "provenance": "SYNTHETIC HARNESS — calibration target, not measured plasma"}),
         _test("replication", "passed", 0.69, "held-out cohort AUC",
               "Reproduces on a held-out acquisition site (AUC 0.69).",
               {"heldout_auc": 0.69}),
@@ -223,9 +225,11 @@ def _synthetic_kill():
               f"Loses ~{int((1 - T('kill_retained', 0.25)) * 100)}% of effect after brain-age "
               f"regression; post-adjustment AUC ~{T('kill_post_auc', 0.58):.2f} (near chance).",
               {"retained": T("kill_retained", 0.25), "post_auc": T("kill_post_auc", 0.58)}),
-        _test("biomarker_anchor", "failed", 0.58, "anchor strength |r|",
-              "No molecular anchor: p-tau217 correlation r=0.08 (n=41), not significant.",
-              {"ptau217_r": 0.08, "n_complete": 41}),
+        _test("biomarker_anchor", "failed", 0.58, "anchor bar (0.5 + r)",
+              "No molecular anchor: p-tau217 correlation r=0.08 (n=41), not significant "
+              "[SYNTHETIC HARNESS: calibration target, not measured plasma].",
+              {"ptau217_r": 0.08, "ptau217_n": 41, "n_complete": 41, "synthetic": True,
+               "provenance": "SYNTHETIC HARNESS — calibration target, not measured plasma"}),
         _test("replication", "failed", 0.57, "held-out cohort AUC",
               "Does not reproduce on the held-out acquisition site (AUC 0.57).",
               {"heldout_auc": 0.57}),
@@ -297,7 +301,7 @@ def _oasis_survivor():
         _test("brain_age", "passed", 0.83, "outcome AUC, brain-age regressed",
               "Holds across the wide OASIS age span (18-96 yr) after brain-age regression.",
               {"post_auc": 0.83, "age_span": "18-96"}),
-        _test("biomarker_anchor", "not_available", 0.5, "anchor strength |r|",
+        _test("biomarker_anchor", "not_available", 0.5, "anchor bar (0.5 + r)",
               "OASIS has no plasma markers — biomarker gate cannot be evaluated. Route to "
               "ADNI / EPAD for the p-tau217 anchor.",
               {"reason": "no plasma p-tau217/GFAP in OASIS", "route_to": "ADNI/EPAD"}),
@@ -381,7 +385,7 @@ def _oasis_kill():
         _test("brain_age", "failed", 0.59, "outcome AUC, brain-age regressed",
               "Collapses after brain-age regression (AUC ~0.59) — it was largely brain aging.",
               {"post_auc": 0.59}),
-        _test("biomarker_anchor", "not_available", 0.5, "anchor strength |r|",
+        _test("biomarker_anchor", "not_available", 0.5, "anchor bar (0.5 + r)",
               "No plasma markers in OASIS — gate cannot run. Route to ADNI/EPAD.",
               {"reason": "no plasma markers", "route_to": "ADNI/EPAD"}),
         _test("replication", "failed", 0.55, "held-out cohort AUC",
@@ -468,6 +472,17 @@ def _oasis_cohort():
     }
 
 
+def _claude_badge() -> dict:
+    """Live-vs-offline Claude descriptor for the workbench header (truthful:
+    reflects whether ANTHROPIC_API_KEY is set at build time)."""
+    try:
+        from neuroad.claude import _client
+        return _client.model_badge()
+    except Exception:
+        return {"live": False, "model": "offline-template",
+                "path": "deterministic offline template (no ANTHROPIC_API_KEY)"}
+
+
 def fallback_demo_data() -> dict:
     """The calibrated, deterministic, guaranteed-offline payload."""
     return {
@@ -481,6 +496,7 @@ def fallback_demo_data() -> dict:
                             "A referee / auditor / red-team, not a co-scientist."),
             "prior_art": ([{"title": t, "cite": c, "note": n}
                            for (t, c, n) in _CAL.PRIOR_ART] if _CAL is not None else []),
+            "claude": _claude_badge(),
         },
         "substrates": {
             "synthetic": {
@@ -741,6 +757,23 @@ def _try_engine() -> dict | None:
     except Exception as exc:
         print(f"[build_demo_data] cohort overlay failed ({exc}); keeping fallback cohorts.")
 
+    # SEED-SWEEP STABILITY: run the referee across 20 seeds of the synthetic
+    # SURVIVOR and KILL and report the score distribution + verdict-flip rate, so
+    # the demo can show "verdict stable across 20 seeds" instead of a single-seed
+    # point. Reduced bootstrap/permutation budget keeps this a ~30s build step.
+    try:
+        from neuroad import pipeline
+        data["seed_sweep"] = {
+            "SURVIVOR": pipeline.seed_sweep("SURVIVOR", n_seeds=20, n_boot=200, n_perm=200),
+            "KILL": pipeline.seed_sweep("KILL", n_seeds=20, n_boot=200, n_perm=200),
+        }
+        ss = data["seed_sweep"]
+        print(f"[build_demo_data]   seed_sweep: SURVIVOR modal="
+              f"{ss['SURVIVOR']['modal_verdict']} flip={ss['SURVIVOR']['flip_rate']} | "
+              f"KILL modal={ss['KILL']['modal_verdict']} flip={ss['KILL']['flip_rate']}")
+    except Exception as exc:
+        print(f"[build_demo_data]   seed_sweep skipped ({exc})")
+
     # REAL-DATA EVIDENCE: the batch effect on healthy OpenBHB (no disease at all).
     try:
         from neuroad.data import openbhb
@@ -767,14 +800,30 @@ def _try_engine() -> dict | None:
         if lk.exists():
             j = json.loads(lk.read_text())
             sl = j.get("scanner_leakage", {})
+            # Recompute the honest PCA-10 leakage AUC live from the checked-in
+            # fixture so the demo carries a bootstrap 95% CI band + permutation p
+            # (the frontend hides the band if these are absent).
+            rep = None
+            try:
+                from neuroad import reproduce
+                rep = reproduce.reproduce_finding(n_boot=1000, n_perm=1000)
+            except Exception as rexc:
+                print(f"[build_demo_data]   reproduce CI skipped ({rexc})")
+            auc_honest = (rep["auc"] if rep else (sl.get("pca10_honest_auc") or [None])[0])
             nj["scanner_leakage"] = {
                 "auc_raw": sl.get("raw_768d_referee_machinery_auc"),
-                "auc_honest": (sl.get("pca10_honest_auc") or [None])[0],
-                "n": sl.get("n_binary"), "n_sites": j.get("n_sites"),
+                "auc_honest": auc_honest,
+                "ci_lo": (rep["ci"][0] if rep and rep.get("ci") else None),
+                "ci_hi": (rep["ci"][1] if rep and rep.get("ci") else None),
+                "p_perm": (rep["p_perm"] if rep else None),
+                "ci_excludes_chance": (rep["ci_excludes_chance"] if rep else None),
+                "reproducible_via": "neuroad reproduce-finding",
+                "n": (rep["n"] if rep else sl.get("n_binary")), "n_sites": j.get("n_sites"),
                 "message": ("Frozen Neuro-JEPA embeddings predict the scanner at AUC "
-                            f"{(sl.get('pca10_honest_auc') or [None])[0]} (honest, PCA-10) on "
+                            f"{auc_honest} (honest, PCA-10) on "
                             f"{j.get('n_subjects')} real healthy multi-site brains — the batch "
-                            "effect the referee gates against, on the foundation model itself."),
+                            "effect the referee gates against, on the foundation model itself. "
+                            "Reproducible from a clean clone: `neuroad reproduce-finding`."),
             }
         if ad.exists():
             j = json.loads(ad.read_text())
@@ -786,7 +835,7 @@ def _try_engine() -> dict | None:
                             "is carried by the model's own representation (matches structural ~0.82)."),
             }
         if nj:
-            nj["provenance"] = ("Frozen NYUMedML/Neuro-JEPA (ViT-B MoE) over OpenBHB quasi-raw + "
+            nj["provenance"] = ("Frozen NYUMedML/Neuro-JEPA (JEPA + Mixture-of-Experts) over OpenBHB quasi-raw + "
                                 "OASIS-1 t88 MNI volumes. Inference only; weights & embeddings never "
                                 "committed (CC-BY-NC-ND). See docs/HF_ACCESS.md.")
             data["neurojepa_evidence"] = nj
@@ -912,26 +961,108 @@ def _write_reports(data: dict) -> None:
     # cohort_card.json
     (REPORTS / "cohort_card.json").write_text(json.dumps(cohort, indent=2))
 
-    # claim.yaml (survivor)
+    # claim.yaml (survivor) — the most-clickable export in the repo. It serializes
+    # the SYNTHETIC HARNESS survivor, so it MUST carry a synthetic stamp: an
+    # unbadged promoted "strong candidate" here is the exact clone-liability that
+    # contradicts "honesty IS the product / refuse our own claims". Top-level
+    # badge/synthetic/provenance keys, the survivor's caveats, and an explicit note
+    # that the leakage-margin CI includes zero travel with the verdict.
+    lm = survivor.get("leakage_margin", {}) or {}
+    ci_lo = lm.get("margin_ci_lo")
+    ci_hi = lm.get("margin_ci_hi")
+    ci_includes_zero = (
+        ci_lo is not None and ci_hi is not None and ci_lo <= 0 <= ci_hi
+    )
+    if lm.get("margin_ci_excludes_zero") is False:
+        ci_includes_zero = True
+    if ci_includes_zero:
+        leakage_note = (
+            "The leakage-margin 95% CI includes zero "
+            f"({ci_lo}..{ci_hi}) — the outcome is NOT confidently decoded better "
+            "than the scanner; treat the positive point margin as provisional.")
+    elif ci_lo is not None and ci_hi is not None:
+        leakage_note = (
+            f"Leakage-margin 95% CI {ci_lo}..{ci_hi} (excludes zero).")
+    else:
+        leakage_note = "Leakage-margin CI unavailable for this build."
+    claim_doc = {
+        "badge": "SYNTHETIC HARNESS",
+        "synthetic": True,
+        "provenance": "SYNTHETIC HARNESS — calibrated survivor, not a real result",
+        "claim": survivor["claim"],
+        "naive_effect": survivor["naive_effect"],
+        "leakage_margin": survivor["leakage_margin"],
+        "leakage_margin_note": leakage_note,
+        "verdict": survivor["verdict"],
+        "score": survivor["score"],
+        "promoted": survivor["promoted"],
+        "caveats": survivor.get("caveats", []),
+    }
     try:
         import yaml
-        (REPORTS / "claim.yaml").write_text(yaml.safe_dump({
-            "claim": survivor["claim"],
-            "naive_effect": survivor["naive_effect"],
-            "leakage_margin": survivor["leakage_margin"],
-            "verdict": survivor["verdict"],
-            "score": survivor["score"],
-            "promoted": survivor["promoted"],
-        }, sort_keys=False))
+        (REPORTS / "claim.yaml").write_text(
+            "# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.\n"
+            "# The verdict below is a positive control on a synthetic cohort; the\n"
+            "# leakage-margin CI includes zero. Do not read as a real finding.\n"
+            + yaml.safe_dump(claim_doc, sort_keys=False))
     except Exception:
         (REPORTS / "claim.yaml").write_text(
-            "# pyyaml unavailable\n" + json.dumps(survivor["claim"], indent=2))
+            "# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.\n"
+            "# pyyaml unavailable\n" + json.dumps(claim_doc, indent=2))
 
-    # evidence_ledger.csv
-    lines = ["test,result,effect,effect_label,detail"]
+    # evidence_ledger.csv — self-describing + fully traceable. The biomarker row
+    # reports the honest correlation r with its Fisher-z 95% CI lower bound, NOT
+    # the 0.5+|r| UI effect-bar transform (which previously mislabeled 0.904 as
+    # |r|). Provenance columns (dataset/seed/source/synthetic) let a downloaded
+    # ledger stand alone as an audit artifact.
+    src = data.get("meta", {}).get("source", "fallback")
+    ledger_dataset = "synthetic:SURVIVOR"
+    ledger_seed = 0
+    ledger_synthetic = survivor.get("substrate_badge", "") == "SYNTHETIC HARNESS"
+
+    def _honest_metric(key: str, st: dict):
+        """(metric_label, value, ci_lo, n) — the DEFENSIBLE headline per test,
+        never the UI effect-bar transform."""
+        if key == "age_sex":
+            return ("effect retained (age/sex)", st.get("retained"), None,
+                    st.get("n"))
+        if key == "site_scanner":
+            return ("leakage margin (outcome-scanner AUC)", st.get("margin"),
+                    st.get("margin_ci_lo"), st.get("n"))
+        if key == "brain_age":
+            return ("effect retained (brain-age)", st.get("retained"), None,
+                    st.get("n") or st.get("n_healthy"))
+        if key == "biomarker_anchor":
+            r = st.get("ptau217_r")
+            ci = st.get("ptau217_ci_lo")
+            n = st.get("ptau217_n")
+            if r is None:
+                r, ci, n = st.get("gfap_r"), st.get("gfap_ci_lo"), st.get("gfap_n")
+            return ("p-tau217 correlation r (Fisher-z CI)", r, ci, n)
+        if key == "replication":
+            return ("held-out cohort AUC",
+                    st.get("test_auc") or st.get("heldout_auc"), None,
+                    st.get("n_test"))
+        return (key, st.get("value"), None, st.get("n"))
+
+    hdr = ("test,result,metric,value,ci_lo,n,dataset,seed,source,synthetic,detail")
+    lines = [
+        "# NeuroAD evidence ledger — SYNTHETIC HARNESS (calibrated demo cohort). "
+        "The p-tau217/GFAP anchor is a CALIBRATION TARGET, not a measured plasma "
+        "value; no open cohort pairs MRI with plasma markers.",
+        hdr,
+    ]
     for t in survivor["tests"]:
+        st = t.get("stats", {}) or {}
+        label, value, ci_lo, n = _honest_metric(t["key"], st)
+        row_synth = "true" if (ledger_synthetic or st.get("synthetic")) else "false"
         detail = t["detail"].replace('"', "'")
-        lines.append(f'{t["key"]},{t["result"]},{t["effect"]},"{t["effect_label"]}","{detail}"')
+        vv = "" if value is None else (round(value, 4) if isinstance(value, float) else value)
+        cc = "" if ci_lo is None else (round(ci_lo, 4) if isinstance(ci_lo, float) else ci_lo)
+        nn = "" if n is None else n
+        lines.append(
+            f'{t["key"]},{t["result"]},"{label}",{vv},{cc},{nn},'
+            f'{ledger_dataset},{ledger_seed},{src},{row_synth},"{detail}"')
     (REPORTS / "evidence_ledger.csv").write_text("\n".join(lines) + "\n")
 
     # methods.md
@@ -943,11 +1074,18 @@ def _write_reports(data: dict) -> None:
         "chains five adversarial challenges; the headline metric is the "
         "subject-disjoint leakage margin (outcome AUC - scanner AUC). Survivors are "
         "gated behind a plasma-biomarker anchor before any biology is proposed. "
-        "All demo numbers are calibrated in `src/neuroad/calibration.py`.\n")
+        "All demo numbers are calibrated in `src/neuroad/calibration.py`.\n\n"
+        "**Permutation-null limitation.** `probe.auc_ci_perm` computes the OOF "
+        "scores once and holds them fixed under the label permutation (the probe "
+        "is never refit, and the bootstrap resamples the frozen OOF `(y, proba)` "
+        "pair). Model-selection variance is therefore under-propagated and the "
+        "reported permutation `p` is a LOWER BOUND on the true p-value "
+        "(anticonservative) — a deliberate speed tradeoff, disclosed here.\n")
 
     # reviewer_report.md
     rlines = ["# Reviewer (Claude) — peer-review critique\n",
-              f"## {survivor['claim']['claim_id']} — {survivor['verdict']}\n"]
+              f"## {survivor['claim']['claim_id']} — {survivor['verdict']} "
+              "[SYNTHETIC HARNESS]\n"]
     for c in survivor["reviewer"]["critique"]:
         rlines.append(f"- {c}")
     (REPORTS / "reviewer_report.md").write_text("\n".join(rlines) + "\n")

@@ -93,19 +93,21 @@ healthy cohorts (wide age span inflates R²; Peng 2021 SFCN MAE≈2.14yr; Bashya
 as such. Post-adjustment outcome AUC: survivor ≈ **0.81** (`survivor_post_auc`),
 kill ≈ **0.58** (`kill_post_auc`, near chance).
 
-### 4. Biomarker anchor (weight 20) — hard gate
+### 4. Biomarker anchor (weight 20) — strongest corroboration
 
-A promoted claim **must** show a plasma-biomarker correlation on the *complete*
-subset, or it cannot reach "robust enough for follow-up." We correlate the probe
-score with p-tau217 and GFAP and report the correlation *and the n* of the
-complete subset.
+When plasma markers are available, a promoted claim should show a biomarker
+correlation on the *complete* subset. We correlate the probe score with p-tau217
+and GFAP and report the correlation *and the n* of the complete subset. A failed
+biomarker anchor is a hard refutation and blocks promotion.
 
 Calibrated targets: p-tau217 r ≈ **0.43** (`ptau217_r`, 0.30–0.55) and GFAP
 r ≈ **0.35** (`gfap_r`, 0.25–0.45) — a **modest** structural↔molecular link, not
 redundancy (plasma p-tau217 alone reaches AD-vs-CU AUC ~0.93–0.98). Realistic
 missingness is high (`PTAU217_MISSINGNESS` ≈ 0.45), so the completeness caveat is
-surfaced on every card. No open cohort ships plasma markers, so this anchor uses
-a calibrated synthetic surrogate and routes to ADNI/EPAD in the notation.
+surfaced on every card. No open cohort ships plasma markers, so the live
+open-data path treats the anchor as `not_available` and routes to ADNI/EPAD. The
+synthetic harness demonstrates the molecular-anchor mechanic, but it is labeled
+as a harness rather than treated as evidence.
 
 **Biomarker routing** (used by the biology bridge, survivors only):
 amyloid + p-tau → amyloid-cascade; GFAP / weak-amyloid → neuroinflammatory /
@@ -116,6 +118,12 @@ glial; NfL + WMH → vascular / axonal.
 Refit and evaluate on a held-out site/cohort (OASIS-1 vs OASIS-2, or a held-out
 synthetic site). A signal that reproduces out-of-cohort *passes*; one that only
 holds in-sample is *weakened* or *failed*.
+
+Replication is also the accepted open-data corroboration fallback when a cohort
+does not ship plasma biomarkers. It can promote a claim only if the biomarker
+anchor is `not_available`, the held-out replication passes, and the site/scanner
+leakage test passes. Replication alone is not enough, because a scanner artifact
+can replicate across similarly biased cohorts.
 
 ## Scoring and verdict
 
@@ -133,9 +141,19 @@ score maps through `VERDICT_BANDS`:
 | ≥ 40 | partially robust |
 | < 40 | fragile |
 
-Only claims at or above `PROMOTION_FLOOR` (partially robust) reach the biology
-step (`contract.is_promoted`). Biology speaks only about promoted survivors, and
-every claim is paired with its evidence ledger.
+Only claims at or above `PROMOTION_FLOOR` (partially robust) are eligible for
+promotion (`contract.is_promoted`). Eligibility is then gated by independent
+corroboration:
+
+- **Molecular path:** biomarker anchor is passed or weakened. This is the
+  strongest path and is required when the biomarker test is available.
+- **Open-data replication path:** biomarker anchor is unavailable, held-out
+  replication passes, and the site/scanner leakage test passes.
+
+Biology speaks only about promoted survivors, and every claim is paired with its
+evidence ledger. If promotion uses replication rather than a molecular anchor,
+the card says so and routes the next experiment to ADNI/EPAD for plasma
+confirmation.
 
 ## Adjudication and self-review (Claude)
 

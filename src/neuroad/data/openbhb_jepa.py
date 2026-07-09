@@ -28,7 +28,7 @@ feeders without it.
 
 Provenance
 ----------
-Embeddings: frozen ``NYUMedML/Neuro-JEPA`` (ViT-B MoE) over OpenBHB quasi-raw
+Embeddings: frozen ``NYUMedML/Neuro-JEPA`` (JEPA + Mixture-of-Experts) over OpenBHB quasi-raw
 MNI152 volumes (``huggingface.co/datasets/benoit-dufumier/openBHB``, Apache-2.0).
 Metadata (age/sex/site/field-strength): OpenBHB ``participants.tsv``.
 """
