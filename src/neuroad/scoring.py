@@ -62,6 +62,33 @@ def _ledger_row(t: TestEvidence) -> dict:
     }
 
 
+def apply_honesty_caps(results: dict, score: int, verdict: Verdict) -> tuple[int, Verdict]:
+    """Two honesty caps shared by the card scorer and the courtroom judge so a
+    single finding never gets two different scores/verdicts (the judge_reasoning
+    string must agree with the meter the viewer sees).
+
+    CAP 1 — an UNRUN molecular anchor must not renormalize to the top band. When
+    the biomarker gate is NA (e.g. OASIS ships no plasma p-tau217/GFAP), the
+    NA-renormalization drops its weight from the denominator, so an otherwise
+    clean card can float up to 100 and read "strong candidate". A signal with NO
+    molecular corroboration is not a strong candidate: cap just below the STRONG
+    band (85) so the verdict lands at "robust enough for follow-up". Only bites
+    when the score would otherwise reach the top band.
+
+    CAP 2 — a FAILED scanner/site star test is a likely-artifact signal.
+    Replication cannot rescue it (a batch artifact "replicates" in every cohort
+    that shares the confound), so cap the verdict language to "fragile".
+    """
+    anchor = results.get("biomarker_anchor", TestResult.NA)
+    if anchor == TestResult.NA and score >= 85:
+        score = 84
+        verdict = verdict_for(score)
+    if results.get("site_scanner") == TestResult.FAILED and verdict != Verdict.FRAGILE:
+        score = min(score, 39)
+        verdict = verdict_for(score)
+    return score, verdict
+
+
 def build_claim_card(claim: Claim, naive_effect: dict, tests: list[TestEvidence],
                      biology: Optional[dict] = None,
                      reviewer: Optional[dict] = None) -> ClaimCard:
@@ -92,6 +119,12 @@ def build_claim_card(claim: Claim, naive_effect: dict, tests: list[TestEvidence]
     anchor = results.get("biomarker_anchor", TestResult.NA)
     replication = results.get("replication", TestResult.NA)
     leakage_ok = results.get("site_scanner") == TestResult.PASSED
+
+    # Honesty caps (shared with the courtroom judge so the reasoning agrees with
+    # the meter): an unrun molecular anchor can't renormalize to the top band, and
+    # a scanner-failed star test caps the verdict to "fragile". See apply_honesty_caps.
+    score, verdict = apply_honesty_caps(results, score, verdict)
+    promoted = is_promoted(verdict)
     # Molecular corroboration = a usable plasma anchor (PASSED or WEAKENED, i.e.
     # anything that isn't a hard FAILED or an unavailable NA) — matches the
     # original hard gate.

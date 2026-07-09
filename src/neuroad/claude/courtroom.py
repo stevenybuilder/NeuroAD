@@ -28,6 +28,7 @@ from ..contract import (
     verdict_for,
 )
 from ..calibration import PRIOR_ART
+from ..scoring import apply_honesty_caps
 from . import _client
 
 SYSTEM = (
@@ -113,8 +114,9 @@ def _strong(tests: list[TestEvidence]) -> list[TestEvidence]:
 
 
 def _fallback(claim: Claim, tests: list[TestEvidence]) -> dict:
-    score = robustness_score({t.key: t.result for t in tests})
-    verdict = verdict_for(score)
+    results = {t.key: t.result for t in tests}
+    score = robustness_score(results)
+    score, verdict = apply_honesty_caps(results, score, verdict_for(score))
     margin = _leakage_margin(tests)
     weak = _weak(tests)
     strong = _strong(tests)
@@ -228,8 +230,9 @@ def _judge(claim, tests, score, verdict, margin, anchor) -> str:
 
 
 def _prompt(claim: Claim, tests: list[TestEvidence]) -> str:
-    score = robustness_score({t.key: t.result for t in tests})
-    verdict = verdict_for(score)
+    results = {t.key: t.result for t in tests}
+    score = robustness_score(results)
+    score, verdict = apply_honesty_caps(results, score, verdict_for(score))
     margin = _leakage_margin(tests)
     lines = [
         f"Claim: {claim.claim_text}",
