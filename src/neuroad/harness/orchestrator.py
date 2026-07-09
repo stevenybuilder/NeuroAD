@@ -49,7 +49,7 @@ from ..contract import (
     verdict_for,
 )
 from . import discovery_router, experiment_card, policy
-from .experiment_card import ExperimentCard
+from .experiment_card import ExperimentCard, HONESTY_LADDER
 
 _log = logging.getLogger("neuroad.harness.orchestrator")
 
@@ -377,8 +377,7 @@ def _novelty_rungs() -> list:
             return keys
     except Exception as exc:  # pragma: no cover - fallback path
         _log.debug("novelty_rubric ladder policy read failed: %r", exc)
-    return ["raw_pattern", "stable_cluster", "confound_survivor",
-            "severity_anchored", "externally_replicated"]
+    return list(HONESTY_LADDER)   # canonical fallback — single source of truth
 
 
 def _stability_floor() -> float:

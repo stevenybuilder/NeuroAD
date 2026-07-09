@@ -37,35 +37,36 @@ from ..contract import ClaimCard, Verdict
 #: invariant holds even before the claim_parser assigns one.
 NOVELTY_CLASSES = ("known", "adjacent", "novel", "unclassified")
 
-#: 5 rungs, lowest -> highest. Higher = more independent corroboration, NEVER a
-#: claim of truth. None of these strings says "proven" or "validated biomarker".
+#: THE canonical honesty ladder, lowest -> highest — the single source of truth
+#: for rung vocabulary. policy/novelty_rubric.md transcribes these exact keys and
+#: orchestrator._novelty_rungs() falls back to this list, so all three agree.
+#: Higher = more independent corroboration, NEVER a claim of truth; no string here
+#: says "proven"/"validated". A single-cohort run caps at rung 4 — rung 5
+#: (externally_replicated) requires a genuinely independent second cohort.
 HONESTY_LADDER = [
-    "artifact-suspected",       # collapsed under the gauntlet — treat as an artifact
-    "exploratory",              # survives some challenges; hypothesis-generating only
-    "candidate-signal",         # robust score but not independently corroborated
-    "corroborated-candidate",   # promoted: biomarker anchor OR leakage-clean replication
-    "replication-ready",        # strong + corroborated: ready for a pre-stated killer test
+    "raw_pattern",            # a naive effect exists, no controls yet
+    "stable_cluster",         # the pattern reproduces (stable sub-cohort / above-chance)
+    "confound_survivor",      # survives the STAR confound gauntlet
+    "severity_anchored",      # clears the biomarker-anchor gate AND is promoted
+    "externally_replicated",  # reproduces on a genuinely independent external cohort
 ]
 
 
 def default_honesty_rung(card: ClaimCard) -> str:
-    """Derive an honesty rung from the card's own verdict + promotion decision.
+    """Conservative offline fallback rung from the card's verdict + promotion.
 
-    Deterministic, offline, and deliberately conservative — a promoted STRONG
-    finding is only ever "replication-ready", never "validated". The promotion
-    gate (biomarker anchor or leakage-clean replication) already encodes the
-    independent-corroboration requirement, so we key off it directly.
+    Coarser than orchestrator.compute_honesty_rung (which walks the actual test
+    evidence); used only when no explicit rung is supplied. Deliberately caps at
+    "severity_anchored" — a single card can never earn "externally_replicated"
+    without a genuine second cohort — and never claims "validated".
     """
     if card.promoted:
-        return "replication-ready" if card.verdict == Verdict.STRONG \
-            else "corroborated-candidate"
-    if card.verdict == Verdict.FRAGILE:
-        return "artifact-suspected"
+        return "severity_anchored"          # cleared the anchor gate + promoted (rung 4)
+    if card.verdict == Verdict.ROBUST_FOLLOWUP:
+        return "confound_survivor"          # survived confounds, gate NA/failed (rung 3)
     if card.verdict == Verdict.PARTIALLY_ROBUST:
-        return "exploratory"
-    # Robust score that nonetheless failed the corroboration gate (anchor NA /
-    # no leakage-clean replication) — a genuine candidate, not yet corroborated.
-    return "candidate-signal"
+        return "stable_cluster"             # reproduces, not confound-clean (rung 2)
+    return "raw_pattern"                    # FRAGILE / collapsed (rung 1)
 
 
 def _norm_novelty(value: Optional[str]) -> str:

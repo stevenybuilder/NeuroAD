@@ -115,19 +115,19 @@ def test_build_stamps_defaults_and_mirrors_onto_claimcard():
     xc = ec.build_experiment_card(card)
     # never blank — the anti-overclaim invariant
     assert xc.novelty_class == "unclassified"
-    assert xc.honesty_rung == "replication-ready"
+    assert xc.honesty_rung == "severity_anchored"
     # stamped back onto the frozen-contract fields
     assert card.novelty_class == "unclassified"
-    assert card.honesty_rung == "replication-ready"
+    assert card.honesty_rung == "severity_anchored"
 
 
 def test_honesty_rung_never_claims_proven_or_validated():
     for score, verdict, promoted, expected in [
-        (10, Verdict.FRAGILE, False, "artifact-suspected"),
-        (55, Verdict.PARTIALLY_ROBUST, False, "exploratory"),
-        (78, Verdict.ROBUST_FOLLOWUP, False, "candidate-signal"),
-        (78, Verdict.ROBUST_FOLLOWUP, True, "corroborated-candidate"),
-        (90, Verdict.STRONG, True, "replication-ready"),
+        (10, Verdict.FRAGILE, False, "raw_pattern"),
+        (55, Verdict.PARTIALLY_ROBUST, False, "stable_cluster"),
+        (78, Verdict.ROBUST_FOLLOWUP, False, "confound_survivor"),
+        (78, Verdict.ROBUST_FOLLOWUP, True, "severity_anchored"),
+        (90, Verdict.STRONG, True, "severity_anchored"),
     ]:
         card = _make_card(score=score, verdict=verdict, promoted=promoted)
         rung = ec.build_experiment_card(card).honesty_rung
@@ -142,7 +142,7 @@ def test_explicit_annotations_and_to_dict_merge():
         card,
         novelty_class="Novel",
         atn_profile={"A": "+", "T": "+", "N": "?"},
-        honesty_rung="corroborated-candidate",
+        honesty_rung="severity_anchored",
         discovery_provenance={"mode": "unsupervised", "stability": 0.71},
     )
     d = xc.to_dict()
@@ -152,7 +152,7 @@ def test_explicit_annotations_and_to_dict_merge():
     # harness block
     assert d["novelty_class"] == "novel"          # normalized lower-case
     assert d["atn_profile"] == {"A": "+", "T": "+", "N": "?"}
-    assert d["honesty_rung"] == "corroborated-candidate"
+    assert d["honesty_rung"] == "severity_anchored"
     assert d["discovery_provenance"] == {"mode": "unsupervised", "stability": 0.71}
 
 
@@ -163,4 +163,4 @@ def test_card_atn_field_is_read_when_arg_omitted():
     xc = ec.build_experiment_card(card)
     assert xc.novelty_class == "adjacent"
     assert xc.atn_profile == {"A": "-", "T": "-", "N": "+"}
-    assert xc.honesty_rung == "exploratory"
+    assert xc.honesty_rung == "stable_cluster"

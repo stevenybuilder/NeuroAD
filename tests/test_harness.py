@@ -133,7 +133,7 @@ def test_guard_blocks_overclaim_in_narration_attr():
 
 def test_guard_requires_novelty_and_rung():
     card = _plain_card()
-    xc = ExperimentCard(card=card, novelty_class="", honesty_rung="exploratory")
+    xc = ExperimentCard(card=card, novelty_class="", honesty_rung="stable_cluster")
     with pytest.raises(HonestyViolation):
         honesty_guard(xc)
     xc2 = ExperimentCard(card=card, novelty_class="novel", honesty_rung="")
