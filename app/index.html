@@ -713,6 +713,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             <div class="verdict-name" id="vName">unadjudicated</div>
             <div class="verdict-sub" id="vSub">run the gauntlet</div>
             <div class="promo no" id="vPromo" style="display:none"></div>
+            <div class="verdict-sub" id="vReality" style="display:none;color:var(--amber);margin-top:2px"></div>
           </div>
         </div>
         <div class="margin-box">
@@ -1318,8 +1319,8 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
               }
             }
           ],
-          "score": 40,
-          "verdict": "partially robust",
+          "score": 39,
+          "verdict": "fragile",
           "promoted": false,
           "confound_leaderboard": [
             {
@@ -1349,12 +1350,10 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "Biomarker anchor failed: no molecular correlate found on the complete subset \u2014 treat as unanchored (blocks promotion).",
             "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET (drawn to sit inside a literature range in calibration.CAL), not a measured plasma value \u2014 no open cohort pairs MRI with plasma markers. The molecular anchor demonstrates the gate MECHANIC, not a real result.",
             "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
-            "'Partially robust' is not 'robust' \u2014 survives some but not all challenges.",
             "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
             "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
             "Any biomarker anchor is complete-case only and may not generalize.",
             "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
-            "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
             "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
             "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
             "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
@@ -1362,7 +1361,6 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
           ],
           "reviewer": {
             "critique": [
-              "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
               "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
               "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
               "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
@@ -1378,7 +1376,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
           "courtroom": {
             "prosecution": "The claim that frozen Neuro-JEPA structural embeddings separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only -0.08 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed), Biomarker anchor (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Brain-age control, Replication split. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
-            "judge_reasoning": "Robustness score 40/100 places this finding at 'partially robust'. The -0.08 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
+            "judge_reasoning": "Robustness score 39/100 places this finding at 'fragile'. The -0.08 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
           },
           "scatter": {
             "n": 90,
@@ -1438,7 +1436,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
               "gfap_ci_lo": -0.147
             }
           },
-          "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+          "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cfragile\u201d (39/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
       }
     },
@@ -1639,8 +1637,8 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
               }
             }
           ],
-          "score": 100,
-          "verdict": "strong candidate",
+          "score": 84,
+          "verdict": "robust enough for follow-up",
           "promoted": true,
           "gate_note": "Biomarker gate NA on OASIS (no plasma markers) \u2014 capped at 'partially robust' pending an ADNI/EPAD anchor.",
           "confound_leaderboard": [
@@ -1684,7 +1682,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
             "Any biomarker anchor is complete-case only and may not generalize.",
             "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
             "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
-            "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+            "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
             "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
             "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
             "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
@@ -1692,7 +1690,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
           ],
           "reviewer": {
             "critique": [
-              "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+              "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
               "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
               "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
               "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
@@ -1709,7 +1707,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
           "courtroom": {
             "prosecution": "The claim that OASIS structural-derived features (weight-free feeder) separate AD (CDR>=1) from CN (CDR=0) does not survive scrutiny. Even granting a +0.25 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating AD (CDR>=1) from CN (CDR=0) is consistent with real disease biology. It withstood: Age / sex adjustment, Site / scanner leakage, Brain-age control, Replication split. The outcome exceeds the scanner-prediction floor by +0.25 AUC on subject-disjoint splits \u2014 the effect is not merely which machine acquired the scan. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
-            "judge_reasoning": "Robustness score 100/100 places this finding at 'strong candidate'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.25 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding provisionally meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
+            "judge_reasoning": "Robustness score 84/100 places this finding at 'robust enough for follow-up'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.25 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding provisionally meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
           },
           "scatter": {
             "n": 120,
@@ -1769,7 +1767,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
               "gfap_ci_lo": null
             }
           },
-          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cstrong candidate\u201d (100/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201crobust enough for follow-up\u201d (84/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
           "id": "OAS-B",
@@ -2130,7 +2128,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
         90,
         70,
         78,
-        40,
+        39,
         88,
         80,
         88,
@@ -2152,7 +2150,7 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
         "strong candidate",
         "robust enough for follow-up",
         "robust enough for follow-up",
-        "partially robust",
+        "fragile",
         "strong candidate",
         "robust enough for follow-up",
         "strong candidate",
@@ -2182,9 +2180,9 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
         true,
         true
       ],
-      "mean": 87.0,
-      "std": 14.18,
-      "min": 40,
+      "mean": 86.95,
+      "std": 14.34,
+      "min": 39,
       "max": 100,
       "modal_verdict": "strong candidate",
       "flip_rate": 0.35,
@@ -2195,48 +2193,48 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
       "preset": "KILL",
       "n_seeds": 20,
       "scores": [
-        40,
+        39,
         32,
-        40,
-        40,
-        40,
-        40,
-        40,
+        39,
+        39,
+        39,
+        39,
+        39,
         32,
         32,
-        40,
+        39,
         32,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39
       ],
       "verdicts": [
-        "partially robust",
-        "fragile",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
         "fragile",
         "fragile",
-        "partially robust",
         "fragile",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust"
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile"
       ],
       "promoted": [
         false,
@@ -2260,14 +2258,14 @@ body.autopilot-active .seg{opacity:.45;transition:opacity .3s}
         false,
         false
       ],
-      "mean": 38.4,
-      "std": 3.2,
+      "mean": 37.6,
+      "std": 2.8,
       "min": 32,
-      "max": 40,
-      "modal_verdict": "partially robust",
-      "flip_rate": 0.2,
+      "max": 39,
+      "modal_verdict": "fragile",
+      "flip_rate": 0.0,
       "promotion_rate": 0.0,
-      "promotion_line": "Verdict flips on 4/20 seeds (modal 'partially robust', 80% agreement)."
+      "promotion_line": "Verdict stable across 20 seeds \u2014 every seed lands on 'fragile' (score 32-39)."
     }
   },
   "real_evidence": {
@@ -4318,7 +4316,7 @@ function effDomain(t){
 }
 
 /* ---------- state ---------- */
-const S = {sub:"oasis", kase:"SURVIVOR", color:"outcome", timers:[], rafids:[], autoTimers:[], auto:false, phase:"idle"};
+const S = {sub:"oasis", kase:"SURVIVOR", color:"outcome", timers:[], rafids:[], autoTimers:[], auto:false, phase:"idle", typed:null};
 
 function curSub(){return DATA.substrates[S.sub];}
 function curCase(){return curSub().cases[S.kase];}
@@ -4539,8 +4537,35 @@ function esc(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<
 
 /* set the hypothesis textarea to the active case's registered hunch (case-switch only) */
 function setHypInput(){
+  S.typed=null;   // any case-switch resets the free-text derivation shown in the plan-out
   const ta=document.getElementById("hypInput"), inv=curInv(); if(!ta||!inv) return;
   ta.value=inv.hypothesis||curCase().claim.claim_text||"";
+}
+/* free-text derivation — ports src/neuroad/claude/claim_parser.py (_infer_target, _novelty_class)
+   so the plan-out visibly reflects what the user typed (offline & deterministic, no LLM call) */
+const DERIVED_GROUPS={conversion:["MCI converters","MCI non-converters"],dx_binary:["AD","CN"],site:["site A","site B"],scanner:["scanner A","scanner B"]};
+const TARGET_LABEL={conversion:"MCI→AD conversion",dx_binary:"AD vs CN diagnosis",site:"acquisition site",scanner:"scanner / field strength"};
+const KNOWN_HINTS=["scanner","site","leak","batch","field strength","acquisition","prior art"];
+const NOVEL_HINTS=["novel","hidden","unknown","undiscovered","latent","emergent","phenotype","subtype","sub-type","subgroup","cluster","stratif"];
+function deriveTargetFromText(text){
+  const low=String(text||"").toLowerCase();
+  if(/conver|progress|mci.?to.?ad|declin/.test(low)) return "conversion";
+  if(/scanner|field strength/.test(low)) return "scanner";
+  if(/\bsite\b|acquisit/.test(low)) return "site";
+  if(/diagnos|ad.?vs.?cn|dementia|alzheimer|patients?\b/.test(low)) return "dx_binary";
+  return "conversion";
+}
+function deriveNoveltyFromText(text){
+  const low=" "+String(text||"").toLowerCase()+" ";
+  if(KNOWN_HINTS.some(h=>low.includes(h))) return "known";
+  if(NOVEL_HINTS.some(h=>low.includes(h))) return "novel";
+  return "adjacent";
+}
+function deriveTypedSpec(text){
+  if(!String(text||"").trim()) return null;
+  const target=deriveTargetFromText(text), g=DERIVED_GROUPS[target]||["group A","group B"];
+  return {text:text, target:target, target_label:(TARGET_LABEL[target]||target),
+          group_a:g[0], group_b:g[1], novelty:deriveNoveltyFromText(text)};
 }
 function renderPresets(){
   const box=document.getElementById("hypPresets"); if(!box) return;
@@ -4572,10 +4597,20 @@ function renderPlanOut(){
   const el=document.getElementById("planOut"); if(!el) return;
   const inv=curInv();
   if(!inv){ el.innerHTML=""; return; }
-  const nov=(inv.novelty_class||"unclassified").toLowerCase();
+  const typed=S.typed;   // re-derived from free text on Investigate; null on a plain case-switch
+  const nov=(typed?typed.novelty:(inv.novelty_class||"unclassified")).toLowerCase();
   const rung=inv.honesty_rung||"raw_pattern";
   const curIdx=Math.max(0,RUNG_ORDER.indexOf(rung));
   const sp=inv.spec||{}, pop=sp.population||{};
+  // when the user typed a hunch, the visible target/contrast + populations follow the typed text,
+  // and we disclose the deterministic snap to the nearest frozen contrast (no silent match).
+  const specTarget = typed ? typed.target_label : (sp.target||"—");
+  const specGroupA = typed ? typed.group_a : (pop.group_a||"—");
+  const specGroupB = typed ? typed.group_b : (pop.group_b||"—");
+  const kase=curCase();
+  const mapNote = typed
+    ? `<div class="po-lb" style="margin-top:8px;color:var(--amber)">Claude parsed your text → target <b>${esc(typed.target)}</b>, novelty <b>${esc(typed.novelty)}</b> · maps to nearest frozen contrast: <b>${esc(kase.id||"")} · ${esc(S.kase)}</b></div>`
+    : "";
   const ladder=RUNG_ORDER.map((k,i)=>{
     const cls=i===curIdx?"cur":(i<curIdx?"reached":"");
     return `<div class="rung-step ${cls}"><span class="rn">rung ${i+1}</span>${esc(RUNG_LABEL[k]||k)}</div>`;
@@ -4598,12 +4633,12 @@ function renderPlanOut(){
       <div class="po-sec">
         <div class="po-lb">structured spec</div>
         <dl class="po-spec">
-          <dt>target</dt><dd>${esc(sp.target||"—")}</dd>
-          <dt>population</dt><dd>${esc(pop.group_a||"—")} <span style="color:var(--mute)">vs</span> ${esc(pop.group_b||"—")}</dd>
+          <dt>target</dt><dd>${esc(specTarget)}</dd>
+          <dt>population</dt><dd>${esc(specGroupA)} <span style="color:var(--mute)">vs</span> ${esc(specGroupB)}</dd>
           <dt>features</dt><dd>${esc(sp.features||"—")}</dd>
           <dt>confounds</dt><dd>${(sp.confounds||[]).map(esc).join(" · ")||"—"}</dd>
           <dt>novelty</dt><dd>${esc(nov)} — ${esc(NOVELTY_GLOSS[nov]||"")}</dd>
-        </dl>
+        </dl>${mapNote}
       </div>
       <div class="po-sec">
         <div class="po-lb">pre-registered kill criteria · reject if ANY fires</div>
@@ -4622,6 +4657,7 @@ function doInvestigate(){
   const text=ta?ta.value:"";
   const kind=matchHypothesisToCase(text);
   if(kind!==S.kase){ S.kase=kind; }
+  S.typed=deriveTypedSpec(text);   // plan-out re-derives its visible spec from the typed text
   S.phase="idle"; clearTimers();
   renderPresets(); renderPlanOut();
   renderAll();
@@ -4761,9 +4797,13 @@ function renderVerdict(filled){
     document.getElementById("vName").textContent="unadjudicated";
     document.getElementById("vSub").textContent="run the gauntlet";
     document.getElementById("vPromo").style.display="none";
+    { const vr=document.getElementById("vReality"); if(vr) vr.style.display="none"; }
     hideVerdictWow();
     return;
   }
+  { const vr=document.getElementById("vReality");
+    const showReality = S.sub==="oasis" && S.kase==="SURVIVOR";  // reality annotation for the OASIS SURVIVOR meter
+    if(vr){ vr.style.display = showReality?"block":"none"; vr.textContent = showReality?"(4/5 tests; molecular gate unrun)":""; } }
   setNeedle(c.score);
   document.getElementById("vScore").textContent=c.score;
   document.getElementById("vScore").style.color=verdictColor(c.verdict);
@@ -5395,23 +5435,30 @@ function entryState(sub,kase,color){
 /* ================= WAVE 3: deterministic autopilot ================= */
 /* t = seconds from roll · fn drives existing/new functions · cap = exact lower-third */
 const AUTOPILOT=[
-  {t:0.0,  cap:"A finding that looks publishable. AUC 0.87. Watch the referee.", sub:"SYNTHETIC HARNESS · a planted classifier, by design", fn:()=>entryState("synthetic","KILL","outcome")},
-  {t:1.2,  cap:"A finding that looks publishable. AUC 0.87. Watch the referee.", sub:"SYNTHETIC HARNESS · a planted classifier, by design", fn:()=>countUpNaiveAUC()},
-  {t:6.0,  cap:"Same probe, different label — it reads the SCANNER better than the disease.", fn:()=>runGauntlet()},
-  {t:11.0, cap:"Same probe, different label — it reads the SCANNER better than the disease.", fn:()=>pairBarRace()},
-  {t:15.0, cap:"The dominant axis of variance is the machine, not the biology.", fn:()=>toggleColor("scanner")},
-  {t:20.0, cap:"REFUSED · 40/100 · leakage margin −0.08. The gate stays shut.", fn:()=>verdictSlam()},
-  {t:25.0, cap:"Claude argues prosecution, defense, and judge — then argues against itself.", sub:"● transcript · offline template (no API key) · honestly badged", fn:()=>expandCourtAndReviewer()},
+  {t:0.0,  cap:"A finding that looks publishable. AUC 0.87. Watch the referee.", sub:"SYNTHETIC HARNESS · a planted classifier, by design", scroll:"top", fn:()=>entryState("synthetic","KILL","outcome")},
+  {t:1.2,  cap:"A finding that looks publishable. AUC 0.87. Watch the referee.", sub:"SYNTHETIC HARNESS · a planted classifier, by design", scroll:"#naiveBig", fn:()=>countUpNaiveAUC()},
+  {t:6.0,  cap:"Same probe, different label — it reads the SCANNER better than the disease.", scroll:"#gauntList", fn:()=>runGauntlet()},
+  {t:11.0, cap:"Same probe, different label — it reads the SCANNER better than the disease.", scroll:"#pairbar", fn:()=>pairBarRace()},
+  {t:15.0, cap:"The dominant axis of variance is the machine, not the biology.", scroll:"#detScatter", fn:()=>toggleColor("scanner")},
+  {t:20.0, cap:"REFUSED · 39/100 · leakage margin −0.08. The gate stays shut.", scroll:".verdict-panel", fn:()=>verdictSlam()},
+  {t:25.0, cap:"Claude argues prosecution and defense — the verdict meter is the judge, then argues against itself.", sub:"● transcript · offline template (no API key) · honestly badged", scroll:"#court", fn:()=>expandCourtAndReviewer()},
   {t:34.0, cap:"REAL DATA · 3,984 healthy brains, no disease. The encoder leaks the scanner.", fn:()=>spotlightReal()},
-  {t:37.0, cap:"frozen Neuro-JEPA · AUC 0.96 (PCA-10) · 95% CI excludes chance", fn:()=>snapCIBand()},
-  {t:44.0, cap:"Reproducible from a clean clone · $ neuroad reproduce-finding", fn:()=>typeReproduceCmd()},
-  {t:52.0, cap:"MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor.", sub:"SYNTHETIC HARNESS · illustrating the gate — not a claimed result", fn:()=>entryState("synthetic","SURVIVOR","outcome")},
-  {t:54.0, cap:"MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor.", sub:"SYNTHETIC HARNESS · illustrating the gate — not a claimed result", fn:()=>runGauntlet()},
-  {t:68.0, cap:"Verdict stable across 20 seeds — not a single-seed accident.", fn:()=>seedSweepFan()},
+  {t:37.0, cap:"frozen Neuro-JEPA · AUC 0.96 (PCA-10) · 95% CI excludes chance", scroll:"#realCI", fn:()=>snapCIBand()},
+  {t:44.0, cap:"Reproducible from a clean clone · $ neuroad reproduce-finding", scroll:"#reproTerm", fn:()=>typeReproduceCmd()},
+  {t:52.0, cap:"MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor.", sub:"SYNTHETIC HARNESS · illustrating the gate — not a claimed result", scroll:"top", fn:()=>entryState("synthetic","SURVIVOR","outcome")},
+  {t:54.0, cap:"MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor.", sub:"SYNTHETIC HARNESS · illustrating the gate — not a claimed result", scroll:"#gauntList", fn:()=>runGauntlet()},
+  {t:68.0, cap:"Verdict stable across 20 seeds — not a single-seed accident.", scroll:"#seedFan", fn:()=>seedSweepFan()},
   {t:78.0, cap:"Open-source. Reproducible. A referee that kills bad claims — including its own.", fn:()=>openSplit()},
   {t:85.0, cap:"Open-source. Reproducible. A referee that kills bad claims — including its own.", fn:()=>showExportTray()},
   {t:92.0, cap:"", fn:()=>endAutopilot()}
 ];
+/* autopilot: center the visual a beat reveals so payoffs never fire below the fold at 16:9 */
+function autoScrollTo(sel){
+  if(!sel) return;
+  if(sel==="top"){ window.scrollTo({top:0,behavior:reduceMotion()?"auto":"smooth"}); return; }
+  const el=document.querySelector(sel); if(!el) return;
+  el.scrollIntoView({behavior:reduceMotion()?"auto":"smooth", block:"center"});
+}
 function setLowerThird(cap,sub){
   const lt=document.getElementById("lowerThird"); if(!lt) return;
   lt.classList.add("on");
@@ -5427,7 +5474,7 @@ function startAutopilot(){
   const btn=document.getElementById("autopilotBtn"); if(btn)btn.classList.add("on");
   document.getElementById("lowerThird").classList.add("on");
   AUTOPILOT.forEach(step=>{
-    S.autoTimers.push(setTimeout(()=>{ setLowerThird(step.cap,step.sub); try{step.fn();}catch(e){/* keep rolling */} }, step.t*1000));
+    S.autoTimers.push(setTimeout(()=>{ setLowerThird(step.cap,step.sub); try{step.fn();}catch(e){/* keep rolling */} try{autoScrollTo(step.scroll);}catch(e){} }, step.t*1000));
   });
 }
 function endAutopilot(){

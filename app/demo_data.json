@@ -526,8 +526,8 @@
               }
             }
           ],
-          "score": 40,
-          "verdict": "partially robust",
+          "score": 39,
+          "verdict": "fragile",
           "promoted": false,
           "confound_leaderboard": [
             {
@@ -557,12 +557,10 @@
             "Biomarker anchor failed: no molecular correlate found on the complete subset \u2014 treat as unanchored (blocks promotion).",
             "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET (drawn to sit inside a literature range in calibration.CAL), not a measured plasma value \u2014 no open cohort pairs MRI with plasma markers. The molecular anchor demonstrates the gate MECHANIC, not a real result.",
             "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
-            "'Partially robust' is not 'robust' \u2014 survives some but not all challenges.",
             "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
             "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
             "Any biomarker anchor is complete-case only and may not generalize.",
             "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
-            "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
             "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
             "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
             "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
@@ -570,7 +568,6 @@
           ],
           "reviewer": {
             "critique": [
-              "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",
               "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.87, MAE=1.6yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
               "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
               "N is small (~137); at this size AUCs are noisy and a single site's idiosyncrasy can dominate \u2014 treat effect sizes as wide-interval estimates.",
@@ -586,7 +583,7 @@
           "courtroom": {
             "prosecution": "The claim that frozen Neuro-JEPA structural embeddings separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only -0.08 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed), Biomarker anchor (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Brain-age control, Replication split. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
-            "judge_reasoning": "Robustness score 40/100 places this finding at 'partially robust'. The -0.08 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
+            "judge_reasoning": "Robustness score 39/100 places this finding at 'fragile'. The -0.08 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
           },
           "scatter": {
             "n": 90,
@@ -646,7 +643,7 @@
               "gfap_ci_lo": -0.147
             }
           },
-          "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+          "narration": "The claim \u201cA structural embedding signature separates MCI converters from non-converters.\u201d lands at \u201cfragile\u201d (39/100). The naive effect (AUC 0.87 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
       }
     },
@@ -847,8 +844,8 @@
               }
             }
           ],
-          "score": 100,
-          "verdict": "strong candidate",
+          "score": 84,
+          "verdict": "robust enough for follow-up",
           "promoted": true,
           "gate_note": "Biomarker gate NA on OASIS (no plasma markers) \u2014 capped at 'partially robust' pending an ADNI/EPAD anchor.",
           "confound_leaderboard": [
@@ -892,7 +889,7 @@
             "Any biomarker anchor is complete-case only and may not generalize.",
             "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
             "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
-            "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+            "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
             "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
             "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
             "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
@@ -900,7 +897,7 @@
           ],
           "reviewer": {
             "critique": [
-              "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+              "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
               "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.57, MAE=6.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
               "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is unmet \u2014 the finding rests on imaging alone.",
               "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
@@ -917,7 +914,7 @@
           "courtroom": {
             "prosecution": "The claim that OASIS structural-derived features (weight-free feeder) separate AD (CDR>=1) from CN (CDR=0) does not survive scrutiny. Even granting a +0.25 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating AD (CDR>=1) from CN (CDR=0) is consistent with real disease biology. It withstood: Age / sex adjustment, Site / scanner leakage, Brain-age control, Replication split. The outcome exceeds the scanner-prediction floor by +0.25 AUC on subject-disjoint splits \u2014 the effect is not merely which machine acquired the scan. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
-            "judge_reasoning": "Robustness score 100/100 places this finding at 'strong candidate'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.25 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding provisionally meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
+            "judge_reasoning": "Robustness score 84/100 places this finding at 'robust enough for follow-up'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.25 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding provisionally meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
           },
           "scatter": {
             "n": 120,
@@ -977,7 +974,7 @@
               "gfap_ci_lo": null
             }
           },
-          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201cstrong candidate\u201d (100/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+          "narration": "The claim \u201cAD vs CN diagnosis is decodable from OASIS structural-derived features.\u201d lands at \u201crobust enough for follow-up\u201d (84/100). The naive effect (AUC 0.82 separating AD (CDR>=1) from CN (CDR=0)) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that a molecular anchor exists at all \u2014 with no p-tau217 / GFAP correlation measured here, the finding rests on imaging alone and would not survive a demand for orthogonal pathology. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         },
         "KILL": {
           "id": "OAS-B",
@@ -1338,7 +1335,7 @@
         90,
         70,
         78,
-        40,
+        39,
         88,
         80,
         88,
@@ -1360,7 +1357,7 @@
         "strong candidate",
         "robust enough for follow-up",
         "robust enough for follow-up",
-        "partially robust",
+        "fragile",
         "strong candidate",
         "robust enough for follow-up",
         "strong candidate",
@@ -1390,9 +1387,9 @@
         true,
         true
       ],
-      "mean": 87.0,
-      "std": 14.18,
-      "min": 40,
+      "mean": 86.95,
+      "std": 14.34,
+      "min": 39,
       "max": 100,
       "modal_verdict": "strong candidate",
       "flip_rate": 0.35,
@@ -1403,48 +1400,48 @@
       "preset": "KILL",
       "n_seeds": 20,
       "scores": [
-        40,
+        39,
         32,
-        40,
-        40,
-        40,
-        40,
-        40,
+        39,
+        39,
+        39,
+        39,
+        39,
         32,
         32,
-        40,
+        39,
         32,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40,
-        40
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39,
+        39
       ],
       "verdicts": [
-        "partially robust",
-        "fragile",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
         "fragile",
         "fragile",
-        "partially robust",
         "fragile",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust",
-        "partially robust"
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile",
+        "fragile"
       ],
       "promoted": [
         false,
@@ -1468,14 +1465,14 @@
         false,
         false
       ],
-      "mean": 38.4,
-      "std": 3.2,
+      "mean": 37.6,
+      "std": 2.8,
       "min": 32,
-      "max": 40,
-      "modal_verdict": "partially robust",
-      "flip_rate": 0.2,
+      "max": 39,
+      "modal_verdict": "fragile",
+      "flip_rate": 0.0,
       "promotion_rate": 0.0,
-      "promotion_line": "Verdict flips on 4/20 seeds (modal 'partially robust', 80% agreement)."
+      "promotion_line": "Verdict stable across 20 seeds \u2014 every seed lands on 'fragile' (score 32-39)."
     }
   },
   "real_evidence": {
