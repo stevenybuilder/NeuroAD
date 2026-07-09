@@ -34,3 +34,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# ultracode pipeline working notes (local only)
+scratch/

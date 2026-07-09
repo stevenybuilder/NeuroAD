@@ -185,22 +185,34 @@ fails fast and loudly rather than silently poisoning a verdict.
 
 ---
 
-## The Neuro-JEPA embedding path (documented, not shipped)
+## The Neuro-JEPA embedding path (now SHIPPED, with a license-safe repro path)
 
-`notebooks/neurojepa_embeddings.ipynb` scaffolds the "real frozen Neuro-JEPA
-structural embeddings" feeder. It is an **honest future path, not a shipped
-feature**, for two reasons:
+Real frozen Neuro-JEPA embeddings **are now used** as a feeder
+(`openbhb:neurojepa`, `oasis:neurojepa`): 96 healthy OpenBHB brains (and 61
+OASIS-1 volumes) embedded by the frozen encoder, driving the headline scanner-
+leakage finding (AUC ~0.93–0.96 PCA-10, `reports/openbhb_neurojepa_leakage.json`).
 
-1. **Gated weights that auto-deny us.** The Neuro-JEPA weights are HF-gated
-   behind an **institutional-PI agreement that auto-denies personal / gmail
-   emails**, and the assistant cannot accept such an agreement on anyone's
-   behalf.
-2. **A preprocessing tax.** Even with weights, each raw T1 needs FSL FLIRT
-   registration to MNI152 1mm, skull-stripping, and bias-field correction before
-   the frozen 122M-parameter encoder runs (inference-only; fits a Colab free-tier
-   T4).
+**What ships vs. what stays local — the honest provenance:**
 
-The notebook documents the whole pipeline with the gated step clearly guarded as
-pseudocode, so a PI-affiliated user can complete it — but nothing in the shipped
-referee depends on it. The weight-free structural feeders (OASIS, OpenBHB, the
-gated FreeSurfer drop-ins above) satisfy the same contract today.
+- **Weights: never in the repo.** The Neuro-JEPA weights are HF-gated under a
+  **CC-BY-NC-ND 4.0** (non-commercial, **NoDerivatives**) license behind an
+  institutional agreement. We obtained access through a HuggingFace grant and use
+  the weights **frozen, inference-only** (no fine-tuning) — which is a
+  non-derivative use — then discard them. They are `.gitignore`d
+  (`*.safetensors/*.pt/*.ckpt`) and are **never committed**. If your HF request is
+  auto-denied for a personal/gmail address, run the embedding step on a PI-
+  affiliated account; the referee itself does not need the weights.
+- **Raw 768-d embedding tables: local only.** Redistributing a large embedding
+  dump could be argued a derivative of the CC-BY-NC-ND weights, so the
+  `*_neurojepa_embeddings.csv` tables are `.gitignore`d
+  (`*embeddings*.csv`) and stay on the machine that generated them.
+- **Reproducible from a clean clone anyway.** We ship a tiny, license-safe
+  **PCA-10 fixture** — `data/real/fixtures/openbhb_neurojepa_pca10.csv` (ten
+  principal components per subject + the scanner label, **not** the encoder's
+  representation) — and a `neuroad reproduce-finding` command that regenerates the
+  leakage AUC (with a bootstrap 95% CI and a permutation-null p) from it. A judge
+  who clones the repo reproduces the number without the weights or the raw table.
+
+Result numbers (AUCs) in `reports/` are fine to commit; the raw vectors and the
+weights are not. The weight-free structural feeders (OASIS, OpenBHB, the gated
+FreeSurfer drop-ins above) satisfy the same contract with no gating at all.

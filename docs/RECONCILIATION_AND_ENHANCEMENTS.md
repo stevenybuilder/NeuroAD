@@ -87,8 +87,11 @@ turf — they won $2M there). Own **referee / auditor / red-team / gauntlet.**
   take). It is a **viewer over the real exported artifacts**, not a mockup.
 
 **Science / trust:**
-- **Biomarker anchor = hard gate.** Headline metric in the frontier's currency:
-  subject-disjoint **(outcome-AUC − scanner-AUC) leakage margin**.
+- **Independent corroboration gate.** A molecular p-tau217/GFAP anchor is the
+  strongest corroboration path when available; when open cohorts lack plasma,
+  held-out replication may substitute only if the site/scanner leakage test also
+  passes. Headline metric in the frontier's currency: subject-disjoint
+  **(outcome-AUC − scanner-AUC) leakage margin**.
 - **Double dissociation:** scrub the scanner signal from the embedding — the
   SURVIVOR still predicts the outcome; the KILL collapses.
 - **Confound leaderboard:** rank how much each confound (scanner, age, sex)
@@ -106,8 +109,8 @@ turf — they won $2M there). Own **referee / auditor / red-team / gauntlet.**
   real data. *Honest caveat:* both are single-scanner, so the real "star" is
   reframed as **cohort/batch leakage** (OASIS-1 vs OASIS-2 as pseudo-sites).
 - **Synthetic harness** carries the *ground-truth* scanner-confound KILL and the
-  p-tau217 biomarker anchor (no open cohort has plasma markers) — and is the
-  guaranteed offline live path.
+  p-tau217 biomarker-anchor mechanic (no open cohort has plasma markers). It is
+  a labeled harness, not the primary evidence path.
 - **Gated (ADNI / OASIS-3 / NACC / EPAD):** hardcoded stub + clear NOTATION,
   drop-in-ready (real file replaces stub, zero code change).
 

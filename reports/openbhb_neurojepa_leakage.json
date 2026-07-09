@@ -1,6 +1,6 @@
 {
   "dataset": "openbhb_neurojepa",
-  "substrate": "frozen Neuro-JEPA (ViT-B MoE) 768-d embeddings of OpenBHB quasi-raw MNI152 T1w volumes",
+  "substrate": "frozen Neuro-JEPA (JEPA + Mixture-of-Experts) 768-d embeddings of OpenBHB quasi-raw MNI152 T1w volumes",
   "n_subjects": 96,
   "n_sites": 6,
   "scanners": [
@@ -27,6 +27,17 @@
   },
   "interpretation": "The frozen Neuro-JEPA representation ITSELF predicts scanner field strength on real healthy multi-site brains with no disease signal. Even reduced to 10 PCA components (no p>>n overfitting), AUC stays ~0.93 \u2014 the batch effect the referee gates against, measured on the foundation model's own embeddings.",
   "honesty_note": "Raw 768-d AUC (~0.998) is inflated by p>>n (768 features, 96 subjects); the PCA-reduced numbers are the defensible estimate. Reported both.",
+  "reproduce_finding": {
+    "auc": 0.958,
+    "ci95": [0.907, 0.997],
+    "p_perm": 0.001,
+    "ci_excludes_chance": true,
+    "n": 96,
+    "n_components": 10,
+    "command": "neuroad reproduce-finding",
+    "fixture": "data/real/fixtures/openbhb_neurojepa_pca10.csv",
+    "note": "Live PCA-10 recomputation from the committed license-safe fixture (bootstrap 95% CI + label-permutation null). Lands in the same defensible ~0.93-0.96 PCA-10 band as pca10_honest_auc above; the small gap is the different cross-validation split, not a different claim. Regenerable from a clean clone without the gated weights or the git-ignored 768-d table."
+  },
   "compliance": "Frozen inference only (no fine-tuning; not a derivative of the CC-BY-NC-ND weights). Weights never stored in repo; embedding table git-ignored, not redistributed.",
   "provenance": "Neuro-JEPA NYUMedML/Neuro-JEPA (gated, CC-BY-NC-ND) over benoit-dufumier/openBHB quasi-raw MNI152 (Apache-2.0); metadata from OpenBHB participants.tsv."
 }

@@ -10,9 +10,14 @@ Names:
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 
-from neuroad.data import synthetic, real, openbhb, openbhb_jepa, oasis_jepa
+from neuroad.data import synthetic, real, openbhb, openbhb_jepa, oasis_jepa, gated
+
+# Conventional drop location for a mapped gated export (see scripts/adni_to_contract.py).
+_GATED_DIR = Path(__file__).resolve().parents[3] / "data" / "real" / "_gated"
 
 
 def load(name: str, *, seed: int = 0) -> pd.DataFrame:
@@ -37,10 +42,18 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
     if low in ("openbhb:neurojepa", "openbhb:jepa"):
         return openbhb_jepa.load_openbhb_neurojepa()
 
+    # Gated cohorts (ADNI/OASIS-3/NACC/EPAD): load a mapped export from
+    # data/real/_gated/<name>.csv if present, else the clearly-marked stub.
+    # 'adni' is shorthand for 'gated:adni'.
+    if low in gated.GATED_NAMES or low.startswith("gated:"):
+        gname = low.split(":", 1)[1] if low.startswith("gated:") else low
+        path = _GATED_DIR / f"{gname}.csv"
+        return gated.load_gated(str(path), gname)
+
     raise ValueError(
         f"unknown dataset {name!r}; try "
         "'synthetic:SURVIVOR', 'synthetic:KILL', 'oasis', 'oasis:oasis1', "
-        "'oasis:oasis2', 'openbhb', 'openbhb:neurojepa'"
+        "'oasis:oasis2', 'openbhb', 'openbhb:neurojepa', 'adni'"
     )
 
 
@@ -54,4 +67,8 @@ AVAILABLE = [
     "openbhb",
     "openbhb:neurojepa",
     "oasis:neurojepa",
+    "adni",
+    "oasis3",
+    "nacc",
+    "epad",
 ]

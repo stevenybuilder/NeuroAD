@@ -1,6 +1,6 @@
 {
-  "claim_id": "claim-mri-embeddings-separate-mci-conv",
-  "claim_text": "MRI embeddings separate MCI converters from non-converters",
+  "claim_id": "claim-a-structural-signature-separates",
+  "claim_text": "a structural signature separates converters",
   "substrate": "frozen Neuro-JEPA structural embeddings",
   "head": "linear probe",
   "population": {
@@ -227,7 +227,7 @@
       "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
     }
   },
-  "narration": "The claim \u201cMRI embeddings separate MCI converters from non-converters\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.85 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict.",
+  "narration": "The claim \u201ca structural signature separates converters\u201d lands at \u201cpartially robust\u201d (40/100). The naive effect (AUC 0.85 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict.",
   "reviewer": {
     "critique": [
       "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes over the tests that ran, so a middling verdict can hide a dimension that quietly failed \u2014 read the per-test results, not just the headline.",

@@ -30,9 +30,9 @@
       "note": "Quantifies that brain-FM embeddings predict acquisition site/scanner as well as biological outcome \u2014 the same 'star' mechanic. We cite it, we don't claim it."
     },
     {
-      "title": "Pretrained, Frozen, Still Leaking",
+      "title": "Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models",
       "cite": "arXiv:2606.09189 (2026)",
-      "note": "Audits attribute leakage from FROZEN foundation-model embeddings with subject-disjoint lower bounds (leakage margin ~0.16-0.37)."
+      "note": "Audits attribute leakage from FROZEN foundation-model embeddings with subject-disjoint lower bounds (EEG modality; same-genre evidence). https://arxiv.org/abs/2606.09189"
     },
     {
       "title": "PathoROB",

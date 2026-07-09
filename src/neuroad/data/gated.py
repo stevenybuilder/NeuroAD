@@ -233,6 +233,13 @@ def _map_str(value: object, table: dict[str, object]) -> object:
     key = str(value).strip().lower()
     if key in table:
         return table[key]
+    # Numeric round-trips (CSV/float) render 1 as "1.0"; match the int form too.
+    try:
+        f = float(key)
+        if f.is_integer() and str(int(f)) in table:
+            return table[str(int(f))]
+    except (ValueError, TypeError):
+        pass
     return pd.NA
 
 
@@ -250,7 +257,10 @@ def _dx_from_cdr(cdr: float) -> object:
 def _to_int8(series: pd.Series, mapping: Optional[dict] = None) -> pd.array:
     """Coerce a source series to the contract's Int8 (1/0/<NA>)."""
     if mapping is not None:
-        vals = series.map(lambda v: _map_str(v, mapping))
+        # NOTE: .map() over a nullable Int8 series nulls every entry, so an
+        # already-clean 1/0/<NA> column (e.g. a derived `conversion`) would be
+        # silently erased. Coerce to object first — a no-op for str/object input.
+        vals = series.astype(object).map(lambda v: _map_str(v, mapping))
     else:
         vals = pd.to_numeric(series, errors="coerce")
     return pd.array(pd.Series(vals).astype("Float64").round().astype("Int8"),

@@ -29,30 +29,33 @@ Of 8 report artifacts, 5 are computed on **real** data (`oasis.json` AD-vs-CN AU
 `openbhb_neurojepa_leakage.json` AUC 0.93, plus `openbhb.json`) and 3 on **synthetic**
 (`cohort_card.json`, `synthetic_survivor.json`, `synthetic_kill.json`). **≈ 60% real.**
 
-### 3. By DEMO spotlight — synthetic over-indexed (the real issue)
-The two hero cases the video showcases (SURVIVOR promoted to 88, KILL blocked at 15) and
-the emotional core (the **biomarker rescue**, p-tau217 r≈+0.40) are **100% synthetic**.
-So while the data and the validation are mostly real, the *narrative spotlight* leans
-synthetic. **This — not the raw data mix — is the credibility risk a domain judge flags.**
+### 3. By demo spotlight — real-first, synthetic as harness
+The current visual workbench boots on **REAL OASIS** and attaches real OpenBHB /
+Neuro-JEPA scanner-leakage evidence. The synthetic SURVIVOR/KILL pair remains in
+the app as a labeled harness: it demonstrates the p-tau217 biomarker-anchor
+mechanic and a ground-truth scanner-confound KILL, but it is not the primary
+evidence.
 
 ## Assessment: is it "too much synthetic"?
 
 - **Data volume: no.** Real already dominates (~87%). No action needed on the mix itself.
-- **Demo spotlight: yes.** The showcased beats are synthetic. Now that real, strong results
-  exist, the demo should LEAD with real and clearly badge synthetic:
-  - **Real & strong (lead with these):** frozen Neuro-JEPA embeddings predict scanner at
-    **AUC 0.93** (PCA-10 honest) on real healthy multi-site brains (`openbhb:neurojepa`);
-    real OASIS AD-vs-CN **AUC 0.82**; real OpenBHB tabular leakage **0.89**.
-  - **Synthetic (keep, but badge as a calibrated harness, never as evidence):** the
-    SURVIVOR/KILL choreography and the biomarker gate.
+- **Demo spotlight: no, after the reframe.** The app now leads with real OASIS
+  and real OpenBHB/Neuro-JEPA evidence:
+  - **Real & strong:** frozen Neuro-JEPA embeddings predict scanner at **AUC
+    0.93** (PCA-10 honest) on real healthy multi-site brains
+    (`openbhb:neurojepa`); real OASIS AD-vs-CN **AUC 0.82**; real OpenBHB
+    tabular leakage **0.89**.
+  - **Synthetic (kept, but badged):** the SURVIVOR/KILL choreography and
+    p-tau217 biomarker-anchor mechanic.
 
 ## Why the synthetic parts exist (and can't currently be real)
 
-The **biomarker anchor** (plasma p-tau217/GFAP correlated with an imaging signal) is the
-one thing with **no open dataset**: cohorts that pair MRI with plasma biomarkers (ADNI,
-OASIS-3, A4, EPAD) are all access-gated. The SURVIVOR/KILL cases are synthetic because no
-single open cohort has a disease signal AND plasma biomarkers AND multi-scanner variation
-at once. Everything else runs on real data.
+The **biomarker anchor** (plasma p-tau217/GFAP correlated with an imaging signal)
+is the one thing with **no open dataset**: cohorts that pair MRI with plasma
+biomarkers (ADNI, OASIS-3, A4, EPAD) are all access-gated. The synthetic
+SURVIVOR case exists to show that molecular gate. The current open-data
+promotion path instead uses leakage-clean cross-cohort replication when the
+biomarker anchor is unavailable.
 
 ## Roadmap to MORE real data (prioritized)
 
@@ -64,8 +67,9 @@ at once. Everything else runs on real data.
    real disease cohort with no gating.
 3. **Scale the OpenBHB Neuro-JEPA embeddings** from 96 → 300+ subjects (cheap on a Colab
    T4) to tighten the real leakage/brain-age numbers and per-site balance.
-4. **Real biomarker gate (slow path):** apply for OASIS-3 (~1-week DUA) or ADNI. Likely
-   miss the hackathon deadline; until then, keep the biomarker beat synthetic + badged.
+4. **Real biomarker gate (slow path):** apply for OASIS-3 (~1-week DUA) or ADNI.
+   Until then, keep biomarker-anchor examples synthetic + badged and mark
+   replication-promoted open-data findings as not yet molecularly confirmed.
 5. **More real multi-site:** ABIDE / CoRR (via the open `fcp-indi` S3 bucket) if a second
    multi-scanner cohort is wanted beyond OpenBHB.
 
@@ -78,11 +82,12 @@ The two demo hero cases run on real, open data:
   structural / 0.93 Neuro-JEPA) on healthy multi-site brains with no disease. The
   referee kills it (fails the leakage test).
 - **SURVIVOR — OASIS AD-vs-CN (real).** AUC 0.82 (n=263, subject-disjoint). Passes
-  age/sex, passes the scanner/site leakage test (margin +0.25), and — the key —
-  is **corroborated by real held-out cross-cohort replication** (OASIS-2, AUC 0.79).
-  Referee verdict: **partially robust, PROMOTED**, with honest caveats surfaced
-  (much of the effect is explained by brain-aging; the molecular plasma anchor is
-  unavailable in open data).
+  age/sex, passes the scanner/site leakage test (margin +0.25), passes the
+  brain-age-gap control while surfacing the stricter predicted-brain-age caveat,
+  and — the key — is **corroborated by real held-out cross-cohort replication**
+  (OASIS-2, AUC 0.79). Referee verdict: **strong candidate, PROMOTED by
+  replication**, with an explicit caveat that the molecular plasma anchor is
+  unavailable in open data and must be confirmed in ADNI/EPAD.
 
 **Real Neuro-JEPA disease signal (`oasis:neurojepa`, n=61).** Beyond structural
 features, the frozen Neuro-JEPA embeddings of OASIS-1 T1w volumes separate clinical

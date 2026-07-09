@@ -1,5 +1,5 @@
-claim_id: claim-mri-embeddings-separate-mci-conv
-claim_text: MRI embeddings separate MCI converters from non-converters
+claim_id: claim-a-structural-signature-separates
+claim_text: a structural signature separates converters
 substrate: frozen Neuro-JEPA structural embeddings
 head: linear probe
 population:
@@ -217,8 +217,8 @@ discovery_provenance:
       r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects
     kill_criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the
       complete-case subset, the amyloid-cascade routing is wrong
-narration: "The claim \u201CMRI embeddings separate MCI converters from non-converters\u201D\
-  \ lands at \u201Cpartially robust\u201D (40/100). The naive effect (AUC 0.85 separating\
+narration: "The claim \u201Ca structural signature separates converters\u201D lands\
+  \ at \u201Cpartially robust\u201D (40/100). The naive effect (AUC 0.85 separating\
   \ MCI converters from MCI non-converters) is real on paper, but the referee's job\
   \ is to ask what else could produce it. It sits below the promotion floor, so the\
   \ honest read is that acquisition, demographics or generic aging can plausibly account\

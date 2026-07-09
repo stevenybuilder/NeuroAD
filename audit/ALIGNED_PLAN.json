@@ -1,0 +1,1001 @@
+{
+  "audits": [
+    {
+      "domain": "Alzheimer's structural-MRI neuroimaging ML (foundation-model embedding auditing / batch-effect leakage)",
+      "summary": "The engineering is genuinely careful (subject-disjoint CV, CI-gated anchors, honest \"leakage margin\" framing, explicit prior-art positioning) and the core scientific premise \u2014 frozen brain-FM embeddings leak scanner/site and must be gated against \u2014 is real and well-supported. But the two hero results do not cleanly survive the tool's own gauntlet: the real OASIS \"survivor\" collapses to chance on the brain-age star, and the promoted synthetic \"strong candidate\" barely passes the leakage star and is rescued almost entirely by a fabricated p-tau217 correlation. The biomarker-anchor step \u2014 the advertised differentiator (\"Proteins confirm it\") \u2014 is 100% synthetic and never run on real molecular data, the brain-age control is over-aggressive in a way an AD-imaging expert would flag, the load-bearing prior-art citations are unverifiable/future-dated, and several shipped artifacts contradict the docs. Fixable before the deadline, but the demo should stop leading with beats that fail the referee.",
+      "strengths": [
+        "Core premise is scientifically sound and correctly scoped: frozen FM embeddings leak scanner/site is a real, documented phenomenon, and the project honestly claims productization (a runnable referee) rather than discovery of the effect.",
+        "Real, demonstrable leakage result: on 3,984 healthy OpenBHB brains with no disease, structural features predict scanner field strength at AUC 0.89 (and the frozen Neuro-JEPA 768-d embedding at ~0.93 PCA-10) \u2014 a genuine, honestly-caveated batch-effect demonstration.",
+        "Methodologically literate: subject-disjoint cross-validated AUC, Fisher-z CI-gated biomarker anchor, Wilson/Cohen's-d cluster stats, p>>n overfitting explicitly acknowledged (raw 0.998 vs PCA-10 0.93), and a conservative-lower-bound argument for the leakage-margin CV asymmetry.",
+        "Unusually honest self-documentation: DATA_PROVENANCE.md openly states the demo over-indexes on synthetic and names it as the credibility risk; caveats are surfaced on every card."
+      ],
+      "findings": [
+        {
+          "title": "Both hero 'survivors' fail a heavy-weight star test \u2014 the real one collapses on brain-age, the promoted one leans on synthetic biomarkers",
+          "severity": "high",
+          "detail": "reports/oasis.json (the real AD-vs-CN 'survivor') FAILS the brain-age star: effect retained 1% after control (AUC 0.82\u21920.50, chance), so the tool's own gauntlet says the real signal is indistinguishable from generic aging. The promoted synthetic 'strong candidate' (synthetic_survivor.json, score 88) has a leakage margin of only +0.04 (star WEAKENED) \u2014 its own judge_reasoning calls the artifact reading 'the more defensible one' \u2014 yet it is rescued to 'strong candidate' almost entirely by a fabricated p-tau217 r=0.40. Neither hero cleanly passes both starred tests.",
+          "evidence": "reports/oasis.json brain_age retained 0.012, promoted:false; reports/synthetic_survivor.json margin +0.04, ptau217_r 0.404, judge_reasoning",
+          "judging_impact": "Demo (30%) and Impact (25%): a judge who reads the exported JSON sees the flagship survivor narrative undercut by the referee itself."
+        },
+        {
+          "title": "The biomarker-anchor differentiator ('Proteins confirm it') is entirely synthetic and never validated on real molecular data",
+          "severity": "high",
+          "detail": "The p-tau217 r\u22480.43 / GFAP r\u22480.35 anchor values are calibration targets in calibration.CAL chosen to sit inside a literature range, not measurements \u2014 no open MRI+plasma cohort is used, as DATA_PROVENANCE.md concedes. This anchor is the hard promotion gate (scoring.py), so the promotion of the emotional-core SURVIVOR rests on a fabricated correlation, and the tagline 'Proteins confirm it' overstates what is demonstrated.",
+          "evidence": "src/neuroad/calibration.py CAL['ptau217_r']; docs/DATA_PROVENANCE.md 'no open dataset'; scoring.py HARD GATE",
+          "judging_impact": "Impact (25%)/Depth (20%): the advertised molecular-anchor edge is unproven; a Gladstone judge will discount it heavily."
+        },
+        {
+          "title": "Brain-age control conflates disease atrophy with aging, making the star over-aggressive and its 'kill' uninterpretable",
+          "severity": "medium",
+          "detail": "gauntlet.test_brain_age regresses out *predicted brain age* (not the brain-age gap) from the embedding, then re-probes. On OASIS the 'embedding' is 3 collinear volumetric features (nWBV/eTIV/ASF); AD atrophy loads on the same direction as brain-age, so this control removes the disease signal by construction (hence retained 1%). It cannot separate 'accelerated aging' from 'AD-specific atrophy' \u2014 an AD-imaging expert would call this hand-wavy.",
+          "evidence": "src/neuroad/gauntlet.py lines 161-177; reports/oasis.json brain_age R2=0.57 retained 0.012",
+          "judging_impact": "Depth (20%): the 25-weight star that decides the real verdict is methodologically shaky."
+        },
+        {
+          "title": "Load-bearing prior-art citations are unverifiable and future-dated; the whole 'we don't overclaim' defense rests on them",
+          "severity": "medium",
+          "detail": "The positioning ('published prior art, we productize') hinges on arXiv:2604.14441, arXiv:2606.09189, Neuro-JEPA arXiv:2606.14957, and 'PathoROB, Nature Communications 2026' \u2014 all 2026, none verifiable offline. If a judge Googles one and it does not resolve, the entire honesty framing collapses. These cites must each be resolved to a real DOI/abstract or removed.",
+          "evidence": "src/neuroad/calibration.py PRIOR_ART; README.md lines 18-27",
+          "judging_impact": "Claude Use (25%)/trust: a single fabricated citation is catastrophic for a 'referee' whose value proposition is rigor."
+        },
+        {
+          "title": "Docs contradict shipped artifacts, and the flagship report mislabels 3 morphometric features as Neuro-JEPA embeddings",
+          "severity": "medium",
+          "detail": "reports/oasis.json (n=263) is labeled substrate 'frozen Neuro-JEPA structural embeddings', but the real Neuro-JEPA OASIS run is n=61 (oasis_neurojepa_ad.json) \u2014 the n=263 run is the 3-feature tabular block, so the flagship real survivor overstates its substrate. DATA_ACCESS.md still says the Neuro-JEPA path is 'documented, not shipped' and 'nothing depends on it', while README/PROVENANCE/reports ship it as a headline; and DATA_PROVENANCE calls OASIS 'PROMOTED' while oasis.json says promoted:false, score 69.",
+          "evidence": "reports/oasis.json vs reports/oasis_neurojepa_ad.json; docs/DATA_ACCESS.md 'documented, not shipped' vs docs/DATA_PROVENANCE.md 'PROMOTED'",
+          "judging_impact": "Depth (20%)/Demo (30%): internal contradictions read as sloppiness and invite deeper scrutiny."
+        },
+        {
+          "title": "Gated CC-BY-NC-ND Neuro-JEPA weight provenance is unexplained given the auto-deny-gmail note",
+          "severity": "low",
+          "detail": "Real 768-d Neuro-JEPA embeddings are shipped (data/real/*_neurojepa_embeddings.csv), yet DATA_ACCESS.md states the weights are 'HF-gated behind an institutional-PI agreement that auto-denies personal/gmail emails' and the assistant 'cannot accept such an agreement' \u2014 while the operating account is a gmail address. Frozen-inference-only + git-ignored embeddings is a defensible non-derivative stance, but the access path should be stated explicitly to avoid a license/provenance question.",
+          "evidence": "data/real/oasis1_neurojepa_embeddings.csv (773 cols); docs/DATA_ACCESS.md 'auto-denies personal / gmail emails'",
+          "judging_impact": "Impact/trust: an open-source rules or licensing challenge from a judge is avoidable with one provenance sentence."
+        }
+      ],
+      "enhancements": [
+        {
+          "title": "Lead the demo with a REAL survivor that passes both stars \u2014 add a second open AD cohort",
+          "detail": "Add MIRIAD (open, self-serve, 46 AD/23 CN) or push the OASIS-3 1-week DUA so the leakage star is a real multi-scanner test (not the OASIS1-vs-OASIS2 cohort reframe) AND run brain-age with a control the AD signal can survive. A real disease finding that clears both stars is the single biggest credibility lift.",
+          "effort": "L",
+          "files": [
+            "docs/DATA_ACCESS.md",
+            "src/neuroad/data/"
+          ],
+          "rubric": "Impact 25% / Demo 30%"
+        },
+        {
+          "title": "Report brain-age adjustment two ways and add the standard scanner control",
+          "detail": "Show both the predicted-brain-age (aggressive) and brain-age-GAP (Franke/Gaser standard) adjustments so a reviewer sees the survivor isn't killed by one over-aggressive residualization, and add ComBat/ComBat-GAM harmonization as the cited-standard scanner control rather than only LDA direction-scrubbing.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/gauntlet.py",
+            "src/neuroad/leakage.py"
+          ],
+          "rubric": "Depth 20%"
+        },
+        {
+          "title": "Badge every biomarker number as SYNTHETIC and pull it from the headline until real",
+          "detail": "Since the p-tau217/GFAP anchor is calibrated, not measured, remove 'Proteins confirm it' from the top-line pitch and visibly badge the anchor in the UI/reports; optionally demonstrate the anchor mechanic on a real reachable proxy (amyloid-PET Centiloid or CSF in OASIS-3) to make the gate real.",
+          "effort": "M",
+          "files": [
+            "docs/DATA_PROVENANCE.md",
+            "app/index.html",
+            "src/neuroad/scoring.py"
+          ],
+          "rubric": "Impact 25% / Depth 20%"
+        },
+        {
+          "title": "Resolve or delete every prior-art citation and hyperlink DOIs in-repo",
+          "detail": "Verify arXiv:2604.14441, 2606.09189, 2606.14957 and PathoROB against live abstracts; embed resolvable links in calibration.PRIOR_ART and README. Any cite that does not resolve must be removed \u2014 the referee's credibility cannot rest on an unverifiable reference.",
+          "effort": "S",
+          "files": [
+            "src/neuroad/calibration.py",
+            "README.md"
+          ],
+          "rubric": "Claude Use 25% / trust"
+        },
+        {
+          "title": "Make the leakage-margin comparison symmetric and report CIs",
+          "detail": "Add a leave-one-site-out (site-disjoint) scanner AUC alongside the standard-CV one so the margin isn't an asymmetric comparison a reviewer can attack, and report bootstrap CIs on the n=96 Neuro-JEPA leakage numbers where p>>n makes point estimates fragile.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/leakage.py",
+            "reports/openbhb_neurojepa_leakage.json"
+          ],
+          "rubric": "Depth 20%"
+        },
+        {
+          "title": "Regenerate all reports and reconcile docs with artifacts",
+          "detail": "Re-run every reports/*.json under the current scoring logic (fix the OASIS promoted flag and the n=263 'Neuro-JEPA' substrate mislabel), and update DATA_ACCESS.md's 'documented, not shipped' section now that embeddings ARE shipped, so no doc contradicts a shipped file.",
+          "effort": "S",
+          "files": [
+            "reports/oasis.json",
+            "docs/DATA_ACCESS.md",
+            "docs/DATA_PROVENANCE.md"
+          ],
+          "rubric": "Demo 30% / Depth 20%"
+        }
+      ],
+      "references": [
+        "reports/oasis.json",
+        "reports/synthetic_survivor.json",
+        "reports/oasis_neurojepa_ad.json",
+        "reports/openbhb_neurojepa_leakage.json",
+        "src/neuroad/calibration.py",
+        "src/neuroad/gauntlet.py",
+        "src/neuroad/scoring.py",
+        "docs/DATA_PROVENANCE.md",
+        "docs/DATA_ACCESS.md",
+        "data/registry.yaml"
+      ]
+    },
+    {
+      "domain": "Data Science / Statistics methodology audit \u2014 NeuroAD Discovery Engine (leakage probes, calibration, scoring, verdict, evidence ledger)",
+      "summary": "The pipeline is unusually careful for a hackathon: it uses StratifiedGroupKFold for site-disjoint outcome AUC (probe.py:167), out-of-fold probe scores for the biomarker anchor (gauntlet.py:219-231), a Fisher-z CI on the anchor correlation (gauntlet.py:198-216), Wilson and Cohen's-d CIs in cluster characterization (discovery.py:43-70), and bootstrap-Jaccard cluster stability (detective.py:136). The single biggest statistical gap is that every headline AUC (naive effect, leakage margin, replication) is a single-seed point estimate compared against hard thresholds with NO confidence interval and NO permutation/null baseline \u2014 so near-threshold verdicts (e.g. margin +0.04 -> WEAKENED) are within noise and not defensibly significant. A second real gap: the core probe runs logistic regression on the full 768-d Neuro-JEPA embedding with n as low as 61-96 (probe.py:100), so the builder-track referee's own AUCs on real cohorts are p>>n inflated and internally inconsistent with the researcher-track \"honesty_note\" that only trusts PCA-reduced numbers. No multiple-comparison control exists across the 5 tests x up-to-6 clusters, covariate residualization happens outside the CV loop, and \"calibration.py\" contains literature plausibility ranges, not any actual probability calibration. These are fixable and, if fixed, would sharply raise Depth and Demo-trust credibility.",
+      "strengths": [
+        "Subject/site-disjoint CV is real, not decorative: point_head emits site groups and cross_val_auc routes them into StratifiedGroupKFold for all outcome AUCs (probe.py:121-129, 165-173), with graceful fallback when groups are too few.",
+        "The biomarker anchor is gated on the Fisher-z 95% CI LOWER BOUND of the correlation, not raw r, and uses out-of-fold probe scores (gauntlet.py:219-283) \u2014 this specifically defeats the 'lucky small-n correlation on noise passes' failure mode and is the most statistically mature part of the code.",
+        "Honest self-flagging of p>>n: openbhb_neurojepa_leakage.json reports both the inflated raw-768d AUC (0.998) and the defensible PCA-10 AUC (0.931) with an explicit honesty_note \u2014 exactly the disclosure a reviewer wants for the researcher-track finding.",
+        "Leakage-margin CV asymmetry (grouped outcome vs ungrouped scanner) is documented and argued to be a conservative lower bound (leakage.py:47-55), showing awareness of the direction of bias.",
+        "Cluster discovery uses reduce-then-cluster with bootstrap-Jaccard stability as the primary gate and ARI/AMI vs planted truth (detective.py, discovery.py:226-232) \u2014 proper unsupervised rigor rather than eyeballing k.",
+        "NA-renormalized scoring drops untestable dimensions from numerator AND denominator with an explicit completeness caveat (contract.py:165-183, scoring.py:110-114), so missing data cannot silently inflate the score.",
+        "Determinism: RANDOM_STATE=0 pinned across probe, detective, PCA and CV, so runs are byte-reproducible."
+      ],
+      "findings": [
+        {
+          "title": "No confidence intervals or permutation/null baseline on any headline AUC \u2014 verdicts are hard thresholds on single-seed point estimates",
+          "severity": "high",
+          "detail": "Every gate that drives the verdict compares a single point-estimate AUC to a fixed cutoff with no uncertainty quantification: site_scanner uses margin<0.10 -> WEAKENED, margin<=0 -> FAILED (gauntlet.py:116-124); replication uses test_auc>=0.65 -> PASSED (gauntlet.py:321-326); retained-fraction bands 0.70/0.40 gate age_sex and brain_age (gauntlet.py:47-52). The shipped ledger shows margin +0.04 producing 'WEAKENED' (evidence_ledger.csv row 2) \u2014 a difference of two CV-AUCs that is almost certainly inside a 95% CI of zero. There is no DeLong test, no bootstrap AUC CI, and no label-permutation null anywhere in src/ (grep for delong/p_value/permut returns nothing but the anchor's Fisher-z). A rigorous reviewer will treat every near-threshold PASS/FAIL as a coin flip and discount the fragile/robust verdict.",
+          "evidence": "gauntlet.py:116-124, 321-326, 47-52; reports/evidence_ledger.csv line 3 (margin +0.04 -> weakened); grep 'permut|delong|p_value' src/ -> none",
+          "judging_impact": "Depth & Execution (20%): the central deliverable is a statistical referee, and it issues verdicts without significance testing. Demo (30%): a judge who knows imaging ML will immediately ask 'is that margin significant?' and the tool has no answer."
+        },
+        {
+          "title": "Core referee probe runs on full 768-d embeddings at n=61-96 (p>>n) \u2014 builder-track AUCs are inflated and inconsistent with the researcher-track honesty note",
+          "severity": "high",
+          "detail": "LinearProbe fits LogisticRegression on contract.embedding_matrix(df) with NO dimensionality reduction (probe.py:47-58, 100). For the real Neuro-JEPA cohorts the embedding is 768-d while n_subjects is 61 (oasis_neurojepa_ad.json) to 96 (openbhb_neurojepa_leakage.json). The project itself acknowledges this exact regime is inflated ('Raw 768-d AUC (~0.998) is inflated by p>>n', openbhb_neurojepa_leakage.json honesty_note) and only trusts PCA-reduced numbers in the standalone scripts \u2014 but the gauntlet, scoring, and leakage_margin that produce the actual ClaimCards never apply that reduction. So the referee's own outcome/scanner/replication AUCs on any real high-dim cohort are optimistically biased, and the two tracks report methodologically different numbers for the same embeddings.",
+          "evidence": "probe.py:100 (embedding_matrix, no PCA) + LogisticRegression C=1.0 probe.py:52-54; oasis_neurojepa_ad.json n=61; openbhb_neurojepa_leakage.json n=96 + honesty_note",
+          "judging_impact": "Depth & Execution (20%): internal inconsistency between the honest researcher-track script and the builder-track engine undermines the 'sound engineering' claim. Impact (25%): a scientist running the referee on a real gated cohort gets optimistic AUCs the authors elsewhere admit are unreliable."
+        },
+        {
+          "title": "Covariate and brain-age residualization is fit on the full dataset outside the CV loop",
+          "severity": "medium",
+          "detail": "test_age_sex and test_brain_age compute the adjustment by regressing covariates out of the ENTIRE embedding matrix once (_residualize fits StandardScaler + lstsq on all rows, gauntlet.py:55-63), then feed the residualized X into cross_val_auc. The covariate coefficients are therefore estimated using the same rows that appear in every test fold, so the 'after adjustment' AUC and the retained-fraction are not a clean nested-CV estimate. Brain-age partially guards this (OOF predictions for CN training rows, gauntlet.py:168-169) but the final _residualize(Xo, control) is still fit-and-applied on all outcome rows. The bias generally makes the 'after' AUC slightly optimistic-to-neutral, muddying the survivor/kill retained-fraction that the verdict hinges on.",
+          "evidence": "gauntlet.py:55-63 (_residualize fit on full X), 94-96 (age_sex), 176-177 (brain_age)",
+          "judging_impact": "Depth & Execution (20%): a reviewer checking the adjustment methodology will flag that covariate removal is not inside the CV fold, weakening the 'effect retained' numbers that are the product's core evidence."
+        },
+        {
+          "title": "No multiple-comparison control across 5 tests x up-to-6 clusters + biomarker and confound sub-tests",
+          "severity": "medium",
+          "detail": "discover_and_referee reruns the full 5-test gauntlet per cluster (k up to 6, discovery.py:195-224) plus 2 Cohen's-d biomarker CIs and 3 Cramer's-V/eta^2 confound associations per cluster, each with its own 95% CI or hard threshold, and none are FDR/Bonferroni-adjusted. The artifact-flag cutoff _ARTIFACT_ASSOC=0.25 (discovery.py:37) is asserted, not derived from a null distribution of Cramer's V under random cluster membership. With ~5x6 + characterizations, several 'significant' CIs excluding zero are expected by chance alone.",
+          "evidence": "discovery.py:37 (_ARTIFACT_ASSOC=0.25 arbitrary), 180-224 (per-cluster gauntlet loop), 55-70 (_cohens_d CI), 139-153 (associations); no BH/Bonferroni in repo",
+          "judging_impact": "Depth & Execution (20%): open surface for a 'p-hacking / no multiplicity correction' critique on the discovery/RESEARCHER-track claims."
+        },
+        {
+          "title": "Replication test can PASS on n_test as small as 6 with a single-fit AUC and no CI",
+          "severity": "medium",
+          "detail": "test_replication holds out the smallest usable site requiring only te.sum()>=6 (gauntlet.py:302-309), fits ONE LinearProbe, and computes a single held-out roc_auc_score with no CI (gauntlet.py:317-319), then gates test_auc>=0.65 -> PASSED. An AUC on 6 held-out subjects has a 95% CI spanning roughly [0.3,1.0]; a PASS there is essentially noise, yet replication carries 15 score weight and is the open-data corroboration path that unlocks promotion (scoring.py:87-89). The shipped ledger's n_test=62 is fine, but the code permits credit at n_test=6.",
+          "evidence": "gauntlet.py:307 (te.sum()>=6), 317-319 (single-fit AUC, no CI), 321 (>=0.65 -> PASSED); scoring.py:87-89 (replication unlocks promotion)",
+          "judging_impact": "Depth & Execution (20%) and Demo trust (30%): the corroboration gate can be satisfied by a statistically meaningless held-out AUC."
+        },
+        {
+          "title": "'calibration.py' performs no probability calibration despite the pipeline consuming predict_proba downstream",
+          "severity": "medium",
+          "detail": "calibration.py contains hardcoded literature plausibility RANGES (CAL dict, lines 71-92) used as verdict thresholds \u2014 there is no reliability diagram, Brier score, or ECE anywhere. Yet raw predict_proba scores drive the biomarker anchor correlation (gauntlet.py:231) and the demo effect bars, and LinearProbe uses class_weight='balanced' (probe.py:54), which deliberately decouples output probabilities from base rates. The probabilities that flow into downstream statistics are never calibration-assessed, and the module name oversells what is really a citation/threshold table.",
+          "evidence": "calibration.py:71-92 (ranges, not calibration); probe.py:54 (class_weight='balanced'); gauntlet.py:231 (proba used for anchor); grep 'brier|isotonic|reliability|ECE' -> none",
+          "judging_impact": "Depth & Execution (20%): a judge auditing 'is calibration done correctly?' finds no calibration at all under a file named calibration.py."
+        },
+        {
+          "title": "Shipped evidence_ledger.csv is not self-describing or fully traceable \u2014 no provenance, and one effect value is mislabeled",
+          "severity": "medium",
+          "detail": "evidence_ledger.csv is written by app/build_demo_data.py:930-935 from the synthetic SURVIVOR case, but the CSV carries no dataset name, seed, source (engine vs calibrated-fallback), n, or CI columns \u2014 a reviewer who downloads it cannot tell it is synthetic (only cohort_card.json carries the 'SYNTHETIC HARNESS' badge, and it is a separate file). Worse, the biomarker_anchor row reports effect=0.904 labeled 'anchor strength |r|' while the same row's detail says 'r=+0.40': 0.904 is the UI transform 0.5+min(|r|,0.5) (build_demo_data.py:531), not |r|, so the shipped artifact's headline number contradicts its own detail text.",
+          "evidence": "reports/evidence_ledger.csv line 5 (0.904 labeled |r| vs detail r=+0.40); app/build_demo_data.py:531 (_effect_bar transform), 930-935 (writer, no provenance cols)",
+          "judging_impact": "Impact (25%): the ledger is pitched as the reproducible/auditable evidence trail; a mislabeled headline number and missing provenance let a skeptic dismiss traceability. Demo (30%): the export-tray artifact must survive inspection."
+        },
+        {
+          "title": "Single fixed seed with no seed-sensitivity / repeated-CV assessment near thresholds",
+          "severity": "low",
+          "detail": "All CV uses shuffle=True, random_state=0 (probe.py:167-172) and RANDOM_STATE=0 is pinned everywhere. This is great for reproducibility but means no verdict-stability check: for cases sitting near the 0.10 margin or 0.70/0.40 retained bands, a different seed could flip WEAKENED<->PASSED<->FAILED. The code comments claim seed-robustness only for the anchor (gauntlet.py:203); the AUC-threshold verdicts have no analogous defense. No repeated k-fold or seed-sweep is reported.",
+          "evidence": "probe.py:167-172 (single random_state=0), gauntlet.py:203 (seed-robustness claimed only for anchor)",
+          "judging_impact": "Depth & Execution (20%): a reviewer can flip a demo verdict by changing one seed, which would read as fragility of the tool itself."
+        }
+      ],
+      "enhancements": [
+        {
+          "title": "Add bootstrap/DeLong AUC CIs + a label-permutation null p-value to every headline metric",
+          "detail": "For naive effect, outcome_auc, scanner_auc, leakage margin, and replication AUC, add a bootstrap over subjects (or DeLong for paired AUCs) to report 95% CIs, plus a stratified label-permutation null (e.g. 1000 shuffles, honoring the site groups) to report p vs chance and p vs scanner. Then reframe thresholds as 'CI excludes chance' / 'margin CI excludes zero' rather than point-estimate cutoffs. Highest-ROI change: it directly answers the reviewer's first question and upgrades every verdict from an assertion to a test.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/probe.py",
+            "src/neuroad/leakage.py",
+            "src/neuroad/gauntlet.py"
+          ],
+          "rubric": "Depth & Execution (20%), Demo trust (30%)"
+        },
+        {
+          "title": "Reconcile builder- and researcher-track dimensionality: reduce inside the probe for p>>n cohorts",
+          "detail": "Add an optional PCA/whitening (or strong-ridge) front-end to LinearProbe, selected automatically when n < k*D, and make the gauntlet + leakage_margin use the SAME reduction the standalone neurojepa scripts already trust. Report effective degrees of freedom. This removes the internal inconsistency where the honesty_note distrusts the very AUCs the engine ships.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/probe.py",
+            "src/neuroad/gauntlet.py",
+            "src/neuroad/leakage.py"
+          ],
+          "rubric": "Depth & Execution (20%), Impact (25%)"
+        },
+        {
+          "title": "Move covariate/brain-age adjustment inside the CV fold (nested residualization)",
+          "detail": "Wrap StandardScaler + covariate-regression + logistic head in one sklearn Pipeline (or a custom transformer) so the residualization is fit only on each training fold, and report retained-fraction with a bootstrap CI. Eliminates the out-of-fold-adjustment leakage in age_sex and brain_age and makes 'effect retained' a defensible nested-CV estimate.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/gauntlet.py"
+          ],
+          "rubric": "Depth & Execution (20%)"
+        },
+        {
+          "title": "Add Benjamini-Hochberg FDR across gauntlet tests and clusters, and derive the artifact threshold from a null",
+          "detail": "Collect all per-test / per-cluster p-values (from the permutation nulls above and the anchor CI) and apply BH-FDR, reporting q-values on the ClaimCard and cluster cards. Replace the hardcoded _ARTIFACT_ASSOC=0.25 with a permutation null of Cramer's V under shuffled cluster membership (flag when observed exceeds the 95th percentile). Closes the multiplicity critique on the RESEARCHER-track discovery output.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/discovery.py",
+            "src/neuroad/scoring.py"
+          ],
+          "rubric": "Depth & Execution (20%), Impact (25%)"
+        },
+        {
+          "title": "Make evidence_ledger.csv self-describing and reproducible",
+          "detail": "Emit provenance columns/header: dataset, seed, source (engine|fallback), n_used, n_missing, effect, ci_lo, ci_hi, p_perm, plus a top comment line with contract version and a 'SYNTHETIC HARNESS' flag matching cohort_card. Fix the biomarker_anchor row so the 'effect' column and its label are consistent (report r with its CI, not the 0.5+|r| UI transform, or relabel the column 'effect bar'). A downloaded ledger should stand alone as an audit artifact.",
+          "effort": "S",
+          "files": [
+            "app/build_demo_data.py",
+            "reports/evidence_ledger.csv",
+            "src/neuroad/scoring.py"
+          ],
+          "rubric": "Impact (25%), Demo trust (30%)"
+        },
+        {
+          "title": "Add a seed-sweep verdict-stability panel",
+          "detail": "Run the referee across ~20 seeds on the synthetic SURVIVOR and KILL and report the distribution of scores and the verdict-flip rate near band boundaries; surface it in the demo as 'verdict stable across 20 seeds' (or honestly widen the MIXED band where it flips). Turns the single-seed determinism from a hidden risk into a demonstrated robustness claim.",
+          "effort": "S",
+          "files": [
+            "src/neuroad/pipeline.py",
+            "app/build_demo_data.py"
+          ],
+          "rubric": "Depth & Execution (20%), Demo trust (30%)"
+        },
+        {
+          "title": "Add a genuine calibration check for the probabilities used downstream",
+          "detail": "Since predict_proba scores feed the anchor correlation and effect bars, add an OOF reliability diagram + Brier score / ECE for the probe (at least on the synthetic and OASIS cohorts) and either report it or switch to CalibratedClassifierCV. At minimum rename/annotate calibration.py so the module name matches its contents (plausibility ranges, not probability calibration).",
+          "effort": "S",
+          "files": [
+            "src/neuroad/calibration.py",
+            "src/neuroad/probe.py",
+            "src/neuroad/gauntlet.py"
+          ],
+          "rubric": "Depth & Execution (20%)"
+        }
+      ],
+      "references": [
+        "DeLong et al. 1988, Comparing areas under two or more correlated ROC curves (Biometrics) \u2014 paired AUC significance for the leakage margin: https://pubmed.ncbi.nlm.nih.gov/3203132/",
+        "Ojala & Garriga 2010, Permutation Tests for Studying Classifier Performance (JMLR) \u2014 label-permutation null for AUC/accuracy: https://www.jmlr.org/papers/v11/ojala10a.html",
+        "Benjamini & Hochberg 1995, Controlling the False Discovery Rate (JRSS-B) \u2014 multiplicity correction across the 5 tests x clusters: https://www.jstor.org/stable/2346101",
+        "Varoquaux 2018, Cross-validation failure: Small sample sizes lead to large error bars (NeuroImage) \u2014 why n=61-96 CV AUCs need wide CIs: https://doi.org/10.1016/j.neuroimage.2017.06.061",
+        "Nixon/Guo et al. 2017, On Calibration of Modern Neural Networks \u2014 ECE / reliability diagrams (concept applies to any probabilistic classifier): https://arxiv.org/abs/1706.04599",
+        "scikit-learn calibration guide (reliability curves, Brier, CalibratedClassifierCV): https://scikit-learn.org/stable/modules/calibration.html"
+      ]
+    },
+    {
+      "domain": "Engineering / Architecture",
+      "summary": "Well-architected Python package: a frozen contract layer (contract.py) cleanly decouples data feeders from the referee engine, the \"run in one command\" claim genuinely holds (both `neuroad demo` via -m and the installed `neuroad` console script work, producing the compelling 88/100 SURVIVOR vs 15/100 KILL punchline), and 75/75 pytest tests pass in ~25s with determinism pinned via RANDOM_STATE. The Claude layer is a real strength for the Claude Use score: five persona modules plus a three-voice courtroom, strict structured tool-use, a server-side-refusal beta + retry-model chain, and rich deterministic fallbacks on every call. The main gaps are reproducibility and demo-verifiability: the real Neuro-JEPA embedding tables behind the researcher-track finding are git-ignored (so a clean clone cannot regenerate the headline leakage result), and by default every Claude call silently degrades to offline templates with no live/offline indicator, leaving the \"Claude as adjudicator\" story unverified in the shipped demo.",
+      "strengths": [
+        "contract.py is a genuine frozen-interface seam: METADATA_COLUMNS + validate_table + one linear head pointed at LABEL_TARGETS means swapping real embeddings changes the table, not the code. Clean, modular, data-source-independent.",
+        "One-command claim holds: installed `neuroad` console script and `python -m neuroad.cli demo` both run fully offline and produce the SURVIVOR-promotes / higher-AUC-KILL-refused punchline (contract-level demo integrity).",
+        "75/75 tests pass (tests/test_*.py) covering engine, pipeline, data, gated mapper, discovery, claude layer; determinism handled via probe.RANDOM_STATE and CI-lower-bound gauntlet gates.",
+        "Sophisticated, creative Claude use: claim_parser + courtroom(3 voices) + bridge + reviewer + narrator, strict single-tool structured output (_client.py:90-97), server-side refusal fallback beta + sonnet retry chain, each with a rich deterministic fallback so the pipeline never crashes offline.",
+        "Strong secrets / gated-weight hygiene: .gitignore blocks *.safetensors/*.pt/*embeddings*.csv/.env; gated.py is a clean drop-in seam mapping raw exports to the contract with zero downstream change; compliance reasoning documented in loader docstrings.",
+        "skills/ are real Agent Skills (SKILL.md YAML frontmatter) whose run.py call the actual neuroad.gauntlet functions \u2014 composable entrypoints, not duplicated logic."
+      ],
+      "findings": [
+        {
+          "title": "Researcher-track finding is not reproducible from a clean clone (embedding tables git-ignored)",
+          "severity": "high",
+          "detail": "The .gitignore rule `*embeddings*.csv` excludes data/real/oasis1_neurojepa_embeddings.csv and openbhb_neurojepa_embeddings.csv (confirmed via git check-ignore), so loaders.load('openbhb:neurojepa') / 'oasis:neurojepa' raise FileNotFoundError on a fresh clone. The headline scanner-leakage result (AUC 0.93 on frozen Neuro-JEPA) survives only as committed reports/*.json plus a Colab notebook, not as a runnable path.",
+          "evidence": "data/real/oasis_jepa.py, openbhb_jepa.py load these CSVs; .gitignore:*embeddings*.csv; git check-ignore confirms both ignored; git ls-files shows neither tracked",
+          "judging_impact": "Reproducibility for open-source submission + Impact: a judge cloning the repo can run only the synthetic demo, not the real finding others would build on.",
+          "severity_note": ""
+        },
+        {
+          "title": "Default demo runs 100% offline templates with no live-Claude indicator",
+          "severity": "medium",
+          "detail": "USING_LIVE_API is False without ANTHROPIC_API_KEY, so claim_parser/courtroom/bridge/reviewer/narrator all silently return deterministic fallbacks; nothing in CLI output or reports states whether Claude actually ran. The pipeline shims (pipeline.py:32-92) also swallow every exception with bare except:pass, so a misconfigured live key degrades invisibly.",
+          "evidence": "_client.py:38,63-69; pipeline.py:39,57,67,80 bare `except Exception: pass`; cli._fmt_card prints no live/offline badge",
+          "judging_impact": "Claude Use 25% + Demo 30%: the 'Claude as adjudicator' story is the differentiator, yet the shipped demo shows only templates and gives judges no way to confirm live reasoning ran.",
+          "severity_note": ""
+        },
+        {
+          "title": "UI does not read the reports `neuroad demo` writes \u2014 separate build step, risk of stale demo",
+          "severity": "medium",
+          "detail": "README quickstart says `open app/index.html` 'ticks the gauntlet through reports/*.json', but index.html fetch()es app/demo_data.json (built only by app/build_demo_data.py) and on the file:// path CORS blocks fetch, falling back to embedded JSON. Running `neuroad demo` regenerates reports/ that the UI never consumes, and demo_data.json is a committed 87KB artifact that can drift from the engine.",
+          "evidence": "app/index.html:4350 fetch('demo_data.json'); build_demo_data.py writes app/demo_data.json + reports/; cli._cmd_demo writes only reports/",
+          "judging_impact": "Demo 30%: presenter may show stale demo_data.json, and file:// fetch failure means the 'live' workbench is actually the embedded fallback unless served over http.",
+          "severity_note": ""
+        },
+        {
+          "title": "Packaging/config inconsistencies undercut open-source polish",
+          "severity": "low",
+          "detail": "requirements.txt hardcodes anthropic even though pyproject marks it an optional [claude] extra; the egg-info is a stub (only dependency_links.txt); and gated.py's module docstring (lines 32-35) claims it is 'intentionally NOT wired into loaders.py' while loaders.py:48-51 in fact dispatches gated datasets. No .github CI exists to show reviewers a green build.",
+          "evidence": "requirements.txt vs pyproject [project.optional-dependencies].claude; src/neuroad_referee.egg-info/ has only dependency_links.txt; gated.py:32-35 vs loaders.py:48-51; no .github/",
+          "judging_impact": "Depth & Execution 20%: small contradictions and a stub build signal a hack rather than refined engineering to a careful reviewer.",
+          "severity_note": ""
+        }
+      ],
+      "enhancements": [
+        {
+          "title": "Surface a live-vs-offline Claude badge and capture one live transcript",
+          "detail": "Print the model and path actually used (live claude-fable-5 vs offline template) in _fmt_card and each report, and commit one API-key demo transcript (courtroom/bridge/reviewer output). Makes the strongest differentiator visible and verifiable.",
+          "effort": "S",
+          "files": [
+            "src/neuroad/claude/_client.py",
+            "src/neuroad/cli.py"
+          ],
+          "rubric": "Claude Use 25% + Demo 30%"
+        },
+        {
+          "title": "Make the researcher finding runnable from a clone",
+          "detail": "Ship a license-safe reproduction path: either a `neuroad reproduce-finding` command that reads committed reports + a tiny checked-in fixture, or a small PCA-reduced embedding sample that is arguably non-derivative, so judges can regenerate the AUC 0.93 leakage number without gated weights.",
+          "effort": "M",
+          "files": [
+            "src/neuroad/data/openbhb_jepa.py",
+            "src/neuroad/cli.py",
+            "docs/HF_ACCESS.md"
+          ],
+          "rubric": "Reproducibility + Impact 25%"
+        },
+        {
+          "title": "Have `neuroad demo` also write app/demo_data.json and add a serve command",
+          "detail": "Fold build_demo_data's demo_data.json write into `neuroad demo` (or call it), and document `python -m http.server` since file:// blocks fetch. Guarantees the workbench reflects the just-run engine, not a stale committed artifact.",
+          "effort": "S",
+          "files": [
+            "src/neuroad/cli.py",
+            "app/build_demo_data.py",
+            "README.md"
+          ],
+          "rubric": "Demo 30%"
+        },
+        {
+          "title": "Add a minimal GitHub Actions CI (pytest + `neuroad demo` smoke)",
+          "detail": "A single workflow running the 75 tests plus one offline demo invocation gives open-source reviewers an immediate green signal and guards the one-command claim against regressions.",
+          "effort": "S",
+          "files": [
+            ".github/workflows/ci.yml"
+          ],
+          "rubric": "Depth & Execution 20%"
+        },
+        {
+          "title": "Reconcile packaging and stale docs",
+          "detail": "Move anthropic out of requirements.txt into the [claude] extra (or note it's optional), fix the gated.py docstring that contradicts loaders.py wiring, and add a `make demo`/Makefile one-liner. Small edits that read as craft.",
+          "effort": "S",
+          "files": [
+            "requirements.txt",
+            "src/neuroad/data/gated.py",
+            "Makefile"
+          ],
+          "rubric": "Depth & Execution 20%"
+        },
+        {
+          "title": "Tighten exception handling in the Claude shims",
+          "detail": "The pipeline's bare `except Exception: pass` around every Claude call hides real bugs; log at debug level (or capture the exception type into the report) so live-API misconfig is diagnosable without breaking the offline guarantee.",
+          "effort": "S",
+          "files": [
+            "src/neuroad/pipeline.py",
+            "src/neuroad/claude/_client.py"
+          ],
+          "rubric": "Depth & Execution 20%"
+        }
+      ],
+      "references": [
+        "src/neuroad/contract.py",
+        "src/neuroad/pipeline.py",
+        "src/neuroad/cli.py",
+        "src/neuroad/claude/_client.py",
+        "src/neuroad/data/gated.py",
+        "src/neuroad/data/loaders.py",
+        "app/index.html",
+        "app/build_demo_data.py",
+        ".gitignore",
+        "README.md"
+      ]
+    },
+    {
+      "domain": "Design / UI-UX (single-file HTML workbench, app/index.html)",
+      "summary": "NeuroAD's workbench (app/index.html, ~4360 lines, all CSS/JS inline, offline-safe) is already a genuinely sophisticated, credible \"scientific referee\" UI: a dark 3-column workbench with masthead + substrate toggle, cohort card, docket, PCA canvas scatter with 1\u03c3 ellipses/centroids, a staged-reveal gauntlet with eased effect-size bars, an animated verdict-meter needle, a Claude courtroom + self-critiquing reviewer, a confound leaderboard, KILL-vs-SURVIVOR split, and an export tray \u2014 with deterministic data, progressive disclosure, and prefers-reduced-motion support. The engineering craft is real and it reads as a tool a scientist would trust, which serves Impact and Depth well. But for Demo (30% of score) it leaves its best beats on the table: the two hero numbers snap instead of counting up, the scatter hard-swaps instead of morphing when it should make leakage visible, the verdict lands without a stamp, and there is no spotlight/autopilot to guide the eye or guarantee a repeatable take. Legibility is also a video risk \u2014 pervasive 10\u201311px mono microtext and low-contrast grays will turn to mush at 1080p/phone. The fixes are almost all cheap, single-file, and disproportionately raise the \"cool to watch\" ceiling without touching the science.",
+      "strengths": [
+        "Strong, coherent visual identity: dark instrument-panel aesthetic, tabular-mono numerics, consistent semantic color (green=survives, red=kill, amber=weakened, star=\u2605 decisive tests) \u2014 reads instantly as a serious lab tool, not a toy app.",
+        "Real motion foundations already in place: staged gauntlet reveal (680ms/step at index.html:4289-4293), CSS-eased bar fills with cubic-bezier(.2,.8,.2,1) (line 103, 186), animated meter needle (line 207), staggered court/reviewer li fade-ins, and a pulsing 'running' status dot \u2014 the choreography scaffolding exists to build on.",
+        "The scatter is conceptually the wow moment: seeded deterministic points + per-class 1\u03c3 ellipses + ringed centroids (drawScatter, 3632-3683) make the 'color-by-scanner shows the machine IS the axis' finding literally visible \u2014 the core researcher-track insight is already spatial.",
+        "Genuinely novel narrative devices that photograph well on video: the KILL-vs-SURVIVOR split modal, the leakage-margin pair-bar (outcome AUC vs scanner AUC on a shared axis), the gated biology zone (\ud83d\udd12 locked until promoted), and Claude arguing prosecution/defense/judge THEN critiquing its own verdict \u2014 this is strong Claude-Use material.",
+        "Disciplined craft: offline/file:// safe with embedded-JSON fallback, prefers-reduced-motion honored with an instant-render path (4280-4287), keyboard controls, ARIA roles/labels, focus-visible outlines, progressive disclosure via collapsible panels \u2014 this is refined, not a hack."
+      ],
+      "findings": [
+        {
+          "title": "Hero numbers snap instead of animating \u2014 the single cheapest 'wow' is missing",
+          "severity": "high",
+          "detail": "The 34px verdict score and the leakage-margin headline are set via textContent (renderVerdict: vScore.textContent=c.score at 3873; mv.textContent at 3861) with no count-up/roll. The needle glides (CSS transition, line 207) but the number it points to just appears. On a 3-min video the verdict is THE payoff beat (FRAGILE 15 vs STRONG CANDIDATE 88) and it lands flat. A 900ms eased count-up synced to the needle glide is the highest-ROI polish in the whole app.",
+          "evidence": "app/index.html:3873, 3861, 3826 (naive AUC big number also static)",
+          "judging_impact": "Demo 30% \u2014 the emotional climax (refuse vs promote) is under-dramatized; count-ups are the classic dashboard 'cool to watch' move judges register instantly."
+        },
+        {
+          "title": "Scatter hard-swaps on color toggle \u2014 the leakage finding is not made cinematic",
+          "severity": "high",
+          "detail": "toggleColor just calls drawScatter() which fully clears and redraws (3632-3637, 4311-4313). Switching color:outcome\u2192color:scanner on the KILL is THE researcher-track reveal ('the dominant axis of variance is the scanner, not the disease') but it happens as an instantaneous repaint \u2014 no tween, no ellipse rotation, no centroids sliding apart. Points are re-grouped and ellipses recomputed each call, so the machinery to animate a per-point morph + ellipse re-orientation is already there; it just needs a requestAnimationFrame interpolation between the two colorings.",
+          "evidence": "app/index.html:3632 (drawScatter clears+redraws), 4311-4313 (toggleColor\u2192drawScatter, no tween)",
+          "judging_impact": "Demo 30% + Impact 25% \u2014 this is the visual proof of the core finding; morphing it would be the most memorable frame in the video and the clearest 'others can see the leakage' moment."
+        },
+        {
+          "title": "No autopilot / guided demo mode \u2014 the 3-min take depends on live human input",
+          "severity": "high",
+          "detail": "The demo is driven entirely by manual Space/\u2190\u2192/C/S/V keypresses (bind, 4334-4343). DEMO_SCRIPT.md specifies a precise beat-by-beat timeline (cold-open KILL \u2192 star test \u2192 FRAGILE \u2192 flip SURVIVOR \u2192 biomarker rescue \u2192 courtroom \u2192 real OASIS), but nothing in the app executes it. Recording a clean, identically-timed 3-min take requires flawless manual choreography every attempt \u2014 fragile for the single most-weighted deliverable. A scripted timeline array driving the existing selectCase/runGauntlet/toggleColor/toggleSubstrate/openSplit functions with timed lower-third captions would make every take deterministic.",
+          "evidence": "app/index.html:4334-4343 (only manual keybinds); docs/DEMO_SCRIPT.md (a timeline that has no code counterpart)",
+          "judging_impact": "Demo 30% \u2014 de-risks the highest-weight deliverable and lets the narration land exactly on each visual beat; also doubles as a reusable 'press play' artifact for judges who open the repo."
+        },
+        {
+          "title": "Video legibility: pervasive 10\u201311px mono microtext + low-contrast grays",
+          "severity": "high",
+          "detail": "Core labels run 10\u201311.5px mono on near-black: keyhints 10.5px (line 46), panel tags 10px (line 81), gauntlet weights/axes 10-11px (173, 188-189), src-chip 10.5px, scatter axis labels 11px canvas text (3680). Support inks --mute #6a7d92 and --ink3 #8ea3b8 on --bg #0b0f14 sit near/below WCAG AA. At 1080p H.264 compression and phone viewing these turn to mush while only the hero numbers survive \u2014 so the supporting evidence (the AUC values, axis domains, chips that make the tool credible) becomes unreadable exactly when a judge is deciding whether to trust it.",
+          "evidence": "app/index.html:46, 81, 173, 188-189, 3680; palette --mute/--ink3/--bg at lines 6-9",
+          "judging_impact": "Demo 30% \u2014 legibility on compressed video and small screens directly determines whether the findings 'hold up as software you trust'."
+        },
+        {
+          "title": "No spotlight/focus \u2014 dense 3-column layout gives the eye no guide on video",
+          "severity": "medium",
+          "detail": "Three columns + a full-width extras section (real-data + Detective) + a fixed export tray are all fully lit simultaneously (.wrap grid, 70-72; #extras, 557). During each narrative beat nothing dims or elevates the active panel, so a viewer watching the video has no cue where to look as the story moves docket\u2192scatter\u2192gauntlet\u2192verdict\u2192courtroom. High information density is a strength for a working scientist but a liability for a passive 3-min viewer.",
+          "evidence": "app/index.html:70-72 (.wrap), 557 (#extras), no active-panel highlight class anywhere in render path",
+          "judging_impact": "Demo 30% \u2014 attention direction is what separates a 'busy screenshot' from a 'compelling watch'."
+        },
+        {
+          "title": "Verdict lands without a stamp \u2014 the biggest emotional beat is undramatized",
+          "severity": "medium",
+          "detail": "On completion the promo chip is simply shown (vp.style.display='inline-flex', 3878-3879) and the panel keeps its neutral chrome. There's a small .flash on gauntlet rows (line 402) but the verdict panel itself doesn't react \u2014 no rubber-stamp slam, no full-panel red/green color flood distinguishing REFUSED from PROMOTED. The refuse-vs-promote contrast is the whole thesis and it currently reads as a quiet text change.",
+          "evidence": "app/index.html:3877-3879 (promo chip appears), 219-224 (.promo static), 402 (flash only on rows)",
+          "judging_impact": "Demo 30% \u2014 the payoff frame is the one judges remember; a stamp/flood makes FRAGILE-vs-STRONG unmistakable even muted or thumbnailed."
+        },
+        {
+          "title": "Boot default state contradicts the demo script's cold-open",
+          "severity": "medium",
+          "detail": "State initializes to S={sub:'oasis', kase:'SURVIVOR'} (line 3609), but DEMO_SCRIPT.md \u00a70:00 opens 'with the KILL cohort loaded' on the SYNTHETIC harness (the KILL naive AUC 0.82 / scanner 0.95 / margin \u22120.13 / score 15 live in the synthetic substrate, not OASIS). Every recording therefore requires manual pre-setup (press S, then select KILL) before rolling \u2014 an easy way to fumble a take or record the wrong opening frame. A URL-param entry state (?sub=synthetic&case=KILL) or matching the default to the script start removes the footgun.",
+          "evidence": "app/index.html:3609 (default oasis/SURVIVOR) vs docs/DEMO_SCRIPT.md:8-14 (cold-open KILL on synthetic)",
+          "judging_impact": "Demo 30% \u2014 reduces take-fumble risk and guarantees the opening frame matches the narration."
+        },
+        {
+          "title": "Strongest Claude-Use beat (courtroom + self-critique) is collapsed by default",
+          "severity": "medium",
+          "detail": "The Reviewer panel ships with class 'collapsible collapsed' (line 545) and the Courtroom is collapsible (505). runGauntlet populates them (renderReviewer/renderCourt at endT+300/+600, 4301-4302) but does NOT auto-expand them, so 'Claude argues both sides then argues against its own verdict' \u2014 arguably the single best Claude-Use narrative in the project \u2014 is hidden behind a chevron unless the presenter remembers to open it on camera.",
+          "evidence": "app/index.html:545 (reviewer starts collapsed), 4301-4302 (populated but not expanded on run)",
+          "judging_impact": "Claude Use 25% + Demo 30% \u2014 the most creative Claude usage risks being invisible in the video."
+        },
+        {
+          "title": "Leakage pair-bar renders at once instead of choreographing the 'scanner catches up' race",
+          "severity": "low",
+          "detail": "pairBarHTML builds outcome/scanner/margin bars in one innerHTML write (3842-3864); they animate only via the generic CSS width transition, both at once. The dramatic content of the finding is the scanner bar racing up to nearly match (SURVIVOR, +0.04) or exceed (KILL, \u22120.13) the outcome bar \u2014 staging the scanner fill ~400ms after the outcome fill, with the margin value flashing red on a negative, would turn a static chart into the money shot of the leakage argument.",
+          "evidence": "app/index.html:3842-3864 (single-shot render), 413-420 (.pb-fill CSS transition only)",
+          "judging_impact": "Demo 30% \u2014 sequencing sells the leakage mechanic; simultaneous fills bury it."
+        }
+      ],
+      "enhancements": [
+        {
+          "title": "Count-up the hero numbers (verdict score, leakage margin, naive AUC)",
+          "detail": "Add a small rAF easing helper (easeOutCubic, ~900ms) and use it wherever a headline number is set: verdict score (3873), leakage margin mv (3861), naive AUC big (3826), and the split-view scores. Format with the existing tabular-mono/font-variant-numeric so digits don't jitter. Time the score count-up to finish exactly as setNeedle's 1.1s glide lands. Pattern per CountUp.js/odometer (see references) but hand-rolled to stay single-file/offline. Respect prefers-reduced-motion (snap to final).",
+          "effort": "S",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30%"
+        },
+        {
+          "title": "Morph the scatter on color toggle + choreograph ellipse re-orientation",
+          "detail": "Refactor drawScatter to accept an interpolation t and cache last vs target point/ellipse geometry; on toggleColor (4311) run a ~700ms rAF tween that lerps each point's screen position and each 1\u03c3 ellipse's center/axes between the outcome-grouping and scanner-grouping. On the KILL, the scanner centroids visibly slide apart and the dominant ellipse rotates to become the primary axis \u2014 making 'the machine is the signal' a moving image. Keep the deterministic seeded points; only the grouping/coloring animates.",
+          "effort": "M",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30% + Impact 25% (visualizes the core finding)"
+        },
+        {
+          "title": "Add a '\u25b6 Cinematic Demo' autopilot that executes DEMO_SCRIPT beats",
+          "detail": "Encode docs/DEMO_SCRIPT.md as a timeline array [{t, fn, caption}] that calls the existing selectCase/runGauntlet/toggleColor/toggleSubstrate/openSplit, plus a fixed lower-third caption band echoing each VO beat. A new button next to RUN GAUNTLET (and ?autoplay=1) starts it; Esc/Space cancels back to manual. Makes every 3-min take identical and lets narration hit each visual on cue. Reuses clearTimers/S.timers infra already present (4245).",
+          "effort": "M",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30% (repeatable, on-beat take)"
+        },
+        {
+          "title": "Spotlight choreography: dim inactive panels during each beat",
+          "detail": "Add a body-level 'stage' mode and a .spot class that raises the active panel (full opacity, subtle accent ring) while others drop to ~0.45 opacity + 1px blur, driven by the autopilot timeline (and by which panel the current gauntlet phase touches). Moves the viewer's eye docket\u2192scatter\u2192gauntlet\u2192verdict\u2192courtroom. Auto-disabled outside demo mode so the workbench stays fully lit for real use.",
+          "effort": "M",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30% (attention direction)"
+        },
+        {
+          "title": "Verdict stamp slam + panel color flood",
+          "detail": "On phase='done', animate the promo chip with a rubber-stamp keyframe (scale 1.6\u21921, ~-4deg\u21920, box-shadow flash) and flood the verdict panel border/background red for FRAGILE / green for STRONG CANDIDATE. Pair with a one-shot screen-edge pulse. Extends the existing .flash pattern (402) and .promo styles (219-224). Honors reduced-motion.",
+          "effort": "S",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30% (payoff frame)"
+        },
+        {
+          "title": "Video-legibility pass + optional Presentation Mode",
+          "detail": "Raise the smallest mono labels from 10\u201311px to 12\u201313px (lines 46, 81, 173, 188-189), lift --mute/--ink3 one step for AA contrast on --bg, and thicken the canvas axis-label font (3680). Add a 'Presentation Mode' toggle that sets :root font-size +12% and bumps key stroke widths, for recording. Everything stays proportional via the existing rem/relative units.",
+          "effort": "S",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30% (legibility on phone/1080p)"
+        },
+        {
+          "title": "Stage the leakage pair-bar race (scanner catches up after outcome)",
+          "detail": "In pairBarHTML/renderVerdict (3842-3864) fill the outcome bar first, then the scanner bar ~400ms later, and flash the margin value red when negative / green pulse when the outcome clears scanner. Turns the headline metric into the leakage argument's money shot.",
+          "effort": "S",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Demo 30%"
+        },
+        {
+          "title": "Auto-expand Courtroom + Reviewer on run; add entry-state URL params",
+          "detail": "Remove the default 'collapsed' on the Reviewer (545) or programmatically expand both courtroom+reviewer at endT (4301-4302) so Claude's dual-argument + self-critique is guaranteed on camera. Separately, read ?sub= & ?case= at boot (4348) so the recording always opens on the exact DEMO_SCRIPT cold-open (synthetic/KILL) instead of the current oasis/SURVIVOR default (3609).",
+          "effort": "S",
+          "files": [
+            "app/index.html"
+          ],
+          "rubric": "Claude Use 25% + Demo 30% (visibility + take reliability)"
+        }
+      ],
+      "references": [
+        "https://claude.com/blog/meet-the-winners-of-our-claude-opus-4-8-build-day-hackathon (Anthropic Build Day winners \u2014 Tekton's 339-state interactive 3D reconstruction with clickable evidence-chains, Sim Francisco's live-polling demographic map: 'wow' comes from interactive, traceable, real-time reveals judges can watch happen)",
+        "https://cerebralvalley.ai/e/built-with-claude-life-sciences (the target hackathon page \u2014 Cerebral Valley x Anthropic x Gladstone, rubric/track context)",
+        "https://info.devpost.com/blog/6-tips-for-making-a-hackathon-demo-video (set the stage in ~10s then execute core features in 60-90s narrating each step \u2014 argues directly for the autopilot + spotlight beats)",
+        "https://tips.hackathon.com/article/creating-the-best-demo-video-for-a-hackathon-what-to-know (judges review projects back-to-back; demo must be smooth/clear/impressive \u2014 motivates deterministic autopilot take)",
+        "https://www.tamirdresher.com/blog/2026/03/05/ai-produced-demo-video (Remotion-style spring-animated intros, synchronized narration with animated lower-third labels \u2014 the lower-third caption pattern for the autopilot mode)",
+        "https://inorganik.github.io/countUp.js/ (CountUp.js \u2014 rAF eased numeric count-up reference for the hero-number enhancement; hand-roll to stay single-file/offline)",
+        "https://github.com/inorganik/CountUp.js (CountUp.js source \u2014 easing + formatting approach to mirror)",
+        "https://www.jqueryscript.net/animation/Odometer-Number-Roll-Effect-jQuery-gScrollNumber.html (odometer/slot-machine digit-roll alternative aesthetic for the verdict score)",
+        "https://flourish.studio/blog/animated-gauge-visualization/ (animated gauge/needle patterns \u2014 reference for pairing the verdict-meter needle glide with the count-up)",
+        "https://www.informationisbeautifulawards.com/news/118-the-nyt-s-best-data-visualizations-of-the-year (NYT award-winning scatter storytelling \u2014 5,000-point opinion scatter that re-clusters under a new framework: exemplar for the animated scatter re-grouping/morph)",
+        "https://vallandingham.me/scroll_talk/examples/ (catalog of scroll-triggered dataviz reveals and animated transitions \u2014 techniques for staged, beat-synced reveals adaptable to the gauntlet/autopilot timeline)",
+        "https://www.anychart.com/blog/2026/01/09/best-data-visualizations-2025/ (Bloomberg/Reuters 2025 award pieces \u2014 cluster-reveal and granular-signal storytelling as credibility+wow benchmarks for a science tool)"
+      ]
+    }
+  ],
+  "reactions": [
+    {
+      "domain": "Alzheimer's structural-MRI neuroimaging ML (foundation-model embedding auditing / batch-effect leakage) \u2014 SCIENCE",
+      "agreements": [
+        "Data-Science's top finding \u2014 no CI / permutation-null on any headline AUC, verdicts are hard thresholds on single-seed point estimates \u2014 is the same disease I flagged from the science side. The margin +0.04 -> WEAKENED and the OASIS brain-age 'retained 1%' kill are both almost certainly inside a 95% CI of zero. A stratified label-permutation null + bootstrap AUC CI is the single change that converts our referee's verdicts from assertions into tests, and it directly tells us whether the OASIS 'kill' is real or an artifact of an over-aggressive control.",
+        "Data-Science's p>>n finding (probe fits logistic regression on full 768-d embeddings at n=61-96 while the honesty_note only trusts PCA-reduced numbers) is a real internal contradiction. The builder-track engine and the researcher-track script must report the same dimensionality-reduced number for the same embeddings, or a judge who reads both catches us claiming AUCs we elsewhere admit are inflated.",
+        "Data-Science is right that covariate/brain-age residualization is fit on the full matrix outside the CV fold \u2014 this compounds my brain-age critique. The 'effect retained' fraction that decides the OASIS verdict is not a clean nested-CV estimate.",
+        "Engineering's #1 \u2014 the researcher-track leakage finding is not reproducible from a clean clone because the embedding CSVs are git-ignored \u2014 is critical. Our headline researcher-track claim (scanner-leakage at AUC ~0.93 on frozen Neuro-JEPA) is exactly the 'finding others build on' the Researcher track rewards, and right now a judge who clones the repo can only run the synthetic demo. This must have a license-safe runnable path.",
+        "Design's scatter-morph beat (color-by-outcome -> color-by-scanner, centroids sliding apart, dominant ellipse rotating to become the primary axis) is simultaneously the flashiest AND the most scientifically defensible moment we have \u2014 it makes the real, robust leakage finding literally visible. Endorse strongly; this should be the hero frame, not the biomarker promote.",
+        "Design's video-legibility concern (10-11px mono microtext, sub-AA grays) is a science-credibility issue too: if the AUC values, axis domains, and source chips turn to mush at 1080p, the supporting evidence a judge needs to TRUST the finding disappears while only the big number survives.",
+        "Design's autopilot / guided-demo mode de-risks the highest-weighted deliverable and doubles as a 'press play' reproducibility artifact \u2014 endorse, provided it drives the corrected narrative."
+      ],
+      "conflicts": [
+        {
+          "tension": "Design wants to dramatize the emotional climax (count-up to 88 STRONG CANDIDATE, verdict rubber-stamp) on the promoted SURVIVOR \u2014 but from the science side that survivor barely clears the leakage star (+0.04) and is rescued almost entirely by a fabricated p-tau217 r=0.40, and the REAL OASIS survivor collapses to chance on brain-age. Leading the demo with polish on a beat that fails our own gauntlet is a credibility trap.",
+          "resolution": "Keep every bit of Design's polish but re-point it. Make the HERO the real leakage finding (OpenBHB, 3,984 healthy brains, structural AUC 0.89 / frozen-embedding ~0.93 PCA-10) via the scatter morph and the 'scanner catches up' pair-bar race \u2014 this is real, robust, and honestly caveated. Demote the biomarker 'promote' to a clearly SYNTHETIC-HARNESS-badged illustration of the gate MECHANIC, not a claimed result. Drop 'Proteins confirm it' from the top-line pitch."
+        },
+        {
+          "tension": "Design's DEMO_SCRIPT cold-opens on the synthetic KILL/SURVIVOR and treats the synthetic promote as the payoff; Science needs real cohorts carrying the credibility.",
+          "resolution": "Synthetic-first is fine as the pedagogical 'here is how the referee behaves' harness IF it is visibly badged SYNTHETIC HARNESS the entire time, and the demo LANDS on the real OpenBHB leakage result as the closing credibility beat. The emotional climax must be a real, star-passing finding, never the fabricated biomarker rescue."
+        },
+        {
+          "tension": "Data-Science proposes a large rigor program (bootstrap+DeLong CIs, permutation nulls, nested-CV residualization, BH-FDR across tests x clusters, calibration/reliability diagrams, seed-sweep). All correct, but that is far more than survives to July 13 without risking a broken demo.",
+          "resolution": "Triage to the two rigor adds that actually change a verdict AND are demo-visible: (1) permutation-null + bootstrap CI on the headline leakage AUC and the leakage margin; (2) report brain-age adjustment two ways (predicted-age AND Franke/Gaser brain-age GAP) so the OASIS survivor is not killed by one over-aggressive residualization. Defer nested-CV residualization, FDR, and calibration/reliability to an 'if-time / documented-limitation' bucket \u2014 note them honestly in LIMITATIONS rather than half-implementing them."
+        },
+        {
+          "tension": "Engineering wants the finding reproducible from a clean clone, but the Neuro-JEPA weights are gated CC-BY-NC-ND and the operating account is a gmail that auto-denies the access agreement \u2014 a license/compliance wall.",
+          "resolution": "Ship a license-safe, non-derivative reproduction path: commit the small PCA-reduced / frozen-inference FEATURE table (not the weights) plus the regenerated reports, and a `neuroad reproduce-finding` command that regenerates the AUC from it. Frozen-inference-only reduced features are a defensible non-derivative artifact; state the access path in one provenance sentence so a rules challenge is pre-empted."
+        }
+      ],
+      "dependencies": [
+        "Engine science-fixes FIRST: reconcile probe dimensionality (PCA for p>>n cohorts) + add permutation/bootstrap CI on leakage AUC & margin + brain-age two-way (predicted-age and gap) MUST land before any reports/*.json are regenerated, because they change the numbers and possibly the OASIS verdict.",
+        "Regenerate ALL reports/*.json under the corrected engine (fixing the promoted flag and the n=263 'Neuro-JEPA' substrate mislabel) BEFORE app/build_demo_data.py and the UI's demo_data.json are rebuilt \u2014 otherwise the workbench shows stale/contradictory numbers.",
+        "Reconcile the UI so it consumes the regenerated reports (Engineering's stale-demo_data finding) BEFORE recording \u2014 no take should be filmed against a committed artifact that can drift from the engine.",
+        "Choose and lock the corrected demo narrative (lead with real leakage, badge synthetic, demote biomarker) BEFORE the autopilot timeline is scripted, since autopilot hard-codes the beat order.",
+        "Design's polish layer (count-ups, scatter morph, stamp, legibility pass, live/offline Claude badge) comes AFTER the numbers are final \u2014 never animate stale numbers.",
+        "Prior-art citation verification and doc<->artifact reconciliation must complete BEFORE the written 100-200 word summary and README are finalized, because a single unverifiable future-dated cite invalidates the whole 'we productize published prior art' honesty frame."
+      ],
+      "top_priorities": [
+        "1. RE-ANCHOR THE NARRATIVE (near-zero cost, highest credibility ROI). Make the real, robust OpenBHB scanner-leakage result the hero (scatter morph + 'scanner catches up' pair-bar), badge every synthetic number SYNTHETIC HARNESS, and delete 'Proteins confirm it' from the pitch. This removes the trap where a judge reading our own exported JSON sees the flagship survivor undercut by our own referee.",
+        "2. SIGNIFICANCE-TEST THE CORE CLAIM + FIX THE BRAIN-AGE CONTROL. Add a stratified label-permutation null and bootstrap CI to the headline leakage AUC and the leakage margin, and report brain-age adjustment BOTH ways (predicted-age and brain-age gap). This tells us whether the margin +0.04 and the OASIS brain-age 'kill' are real, converts every verdict from assertion to test, and keeps the real disease survivor from being killed by one over-aggressive residualization.",
+        "3. VERIFY-OR-DELETE EVERY PRIOR-ART CITATION AND RECONCILE DOCS WITH ARTIFACTS. Resolve arXiv:2604.14441 / 2606.09189 / Neuro-JEPA 2606.14957 / PathoROB to live DOIs or remove them; fix the n=263 'Neuro-JEPA' substrate mislabel, the OASIS promoted flag, and the PROVENANCE 'PROMOTED' contradiction. A referee whose value proposition is rigor cannot ship one unverifiable reference or one self-contradicting artifact.",
+        "4. MAKE THE RESEARCHER FINDING REPRODUCIBLE FROM A CLEAN CLONE, LICENSE-SAFELY. Commit a PCA-reduced / frozen-inference feature fixture + regenerated reports + a `reproduce-finding` command so a judge can regenerate the leakage AUC without gated weights, and add one provenance sentence on the CC-BY-NC-ND access path. Serves both the open-source rule and Researcher-track Impact.",
+        "5. APPLY DESIGN'S DEMO POLISH ON THE FINAL NUMBERS. Autopilot timeline driving the corrected beats, legibility/presentation pass (12-13px, AA contrast), scatter morph, hero count-ups, verdict stamp, auto-expanded courtroom, and a live-vs-offline Claude badge. This lands the 30% Demo weight and makes the strongest Claude-Use beat visible on camera \u2014 but only after priorities 1-4 have set the numbers and the story."
+      ]
+    },
+    {
+      "domain": "Data Science / Statistics methodology",
+      "agreements": [
+        "Neuroimaging's 'badge every biomarker number SYNTHETIC and pull \"Proteins confirm it\" from the headline' is exactly right and overlaps my own finding that evidence_ledger.csv mislabels the 0.5+|r| UI transform (0.904) as |r| while the promotion gate rests on a calibrated, never-measured p-tau217 r. This is a fabrication-liability, not a polish item.",
+        "Neuroimaging's 'resolve or delete every prior-art citation' \u2014 the 2026 future-dated arXiv IDs are a single-glance disqualifier for a tool whose whole value proposition is rigor. Cheap to fix, catastrophic to miss.",
+        "Engineering's 'make the researcher finding runnable from a clean clone' converges perfectly with my p>>n fix: a PCA-reduced embedding table is BOTH statistically defensible AND arguably non-derivative/shippable, so one change (PCA-in-probe + ship the reduced sample) closes my builder-vs-researcher inconsistency and their reproducibility gap simultaneously.",
+        "Engineering's live-vs-offline Claude badge + one committed live transcript \u2014 I endorse this; the 'Claude as adjudicator' claim (25% of score) is currently unverifiable in the shipped offline demo.",
+        "Neuroimaging's 'report brain-age two ways (predicted brain-age vs Franke/Gaser brain-age GAP) and add ComBat as the cited-standard scanner control' \u2014 this directly complements my nested-residualization concern and stops the over-aggressive control from silently killing the real signal.",
+        "Design's autopilot/cinematic-demo timeline and cold-open-on-KILL \u2014 I strongly endorse leading with the KILL because it is the honest, unambiguous beat (high scanner AUC, negative margin); it also sidesteps the fragile-survivor problem the whole team flagged.",
+        "Design's count-up / verdict-stamp / scatter-morph choreography is genuinely high-ROI for the 30% Demo weight \u2014 with the caveat below about WHICH numbers we're allowed to dramatize."
+      ],
+      "conflicts": [
+        {
+          "tension": "Design wants to dramatize the hero numbers (count-up on the +0.04 leakage margin, a triumphant STRONG-CANDIDATE-88 stamp, scatter morph on the SURVIVOR) \u2014 but statistically the +0.04 margin is inside a 95% CI of zero and the 88 promotion is rescued by a fabricated biomarker. Animating a number that is within noise or synthetic is a credibility bomb the moment a judge reads the exported JSON (neuroimaging's finding).",
+          "resolution": "Sequence, don't veto. Add the bootstrap/DeLong CI + permutation null FIRST (my priority #2), then dramatize only the beats that survive: the KILL leakage (real, decisive) and the real OpenBHB AUC 0.93 scanner-leakage finding. Present the SURVIVOR with its CI and SYNTHETIC badge visible \u2014 the honesty IS the beat. Never count-up a point estimate whose CI crosses the threshold."
+        },
+        {
+          "tension": "Neuroimaging wants a REAL survivor that passes both stars by adding a new open cohort (MIRIAD / OASIS-3 DUA) \u2014 an L-effort data acquisition 3-4 days before deadline.",
+          "resolution": "De-prioritize to a stretch goal, off the critical path. Acquiring and analyzing a fresh cohort under deadline pressure re-creates exactly the p>>n / no-CI / no-multiplicity traps we're trying to fix. Higher-ROI is to fix the statistics on the cohorts we already have and REFRAME the narrative honestly (lead with leakage, not a triumphant disease survivor). Only chase MIRIAD if priorities 1-3 land with time to spare."
+        },
+        {
+          "tension": "Design's verdict-stamp wants a clean binary REFUSED-vs-PROMOTED payoff; statistics says near-threshold verdicts (margin<0.10\u2192WEAKENED, retained-band 0.70/0.40, replication\u22650.65 on n as low as 6) are single-seed coin flips.",
+          "resolution": "Earn the stamp before you slam it. Gate the verdict on 'CI excludes chance / margin CI excludes zero' rather than a point-estimate cutoff, and raise the replication n_test floor above 6. Once the number under the stamp is a tested claim, the dramatic flood is fully justified \u2014 and a judge who probes it finds it holds."
+        },
+        {
+          "tension": "Engineering flags the researcher finding is git-ignored/unreproducible; my audit flags the same embeddings are run at 768-d with n=61-96 (p>>n inflated). If we simply un-ignore and ship the raw 768-d tables to fix reproducibility, we ship the inflated 0.998 AUCs.",
+          "resolution": "Ship the PCA-reduced (e.g. PCA-10) table, not the raw 768-d one. This is the single reduction the standalone neurojepa scripts already trust, it makes the clone-reproducible number the DEFENSIBLE 0.93 rather than the inflated 0.998, and PCA-projection strengthens the non-derivative license argument. Same artifact resolves both audits."
+        }
+      ],
+      "dependencies": [
+        "Fabrication cleanup (badge biomarker SYNTHETIC, remove 'Proteins confirm it', resolve/delete prior-art citations, fix mislabeled 0.904) MUST land before the demo video is recorded \u2014 the video is the 30% deliverable and must not ship a fabrication.",
+        "Statistical uncertainty (bootstrap/DeLong CIs + label-permutation null, reframed thresholds) must land BEFORE Design dramatizes any survivor number \u2014 otherwise the count-up/stamp animates noise.",
+        "PCA-in-probe reduction is upstream of BOTH Engineering's clone-reproducibility (ship the reduced table) AND report regeneration \u2014 do it before regenerating any real-cohort report.",
+        "Regenerate all reports/*.json under the fixed scoring/CI/PCA logic BEFORE rebuilding app/demo_data.json, which must happen BEFORE Design's autopilot/count-up/spotlight work \u2014 those animate whatever demo_data holds, so it must be final and correct first.",
+        "Live-Claude badge + committed transcript before the video, so the 25% Claude-Use story is visibly verifiable on camera.",
+        "evidence_ledger.csv self-describing + 0.904 relabel before the export-tray is shown on video (the export artifact must survive a judge downloading it)."
+      ],
+      "top_priorities": [
+        "1. KILL THE FABRICATION LIABILITIES (S effort, protects Impact/Depth/trust from a single-glance disqualifier): badge every biomarker number SYNTHETIC and strike 'Proteins confirm it' from the headline; resolve-or-delete all future-dated prior-art citations; fix the mislabeled 0.904\u2192r relabel in evidence_ledger. Cheapest, highest-downside-avoided work in the whole project.",
+        "2. PUT UNCERTAINTY ON EVERY HEADLINE AUC (M effort, the core Depth-20% lift and Demo-trust move): bootstrap/DeLong 95% CIs + a stratified label-permutation null on naive-effect, outcome, scanner, leakage-margin and replication AUCs; reframe verdict gates as 'CI excludes chance / margin CI excludes zero'; raise the replication n_test floor off 6. This turns every verdict from an assertion into a test and answers the imaging judge's inevitable first question ('is that margin significant?').",
+        "3. RECONCILE THE TWO TRACKS WITH PCA-IN-PROBE + SHIP THE REDUCED TABLE (M effort, one change / three payoffs): fixes my builder-vs-researcher p>>n inconsistency, makes the researcher finding reproducible from a clean clone (Engineering), and makes the clone number the defensible 0.93 not the inflated 0.998. Then regenerate all reports under the fixed logic.",
+        "4. RE-ANCHOR THE DEMO ON HONEST, STRONG BEATS, THEN LET DESIGN DRAMATIZE THEM (M effort, the Demo-30% payoff): lead the autopilot cold-open with the KILL leakage scatter and the real OpenBHB AUC-0.93 finding as the hero; present the SURVIVOR promotion with visible CI + SYNTHETIC badge as an honesty beat, not a triumph. Apply count-up, scatter-morph, spotlight and verdict-stamp to these now-tested numbers only.",
+        "5. MAKE CLAUDE VISIBLY LIVE (S effort, protects the 25% Claude-Use differentiator): live/offline badge in CLI + UI and one committed live courtroom/reviewer transcript, so the 'Claude argues both sides then critiques its own verdict' story is verifiable rather than a silent offline template."
+      ]
+    },
+    {
+      "domain": "Engineering / Architecture",
+      "agreements": [
+        "Design's deterministic autopilot demo mode is the single highest-ROI item across all four audits. The 3-min video is 30% of the score and the entire take currently depends on flawless manual Space/arrow/C/S/V keypresses (index.html:4334-4343) against a DEMO_SCRIPT.md that has no code counterpart. A timeline array driving the existing selectCase/runGauntlet/toggleColor/openSplit functions is pure single-file JS, zero science risk, and turns the highest-weight deliverable from 'hope the take lands' into 'press play.' I fully endorse this plus the cheap companions: count-up hero numbers, verdict stamp, auto-expand courtroom/reviewer, and ?sub=&case= entry-state params.",
+        "Neuroimaging's core call to stop leading the demo with beats that fail the tool's own referee. Engineering-wise, shipping reports/oasis.json with promoted:false and a brain-age retained fraction of 1% while docs call it PROMOTED, plus the n=263 tabular run mislabeled as a Neuro-JEPA embedding, is exactly the kind of internal contradiction a judge who opens the JSON will find. Reconciling docs to artifacts and regenerating every report under one scoring pass is straightforward hygiene I own.",
+        "Neuroimaging's demand to verify-or-delete every prior-art citation (arXiv:2604.14441, 2606.09189, 2606.14957, 'PathoROB Nat Comms 2026'). For a tool whose entire value proposition is rigor, one citation that doesn't resolve when a judge Googles it is catastrophic and asymmetric. This is an S-effort task with an outsized downside if skipped.",
+        "Data Science's finding that the shipped evidence_ledger.csv is not self-describing and mislabels the biomarker_anchor effect (0.904 is the 0.5+|r| UI transform from build_demo_data.py:531, not |r|=0.40 as the detail text says). The export tray is pitched as the auditable artifact; a downloaded CSV with a headline number contradicting its own detail row and no provenance/synthetic flag is a cheap fix with real Demo-trust payoff.",
+        "Data Science's narrow, high-signal statistical asks: a bootstrap/DeLong CI and a label-permutation null on the ONE headline leakage margin, plus a seed-sweep verdict-stability panel. The margin +0.04 -> WEAKENED verdict is almost certainly inside a 95% CI of zero, and a single seed can flip near-threshold band verdicts. Defending the headline number (not every gate) is worth the M effort.",
+        "Badging the p-tau217/GFAP anchor as SYNTHETIC and pulling 'Proteins confirm it' from the top-line pitch. The anchor is a calibration target, not a measurement, and it's the hard promotion gate. I'd keep the gated-biology visual mechanic (it demos well) but relabel it honestly."
+      ],
+      "conflicts": [
+        {
+          "tension": "Data Science wants deep, uniform statistical rigor across the whole engine (bootstrap CIs + permutation nulls on every gate, nested-in-fold residualization, BH-FDR across 5 tests x 6 clusters, PCA-front-end in the probe, calibration diagrams). That is days of work and would churn the shipped numbers repeatedly, colliding head-on with Design's demo-polish work and the 5-day clock.",
+          "resolution": "Apply the 80/20: instrument only the numbers the demo actually says out loud (the leakage margin and the two verdict scores) with a CI + permutation null + seed-sweep, and reframe those verdicts as 'CI excludes zero' instead of point-estimate cutoffs. Add the PCA front-end ONLY on the real p>>n Neuro-JEPA cohorts (n=61-96, 768-d) to reconcile the two tracks, then freeze. Defer FDR, nested-CV residualization, and calibration reliability diagrams to a 'Limitations/Future Work' note in the write-up. Rigor theater on gates the demo never mentions buys no judge points and destabilizes the take."
+        },
+        {
+          "tension": "Neuroimaging's strongest fix \u2014 lead with a REAL survivor that passes both stars \u2014 is rated effort L and implies acquiring a new cohort (MIRIAD self-serve, or an OASIS-3 DUA) five days out. That is schedule risk that competes directly with autopilot/demo polish, and a DUA has a nonzero chance of not clearing in time.",
+          "resolution": "Do NOT start new gated-data acquisition this late. Reframe the thesis instead: the tool's credibility comes from correctly refusing/weakening claims \u2014 including our own OASIS survivor and the near-threshold synthetic one \u2014 not from needing a clean double-star hero. An honest 'watch the referee kill a plausible-looking result, including one of ours' narrative is higher-integrity AND lower-risk than chasing a new cohort. If someone has spare cycles, MIRIAD is the only acceptable stretch, time-boxed to 1 day with a hard abort."
+        },
+        {
+          "tension": "My reproducibility finding (embeddings git-ignored, so a clean clone cannot regenerate the AUC 0.93 leakage headline) pulls toward shipping a runnable data path, but the CC-BY-NC-ND gated-weight license and gmail-auto-deny access story mean we cannot just commit the embeddings.",
+          "resolution": "Ship a tiny checked-in PCA-reduced (e.g. 10-d) embedding fixture that is arguably non-derivative plus a `neuroad reproduce-finding` command that regenerates the leakage AUC from it. Keep the full 768-d tables git-ignored. This makes the researcher-track finding runnable from a clone without a license violation, and adds one provenance sentence to DATA_ACCESS.md to close the gmail-gate question."
+        },
+        {
+          "tension": "The default offline demo silently degrades every Claude call to deterministic templates (USING_LIVE_API False; pipeline.py bare except:pass), so the 'Claude as adjudicator' differentiator \u2014 25% of the score \u2014 is unverifiable in the shipped demo. But wiring live API into the recorded take risks a flaky/refused call during recording.",
+          "resolution": "Decouple them: record the demo against the deterministic offline path for reliability, but ALSO capture one real live-Claude transcript (courtroom + self-critiquing reviewer) with an API key, commit it, and add a live-vs-offline badge printing the actual model used. Judges see verifiable live reasoning as an artifact without the recording depending on a live call. Also replace the bare excepts with debug-level logging so a live misconfig is diagnosable."
+        },
+        {
+          "tension": "Design wants the animated scatter morph on color-toggle (the researcher-track 'the machine is the axis' reveal) at effort M, which touches the same index.html as the autopilot and the count-ups \u2014 all competing for one file and one person's time.",
+          "resolution": "Rank within the single-file budget: autopilot + count-ups + verdict stamp + auto-expand courtroom are must-haves (they de-risk the take and dramatize the payoff). The scatter morph is the one 'wow' worth M effort IF the must-haves land with time to spare; otherwise ship the hard-swap with a beat of narration. Sequence them so a half-finished morph never blocks a working autopilot."
+        }
+      ],
+      "dependencies": [
+        "Lock the narrative/beat decisions FIRST (which cases are hero beats, badge synthetic anchor, honest reframe of near-threshold verdicts) before building the autopilot timeline, because the autopilot array literally encodes the beat sequence and captions.",
+        "Engine fixes (verify/remove citations, PCA front-end on p>>n cohorts, CI+permutation on the leakage margin, evidence_ledger label fix, scoring reconciliation) must land BEFORE regenerating reports/*.json \u2014 regenerating on top of unfixed logic wastes a pass.",
+        "Fold build_demo_data.json generation into `neuroad demo` and regenerate all reports BEFORE recording, because the UI fetches app/demo_data.json (a committed 87KB artifact), not the reports the engine writes \u2014 otherwise the recorded workbench can show stale numbers that contradict the freshly-run engine.",
+        "Reconcile docs-vs-artifacts (DATA_ACCESS.md 'documented, not shipped', DATA_PROVENANCE.md 'PROMOTED' vs promoted:false, n=263 substrate mislabel) AFTER reports are regenerated, so docs describe the final shipped state, not an interim one.",
+        "Verify citations BEFORE writing the 100-200 word summary and finalizing README, since the summary's honesty framing rests on them resolving.",
+        "Ship the PCA reproduction fixture + `neuroad reproduce-finding` BEFORE the README claims the finding is reproducible from a clone.",
+        "Capture the live-Claude transcript and add the live/offline badge BEFORE recording, so the demo can point at a committed live artifact.",
+        "Autopilot timeline + spotlight + count-ups must be finished and smoke-tested BEFORE the final video recording session \u2014 the whole point is a deterministic take."
+      ],
+      "top_priorities": [
+        "1. NARRATIVE INTEGRITY PASS (do first, cheap, protects Impact + trust): verify-or-delete every prior-art citation; badge the biomarker anchor SYNTHETIC and drop 'Proteins confirm it' from the headline; reframe the pitch so the tool's value is that it correctly refuses/weakens claims including our own, rather than needing a clean double-star survivor. Lock the beat list here.",
+        "2. DETERMINISTIC AUTOPILOT DEMO MODE (highest single-deliverable ROI on the 30% Demo weight): encode DEMO_SCRIPT.md as a timeline array driving the existing selectCase/runGauntlet/toggleColor/openSplit, add ?sub=&case= entry-state, auto-expand courtroom+reviewer, count-up the hero numbers, and a verdict stamp/color-flood. Single-file, zero science risk, makes every take identical.",
+        "3. DEMO SELF-CONSISTENCY + REPRODUCIBILITY: fold demo_data.json generation into `neuroad demo`, regenerate all reports under one scoring pass, reconcile docs to artifacts, fix the evidence_ledger label/provenance, and ship a tiny PCA fixture + `neuroad reproduce-finding` so the leakage finding runs from a clean clone without violating the gated license.",
+        "4. DEFEND THE HEADLINE NUMBERS STATISTICALLY (narrow, not uniform): bootstrap/DeLong CI + label-permutation null on the leakage margin, PCA front-end on the p>>n real Neuro-JEPA cohorts to reconcile the two tracks, and a seed-sweep verdict-stability panel. Reframe near-threshold verdicts as 'CI excludes zero.' Defer FDR/nested-CV/calibration to a Limitations note.",
+        "5. MAKE THE CLAUDE DIFFERENTIATOR VISIBLE (defends 25% Claude Use): capture and commit one real live-Claude courtroom+self-critique transcript, add a live-vs-offline model badge to cards/reports, and replace the pipeline's bare except:pass with debug logging so live misconfig is diagnosable."
+      ]
+    },
+    {
+      "domain": "Design / UI-UX (single-file HTML workbench + 3-min demo video choreography)",
+      "agreements": [
+        "Neuro's 'badge every biomarker number as SYNTHETIC and pull Proteins-confirm-it from the headline' is exactly right, and it's a design fix as much as a science one: an unbadged synthetic p-tau217 that I then dramatize with a count-up and a verdict stamp doesn't just fail to help, it weaponizes my polish against us the moment a judge pauses the frame. Every calibrated number needs a visible SYNTHETIC HARNESS chip in the UI, not just in a separate cohort_card.json.",
+        "Stats' seed-sweep 'verdict stable across 20 seeds' panel is the rare item that satisfies two rubric lines at once: it closes the single-seed fragility critique (Depth 20%) AND is a genuinely cool-to-watch demo beat (Demo 30%). I want it as an explicit autopilot beat, and I'll design the visual: 20 needles fanning to a tight cluster reads instantly as 'this tool is stable.'",
+        "Engineering's live-vs-offline Claude badge + one committed live transcript is critical to MY strongest beat. The courtroom + self-critiquing reviewer is the best Claude-Use narrative in the project, and right now I'd be filming deterministic templates with no way to prove Claude ran. Capture one live run, freeze it as the demo's canned data, and badge it 'live Claude transcript.'",
+        "Engineering's 'fold demo_data.json write into neuroad demo + serve over http' is a hard prerequisite for me. My autopilot and count-ups are worthless if they animate a stale committed 87KB artifact or silently fall back to embedded JSON on file://. The demo I record must be the engine's actual output.",
+        "Neuro's and Engineering's push to make the REAL leakage finding (AUC 0.89 structural / 0.93 frozen-embedding on OpenBHB) reproducible-from-clone and central. This is the defensible science, and it happens to be my most cinematic asset (the scatter where the scanner IS the dominant axis)."
+      ],
+      "conflicts": [
+        {
+          "tension": "My highest-ROI polish (count-up + needle glide + rubber-stamp slam on the '88 STRONG CANDIDATE \u2014 promoted' verdict) lands on a beat that Neuro and Stats both say is not defensible: the promoted survivor is rescued almost entirely by a fabricated p-tau217 r=0.40, and its leakage margin (+0.04 \u2192 WEAKENED) is within the noise of zero. Dramatizing a beat a judge can debunk is worse than not dramatizing it.",
+          "resolution": "Re-target the emotional climax. Lead the video with the HONEST beat: the KILL cohort \u2014 higher naive AUC, but the scanner bar races past the outcome bar and the referee REFUSES it \u2014 paired with the scatter morphing so 'the machine is the axis' becomes a moving image. Keep the SURVIVOR promote beat but reframe it explicitly as a demonstration of the anchor mechanic on the synthetic harness (badged), NOT a real discovery. This aligns my best visual (scatter morph) with the actually-defensible finding and moves the count-up/stamp onto REFUSE-vs-promote as a mechanic contrast rather than a truth claim."
+        },
+        {
+          "tension": "Design wants every headline number to animate triumphantly; Stats says several are point estimates inside a 95% CI of zero (margin +0.04) and issuing confident verdicts on them is a coin flip.",
+          "resolution": "Make uncertainty a visual feature, not something the animation hides. Where a number is fragile, the count-up lands and then a CI band snaps in beneath it (\u00b1 whiskers on the effect bars, a shaded band on the meter). This turns Stats' rigor into on-screen craft and pre-empts the 'is that margin significant?' question a judge will ask. Reserve the full stamp-slam drama for beats that earn it (the seed-sweep stability panel, the real leakage scatter)."
+        },
+        {
+          "tension": "Neuro's biggest-lift enhancement is an L-effort new real AD cohort (MIRIAD / OASIS-3 DUA) so a survivor clears both stars. That competes directly for the last 5 days against all the cheap, high-Demo-ROI polish, and risks the demo hinging on data that may not land in time.",
+          "resolution": "Do NOT gate the demo on acquiring new data. The real, defensible finding we already hold is the leakage/batch-effect result, not a disease survivor \u2014 so reframe the narrative spine around leakage (refuse the confounded claim) rather than around a promoted disease survivor. Treat MIRIAD as a stretch beat that gets added if it lands, not a dependency. The honest reframe is cheaper and higher-ROI than chasing a cohort before the deadline."
+        },
+        {
+          "tension": "My autopilot/spotlight/count-up agenda is pure Demo-30% polish, but Engineering shows the shipped demo is 100% offline templates and the researcher finding isn't runnable from a clean clone \u2014 polishing the surface while the substance is unverifiable inverts the priority.",
+          "resolution": "Sequence explicitly: substance-verifiability (reproducible finding, live transcript, reconciled artifacts) is a prerequisite that feeds the polish, not a competitor to it. The autopilot is the LAST layer, built on top of regenerated demo_data and a frozen live transcript. Polish amplifies whatever it sits on, so it must sit on fixed content."
+        }
+      ],
+      "dependencies": [
+        "Neuro/Stats must pick the honest lead beats (which cohort headlines, badge the synthetic biomarker, drop 'Proteins confirm it') BEFORE I rewrite DEMO_SCRIPT.md and encode the autopilot timeline \u2014 I can't choreograph beats until I know which beats survive the referee.",
+        "Engineering must fold the demo_data.json write into `neuroad demo` and make it servable over http (not file://) BEFORE I record \u2014 my count-ups/morph/autopilot must animate the engine's real output, not a stale committed artifact or embedded fallback.",
+        "One live Claude transcript (courtroom + reviewer) must be captured and frozen as the demo's canned data BEFORE I auto-expand and film those panels \u2014 otherwise the best Claude-Use beat is provably just templates.",
+        "Prior-art citations must be resolved-or-removed and every calibrated number badged SYNTHETIC BEFORE the final take \u2014 a judge who pauses the video on a future-dated arXiv id or an unbadged r=0.40 undoes the whole 'trustworthy referee' frame.",
+        "Engineering's report regeneration (fix the promoted flag, the n=263 substrate mislabel, evidence_ledger label bug) must land BEFORE recording so nothing a judge downloads contradicts what's on screen.",
+        "The video-legibility/presentation-mode pass has NO upstream dependency and should run in parallel from day one."
+      ],
+      "top_priorities": [
+        "FIX THE NARRATIVE SPINE FIRST (with Neuro/Stats): reframe the demo to lead with the real, defensible leakage finding \u2014 KILL refused because the scanner bar overtakes the outcome bar, and the scatter morphs so 'the machine is the axis' is literally visible \u2014 and demote the synthetic 'promote' beat to a badged mechanic demonstration. This resolves the deepest cross-domain conflict and is the difference between polish that helps and polish that backfires. Everything else is downstream of this.",
+        "VIDEO-LEGIBILITY + PRESENTATION-MODE PASS (my finding, zero science risk, do it now in parallel): lift 10\u201311px mono microtext to 12\u201313px, raise --mute/--ink3 to AA on --bg, thicken canvas axis labels, add a +12% presentation-mode toggle for recording. On compressed 1080p/phone this is what decides whether the supporting AUCs and chips 'hold up as software you trust' \u2014 cheapest single-file lever on the 30% Demo score.",
+        "BUILD THE CINEMATIC AUTOPILOT to the corrected script, as the final layer: a timeline array driving the existing selectCase/runGauntlet/toggleColor/openSplit with lower-third captions, plus the three concentrated wow-fixes \u2014 eased count-ups synced to the needle glide, the ~700ms scatter morph on color-toggle, and the verdict stamp-slam + panel color flood. Bundle Stats' seed-sweep stability panel as an on-beat 'stable across 20 seeds' moment. Makes every 3-min take deterministic and on-narration.",
+        "MAKE CLAUDE VISIBLY LIVE (with Engineering): capture one live courtroom+reviewer transcript, freeze it as the demo data, add a live-vs-offline badge, and auto-expand both panels on run so the self-critiquing-adjudicator beat \u2014 the strongest Claude-Use 25% material \u2014 is guaranteed on camera and provably real, not a collapsed chevron over a template.",
+        "RECONCILE EVERY SHIPPED ARTIFACT WITH THE DEMO (with Engineering/Stats): fix the demo_data drift, the evidence_ledger 0.904-labeled-as-|r| bug, the promoted:false vs 'PROMOTED' contradiction, and resolve/delete the future-dated citations. A judge who clones the repo or pauses the frame must see nothing that contradicts the polished story \u2014 trust hygiene that protects Depth (20%) and Impact (25%) and keeps my Demo polish from being undercut on close inspection."
+      ]
+    }
+  ],
+  "plan": {
+    "north_star": "Ship a runnable, open-source \"scientific referee\" that a judge trusts on close inspection: it visibly and correctly refuses confounded imaging claims \u2014 including our own \u2014 anchored on a REAL, reproducible scanner/site-leakage finding, dramatized by a deterministic autopilot demo, with every synthetic number badged and every citation verified.",
+    "positioning": "Frame NeuroAD as a rigor-first auditor whose credibility IS the product: \"watch the referee kill plausible-looking results, including ours.\" Impact (25%): the hero is the real, honestly-caveated batch-effect finding \u2014 frozen brain-FM embeddings leak scanner/site (AUC ~0.93 PCA-10 on 3,984 healthy OpenBHB brains) \u2014 a reusable finding/tool an Alzheimer's imaging researcher builds on, reproducible from a clean clone. Claude Use (25%): Claude is the adjudicator, not a chatbot \u2014 a three-voice courtroom (prosecution/defense/judge) that then critiques its own verdict, with strict structured tool-use and a verifiable LIVE transcript badged on camera. Never lead with beats that fail the tool's own gauntlet (the +0.04 synthetic survivor rescued by a fabricated p-tau217, or the OASIS brain-age collapse); the honesty of refusing them is the pitch. Drop \"Proteins confirm it\" entirely.",
+    "workstreams": [
+      {
+        "owner": "backend",
+        "items": [
+          {
+            "task": "Verify-or-delete every prior-art citation and reconcile docs-vs-artifacts: resolve arXiv:2604.14441 / 2606.09189 / Neuro-JEPA 2606.14957 / PathoROB to live DOIs (using qa's verification report) or remove them; fix the n=263 'Neuro-JEPA' substrate mislabel, the OASIS promoted flag, and the DATA_PROVENANCE 'PROMOTED' vs promoted:false contradiction; update DATA_ACCESS.md 'documented, not shipped' now that embeddings are shipped and add one provenance sentence on the CC-BY-NC-ND / gmail-gate access path.",
+            "why": "A single unverifiable future-dated citation or self-contradicting artifact collapses the entire 'we productize published prior art' honesty frame for a tool whose whole value is rigor.",
+            "files": [
+              "src/neuroad/calibration.py",
+              "README.md",
+              "docs/DATA_ACCESS.md",
+              "docs/DATA_PROVENANCE.md",
+              "reports/oasis.json"
+            ],
+            "effort": "S",
+            "rubric": "Impact 25% / Claude Use 25% / trust",
+            "priority": "P0"
+          },
+          {
+            "task": "Badge the biomarker anchor SYNTHETIC end-to-end and strike 'Proteins confirm it': mark p-tau217/GFAP as calibration targets (not measurements) in scoring/build outputs and cohort/report JSON, fix evidence_ledger.csv so the biomarker_anchor 'effect' column stops mislabeling the 0.5+|r| UI transform (0.904) as |r| and instead reports r with its Fisher-z CI, and add self-describing provenance columns (dataset, seed, source, n, ci_lo, ci_hi, SYNTHETIC flag).",
+            "why": "The promotion gate rests on a fabricated correlation; an unbadged synthetic number in a downloadable artifact is a single-glance fabrication-liability the moment a judge pauses the frame or opens the CSV.",
+            "files": [
+              "src/neuroad/scoring.py",
+              "app/build_demo_data.py",
+              "reports/evidence_ledger.csv"
+            ],
+            "effort": "S",
+            "rubric": "Impact 25% / Depth 20%",
+            "priority": "P0"
+          },
+          {
+            "task": "Reconcile the two tracks with PCA-in-probe on p>>n cohorts: add an automatic PCA/whitening front-end to LinearProbe selected when n<k*D, and make the gauntlet + leakage_margin use the SAME reduction the standalone neurojepa scripts already trust, so the shipped number is the defensible ~0.93 not the inflated 0.998.",
+            "why": "Fixes the internal contradiction where the honesty_note distrusts the very 768-d AUCs (n=61-96) the engine ships, and yields the defensible number that is also license-safe to reproduce.",
+            "files": [
+              "src/neuroad/probe.py",
+              "src/neuroad/gauntlet.py",
+              "src/neuroad/leakage.py"
+            ],
+            "effort": "M",
+            "rubric": "Depth 20% / Impact 25%",
+            "priority": "P0"
+          },
+          {
+            "task": "Put uncertainty on the headline numbers the demo says out loud: bootstrap/DeLong 95% CI + stratified label-permutation null on the leakage AUC and the leakage margin (honoring site groups), and report brain-age adjustment BOTH ways (predicted-brain-age AND Franke/Gaser brain-age GAP). Reframe near-threshold verdicts as 'margin CI excludes zero' / 'CI excludes chance' rather than point-estimate cutoffs.",
+            "why": "Answers the imaging judge's inevitable 'is that margin significant?', converts verdicts from assertions to tests, and stops the over-aggressive brain-age control from silently killing a real signal \u2014 without boiling the ocean.",
+            "files": [
+              "src/neuroad/gauntlet.py",
+              "src/neuroad/leakage.py",
+              "src/neuroad/probe.py"
+            ],
+            "effort": "M",
+            "rubric": "Depth 20% / Demo 30%",
+            "priority": "P0"
+          },
+          {
+            "task": "Add a seed-sweep verdict-stability computation (~20 seeds on the synthetic KILL and SURVIVOR) that emits the score distribution and verdict-flip rate into demo_data for the frontend 'stable across 20 seeds' panel.",
+            "why": "Closes the single-seed fragility critique (Depth) and doubles as a cool-to-watch demo beat (Demo) \u2014 a rare two-rubric win.",
+            "files": [
+              "src/neuroad/pipeline.py",
+              "app/build_demo_data.py"
+            ],
+            "effort": "S",
+            "rubric": "Depth 20% / Demo 30%",
+            "priority": "P1"
+          },
+          {
+            "task": "Fold demo_data.json generation into `neuroad demo`, regenerate ALL reports/*.json under the fixed scoring/CI/PCA logic, and ship a tiny checked-in PCA-reduced (10-d) frozen-inference feature fixture plus a `neuroad reproduce-finding` command that regenerates the leakage AUC from it (full 768-d tables stay git-ignored).",
+            "why": "Makes the researcher-track finding runnable from a clean clone without violating CC-BY-NC-ND, and guarantees the workbench animates the engine's real output instead of a stale committed 87KB artifact.",
+            "files": [
+              "src/neuroad/cli.py",
+              "src/neuroad/data/openbhb_jepa.py",
+              "data/real/fixtures/",
+              "app/build_demo_data.py"
+            ],
+            "effort": "M",
+            "rubric": "Impact 25% / Demo 30%",
+            "priority": "P0"
+          },
+          {
+            "task": "Make Claude visibly live: add a live-vs-offline model badge to CLI cards and report JSON printing the actual model/path used, replace the pipeline's bare `except Exception: pass` shims with debug-level logging, and capture + commit ONE real live-Claude courtroom+self-critique transcript to freeze as the demo's canned data.",
+            "why": "The 'Claude as adjudicator' differentiator is 25% of the score yet currently unverifiable in a 100%-offline demo; a committed live transcript + badge makes it provably real without the recording depending on a flaky live call.",
+            "files": [
+              "src/neuroad/claude/_client.py",
+              "src/neuroad/cli.py",
+              "src/neuroad/pipeline.py",
+              "reports/live_transcript.json"
+            ],
+            "effort": "S",
+            "rubric": "Claude Use 25% / Demo 30%",
+            "priority": "P1"
+          }
+        ]
+      },
+      {
+        "owner": "frontend",
+        "items": [
+          {
+            "task": "Video-legibility + Presentation-Mode pass (no upstream dependency, start day one): lift 10-11px mono microtext to 12-13px (lines 46,81,173,188-189), raise --mute/--ink3 to WCAG-AA on --bg, thicken canvas axis-label font (3680), and add a +12% presentation-mode toggle for recording.",
+            "why": "On compressed 1080p/phone this decides whether the supporting AUCs, axis domains, and source chips 'hold up as software you trust' \u2014 the cheapest single-file lever on the 30% Demo weight, and a science-credibility fix.",
+            "files": [
+              "app/index.html"
+            ],
+            "effort": "S",
+            "rubric": "Demo 30%",
+            "priority": "P0"
+          },
+          {
+            "task": "Build the deterministic '\u25b6 Cinematic Demo' autopilot: encode the corrected DEMO_SCRIPT beats as a timeline array [{t,fn,caption}] driving the existing selectCase/runGauntlet/toggleColor/toggleSubstrate/openSplit with a lower-third caption band, ?sub=&case= entry-state params matching the cold-open, and Esc/Space cancel back to manual (reuse clearTimers/S.timers).",
+            "why": "The 3-min video is 30% of the score and currently depends on flawless manual keypresses against a script with no code counterpart; autopilot makes every take identical and on-narration, and doubles as a 'press play' artifact for judges.",
+            "files": [
+              "app/index.html"
+            ],
+            "effort": "M",
+            "rubric": "Demo 30%",
+            "priority": "P0"
+          },
+          {
+            "task": "Concentrated wow-fixes on the now-final numbers: eased count-ups (rAF easeOutCubic ~900ms) on the verdict score/leakage margin/naive AUC synced to the needle glide; a ~700ms scatter morph on color-toggle (lerp point positions + 1\u03c3 ellipse re-orientation so 'the machine is the axis' becomes a moving image); a verdict rubber-stamp slam + panel red/green color flood; and a CI band that snaps in beneath fragile numbers so uncertainty reads as craft, not omission. All honor prefers-reduced-motion.",
+            "why": "These are the highest-ROI 'cool to watch' beats, but pointed at the defensible KILL-refusal and real leakage scatter \u2014 and the CI band pre-empts the 'is that significant?' attack instead of hiding it.",
+            "files": [
+              "app/index.html"
+            ],
+            "effort": "M",
+            "rubric": "Demo 30% / Impact 25%",
+            "priority": "P0"
+          },
+          {
+            "task": "Guarantee the Claude beat and stability panel on camera: auto-expand Courtroom + Reviewer at run-completion (remove default 'collapsed'), render the live-vs-offline Claude badge from demo_data, stage the leakage pair-bar race (outcome fills, scanner catches up ~400ms later, margin flashes red on negative), and add the seed-sweep panel (20 needles fanning into a tight cluster).",
+            "why": "The self-critiquing adjudicator is the strongest Claude-Use (25%) narrative yet ships hidden behind a chevron; the pair-bar race is the leakage money-shot; the fan is the stability proof.",
+            "files": [
+              "app/index.html"
+            ],
+            "effort": "S",
+            "rubric": "Claude Use 25% / Demo 30%",
+            "priority": "P1"
+          }
+        ]
+      },
+      {
+        "owner": "design",
+        "items": [
+          {
+            "task": "Lock the corrected narrative spine and rewrite DEMO_SCRIPT.md: cold-open on the badged SYNTHETIC KILL (referee refuses a plausible-looking classifier), climax on the REAL OpenBHB leakage finding with the scatter morph, demote the SURVIVOR promote to an explicitly-badged demonstration of the gate MECHANIC (not a discovery), delete 'Proteins confirm it'. Produce a beat-by-beat timeline with exact caption text and timestamps.",
+            "why": "Everything downstream (autopilot array, count-ups, recording) encodes this beat order; choreographing beats that fail our own gauntlet weaponizes polish against us, so the spine must be fixed and honest before any animation is built.",
+            "files": [
+              "docs/DEMO_SCRIPT.md"
+            ],
+            "effort": "S",
+            "rubric": "Demo 30% / Impact 25%",
+            "priority": "P0"
+          },
+          {
+            "task": "Write the frontend polish spec (design/POLISH_SPEC.md): exact count-up targets and timings synced to the 1.1s needle glide, the scatter-morph choreography (which centroids slide, which ellipse rotates), the verdict stamp/flood colors for REFUSED vs PROMOTED, the CI-band visual, and the seed-sweep needle-fan \u2014 as a spec for frontend to implement, NOT edits to index.html.",
+            "why": "Keeps design and frontend on disjoint files while still giving frontend a precise visual contract; prevents concurrent edits to the single-file app.",
+            "files": [
+              "design/POLISH_SPEC.md"
+            ],
+            "effort": "S",
+            "rubric": "Demo 30%",
+            "priority": "P1"
+          },
+          {
+            "task": "Record the final 3-min take against the autopilot + presentation-mode over http (not file://), and draft the 100-200 word written summary + the repo write-up framing (lead with the leakage finding, the referee-refuses-its-own-claims thesis, the reproduce-finding command, and the live-Claude adjudicator).",
+            "why": "The video is 30% and the summary/write-up carry the Impact + Claude-Use story; both must reflect the corrected, verified numbers.",
+            "files": [
+              "design/SUBMISSION_SUMMARY.md",
+              "design/WRITEUP.md"
+            ],
+            "effort": "M",
+            "rubric": "Demo 30% / Impact 25%",
+            "priority": "P0"
+          }
+        ]
+      },
+      {
+        "owner": "qa",
+        "items": [
+          {
+            "task": "Verify every prior-art citation against live sources (WebSearch/WebFetch) \u2014 arXiv:2604.14441, 2606.09189, Neuro-JEPA 2606.14957, 'PathoROB Nat Comms 2026' \u2014 and produce a verification report listing each as RESOLVED (with real DOI/URL) or UNRESOLVED\u2192DELETE for backend to apply.",
+            "why": "Citation verification is the load-bearing input to the honesty frame and must be done by someone with web access before backend edits calibration.py/README and before the summary is finalized.",
+            "files": [
+              "scratch/CITATIONS_VERIFIED.md"
+            ],
+            "effort": "S",
+            "rubric": "Claude Use 25% / trust",
+            "priority": "P0"
+          },
+          {
+            "task": "Add a minimal GitHub Actions CI (pytest 75/75 + one offline `neuroad demo` smoke + `neuroad reproduce-finding` smoke), and reconcile packaging: move anthropic into the [claude] extra, fix the gated.py docstring that contradicts loaders.py wiring, add a Makefile `make demo`.",
+            "why": "A green CI badge is an immediate open-source trust signal, and the packaging contradictions read as a hack to a careful reviewer (Depth 20%).",
+            "files": [
+              ".github/workflows/ci.yml",
+              "tests/test_reproduce_finding.py",
+              "Makefile",
+              "requirements.txt"
+            ],
+            "effort": "S",
+            "rubric": "Depth 20%",
+            "priority": "P1"
+          },
+          {
+            "task": "Final pre-record verification pass: confirm no shipped artifact contradicts the on-screen story (regenerated reports match demo_data, no promoted-flag/substrate/citation contradiction, evidence_ledger label fixed, no unbadged synthetic number), and that the demo serves over http with the live-Claude transcript present. File a go/no-go checklist.",
+            "why": "A judge who clones the repo or pauses the frame must find nothing that undercuts the polished narrative; this gate protects Depth (20%) and Impact (25%) at the finish line.",
+            "files": [
+              "scratch/GO_NOGO_CHECKLIST.md"
+            ],
+            "effort": "S",
+            "rubric": "Depth 20% / Demo 30%",
+            "priority": "P0"
+          }
+        ]
+      }
+    ],
+    "sequence": [
+      "WAVE 1 (parallel, disjoint files): backend fixes the engine science on src/** (PCA-in-probe, bootstrap/DeLong CI + permutation null on leakage AUC & margin, brain-age two-way) \u2014 the numbers must change before anything is regenerated; qa verifies all prior-art citations via web search into scratch/CITATIONS_VERIFIED.md; design locks the corrected narrative spine in docs/DEMO_SCRIPT.md and writes design/POLISH_SPEC.md; frontend does the video-legibility + presentation-mode pass on app/index.html (no upstream dependency).",
+      "WAVE 2 (parallel, disjoint files): backend applies citation fixes + badges synthetic anchor + fixes evidence_ledger + reconciles docs-vs-artifacts + regenerates ALL reports under fixed logic + folds demo_data.json into `neuroad demo` + ships the PCA fixture and `reproduce-finding` + adds the live/offline badge and captures the live Claude transcript + emits seed-sweep data (src/**, reports/**, app/build_demo_data.py, docs/DATA_*.md, README, data/**); qa builds CI + packaging reconciliation on .github/tests/Makefile/requirements. Frontend and design stay OFF the demo-number work here to avoid animating stale content.",
+      "WAVE 3 (parallel, disjoint files): frontend builds the autopilot + count-ups + scatter morph + verdict stamp + auto-expand courtroom + pair-bar race + seed-sweep panel on app/index.html, consuming the now-final demo_data.json; design prepares the recording environment and drafts the written summary/write-up. Backend is frozen except hotfixes surfaced by frontend.",
+      "WAVE 4 (parallel): qa runs the final go/no-go verification (artifacts vs on-screen story, http serve, live transcript present); design records the final 3-min take and finalizes the 100-200 word summary once qa signs off."
+    ],
+    "demo_plan": "3-minute autopilot take, all served over http, presentation-mode on. [0:00-0:20] COLD OPEN on the badged SYNTHETIC HARNESS KILL cohort: a plausible-looking AD classifier, high naive AUC (~0.82) counts up. VO: 'This looks like a finding. Watch the referee.' [0:20-0:55] Run the gauntlet. The star leakage test: the pair-bar race \u2014 outcome bar fills, then the SCANNER bar races past it, margin flashes red/negative. The scatter MORPHS from color-by-outcome to color-by-scanner; centroids slide apart, the dominant ellipse rotates: the machine IS the axis. Verdict rubber-stamp SLAM + red flood: REFUSED, score 15. [0:55-1:25] Claude courtroom auto-expands: prosecution/defense/judge argue, then the reviewer critiques its OWN verdict \u2014 live-Claude badge visible, provably not a template. [1:25-2:00] Cut to the REAL finding: OpenBHB, 3,984 healthy brains, no disease. Frozen Neuro-JEPA embeddings predict scanner field strength at AUC ~0.93 (PCA-10); a bootstrap CI band snaps in and a permutation-null p is shown. VO: 'This is real, reproducible from a clean clone \u2014 `neuroad reproduce-finding`.' [2:00-2:25] SURVIVOR case as an explicitly badged MECHANIC demo: show the promotion gate and the biomarker anchor, every number stamped SYNTHETIC HARNESS. VO: 'This is how the molecular gate works \u2014 not a claimed result. We refuse to overclaim.' [2:25-2:45] Seed-sweep stability: 20 needles fan out and collapse into a tight cluster \u2014 'verdict stable across 20 seeds.' [2:45-3:00] CLOSE on the export tray + one command `neuroad demo`: open-source, reproducible, and a referee that kills plausible-looking claims \u2014 including our own.",
+    "risks": [
+      "Regenerating reports/demo_data on top of unfixed engine logic wastes a pass and can ship contradictory numbers \u2014 hard-gate: no report regeneration until backend WAVE-1 science fixes land and change the numbers.",
+      "Frontend animating a stale committed demo_data.json (87KB) or the file:// embedded fallback would record the wrong numbers \u2014 mitigate by folding demo_data write into `neuroad demo`, serving over http, and running frontend polish only in WAVE 3 after demo_data is final.",
+      "A single prior-art citation that fails to resolve when a judge Googles it invalidates the whole honesty frame \u2014 qa must verify-or-delete ALL of them before the summary/README are finalized.",
+      "The live Claude call could refuse or flake DURING recording \u2014 decouple: record against the deterministic offline path but freeze one committed live transcript + badge so the differentiator is verifiable without the take depending on a live call.",
+      "Concurrent edits to the single-file app/index.html \u2014 enforce frontend-only ownership; design produces specs (design/*.md) and never edits index.html, backend never touches it.",
+      "Chasing a new real AD cohort (MIRIAD/OASIS-3 DUA) 5 days out could consume the schedule and re-create the p>>n/no-CI traps \u2014 explicitly out of scope unless P0s land with days to spare, time-boxed to 1 day with a hard abort.",
+      "A judge downloads evidence_ledger.csv and sees 0.904 labeled |r| contradicting its own r=0.40 detail \u2014 must be fixed before the export tray appears on camera."
+    ],
+    "out_of_scope": [
+      "Acquiring a new real AD cohort (MIRIAD self-serve or an OASIS-3 DUA) to get a survivor that clears both stars \u2014 L-effort data acquisition that risks the deadline and re-creates the statistical traps; reframe the thesis around the leakage finding instead. Stretch-only if P0s finish early, time-boxed to 1 day.",
+      "Nested-in-fold covariate/brain-age residualization \u2014 correct but churns numbers repeatedly; document as a Limitation instead.",
+      "Benjamini-Hochberg FDR across the 5 tests x up-to-6 clusters \u2014 defer to a Limitations/Future-Work note; the demo never surfaces the per-cluster gates.",
+      "Probability-calibration reliability diagrams / Brier / ECE and renaming calibration.py \u2014 deferred; note honestly that calibration.py holds literature plausibility ranges, not probability calibration.",
+      "Symmetric leave-one-site-out leakage-margin comparison and full bootstrap CIs on every gate \u2014 instrument ONLY the leakage margin + headline AUC + the two verdict scores the demo says out loud; rigor theater on unmentioned gates buys no judge points and destabilizes the take.",
+      "Raising the replication n_test floor / deep replication-gate rework \u2014 low demo visibility; note the n>=6 caveat in Limitations.",
+      "Tightening every bare except in the pipeline beyond the Claude shims \u2014 do the Claude-call logging only; broader exception hygiene is post-deadline polish."
+    ]
+  }
+}

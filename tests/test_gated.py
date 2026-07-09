@@ -128,3 +128,28 @@ def test_missing_structural_features_raises_clearly():
     raw = pd.DataFrame({"PTID": ["S1"], "AGE": [70], "PTGENDER": ["F"]})
     with pytest.raises(contract.ContractError):
         gated.map_export(raw, "adni")
+
+
+def test_precleaned_int8_conversion_survives_map_and_csv_roundtrip(tmp_path):
+    """Regression: a already-clean Int8 1/0/<NA> column (as the ADNI helper
+    derives for `conversion`) must survive both map_export and a CSV round-trip.
+
+    Guards two latent bugs in the Int8/string coercion path:
+      * ``Series.map`` over a nullable Int8 column nulled every value.
+      * float round-trips ("1.0") failed to match the "1" mapping key.
+    """
+    raw = _fake_adni_export().copy()           # 5 rows
+    # inject a pre-derived, nullable-Int8 conversion column (1/0/<NA>)
+    raw["conversion"] = pd.array([1, 0, pd.NA, 1, 0], dtype="Int8")
+
+    mapped = gated.map_export(raw, "adni")
+    assert mapped["conversion"].notna().sum() == 4       # <-- was 0 before fix
+    assert int((mapped["conversion"] == 1).sum()) == 2
+
+    # CSV round-trip (float rendering of ints) must not erase the labels
+    p = tmp_path / "adni_contract.csv"
+    mapped.to_csv(p, index=False)
+    reloaded = gated.load_gated(str(p), "adni")
+    contract.validate_table(reloaded)
+    assert reloaded["conversion"].notna().sum() == 4
+    assert int((reloaded["conversion"] == 1).sum()) == 2

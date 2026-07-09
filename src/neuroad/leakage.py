@@ -26,7 +26,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.preprocessing import StandardScaler
 
 from . import contract
-from .probe import LinearProbe, cross_val_auc, point_head
+from .probe import (LinearProbe, N_BOOT, N_PERM, auc_ci_perm, cross_val_auc,
+                    point_head)
 
 
 # ---------------------------------------------------------------------------
@@ -39,12 +40,28 @@ def _scanner_target(df: pd.DataFrame) -> Optional[str]:
     return None
 
 
-def leakage_margin(df: pd.DataFrame, target: str = "conversion") -> dict:
-    """outcome_AUC - scanner_AUC (site-disjoint outcome AUC).
+def leakage_margin(df: pd.DataFrame, target: str = "conversion",
+                   n_boot: int = N_BOOT, n_perm: int = N_PERM) -> dict:
+    """outcome_AUC - scanner_AUC (site-disjoint outcome AUC), with uncertainty.
 
-    Returns {'outcome_auc', 'scanner_auc', 'margin', 'confound'}. When there is
-    only one scanner/site, scanner_auc is reported as chance (0.5) and the
-    confound is flagged as unavailable.
+    Returns a JSON-safe dict:
+        {outcome_auc, scanner_auc, margin, confound,
+         outcome_ci, scanner_ci, outcome_p_perm, scanner_p_perm,
+         scanner_ci_excludes_chance,
+         margin_ci_lo, margin_ci_hi, margin_p, margin_ci_excludes_zero}
+
+    When there is only one scanner/site, scanner_auc is reported as chance (0.5)
+    and the confound is flagged as unavailable.
+
+    Uncertainty. Both AUCs carry a bootstrap 95% CI and a stratified
+    label-permutation p (site groups honored on the outcome side). The MARGIN CI
+    is a percentile CI of ``outcome_boot - scanner_boot`` (the two AUCs are
+    bootstrapped on their own row sets, so this is a slightly conservative,
+    independent-resample combination); ``margin_p`` is the permutation null
+    P(outcome_auc_perm - scanner_auc >= observed margin), i.e. the chance of the
+    outcome beating the scanner by this much when the outcome labels carry no
+    real (within-site) signal. This lets the star verdict be stated as
+    "margin CI excludes zero" rather than a bare point cutoff.
 
     Note on the CV asymmetry: outcome_AUC is measured site-disjoint (the harder,
     honest estimate), while scanner_AUC cannot be — holding out the very group
@@ -54,21 +71,61 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion") -> dict:
     the machine), which is the right direction of bias for a skeptic's tool.
     """
     Xo, yo, go = point_head(df, target)
-    outcome_auc = cross_val_auc(Xo, yo, groups=go)
+    o = auc_ci_perm(Xo, yo, groups=go, n_boot=n_boot, n_perm=n_perm,
+                    return_arrays=True)
+    outcome_auc = float(o.get("_auc_full", o["auc"]))
+    o_boot = o.get("boot", np.empty(0))
+    o_perm = o.get("perm", np.empty(0))
 
     conf = _scanner_target(df)
     if conf is None:
         scanner_auc = 0.5
+        s = {"ci_lo": None, "ci_hi": None, "p_perm": None,
+             "ci_excludes_chance": False}
+        s_boot = np.empty(0)
     else:
         Xs, ys, _ = point_head(df, conf)
         # No group-aware CV here: we WANT to see the machine signal.
-        scanner_auc = cross_val_auc(Xs, ys, groups=None)
+        s = auc_ci_perm(Xs, ys, groups=None, n_boot=n_boot, n_perm=n_perm,
+                        return_arrays=True)
+        scanner_auc = float(s.get("_auc_full", s["auc"]))
+        s_boot = s.get("boot", np.empty(0))
+
+    margin = outcome_auc - scanner_auc
+
+    # Margin CI: percentile CI of outcome_boot - scanner_boot (paired by index;
+    # truncated to the shorter run). Independent resampling of the two row sets
+    # makes this a conservative (slightly wide) CI — the honest direction.
+    margin_ci_lo = margin_ci_hi = None
+    if o_boot.size and s_boot.size:
+        m = min(o_boot.size, s_boot.size)
+        diff = o_boot[:m] - s_boot[:m]
+        margin_ci_lo, margin_ci_hi = (float(v) for v in np.percentile(diff, [2.5, 97.5]))
+    elif o_boot.size and conf is None:
+        margin_ci_lo, margin_ci_hi = (float(v) for v in
+                                      np.percentile(o_boot - 0.5, [2.5, 97.5]))
+
+    # Margin permutation p: does the outcome beat the (fixed) scanner AUC by more
+    # than the null of shuffled-within-site outcome labels?
+    margin_p = None
+    if o_perm.size:
+        null_margin = o_perm - scanner_auc
+        margin_p = float((1 + int(np.sum(null_margin >= margin))) / (1 + o_perm.size))
 
     return {
         "outcome_auc": round(float(outcome_auc), 4),
         "scanner_auc": round(float(scanner_auc), 4),
-        "margin": round(float(outcome_auc - scanner_auc), 4),
+        "margin": round(float(margin), 4),
         "confound": conf if conf is not None else "none (single scanner/site)",
+        "outcome_ci": None if o["ci_lo"] is None else [o["ci_lo"], o["ci_hi"]],
+        "scanner_ci": None if s["ci_lo"] is None else [s["ci_lo"], s["ci_hi"]],
+        "outcome_p_perm": o["p_perm"],
+        "scanner_p_perm": s["p_perm"],
+        "scanner_ci_excludes_chance": bool(s["ci_excludes_chance"]),
+        "margin_ci_lo": None if margin_ci_lo is None else round(margin_ci_lo, 4),
+        "margin_ci_hi": None if margin_ci_hi is None else round(margin_ci_hi, 4),
+        "margin_p": None if margin_p is None else round(margin_p, 4),
+        "margin_ci_excludes_zero": bool(margin_ci_lo is not None and margin_ci_lo > 0),
     }
 
 

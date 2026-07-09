@@ -1,3 +1,9 @@
+# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.
+# The verdict below is a positive control on a synthetic cohort; the
+# leakage-margin CI includes zero. Do not read as a real finding.
+badge: SYNTHETIC HARNESS
+synthetic: true
+provenance: "SYNTHETIC HARNESS \u2014 calibrated survivor, not a real result"
 claim:
   claim_id: SYN-A
   claim_text: MCI->AD conversion is decodable from frozen structural embeddings beyond
@@ -9,16 +15,62 @@ claim:
   head: linear probe
 naive_effect:
   metric: AUC
-  value: 0.711
+  value: 0.739
   target: conversion
   n: 130
   head: linear probe
   substrate: frozen Neuro-JEPA structural embeddings
 leakage_margin:
-  outcome_auc: 0.712
+  outcome_auc: 0.739
   scanner_auc: 0.676
-  margin: 0.036
+  margin: 0.063
   confound: scanner
-verdict: strong candidate
-score: 88
+  outcome_ci:
+  - 0.6534
+  - 0.8185
+  scanner_ci:
+  - 0.6243
+  - 0.7305
+  outcome_p_perm: 0.001
+  scanner_p_perm: 0.001
+  scanner_ci_excludes_chance: true
+  margin_ci_lo: -0.035
+  margin_ci_hi: 0.161
+  margin_p: 0.001
+  margin_ci_excludes_zero: false
+leakage_margin_note: "The leakage-margin 95% CI includes zero (-0.035..0.161) \u2014\
+  \ the outcome is NOT confidently decoded better than the scanner; treat the positive\
+  \ point margin as provisional."
+verdict: robust enough for follow-up
+score: 80
 promoted: true
+caveats:
+- "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET (drawn to\
+  \ sit inside a literature range in calibration.CAL), not a measured plasma value\
+  \ \u2014 no open cohort pairs MRI with plasma markers. The molecular anchor demonstrates\
+  \ the gate MECHANIC, not a real result."
+- "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014\
+  \ anchor is suggestive, not confirmatory."
+- Verdict is provisional and conditional on the scanner/site distribution of any replication
+  cohort.
+- Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.
+- Any biomarker anchor is complete-case only and may not generalize.
+- "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits\
+  \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
+  \ (2026))."
+- Promotion authorizes one confirmatory experiment, not adoption of the finding.
+- "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not\
+  \ to conclude \u2014 the referee promotes hypotheses, it does not confirm them."
+- 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
+  (this cohort''s fit: R2=0.78, MAE=2.9yr), so residual generic-aging signal can survive
+  the adjustment and masquerade as disease-specific.'
+- The biomarker anchor likely rests on a partial complete-case subset; with realistic
+  p-tau217 missingness the correlation is estimated on far fewer subjects than the
+  headline cohort.
+- "N is small (~130); at this size AUCs are noisy and a single site's idiosyncrasy\
+  \ can dominate \u2014 treat effect sizes as wide-interval estimates."
+- "The leakage test audits the embeddings with the same linear-probe family it uses\
+  \ for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding;\
+  \ this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing\
+  \ Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189\
+  \ (2026)), which we cite rather than claim."

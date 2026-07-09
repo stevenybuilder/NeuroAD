@@ -1,6 +1,6 @@
 """NeuroAD Discovery Engine — an Alzheimer's structural-MRI imaging referee.
 
-Imaging finds it. Proteins confirm it. The system tells you what to do next.
+Imaging finds it. Confounds try to fake it. The referee tells you what to do next.
 """
 from neuroad import contract  # noqa: F401
 

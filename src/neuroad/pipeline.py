@@ -17,12 +17,19 @@ module imports cleanly even before the rest of the engine has landed.
 """
 from __future__ import annotations
 
+import logging
 from typing import Optional, Union
 
 import pandas as pd
 
 from neuroad import contract
 from neuroad.contract import Claim, ClaimCard, TestEvidence, TestResult
+
+#: Debug-level logger. The Claude shims below degrade gracefully to keep the
+#: offline demo alive, but we no longer swallow the reason silently — a
+#: misconfigured live key is diagnosable with ``logging.getLogger('neuroad')``
+#: set to DEBUG, without ever breaking the guaranteed-offline path.
+_log = logging.getLogger("neuroad.pipeline")
 
 
 # ---------------------------------------------------------------------------
@@ -36,8 +43,8 @@ def _parse_claim(text: str, df: Optional[pd.DataFrame]) -> Claim:
         claim = claim_parser.parse_claim(text, df)
         if isinstance(claim, Claim):
             return claim
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("claim_parser unavailable/failed, using fallback claim: %r", exc)
     # Fallback: a sensible default claim keyed to conversion.
     return Claim(
         claim_id="claim-fallback",
@@ -54,8 +61,8 @@ def _adjudicate(claim: Claim, tests: list[TestEvidence]) -> Optional[dict]:
         result = courtroom.adjudicate(claim, tests)
         if isinstance(result, dict):
             return result
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("courtroom.adjudicate failed, skipping adjudication: %r", exc)
     return None
 
 
@@ -65,8 +72,8 @@ def _propose_biology(card: ClaimCard, df: pd.DataFrame) -> Optional[dict]:
         result = bridge.propose_biology(card, df)
         if isinstance(result, dict):
             return result
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("bridge.propose_biology failed, skipping biology: %r", exc)
     return None
 
 
@@ -76,8 +83,8 @@ def _review(card: ClaimCard) -> Optional[dict]:
         result = reviewer.review(card)
         if isinstance(result, dict):
             return result
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("reviewer.review failed, skipping reviewer critique: %r", exc)
     return None
 
 
@@ -87,8 +94,8 @@ def _narrate(card: ClaimCard) -> str:
         text = narrator.narrate(card)
         if isinstance(text, str) and text.strip():
             return text
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("narrator.narrate failed, using fallback narration: %r", exc)
     return _fallback_narration(card)
 
 
@@ -183,6 +190,18 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     # any case — including refused ones — without re-running the gauntlet.
     card.tests_evidence = tests
 
+    # Live-vs-offline Claude badge: a truthful descriptor of whether the reasoning
+    # text came from the live API or the deterministic offline template. Printed by
+    # the CLI and written into every report so the "Claude as adjudicator"
+    # differentiator is verifiable rather than assumed.
+    try:
+        from neuroad.claude import _client
+        card.claude = _client.model_badge()
+    except Exception as exc:  # noqa: BLE001
+        _log.debug("claude model_badge unavailable: %r", exc)
+        card.claude = {"live": False, "model": "offline-template",
+                       "path": "deterministic offline template"}
+
     # 8. STAR trust features — double dissociation + confound leaderboard.
     #    Pure pandas/numpy (leakage.py), no API; guarded so the deterministic
     #    offline referee path never breaks. These populate card.to_dict() and the
@@ -190,6 +209,68 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     _attach_leakage_features(card, df, claim)
 
     return card
+
+
+def seed_sweep(preset: str = "KILL", n_seeds: int = 20,
+               n_boot: int = 200, n_perm: int = 200) -> dict:
+    """Verdict-stability sweep across ``n_seeds`` seeds of a synthetic cohort.
+
+    Re-runs the gauntlet + scoring on freshly generated synthetic cohorts (one per
+    seed) and reports the score distribution and the verdict-flip rate — turning
+    the single-seed determinism from a hidden risk into a demonstrated robustness
+    claim ('verdict stable across N seeds'). Uses reduced bootstrap/permutation
+    counts for speed (the star decision is stable well below the headline 1000).
+
+    Returns a JSON-safe dict:
+        {preset, n_seeds, scores, verdicts, promoted, mean, std, min, max,
+         modal_verdict, flip_rate, promotion_rate, promotion_line}
+    """
+    import numpy as np
+
+    from neuroad import gauntlet, scoring
+    from neuroad.contract import Claim
+    from neuroad.data import synthetic
+
+    target = "conversion"
+    scores: list[int] = []
+    verdicts: list[str] = []
+    promoted: list[bool] = []
+    claim = Claim(claim_id=f"sweep-{preset}", claim_text="seed-stability sweep",
+                  target=target, group_a="MCI converters", group_b="MCI non-converters")
+    for s in range(n_seeds):
+        df = synthetic.generate_cohort(preset, seed=s)
+        tests = gauntlet.run_gauntlet(df, claim, n_boot=n_boot, n_perm=n_perm)
+        card = scoring.build_claim_card(claim, {"metric": "AUC"}, tests)
+        scores.append(int(card.score))
+        verdicts.append(card.verdict.value)
+        promoted.append(bool(card.promoted))
+
+    arr = np.asarray(scores, dtype=float)
+    modal = max(set(verdicts), key=verdicts.count) if verdicts else None
+    flip_rate = round(1.0 - (verdicts.count(modal) / len(verdicts)), 3) if verdicts else 0.0
+    promo_rate = round(sum(promoted) / len(promoted), 3) if promoted else 0.0
+    stable = flip_rate == 0.0
+    promotion_line = (
+        f"Verdict stable across {n_seeds} seeds — every seed lands on "
+        f"'{modal}' (score {int(arr.min())}-{int(arr.max())})."
+        if stable else
+        f"Verdict flips on {int(round(flip_rate * n_seeds))}/{n_seeds} seeds "
+        f"(modal '{modal}', {int((1 - flip_rate) * 100)}% agreement).")
+    return {
+        "preset": preset,
+        "n_seeds": int(n_seeds),
+        "scores": scores,
+        "verdicts": verdicts,
+        "promoted": promoted,
+        "mean": round(float(arr.mean()), 2) if arr.size else None,
+        "std": round(float(arr.std()), 2) if arr.size else None,
+        "min": int(arr.min()) if arr.size else None,
+        "max": int(arr.max()) if arr.size else None,
+        "modal_verdict": modal,
+        "flip_rate": flip_rate,
+        "promotion_rate": promo_rate,
+        "promotion_line": promotion_line,
+    }
 
 
 def _attach_leakage_features(card: ClaimCard, df: pd.DataFrame,
@@ -202,11 +283,11 @@ def _attach_leakage_features(card: ClaimCard, df: pd.DataFrame,
         dd = leakage.double_dissociation(df, target)
         if isinstance(dd, dict):
             card.double_dissociation = dd
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("leakage.double_dissociation failed: %r", exc)
     try:
         board = leakage.confound_leaderboard(df, target)
         if isinstance(board, list):
             card.confound_leaderboard = board
-    except Exception:
-        pass
+    except Exception as exc:
+        _log.debug("leakage.confound_leaderboard failed: %r", exc)
