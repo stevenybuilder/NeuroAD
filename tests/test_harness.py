@@ -113,15 +113,37 @@ def test_guard_passes_a_clean_card():
 @pytest.mark.parametrize("overclaim", [
     "This is a proven biomarker for Alzheimer's.",
     "A validated biomarker of conversion.",
+    "A confirmed biomarker of conversion.",
+    "An established biomarker of AD.",
     "The signature is clinically validated.",
+    "The result is clinically actionable today.",
+    "This probe is ready for clinical use.",
     "The probe detects preclinical disease.",
+    "This is better than plasma p-tau217.",
+    "The imaging signature replaces PET.",
     "A structural cure for dementia.",
+    "A definitive marker of tau pathology.",
+    "This is definitively AD-specific.",
+    "A genuine breakthrough in AD imaging.",
 ])
 def test_guard_blocks_planted_overclaim(overclaim):
     card = _plain_card()
     card.biology_hypothesis = overclaim        # planted into a rendered field
     with pytest.raises(HonestyViolation):
         honesty_guard(_wrap(card))
+
+
+@pytest.mark.parametrize("legit", [
+    "Unsupervised phenotype discovery surfaced a candidate cluster.",
+    "The Detective discovered three sub-cohorts with no labels.",
+    "The brain-age control is a proxy, not a gold standard.",
+    "A secure, accurate, reproducible out-of-fold estimate.",
+])
+def test_guard_allows_product_and_hedged_language(legit):
+    # The Discovery Engine's own vocabulary and honest caveats must NOT trip.
+    card = _plain_card()
+    card.biology_hypothesis = legit
+    assert honesty_guard(_wrap(card)) is not None
 
 
 def test_guard_blocks_overclaim_in_narration_attr():

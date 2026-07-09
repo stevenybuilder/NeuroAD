@@ -58,16 +58,34 @@ _log = logging.getLogger("neuroad.harness.orchestrator")
 # HONESTY GUARD — the anti-overclaim contract every card must satisfy.
 # ===========================================================================
 
-#: Phrases the engine must NEVER emit. The pitch is calibrated honesty: the card
-#: describes how far a finding has been DEFENDED, never that it is true or
-#: clinically actionable. These are matched case-insensitively over the fully
-#: rendered card ("cure" on a word boundary so "secure"/"accurate" don't trip).
+#: Multi-word overclaim PHRASES the engine must never emit (case-insensitive
+#: substring). The pitch is calibrated honesty: the card says how far a finding
+#: has been DEFENDED, never that it is true, clinically actionable, or superior
+#: to an established assay.
 FORBIDDEN_OVERCLAIMS = (
     "proven biomarker",
     "validated biomarker",
+    "confirmed biomarker",
+    "established biomarker",
     "clinically validated",
+    "clinically proven",
+    "clinically actionable",
+    "ready for clinical use",
     "detects preclinical",
+    "better than plasma",
+    "replaces pet",
+    "replace pet",
+)
+
+#: Single overclaim WORDS matched on a word boundary so legitimate substrings
+#: never trip. IMPORTANT: bare "discovery"/"discovered" are deliberately NOT here
+#: — this is the "Discovery Engine" and the Detective legitimately discovers
+#: clusters; only unambiguous claim-of-truth words belong in this list.
+FORBIDDEN_WORDS = (
     "cure",
+    "breakthrough",
+    "definitive",
+    "definitively",
 )
 
 
@@ -98,7 +116,8 @@ def honesty_guard(xcard: ExperimentCard) -> ExperimentCard:
     Invariants:
       * ``novelty_class`` is present and non-empty,
       * ``honesty_rung`` is present and non-empty,
-      * the rendered card contains NONE of ``FORBIDDEN_OVERCLAIMS``.
+      * the rendered card contains NONE of ``FORBIDDEN_OVERCLAIMS`` (phrases)
+        or ``FORBIDDEN_WORDS`` (word-boundary matched).
 
     ``investigate`` always runs this before returning; call it directly to vet a
     card built by hand."""
@@ -110,11 +129,11 @@ def honesty_guard(xcard: ExperimentCard) -> ExperimentCard:
     text = _rendered_text(xcard).lower()
     hits: list[str] = []
     for phrase in FORBIDDEN_OVERCLAIMS:
-        if phrase == "cure":
-            if re.search(r"\bcure\b", text):
-                hits.append(phrase)
-        elif phrase in text:
+        if phrase in text:
             hits.append(phrase)
+    for word in FORBIDDEN_WORDS:
+        if re.search(rf"\b{re.escape(word)}\b", text):
+            hits.append(word)
     if hits:
         raise HonestyViolation(
             "forbidden overclaim(s) in rendered ExperimentCard: "
