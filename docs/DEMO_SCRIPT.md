@@ -63,12 +63,12 @@ spoken track (also exact, but the caption is what must be on screen).
   along the scanner axis. The disease coloring was noise; the machine is the axis.
 - **Action (0:48):** biomarker anchor **FAILS** and leakage **FAILS**. Even though
   some secondary tests pass, the independent-corroboration gate blocks promotion.
-  Verdict **rubber-stamp SLAM**: score counts up to **40/100**, needle glides,
-  panel floods **red**, stamp reads **REFUSED — PARTIALLY ROBUST**. Biology zone
-  stays 🔒 locked.
+  Verdict **rubber-stamp SLAM**: score counts up to **39/100**, needle glides,
+  panel floods **red**, stamp reads **REFUSED — FRAGILE** (a scanner-failed star
+  test can't be rescued by replication). Biology zone stays 🔒 locked.
 - **Lower-third (during race):** `Same probe, different label — it reads the SCANNER better than the disease.`
 - **Lower-third (during morph):** `The dominant axis of variance is the machine, not the biology.`
-- **Lower-third (at verdict):** `REFUSED · 40/100 · leakage margin −0.08. The gate stays shut.`
+- **Lower-third (at verdict):** `REFUSED · 39/100 · leakage margin −0.08. The gate stays shut.`
 - **VO:** "Point the same probe at the scanner label and it scores 0.95 — better than it
   predicts conversion. Negative leakage margin. Watch the scatter: color by scanner and
   the separation *is* the machine. Age fails, the molecular anchor fails, and the
@@ -79,8 +79,8 @@ spoken track (also exact, but the caption is what must be on screen).
 
 ### BEAT 3 — 0:55–1:25 · Claude adjudicates, then critiques itself
 - **Action:** Courtroom + Reviewer **auto-expand** at run-completion (no chevron click).
-  **Prosecution** argues artifact (cites the −0.08 margin), **Defense** argues biology,
-  **Judge** renders the refused verdict. Then the **Reviewer (Claude)** argues *against*
+  **Prosecution** argues artifact (cites the −0.08 margin), **Defense** argues biology;
+  the **verdict meter** is the judge that renders the refused verdict. Then the **Reviewer (Claude)** argues *against*
   the verdict — proxy brain-age control, small-n, same-probe-family leakage bound.
   **`● OFFLINE (template)`** badge visible: the shipped `reports/live_transcript.json`
   is the deterministic offline template rendered on this REFUSED KILL case
@@ -90,9 +90,9 @@ spoken track (also exact, but the caption is what must be on screen).
   `card.promoted`); the demo ships a deterministic **offline-template** courtroom on the
   refused KILL so the refusal is narratable without a live key. The same courtroom runs
   live and opens the biology gate on the promoted SURVIVOR (Beat 5) when a key is set.
-- **Lower-third:** `Claude argues prosecution, defense, and judge — then argues against itself.`
+- **Lower-third:** `Claude argues prosecution and defense — the verdict meter is the judge, then argues against itself.`
 - **Sub-caption:** `● offline template · claude-fable-5 courtroom · runs live when ANTHROPIC_API_KEY is set`
-- **VO:** "Claude runs the courtroom — prosecution, defense, judge — and here it is a
+- **VO:** "Claude runs the courtroom — prosecution and defense, with the verdict meter as judge — and here it is a
   deterministic offline template; Claude runs the same courtroom *live* when an
   ANTHROPIC_API_KEY is set, and the badge flips with no template swap. Then it does the
   thing a real referee does: it argues against its *own* verdict, and lists exactly why
@@ -159,25 +159,30 @@ spoken track (also exact, but the caption is what must be on screen).
 hooks WAVE-3 adds; all others already exist in `app/index.html`. `caption` is the exact
 lower-third.
 
+This is the **shipped** autopilot (`AUTOPILOT` array in `app/index.html`) — the
+recording is a screen capture of this exact ~92s sequence. The beat *timestamps
+in the tables above are the narration/VO cut; the array below is what actually
+drives the pixels.* The autopilot runs ~92s; the 3-minute video is reached by
+VO pacing and holds, not by a longer array.
+
 ```
 [
-  { t: 0.0,  fn: "entryState('synthetic','KILL','outcome')", caption: "A finding that looks publishable. AUC 0.87. Watch the referee." },        // [new] set from URL params
-  { t: 0.5,  fn: "countUpNaiveAUC()",                        caption: "A finding that looks publishable. AUC 0.87. Watch the referee." },        // [new] 0.50→0.87, 900ms
-  { t: 20.0, fn: "runGauntlet()",                            caption: "Same probe, different label — it reads the SCANNER better than the disease." },
-  { t: 30.0, fn: "pairBarRace()",                            caption: "Same probe, different label — it reads the SCANNER better than the disease." },  // [new] outcome fills, scanner overtakes +400ms
-  { t: 38.0, fn: "toggleColor('scanner')",                  caption: "The dominant axis of variance is the machine, not the biology." },          // triggers scatter morph
-  { t: 48.0, fn: "verdictSlam()",                            caption: "REFUSED · 40/100 · leakage margin −0.08. The gate stays shut." },           // [new] count-up + red flood + REFUSED stamp (fires inside runGauntlet's done)
-  { t: 55.0, fn: "expandCourtAndReviewer()",                caption: "Claude argues prosecution, defense, and judge — then argues against itself." }, // [new] auto-expand both panels
-  { t: 85.0, fn: "spotlightReal()",                          caption: "REAL DATA · 3,984 healthy brains, no disease. The encoder leaks the scanner." }, // [new] scroll+spotlight #extras real-evidence
-  { t: 88.0, fn: "snapCIBand()",                             caption: "REAL DATA · 3,984 healthy brains, no disease. The encoder leaks the scanner." }, // [new] CI band + permutation-p chip
-  { t: 112.0, fn: "typeReproduceCmd()",                     caption: "REAL DATA · 3,984 healthy brains, no disease. The encoder leaks the scanner." }, // [new] '$ neuroad reproduce-finding'
-  { t: 120.0, fn: "toggleSubstrate()",                      caption: "MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor." }, // back to synthetic
-  { t: 121.0, fn: "selectCase('SURVIVOR')",                 caption: "MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor." },
-  { t: 122.0, fn: "runGauntlet()",                          caption: "MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor." },
-  { t: 145.0, fn: "seedSweepFan()",                         caption: "KILL never promotes across 20 seeds; SURVIVOR promotes 19/20." },   // [new]
-  { t: 165.0, fn: "openSplit()",                            caption: "Open-source. Reproducible. A referee that kills bad claims — including its own." },
-  { t: 172.0, fn: "showExportTray()",                       caption: "Open-source. Reproducible. A referee that kills bad claims — including its own." }, // [new] slide export tray + '$ neuroad demo'
-  { t: 180.0, fn: "endAutopilot()",                         caption: "" }                                                                          // [new] restore manual controls
+  { t: 0.0,  fn: "entryState('synthetic','KILL','outcome')", caption: "A finding that looks publishable. AUC 0.87. Watch the referee." },
+  { t: 1.2,  fn: "countUpNaiveAUC()",                        caption: "A finding that looks publishable. AUC 0.87. Watch the referee." },  // 0.50→0.87
+  { t: 6.0,  fn: "runGauntlet()",                            caption: "Same probe, different label — it reads the SCANNER better than the disease." },
+  { t: 11.0, fn: "pairBarRace()",                            caption: "Same probe, different label — it reads the SCANNER better than the disease." },
+  { t: 15.0, fn: "toggleColor('scanner')",                  caption: "The dominant axis of variance is the machine, not the biology." },
+  { t: 20.0, fn: "verdictSlam()",                            caption: "REFUSED · 39/100 · leakage margin −0.08. The gate stays shut." },
+  { t: 25.0, fn: "expandCourtAndReviewer()",                caption: "Claude argues prosecution and defense — the verdict meter is the judge, then argues against itself." },
+  { t: 34.0, fn: "spotlightReal()",                          caption: "REAL DATA · 3,984 healthy brains, no disease. The encoder leaks the scanner." },
+  { t: 37.0, fn: "snapCIBand()",                             caption: "frozen Neuro-JEPA · AUC 0.96 (PCA-10) · 95% CI excludes chance" },
+  { t: 44.0, fn: "typeReproduceCmd()",                      caption: "Reproducible from a clean clone · $ neuroad reproduce-finding" },
+  { t: 52.0, fn: "entryState('synthetic','SURVIVOR','outcome')", caption: "MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor." },
+  { t: 54.0, fn: "runGauntlet()",                          caption: "MECHANIC DEMO (synthetic): a thin imaging margin, rescued by a molecular anchor." },
+  { t: 68.0, fn: "seedSweepFan()",                         caption: "Verdict stable across 20 seeds — not a single-seed accident." },
+  { t: 78.0, fn: "openSplit()",                            caption: "Open-source. Reproducible. A referee that kills bad claims — including its own." },
+  { t: 85.0, fn: "showExportTray()",                       caption: "Open-source. Reproducible. A referee that kills bad claims — including its own." },
+  { t: 92.0, fn: "endAutopilot()",                         caption: "" }
 ]
 ```
 
