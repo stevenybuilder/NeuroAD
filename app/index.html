@@ -39,6 +39,7 @@ h1,h2,h3,h4{margin:0;font-weight:650;letter-spacing:.2px}
 .substrate-badge .dot{width:8px;height:8px;border-radius:50%}
 .substrate-badge[data-sub="synthetic"] .dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
 .substrate-badge[data-sub="oasis"] .dot{background:var(--green);box-shadow:0 0 8px var(--green)}
+.substrate-badge[data-sub="adni"] .dot{background:var(--accent);box-shadow:0 0 8px var(--accent)}
 .substrate-badge .lab{font-weight:700}
 .substrate-badge .sub{color:var(--ink3);font-size:11px}
 .src-chip{font-family:var(--mono);font-size:12px;color:var(--ink3);
@@ -4457,7 +4458,8 @@ function renderSubstrate(){
   document.getElementById("substrateBadge").dataset.sub=S.sub;
   document.getElementById("subLab").textContent=sub.badge;
   document.getElementById("subSub").textContent = S.sub==="synthetic"
-    ? "synthetic feeder · offline" : "real · vendored, no login";
+    ? "synthetic feeder · offline"
+    : (S.sub==="adni" ? "real · gated (LONI), assembled" : "real · vendored, no login");
   document.getElementById("srcChip").textContent="artifact: demo_data.json ("+(DATA.meta.source||"fallback")+")";
 }
 
@@ -5483,7 +5485,8 @@ function endAutopilot(){
   const btn=document.getElementById("autopilotBtn"); if(btn)btn.classList.remove("on");
   const lt=document.getElementById("lowerThird"); if(lt)lt.classList.remove("on");
 }
-function toggleSubstrate(){S.sub=S.sub==="synthetic"?"oasis":"synthetic"; S.phase="idle"; clearTimers();
+function toggleSubstrate(){const keys=Object.keys(DATA.substrates||{}); if(!keys.length)return;
+  const i=keys.indexOf(S.sub); S.sub=keys[(i+1)%keys.length]; S.phase="idle"; clearTimers();
   if(!curSub().cases[S.kase]) S.kase="SURVIVOR"; setHypInput(); renderAll();}
 
 function bind(){

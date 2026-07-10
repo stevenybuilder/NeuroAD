@@ -1,0 +1,147 @@
+{
+  "discovery": {
+    "labels": "[0 0 0 ... 1 1 1]",
+    "coords_2d": "[[  9.31473254  -8.93551089]\n [  0.91085921 -13.07743467]\n [  6.17473471  -6.55821823]\n ...\n [ -3.55631884  10.85804236]\n [  7.26602576   8.32223363]\n [ 11.45574674   2.59361311]]",
+    "k": 2,
+    "method": "kmeans",
+    "silhouette": 0.038,
+    "stability": {
+      "0": 0.662,
+      "1": 0.664
+    },
+    "trustworthiness": 0.613
+  },
+  "clusters": [
+    {
+      "cluster": 0,
+      "n": 1511,
+      "stability": 0.662,
+      "unstable": false,
+      "naive_effect": {
+        "metric": "AUC",
+        "value": 0.703,
+        "target": "conversion",
+        "n": 648
+      },
+      "gauntlet": {
+        "score": 39,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "passed",
+          "site_scanner": "failed",
+          "brain_age": "passed",
+          "biomarker_anchor": "weakened",
+          "replication": "failed"
+        }
+      },
+      "characterization": {
+        "conversion": {
+          "rate": 0.461,
+          "ci": [
+            0.423,
+            0.5
+          ],
+          "n_mci": 648
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": 0.337,
+            "ci": [
+              0.224,
+              0.45
+            ],
+            "n_in": 463,
+            "n_out": 903
+          },
+          "gfap": {
+            "d": 0.349,
+            "ci": [
+              0.237,
+              0.462
+            ],
+            "n_in": 463,
+            "n_out": 903
+          }
+        }
+      },
+      "artifact": {
+        "scanner_site": 0.572,
+        "scanner_cramers_v": 0.572,
+        "site_cramers_v": 0.448,
+        "age_eta2": 0.057,
+        "sex_cramers_v": 0.11,
+        "flag": true,
+        "driver": "scanner/site"
+      },
+      "status": "likely artifact (scanner/site)"
+    },
+    {
+      "cluster": 1,
+      "n": 1440,
+      "stability": 0.664,
+      "unstable": false,
+      "naive_effect": {
+        "metric": "AUC",
+        "value": 0.702,
+        "target": "conversion",
+        "n": 551
+      },
+      "gauntlet": {
+        "score": 39,
+        "verdict": "fragile",
+        "promoted": false,
+        "tests": {
+          "age_sex": "passed",
+          "site_scanner": "failed",
+          "brain_age": "passed",
+          "biomarker_anchor": "passed",
+          "replication": "failed"
+        }
+      },
+      "characterization": {
+        "conversion": {
+          "rate": 0.205,
+          "ci": [
+            0.173,
+            0.241
+          ],
+          "n_mci": 551
+        },
+        "biomarker": {
+          "p_tau217": {
+            "d": -0.337,
+            "ci": [
+              -0.45,
+              -0.224
+            ],
+            "n_in": 903,
+            "n_out": 463
+          },
+          "gfap": {
+            "d": -0.349,
+            "ci": [
+              -0.462,
+              -0.237
+            ],
+            "n_in": 903,
+            "n_out": 463
+          }
+        }
+      },
+      "artifact": {
+        "scanner_site": 0.572,
+        "scanner_cramers_v": 0.572,
+        "site_cramers_v": 0.448,
+        "age_eta2": 0.057,
+        "sex_cramers_v": 0.11,
+        "flag": true,
+        "driver": "scanner/site"
+      },
+      "status": "likely artifact (scanner/site)"
+    }
+  ],
+  "note": "Discovered 2 cluster(s) via kmeans (silhouette=0.038). 0 promotable phenotype(s); 2 flagged as likely acquisition/age/sex artifact(s).",
+  "ari": null,
+  "ami": null
+}

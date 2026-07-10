@@ -220,7 +220,7 @@
               "result": "weakened",
               "effect": 0.723,
               "effect_label": "held-out cohort AUC",
-              "detail": "held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62",
+              "detail": "held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62 over 1 aggregated held-out site(s)",
               "stats": {
                 "heldout_auc": 0.69,
                 "train_auc": 0.7316,
@@ -228,7 +228,8 @@
                 "test_auc_ci_lo": 0.5989,
                 "test_auc_ci_hi": 0.8408,
                 "n_train": 68,
-                "n_test": 62
+                "n_test": 62,
+                "n_test_sites": 1
               }
             }
           ],
@@ -514,7 +515,7 @@
               "result": "passed",
               "effect": 0.912,
               "effect_label": "held-out cohort AUC",
-              "detail": "held-out cohort AUC=0.91 [95% CI 0.84, 0.96] (train 0.81); n_test=65",
+              "detail": "held-out cohort AUC=0.91 [95% CI 0.84, 0.96] (train 0.81); n_test=65 over 1 aggregated held-out site(s)",
               "stats": {
                 "heldout_auc": 0.57,
                 "train_auc": 0.8117,
@@ -522,7 +523,8 @@
                 "test_auc_ci_lo": 0.8378,
                 "test_auc_ci_hi": 0.9643,
                 "n_train": 72,
-                "n_test": 65
+                "n_test": 65,
+                "n_test_sites": 1
               }
             }
           ],
@@ -832,7 +834,7 @@
               "result": "passed",
               "effect": 0.786,
               "effect_label": "held-out cohort AUC",
-              "detail": "held-out cohort AUC=0.79 [95% CI 0.66, 0.89] (train 0.85); n_test=98",
+              "detail": "held-out cohort AUC=0.79 [95% CI 0.66, 0.89] (train 0.85); n_test=98 over 1 aggregated held-out site(s)",
               "stats": {
                 "heldout_auc": 0.85,
                 "train_auc": 0.8533,
@@ -840,7 +842,8 @@
                 "test_auc_ci_lo": 0.6591,
                 "test_auc_ci_hi": 0.8918,
                 "n_train": 165,
-                "n_test": 98
+                "n_test": 98,
+                "n_test_sites": 1
               }
             }
           ],
@@ -1252,6 +1255,594 @@
           "narration": "The claim \u201cMCI->AD conversion is decodable from OASIS-2 structural features.\u201d lands at \u201cfragile\u201d (38/100). The naive effect (AUC 0.52 separating Converted from Nondemented) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.05 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
         }
       }
+    },
+    "adni": {
+      "key": "adni",
+      "badge": "REAL ADNI",
+      "cohort": {
+        "badge": "REAL ADNI",
+        "substrate_line": "ADNI UCSF Cross-Sectional FreeSurfer 7.x structural features (weight-free feeder) + plasma p-tau217/GFAP/NfL",
+        "n_subjects": 2951,
+        "embedding_dim": 323,
+        "n_sites": 72,
+        "n_scanners": 2,
+        "dx_counts": {
+          "MCI": 1299,
+          "CN": 1153,
+          "AD": 462,
+          "NaN": 37
+        },
+        "age_mean": 72.4,
+        "pct_female": 50.7,
+        "label_coverage": {
+          "conversion": 0.4063029481531684
+        },
+        "biomarker_coverage": {
+          "amyloid": 0.687,
+          "p_tau217": 0.463,
+          "gfap": 0.463,
+          "nfl": 0.463,
+          "apoe4": 0.909
+        },
+        "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). Multi-site with real plasma p-tau217 \u2014 the biomarker anchor no open cohort ships. The 3T/1.5T split dominates the full cohort (SURVIVOR restricts to 3T)."
+      },
+      "cases": {
+        "SURVIVOR": {
+          "id": "ADNI-A",
+          "label": "Case A",
+          "kind": "SURVIVOR",
+          "substrate_badge": "REAL ADNI",
+          "claim": {
+            "claim_id": "ADNI-A",
+            "claim_text": "AD vs CN diagnosis is decodable from the full ComBat-harmonized ADNI cohort.",
+            "target": "dx_binary",
+            "group_a": "AD",
+            "group_b": "CN",
+            "substrate": "ADNI FreeSurfer features, ComBat-harmonized (weight-free feeder)",
+            "head": "linear probe"
+          },
+          "naive_effect": {
+            "metric": "AUC",
+            "value": 0.923,
+            "target": "dx_binary",
+            "n": 1615,
+            "head": "linear probe",
+            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
+          },
+          "leakage_margin": {
+            "outcome_auc": 0.922,
+            "scanner_auc": 0.374,
+            "margin": 0.549,
+            "confound": "scanner",
+            "outcome_ci": [
+              0.9061,
+              0.9383
+            ],
+            "scanner_ci": [
+              0.3531,
+              0.3948
+            ],
+            "outcome_p_perm": 0.001,
+            "scanner_p_perm": 1.0,
+            "scanner_ci_excludes_chance": false,
+            "margin_ci_lo": 0.522,
+            "margin_ci_hi": 0.575,
+            "margin_p": 0.001,
+            "margin_ci_excludes_zero": true
+          },
+          "tests": [
+            {
+              "key": "age_sex",
+              "label": "Age / sex adjustment",
+              "question": "Does the signal survive demographic covariates?",
+              "weight": 15,
+              "star": false,
+              "result": "passed",
+              "effect": 0.897,
+              "effect_label": "outcome AUC after covariates",
+              "detail": "effect retained 94% after age/sex adjustment (AUC 0.92 -> 0.90)",
+              "stats": {
+                "auc_before": 0.9225,
+                "auc_after": 0.8969,
+                "retained": 0.939,
+                "n": 1615
+              }
+            },
+            {
+              "key": "site_scanner",
+              "label": "Site / scanner leakage",
+              "question": "Disease signal, or just which machine acquired the scan?",
+              "weight": 25,
+              "star": true,
+              "result": "passed",
+              "effect": 0.922,
+              "effect_label": "outcome AUC, scanner-scrubbed",
+              "detail": "outcome exceeds scanner and the margin CI excludes zero (margin +0.55 [95% CI +0.52, +0.57])",
+              "stats": {
+                "outcome_auc": 0.9225,
+                "scanner_auc": 0.3736,
+                "margin": 0.549,
+                "confound": "scanner",
+                "outcome_ci": [
+                  0.9061,
+                  0.9383
+                ],
+                "scanner_ci": [
+                  0.3531,
+                  0.3948
+                ],
+                "outcome_p_perm": 0.001,
+                "scanner_p_perm": 1.0,
+                "scanner_ci_excludes_chance": false,
+                "margin_ci_lo": 0.5217,
+                "margin_ci_hi": 0.5745,
+                "margin_p": 0.001,
+                "margin_ci_excludes_zero": true
+              }
+            },
+            {
+              "key": "brain_age",
+              "label": "Brain-age control",
+              "question": "More than generic aging / atrophy?",
+              "weight": 25,
+              "star": true,
+              "result": "not_available",
+              "effect": 0.5,
+              "effect_label": "outcome AUC, brain-age regressed",
+              "detail": "brain-age model not predictive (out-of-fold R2=-3.78 < 0.10, MAE=9.1yr) \u2014 controlling for it removes nothing; uninformative control",
+              "stats": {
+                "r2": -3.779,
+                "mae_yr": 9.05,
+                "n_healthy": 1153
+              }
+            },
+            {
+              "key": "biomarker_anchor",
+              "label": "Biomarker anchor",
+              "question": "Backed by molecular pathology (p-tau217 / GFAP)?",
+              "weight": 20,
+              "star": false,
+              "result": "passed",
+              "effect": 0.949,
+              "effect_label": "anchor bar (0.5 + r)",
+              "detail": "p-tau217 correlation r=+0.45 (95% CI lower +0.39, n=873)",
+              "stats": {
+                "ptau217_r": 0.449,
+                "ptau217_n": 873,
+                "ptau217_ci_lo": 0.394,
+                "gfap_r": 0.227,
+                "gfap_n": 873,
+                "gfap_ci_lo": 0.163,
+                "synthetic": false,
+                "provenance": "measured"
+              }
+            },
+            {
+              "key": "replication",
+              "label": "Replication split",
+              "question": "Reproduces on a held-out site / cohort?",
+              "weight": 15,
+              "star": false,
+              "result": "passed",
+              "effect": 0.92,
+              "effect_label": "held-out cohort AUC",
+              "detail": "held-out cohort AUC=0.92 [95% CI 0.78, 1.00] (train 0.93); n_test=41 over 11 aggregated held-out site(s)",
+              "stats": {
+                "train_auc": 0.9284,
+                "test_auc": 0.9205,
+                "test_auc_ci_lo": 0.7826,
+                "test_auc_ci_hi": 1.0,
+                "n_train": 1574,
+                "n_test": 41,
+                "n_test_sites": 11
+              }
+            }
+          ],
+          "score": 100,
+          "verdict": "strong candidate",
+          "promoted": true,
+          "confound_leaderboard": [
+            {
+              "confound": "age",
+              "variance_explained": 0.078
+            },
+            {
+              "confound": "scanner",
+              "variance_explained": 0.035
+            },
+            {
+              "confound": "sex",
+              "variance_explained": 0.018
+            }
+          ],
+          "double_dissociation": {
+            "auc_before": 0.922,
+            "auc_after": 0.922,
+            "retained": 1.0,
+            "confound": "scanner",
+            "n": 1615
+          },
+          "biology_hypothesis": "Survivor \u201cAD vs CN diagnosis is decodable from the full ComBat-harmonized ADNI cohort.\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+          "next_experiment": [
+            "Cohort: ADNI-3 / EPAD.",
+            "Target N: ~120 complete-case subjects with the routing biomarker.",
+            "Direction: the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects.",
+            "Kill criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong."
+          ],
+          "falsification": [
+            "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong.",
+            "If the probe score's biomarker correlation disappears after residualizing against a scanner-predicting direction, the survivor was leakage after all.",
+            "If a held-out cohort fails to reproduce the effect (drop below the promotion floor), the mechanism claim is withdrawn."
+          ],
+          "caveats": [
+            "Completeness: 1/5 gauntlet tests could not run; score is renormalized over the tests that did.",
+            "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+            "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+            "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+            "Any biomarker anchor is complete-case only and may not generalize.",
+            "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+            "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
+            "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+            "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+            "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+            "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+          ],
+          "scatter": {
+            "n": 120,
+            "n_scanners": 2,
+            "seed": 511,
+            "outcome_gap": 2.6,
+            "scanner_gap": 0.5,
+            "converter_frac": 0.3
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "AD vs CN diagnosis is decodable from the full ComBat-harmonized ADNI cohort.",
+            "dataset": "adni:combat",
+            "novelty_class": "adjacent",
+            "honesty_rung": "severity_anchored",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "dx_binary",
+              "population": {
+                "group_a": "AD",
+                "group_b": "CN"
+              },
+              "features": "ADNI FreeSurfer features, ComBat-harmonized (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "passed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": 0.394,
+              "gfap_ci_lo": 0.163
+            }
+          },
+          "reviewer": {
+            "critique": [
+              "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+              "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+              "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+              "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+            ],
+            "revised_caveats": [
+              "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+              "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+              "Any biomarker anchor is complete-case only and may not generalize.",
+              "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+              "Promotion authorizes one confirmatory experiment, not adoption of the finding."
+            ]
+          },
+          "courtroom": {
+            "prosecution": "The claim that ADNI UCSF FreeSurfer structural features (weight-free feeder) separate AD from CN does not survive scrutiny. Even granting a +0.55 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "defense": "The signal separating AD from CN is consistent with real disease biology. It withstood: Age / sex adjustment, Site / scanner leakage, Biomarker anchor, Replication split. The outcome exceeds the scanner-prediction floor by +0.55 AUC on subject-disjoint splits \u2014 the effect is not merely which machine acquired the scan. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.45) \u2014 molecular pathology, not pixels.",
+            "judge_reasoning": "Robustness score 100/100 places this finding at 'strong candidate'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.55 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
+          },
+          "narration": "The claim \u201cAD vs CN diagnosis is decodable from the full ComBat-harmonized ADNI cohort.\u201d lands at \u201cstrong candidate\u201d (100/100). The naive effect (AUC 0.92 separating AD from CN) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the held-out cohort resembles this one on scanner, age and sex \u2014 the effect is calibrated to the population it was measured in. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+        },
+        "KILL": {
+          "id": "ADNI-B",
+          "label": "Case B",
+          "kind": "KILL",
+          "substrate_badge": "REAL ADNI",
+          "claim": {
+            "claim_id": "ADNI-B",
+            "claim_text": "AD vs CN diagnosis is decodable from the full ADNI cohort (3T and 1.5T combined).",
+            "target": "dx_binary",
+            "group_a": "AD",
+            "group_b": "CN",
+            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)",
+            "head": "linear probe"
+          },
+          "naive_effect": {
+            "metric": "AUC",
+            "value": 0.935,
+            "target": "dx_binary",
+            "n": 1615,
+            "head": "linear probe",
+            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
+          },
+          "leakage_margin": {
+            "outcome_auc": 0.935,
+            "scanner_auc": 0.989,
+            "margin": -0.054,
+            "confound": "scanner",
+            "outcome_ci": [
+              0.92,
+              0.9483
+            ],
+            "scanner_ci": [
+              0.9864,
+              0.9923
+            ],
+            "outcome_p_perm": 0.001,
+            "scanner_p_perm": 0.001,
+            "scanner_ci_excludes_chance": true,
+            "margin_ci_lo": -0.07,
+            "margin_ci_hi": -0.041,
+            "margin_p": 0.001,
+            "margin_ci_excludes_zero": false
+          },
+          "tests": [
+            {
+              "key": "age_sex",
+              "label": "Age / sex adjustment",
+              "question": "Does the signal survive demographic covariates?",
+              "weight": 15,
+              "star": false,
+              "result": "passed",
+              "effect": 0.909,
+              "effect_label": "outcome AUC after covariates",
+              "detail": "effect retained 94% after age/sex adjustment (AUC 0.93 -> 0.91)",
+              "stats": {
+                "auc_before": 0.9349,
+                "auc_after": 0.9089,
+                "retained": 0.94,
+                "n": 1615
+              }
+            },
+            {
+              "key": "site_scanner",
+              "label": "Site / scanner leakage",
+              "question": "Disease signal, or just which machine acquired the scan?",
+              "weight": 25,
+              "star": true,
+              "result": "failed",
+              "effect": 0.935,
+              "effect_label": "outcome AUC, scanner-scrubbed",
+              "detail": "scanner predicted as well as outcome (margin -0.05 [95% CI -0.07, -0.04]); likely acquisition artifact",
+              "stats": {
+                "outcome_auc": 0.9349,
+                "scanner_auc": 0.9894,
+                "margin": -0.0545,
+                "confound": "scanner",
+                "outcome_ci": [
+                  0.92,
+                  0.9483
+                ],
+                "scanner_ci": [
+                  0.9864,
+                  0.9923
+                ],
+                "outcome_p_perm": 0.001,
+                "scanner_p_perm": 0.001,
+                "scanner_ci_excludes_chance": true,
+                "margin_ci_lo": -0.0696,
+                "margin_ci_hi": -0.0412,
+                "margin_p": 0.001,
+                "margin_ci_excludes_zero": false
+              }
+            },
+            {
+              "key": "brain_age",
+              "label": "Brain-age control",
+              "question": "More than generic aging / atrophy?",
+              "weight": 25,
+              "star": true,
+              "result": "passed",
+              "effect": 0.892,
+              "effect_label": "outcome AUC, brain-age regressed",
+              "detail": "brain-age R2=0.24, MAE=4.7yr; effect retained 90% after brain-age-GAP control (Franke/Gaser standard), 85% under the stricter predicted-brain-age control",
+              "stats": {
+                "r2": 0.236,
+                "mae_yr": 4.71,
+                "auc_before": 0.9349,
+                "auc_after": 0.8924,
+                "retained": 0.902,
+                "auc_after_gap": 0.8924,
+                "retained_gap": 0.902,
+                "auc_after_pred": 0.8709,
+                "retained_pred": 0.853,
+                "n_healthy": 1153
+              }
+            },
+            {
+              "key": "biomarker_anchor",
+              "label": "Biomarker anchor",
+              "question": "Backed by molecular pathology (p-tau217 / GFAP)?",
+              "weight": 20,
+              "star": false,
+              "result": "passed",
+              "effect": 0.959,
+              "effect_label": "anchor bar (0.5 + r)",
+              "detail": "p-tau217 correlation r=+0.46 (95% CI lower +0.40, n=873)",
+              "stats": {
+                "ptau217_r": 0.459,
+                "ptau217_n": 873,
+                "ptau217_ci_lo": 0.405,
+                "gfap_r": 0.252,
+                "gfap_n": 873,
+                "gfap_ci_lo": 0.189,
+                "synthetic": false,
+                "provenance": "measured"
+              }
+            },
+            {
+              "key": "replication",
+              "label": "Replication split",
+              "question": "Reproduces on a held-out site / cohort?",
+              "weight": 15,
+              "star": false,
+              "result": "passed",
+              "effect": 0.9,
+              "effect_label": "held-out cohort AUC",
+              "detail": "held-out cohort AUC=0.90 [95% CI 0.76, 1.00] (train 0.94); n_test=41 over 11 aggregated held-out site(s)",
+              "stats": {
+                "train_auc": 0.94,
+                "test_auc": 0.9,
+                "test_auc_ci_lo": 0.764,
+                "test_auc_ci_hi": 0.995,
+                "n_train": 1574,
+                "n_test": 41,
+                "n_test_sites": 11
+              }
+            }
+          ],
+          "score": 39,
+          "verdict": "fragile",
+          "promoted": false,
+          "confound_leaderboard": [
+            {
+              "confound": "age",
+              "variance_explained": 0.078
+            },
+            {
+              "confound": "scanner",
+              "variance_explained": 0.066
+            },
+            {
+              "confound": "sex",
+              "variance_explained": 0.019
+            }
+          ],
+          "double_dissociation": {
+            "auc_before": 0.935,
+            "auc_after": 0.935,
+            "retained": 1.0,
+            "confound": "scanner",
+            "n": 1615
+          },
+          "biology_hypothesis": "",
+          "next_experiment": [],
+          "falsification": [],
+          "caveats": [
+            "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+            "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+            "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+            "Any biomarker anchor is complete-case only and may not generalize.",
+            "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+            "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.24, MAE=4.7yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+            "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+            "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+            "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+          ],
+          "scatter": {
+            "n": 120,
+            "n_scanners": 2,
+            "seed": 512,
+            "outcome_gap": 0.7,
+            "scanner_gap": 3.0,
+            "converter_frac": 0.29
+          },
+          "investigate": {
+            "source": "engine",
+            "hypothesis": "AD vs CN diagnosis is decodable from the full ADNI cohort (3T and 1.5T combined).",
+            "dataset": "adni",
+            "novelty_class": "adjacent",
+            "honesty_rung": "stable_cluster",
+            "expected_direction": "the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects",
+            "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong",
+            "routed_mechanism": "amyloid_cascade",
+            "spec": {
+              "target": "dx_binary",
+              "population": {
+                "group_a": "AD",
+                "group_b": "CN"
+              },
+              "features": "ADNI UCSF FreeSurfer structural features (weight-free feeder)",
+              "confounds": [
+                "age",
+                "sex",
+                "acquisition scanner / site (STAR)",
+                "structural brain-age (proxy)"
+              ]
+            },
+            "kill_criteria": [
+              {
+                "metric": "scanner leakage margin",
+                "rule": "REJECT if scanner-AUC \u2265 outcome-AUC (leakage margin \u2264 0) \u2014 the head is reading the machine, not the biology"
+              },
+              {
+                "metric": "bootstrap stability (Jaccard)",
+                "rule": "REJECT if bootstrap-Jaccard cluster stability < 0.60"
+              },
+              {
+                "metric": "biomarker-anchor CI",
+                "rule": "REJECT if the p-tau217 anchor 95% CI lower bound crosses / drops \u2264 0.12 (present but unanchored \u2014 no molecular support)"
+              },
+              {
+                "metric": "pre-registered routing kill",
+                "rule": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
+              }
+            ],
+            "anchor_gate": {
+              "status": "passed",
+              "ci_pass": 0.12,
+              "ci_weak": 0.0,
+              "min_n": 20.0,
+              "ptau217_ci_lo": 0.405,
+              "gfap_ci_lo": 0.189
+            }
+          },
+          "reviewer": {
+            "critique": [
+              "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.24, MAE=4.7yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+              "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+              "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+              "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+            ],
+            "revised_caveats": [
+              "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+              "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+              "Any biomarker anchor is complete-case only and may not generalize.",
+              "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026))."
+            ]
+          },
+          "courtroom": {
+            "prosecution": "The claim that ADNI UCSF FreeSurfer structural features (weight-free feeder) separate AD from CN does not survive scrutiny. The subject-disjoint leakage margin is only -0.05 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "defense": "The signal separating AD from CN is consistent with real disease biology. It withstood: Age / sex adjustment, Brain-age control, Biomarker anchor, Replication split. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.46) \u2014 molecular pathology, not pixels.",
+            "judge_reasoning": "Robustness score 39/100 places this finding at 'fragile'. The -0.05 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
+          },
+          "narration": "The claim \u201cAD vs CN diagnosis is decodable from the full ADNI cohort (3T and 1.5T combined).\u201d lands at \u201cfragile\u201d (39/100). The naive effect (AUC 0.94 separating AD from CN) is real on paper, but the referee's job is to ask what else could produce it. It sits below the promotion floor, so the honest read is that acquisition, demographics or generic aging can plausibly account for it, and it should not consume a scientist's quarter without stronger evidence. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only -0.05 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict."
+        }
+      }
     }
   },
   "gauntlet_meta": [
@@ -1526,15 +2117,15 @@
           "target": "conversion",
           "n": 60
         },
-        "score": 72,
+        "score": 79,
         "verdict": "robust enough for follow-up",
         "promoted": true,
         "tests": {
           "age_sex": "passed",
           "site_scanner": "weakened",
-          "brain_age": "passed",
+          "brain_age": "not_available",
           "biomarker_anchor": "passed",
-          "replication": "failed"
+          "replication": "not_available"
         },
         "conversion": {
           "rate": 0.5,
@@ -1582,15 +2173,15 @@
           "target": "conversion",
           "n": 60
         },
-        "score": 58,
+        "score": 42,
         "verdict": "partially robust",
         "promoted": false,
         "tests": {
           "age_sex": "failed",
           "site_scanner": "passed",
-          "brain_age": "passed",
+          "brain_age": "not_available",
           "biomarker_anchor": "failed",
-          "replication": "weakened"
+          "replication": "not_available"
         },
         "conversion": {
           "rate": 0.55,
@@ -1644,7 +2235,7 @@
         "tests": {
           "age_sex": "failed",
           "site_scanner": "failed",
-          "brain_age": "failed",
+          "brain_age": "not_available",
           "biomarker_anchor": "failed",
           "replication": "not_available"
         },

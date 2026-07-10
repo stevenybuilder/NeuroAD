@@ -1,0 +1,56 @@
+# Cloud Build upload allowlist-by-exclusion. When a .gcloudignore exists, gcloud
+# uses ONLY this file (it does NOT fall back to .gitignore), so every sensitive
+# path must be named here explicitly. The Dockerfile only serves the two static
+# assets; nothing else is needed to build or run the demo.
+
+# --- secrets / credentials (never upload) ---
+.env
+.env.*
+*.key
+*.pem
+*token*
+*secret*
+
+# --- gated NeuroJEPA weights + raw embedding dumps (never upload) ---
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*embeddings*.csv
+*_emb.csv
+*.npy
+*.nii
+*.nii.gz
+*.mgz
+
+# --- everything not needed to serve the static demo ---
+.git/
+.github/
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+src/
+tests/
+scripts/
+notebooks/
+reports/
+docs/
+design/
+audit/
+scratch/
+skills/
+policy/
+data/
+app/build_demo_data.py
+app/README.md
+.pytest_cache/
+.DS_Store
+*.md
+pyproject.toml
+requirements.txt
+Makefile
+*.egg-info/
+
+# Uploaded to Cloud Build: Dockerfile, nginx.conf, .gcloudignore,
+# app/index.html, app/demo_data.json  (nothing else)

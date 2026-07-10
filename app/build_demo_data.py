@@ -440,6 +440,103 @@ def _oasis_kill():
     }
 
 
+def _adni_survivor():
+    """Scaffold for the REAL ADNI SURVIVOR (AD-vs-CN, 3T only). The live referee
+    overlays the real verdict/tests/leakage/anchor via _real_case; this provides
+    the id/label/claim/scatter the overlay keeps."""
+    dxauc = 0.923
+    return {
+        "id": "ADNI-A", "label": "Case A", "kind": "SURVIVOR",
+        "substrate_badge": "REAL ADNI",
+        "claim": {
+            "claim_id": "ADNI-A",
+            "claim_text": "AD vs CN diagnosis is decodable from the full "
+                          "ComBat-harmonized ADNI cohort.",
+            "target": "dx_binary", "group_a": "AD", "group_b": "CN",
+            "substrate": "ADNI FreeSurfer features, ComBat-harmonized (weight-free feeder)",
+            "head": "linear probe"},
+        "naive_effect": {"metric": "AUC", "value": dxauc,
+                         "task": "AD vs CN diagnosis (ComBat-harmonized full cohort)"},
+        "leakage_margin": {"outcome_auc": dxauc, "scanner_auc": 0.374, "margin": 0.549},
+        "tests": [
+            _test("age_sex", "passed", 0.90, "outcome AUC after covariates",
+                  "AD-vs-CN holds after age + sex.", {}),
+            _test("site_scanner", "passed", 0.92, "outcome AUC, scanner-scrubbed",
+                  "ComBat removes the scanner (field-strength) batch effect label-blind: scanner "
+                  "AUC drops to ~0.37 while the outcome holds. Positive leakage margin.", {}),
+            _test("brain_age", "not_available", 0.5, "outcome AUC, brain-age regressed",
+                  "Brain-age control NA on harmonized features: the brain-age model is not "
+                  "predictive (R2 below floor), so it cannot control for aging — dropped, not "
+                  "credited as a pass.", {}),
+            _test("biomarker_anchor", "passed", 0.95, "anchor bar (0.5 + r)",
+                  "Anchored to real plasma p-tau217.", {}),
+            _test("replication", "passed", 0.92, "held-out cohort AUC",
+                  "Reproduces on an aggregated held-out set of whole ADNI sites (group-disjoint).", {}),
+        ],
+        "score": 100, "verdict": "strong candidate", "promoted": True,
+        "confound_leaderboard": [], "double_dissociation": {},
+        "biology_hypothesis": "", "next_experiment": [], "falsification": [], "caveats": [],
+        "scatter": {"n": 120, "n_scanners": 2, "seed": 511,
+                    "outcome_gap": 2.6, "scanner_gap": 0.5, "converter_frac": 0.30},
+    }
+
+
+def _adni_kill():
+    """Scaffold for the REAL ADNI KILL (AD-vs-CN, full cohort). The full cohort's
+    FreeSurfer feeder predicts 3T-vs-1.5T field strength better than disease, so
+    the STAR site/scanner test fails and the honesty cap floors it to fragile."""
+    dxauc = 0.935
+    return {
+        "id": "ADNI-B", "label": "Case B", "kind": "KILL",
+        "substrate_badge": "REAL ADNI",
+        "claim": {
+            "claim_id": "ADNI-B",
+            "claim_text": "AD vs CN diagnosis is decodable from the full ADNI cohort "
+                          "(3T and 1.5T combined).",
+            "target": "dx_binary", "group_a": "AD", "group_b": "CN",
+            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)",
+            "head": "linear probe"},
+        "naive_effect": {"metric": "AUC", "value": dxauc, "task": "AD vs CN diagnosis"},
+        "leakage_margin": {"outcome_auc": dxauc, "scanner_auc": 0.989, "margin": -0.054},
+        "tests": [
+            _test("age_sex", "passed", 0.91, "outcome AUC after covariates",
+                  "Signal holds after age + sex.", {}),
+            _test("site_scanner", "failed", 0.94, "outcome AUC, scanner-scrubbed",
+                  "Embeddings predict 3T-vs-1.5T field strength (AUC ~0.99) better than disease — "
+                  "negative leakage margin. Acquisition artifact.", {}),
+            _test("brain_age", "passed", 0.90, "outcome AUC, brain-age regressed",
+                  "Survives brain-age control.", {}),
+            _test("biomarker_anchor", "passed", 0.96, "anchor bar (0.5 + r)",
+                  "Correlates with real plasma p-tau217 — but a passing anchor cannot rescue a "
+                  "failed STAR scanner test.", {}),
+            _test("replication", "not_available", 0.5, "held-out cohort AUC",
+                  "Held-out ADNI sites too small to be individually informative.", {}),
+        ],
+        "score": 39, "verdict": "fragile", "promoted": False,
+        "confound_leaderboard": [], "double_dissociation": {},
+        "biology_hypothesis": "", "next_experiment": [], "falsification": [], "caveats": [],
+        "scatter": {"n": 120, "n_scanners": 2, "seed": 512,
+                    "outcome_gap": 0.7, "scanner_gap": 3.0, "converter_frac": 0.29},
+    }
+
+
+def _adni_cohort():
+    return {
+        "badge": "REAL ADNI",
+        "substrate_line": "ADNI UCSF Cross-Sectional FreeSurfer 7.x structural features "
+                          "(weight-free feeder) + plasma p-tau217/GFAP/NfL",
+        "n_subjects": 2951, "embedding_dim": 323, "n_sites": 72, "n_scanners": 2,
+        "dx_counts": {"CN": 1153, "MCI": 1299, "AD": 462},
+        "age_mean": 72.4, "pct_female": 50.7,
+        "label_coverage": {"conversion": 0.406},
+        "biomarker_coverage": {"amyloid": 0.687, "p_tau217": 0.463,
+                               "gfap": 0.463, "nfl": 0.463, "apoe4": 0.909},
+        "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). "
+                "Multi-site with real plasma p-tau217 — the biomarker anchor no open cohort "
+                "ships. The 3T/1.5T split dominates the full cohort (SURVIVOR restricts to 3T).",
+    }
+
+
 def _synthetic_cohort():
     miss = _missingness()
     return {
@@ -662,6 +759,11 @@ def fallback_demo_data() -> dict:
                 "cohort": _oasis_cohort(),
                 "cases": {"SURVIVOR": _oasis_survivor(), "KILL": _oasis_kill()},
             },
+            "adni": {
+                "key": "adni", "badge": "REAL ADNI",
+                "cohort": _adni_cohort(),
+                "cases": {"SURVIVOR": _adni_survivor(), "KILL": _adni_kill()},
+            },
         },
         "gauntlet_meta": [
             {"key": k, "label": l, "question": q, "weight": w, "star": s}
@@ -679,7 +781,12 @@ def fallback_demo_data() -> dict:
     # hypothesis-entry surface always has something to render, even offline.
     for sub_key, sub in data["substrates"].items():
         for kind, case in sub["cases"].items():
-            dataset = f"synthetic:{kind}" if sub_key == "synthetic" else "oasis"
+            if sub_key == "synthetic":
+                dataset = f"synthetic:{kind}"
+            elif sub_key == "adni":
+                dataset = "adni:combat" if kind == "SURVIVOR" else "adni"
+            else:
+                dataset = sub_key
             case["investigate"] = _static_investigate(
                 case, case["claim"]["claim_text"], dataset)
     return data
@@ -865,6 +972,14 @@ def _try_engine() -> dict | None:
         ("oasis", "KILL", "oasis", 0,
          "MCI->AD conversion is decodable from OASIS-2 structural features.",
          "conversion", "Converted", "Nondemented", None),
+        ("adni", "SURVIVOR", "adni:combat", 0,
+         "AD vs CN diagnosis is decodable from the full ComBat-harmonized "
+         "ADNI cohort.",
+         "dx_binary", "AD", "CN", None),
+        ("adni", "KILL", "adni", 0,
+         "AD vs CN diagnosis is decodable from the full ADNI cohort "
+         "(3T and 1.5T combined).",
+         "dx_binary", "AD", "CN", None),
     ]
     loaded: dict[tuple, object] = {}
     for sub, kind, loader, seed, text, target, ga, gb, cap in plan:
@@ -880,9 +995,12 @@ def _try_engine() -> dict | None:
             # Label the substrate honestly per feeder (real OASIS is weight-free
             # structural features, NOT Neuro-JEPA embeddings). This flows into
             # naive_effect.substrate and the courtroom text, which read claim.substrate.
-            claim.substrate = ("OASIS structural-derived features (weight-free feeder)"
-                               if loader == "oasis"
-                               else "frozen Neuro-JEPA structural embeddings")
+            if loader == "oasis":
+                claim.substrate = "OASIS structural-derived features (weight-free feeder)"
+            elif loader.startswith("adni"):
+                claim.substrate = "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
+            else:
+                claim.substrate = "frozen Neuro-JEPA structural embeddings"
             card = pipeline.run_referee(df, claim)
             fb = data["substrates"][sub]["cases"][kind]
             data["substrates"][sub]["cases"][kind] = _real_case(fb, card, df, promoted_cap=cap)
@@ -921,6 +1039,15 @@ def _try_engine() -> dict | None:
                        "pct_female": co["pct_female"],
                        "label_coverage": co["label_coverage"],
                        "biomarker_coverage": co["biomarker_coverage"]})
+        if ("adni", 0) in loaded:
+            ca = contract.cohort_summary(loaded[("adni", 0)])
+            ac = data["substrates"]["adni"]["cohort"]
+            ac.update({"n_subjects": ca["n_subjects"], "embedding_dim": ca["embedding_dim"],
+                       "n_sites": ca["n_sites"], "n_scanners": ca["n_scanners"],
+                       "dx_counts": ca["dx_counts"], "age_mean": ca["age_mean"],
+                       "pct_female": ca["pct_female"],
+                       "label_coverage": ca["label_coverage"],
+                       "biomarker_coverage": ca["biomarker_coverage"]})
     except Exception as exc:
         print(f"[build_demo_data] cohort overlay failed ({exc}); keeping fallback cohorts.")
 
