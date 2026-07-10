@@ -37,3 +37,9 @@ dist/
 
 # ultracode pipeline working notes (local only)
 scratch/
+
+# --- gated cohort data: assembled real ADNI/OASIS-3/NACC contract tables ---
+# These carry subject-level gated data (age/sex/dx/biomarkers/FreeSurfer per RID)
+# under a Data Use Agreement — NEVER commit or redistribute. The demo ships only
+# aggregate numbers baked into app/demo_data.json; the raw table stays local.
+data/real/_gated/

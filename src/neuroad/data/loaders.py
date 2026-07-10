@@ -42,6 +42,32 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
     if low in ("openbhb:neurojepa", "openbhb:jepa"):
         return openbhb_jepa.load_openbhb_neurojepa()
 
+    # ADNI ComBat-harmonized full cohort: 'adni:combat' removes the scanner
+    # (field-strength) batch effect from the emb_* features while preserving the
+    # whole cohort — a stronger de-confound than the 'adni:3t' slice, which just
+    # drops every 1.5T scan. Label-blind (protects age/sex, not dx). Optional
+    # 'adni:combat-site' harmonizes by acquisition site instead.
+    if low == "adni:combat" or low.startswith("adni:combat"):
+        from neuroad.data import harmonize as _harm
+        batch = "site" if low in ("adni:combat-site", "adni:combat:site") else "scanner"
+        base = gated.load_gated(str(_GATED_DIR / "adni.csv"), "adni")
+        out = _harm.harmonize(base, batch=batch, covariates=("age", "sex"))
+        return out
+
+    # ADNI field-strength slice: 'adni:3t' / 'adni:1.5t' restrict the real ADNI
+    # contract table to a single scanner field strength. This is the de-confound
+    # that turns the scanner-dominated full-cohort KILL into a promotable
+    # SURVIVOR (the 3T-only AD-vs-CN card): with one field strength the STAR
+    # site/scanner test can no longer be dominated by the 3T-vs-1.5T split.
+    if low.startswith("adni:") and low.split(":", 1)[1] not in ("", "neurojepa", "jepa"):
+        fs = key.split(":", 1)[1].strip().lower()
+        base = gated.load_gated(str(_GATED_DIR / "adni.csv"), "adni")
+        mask = base["scanner"].astype("string").str.lower().eq(fs).fillna(False)
+        sub = base[mask].copy()
+        sub.attrs.update(base.attrs)
+        sub.attrs["field_strength"] = key.split(":", 1)[1]
+        return sub
+
     # Gated cohorts (ADNI/OASIS-3/NACC/EPAD): load a mapped export from
     # data/real/_gated/<name>.csv if present, else the clearly-marked stub.
     # 'adni' is shorthand for 'gated:adni'.
