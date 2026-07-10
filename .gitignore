@@ -43,3 +43,8 @@ scratch/
 # under a Data Use Agreement — NEVER commit or redistribute. The demo ships only
 # aggregate numbers baked into app/demo_data.json; the raw table stays local.
 data/real/_gated/
+
+# NeuroJEPA-derived tables (embeddings & PCA projections): local-only, never GitHub.
+# The name-based *embeddings*.csv rule missed the pca10 fixture; this catches all.
+*neurojepa*.csv
+data/real/fixtures/
