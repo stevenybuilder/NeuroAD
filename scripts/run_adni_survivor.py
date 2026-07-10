@@ -70,6 +70,9 @@ def build_survivor_card(mode: str = "combat", field_strength: str = "3T"):
 
     claim = contract.Claim(claim_id=claim_id, claim_text=claim_text,
                            target="dx_binary", group_a="AD", group_b="CN")
+    # Truthful substrate: ADNI emb_* are FreeSurfer morphometry, NOT Neuro-JEPA.
+    from neuroad.data.loaders import honest_substrate
+    claim.substrate = honest_substrate("adni")
     card = pipeline.run_referee(sub, claim)
     return sub, card, label
 

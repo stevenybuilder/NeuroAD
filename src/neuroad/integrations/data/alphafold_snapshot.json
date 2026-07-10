@@ -1,0 +1,15 @@
+{
+  "_comment": "Captured live from https://alphafold.ebi.ac.uk/api/prediction/{acc} on 2026-07-10. mean_plddt == API globalMetricValue field. model version v6. source=offline_snapshot",
+  "P05067": {"gene_symbol": "APP",   "uniprot": "P05067", "mean_plddt": 67.38, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb"},
+  "P10636": {"gene_symbol": "MAPT",  "uniprot": "P10636", "mean_plddt": 49.22, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P10636-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P10636-F1-model_v6.pdb"},
+  "P02649": {"gene_symbol": "APOE",  "uniprot": "P02649", "mean_plddt": 75.5,  "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P02649-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P02649-F1-model_v6.pdb"},
+  "P49768": {"gene_symbol": "PSEN1", "uniprot": "P49768", "mean_plddt": 72.12, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P49768-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P49768-F1-model_v6.pdb"},
+  "P49810": {"gene_symbol": "PSEN2", "uniprot": "P49810", "mean_plddt": 71.81, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P49810-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P49810-F1-model_v6.pdb"},
+  "P56817": {"gene_symbol": "BACE1", "uniprot": "P56817", "mean_plddt": 87.5,  "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P56817-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P56817-F1-model_v6.pdb"},
+  "Q9NZC2": {"gene_symbol": "TREM2", "uniprot": "Q9NZC2", "mean_plddt": 76.75, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q9NZC2-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-Q9NZC2-F1-model_v6.pdb"},
+  "P01112": {"gene_symbol": "HRAS",  "uniprot": "P01112", "mean_plddt": 91.94, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P01112-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P01112-F1-model_v6.pdb"},
+  "P28482": {"gene_symbol": "MAPK1", "uniprot": "P28482", "mean_plddt": 90.38, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P28482-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P28482-F1-model_v6.pdb"},
+  "P03372": {"gene_symbol": "ESR1",  "uniprot": "P03372", "mean_plddt": 66.44, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P03372-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P03372-F1-model_v6.pdb"},
+  "P10909": {"gene_symbol": "CLU",   "uniprot": "P10909", "mean_plddt": 77.31, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P10909-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-P10909-F1-model_v6.pdb"},
+  "O00499": {"gene_symbol": "BIN1",  "uniprot": "O00499", "mean_plddt": 66.69, "cif_url": "https://alphafold.ebi.ac.uk/files/AF-O00499-F1-model_v6.cif", "pdb_url": "https://alphafold.ebi.ac.uk/files/AF-O00499-F1-model_v6.pdb"}
+}

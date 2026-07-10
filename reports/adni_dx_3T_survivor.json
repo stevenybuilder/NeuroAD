@@ -1,7 +1,7 @@
 {
   "claim_id": "adni_dxcn_3t_survivor",
-  "claim_text": "Structural MRI embeddings distinguish AD from cognitively normal subjects, within 3T scans only (field-strength confound removed).",
-  "substrate": "frozen Neuro-JEPA structural embeddings",
+  "claim_text": "AD vs CN diagnosis is decodable from ADNI 3T structural features (field-strength confound removed).",
+  "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)",
   "head": "linear probe",
   "population": {
     "group_a": "AD",
@@ -13,14 +13,14 @@
     "target": "dx_binary",
     "n": 1193,
     "head": "linear probe",
-    "substrate": "frozen Neuro-JEPA structural embeddings"
+    "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)"
   },
   "robustness": {
     "age_sex": "passed",
     "site_scanner": "weakened",
-    "brain_age": "passed",
+    "brain_age": "not_available",
     "biomarker_anchor": "passed",
-    "replication": "not_available"
+    "replication": "passed"
   },
   "robustness_detail": {
     "age_sex": {
@@ -54,17 +54,10 @@
       }
     },
     "brain_age": {
-      "detail": "brain-age R2=-0.38, MAE=5.3yr; effect retained 85% after brain-age-GAP control (Franke/Gaser standard), 69% under the stricter predicted-brain-age control",
+      "detail": "brain-age model not predictive (out-of-fold R2=-0.38 < 0.10, MAE=5.3yr) \u2014 controlling for it removes nothing; uninformative control",
       "stats": {
         "r2": -0.379,
         "mae_yr": 5.29,
-        "auc_before": 0.9245,
-        "auc_after": 0.8615,
-        "retained": 0.852,
-        "auc_after_gap": 0.8615,
-        "retained_gap": 0.852,
-        "auc_after_pred": 0.7924,
-        "retained_pred": 0.689,
         "n_healthy": 924
       }
     },
@@ -82,21 +75,22 @@
       }
     },
     "replication": {
-      "detail": "held-out site perfectly separable at n_test=6 (AUC=1.00, CI width ~0) \u2014 too small to be informative; reported NA",
+      "detail": "held-out cohort AUC=0.84 [95% CI 0.65, 0.97] (train 0.93); n_test=41 over 12 aggregated held-out site(s)",
       "stats": {
-        "train_auc": 0.9242,
-        "test_auc": 1.0,
-        "test_auc_ci_lo": 1.0,
-        "test_auc_ci_hi": 1.0,
-        "n_train": 1187,
-        "n_test": 6
+        "train_auc": 0.9292,
+        "test_auc": 0.8359,
+        "test_auc_ci_lo": 0.6528,
+        "test_auc_ci_hi": 0.9697,
+        "n_train": 1152,
+        "n_test": 41,
+        "n_test_sites": 12
       }
     }
   },
-  "robustness_score": 85,
-  "verdict": "strong candidate",
+  "robustness_score": 83,
+  "verdict": "robust enough for follow-up",
   "promoted": true,
-  "biology_hypothesis": "Survivor \u201cStructural MRI embeddings distinguish AD from cognitively normal subjects, within 3T scans only (field-strength confound removed).\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+  "biology_hypothesis": "Survivor \u201cAD vs CN diagnosis is decodable from ADNI 3T structural features (field-strength confound removed).\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
   "next_experiment": [
     "Cohort: ADNI-3 / EPAD.",
     "Target N: ~120 complete-case subjects with the routing biomarker.",
@@ -116,8 +110,7 @@
     "Any biomarker anchor is complete-case only and may not generalize.",
     "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
     "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
-    "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
-    "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=-0.38, MAE=5.3yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+    "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
     "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
     "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
     "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
@@ -144,11 +137,11 @@
     {
       "test": "brain_age",
       "metric": "effect retained (brain-age)",
-      "value": 0.852,
-      "result": "passed",
+      "value": null,
+      "result": "not_available",
       "n_used": 924,
       "n_missing": null,
-      "detail": "brain-age R2=-0.38, MAE=5.3yr; effect retained 85% after brain-age-GAP control (Franke/Gaser standard), 69% under the stricter predicted-brain-age control"
+      "detail": "brain-age model not predictive (out-of-fold R2=-0.38 < 0.10, MAE=5.3yr) \u2014 controlling for it removes nothing; uninformative control"
     },
     {
       "test": "biomarker_anchor",
@@ -165,11 +158,11 @@
     {
       "test": "replication",
       "metric": "held-out cohort AUC",
-      "value": 1.0,
-      "result": "not_available",
-      "n_used": 6,
+      "value": 0.8359,
+      "result": "passed",
+      "n_used": 41,
       "n_missing": null,
-      "detail": "held-out site perfectly separable at n_test=6 (AUC=1.00, CI width ~0) \u2014 too small to be informative; reported NA"
+      "detail": "held-out cohort AUC=0.84 [95% CI 0.65, 0.97] (train 0.93); n_test=41 over 12 aggregated held-out site(s)"
     }
   ],
   "double_dissociation": {
@@ -195,5 +188,122 @@
   ],
   "novelty_class": "",
   "atn_profile": {},
-  "honesty_rung": ""
+  "honesty_rung": "",
+  "translation": {
+    "mechanism": "amyloid_cascade",
+    "dominant_biomarker": "p_tau217",
+    "status": "translated",
+    "ranked_targets": [
+      {
+        "gene": "APP",
+        "priority_score": 8.597,
+        "rank": 18,
+        "evidence_note": "Core PI4AD target (amyloid beta precursor protein)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "ESR1",
+        "priority_score": 7.992,
+        "rank": 61,
+        "evidence_note": "Peripheral PI4AD target (estrogen receptor 1)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "MAPT",
+        "priority_score": 7.304,
+        "rank": 151,
+        "evidence_note": "Core PI4AD target (microtubule associated protein tau)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "APOE",
+        "priority_score": 7.151,
+        "rank": 185,
+        "evidence_note": "Core PI4AD target (apolipoprotein E)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "PSEN1",
+        "priority_score": 6.211,
+        "rank": 492,
+        "evidence_note": "Peripheral PI4AD target (presenilin 1)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "BACE1",
+        "priority_score": null,
+        "rank": null,
+        "evidence_note": "not in PI4AD prioritisation table",
+        "source": "candidate_only"
+      }
+    ],
+    "top_target": "APP",
+    "structure": {
+      "uniprot": "P05067",
+      "gene_symbol": "APP",
+      "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb",
+      "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif",
+      "mean_plddt": 67.38,
+      "model_version": "v6",
+      "plddt_recomputed": false,
+      "n_residues_scored": null,
+      "source": "offline_snapshot",
+      "error": ""
+    },
+    "repurposing": [
+      {
+        "compound": "Nilotinib",
+        "target_gene": "ABL1",
+        "related_genes": [
+          "ABL1",
+          "MAPT",
+          "APP"
+        ],
+        "mechanism_note": "c-Abl tyrosine-kinase inhibitor hypothesized to promote autophagic clearance of misfolded amyloid/tau; explored in small early-phase Alzheimer disease studies.",
+        "evidence_strength": 0.42,
+        "disease": "Alzheimer disease",
+        "disease_node_ids": [
+          "4975",
+          "11913",
+          "7088",
+          "11743",
+          "12153"
+        ],
+        "trial_ref": "Georgetown nilotinib phase-2 (NCT02947893)",
+        "rationale": "",
+        "rationale_source": "",
+        "source": "offline_snapshot"
+      },
+      {
+        "compound": "Bexarotene",
+        "target_gene": "RXRA",
+        "related_genes": [
+          "RXRA",
+          "APOE",
+          "APP"
+        ],
+        "mechanism_note": "RXR agonist hypothesized to enhance APOE-mediated amyloid clearance; small exploratory repurposing study in Alzheimer disease (results equivocal).",
+        "evidence_strength": 0.25,
+        "disease": "Alzheimer disease",
+        "disease_node_ids": [
+          "4975",
+          "11913",
+          "7088",
+          "11743",
+          "12153"
+        ],
+        "trial_ref": "Bexarotene pilot (NCT01782742)",
+        "rationale": "",
+        "rationale_source": "",
+        "source": "offline_snapshot"
+      }
+    ],
+    "wet_lab_experiment": "In Tanzi-style 3D human neural organoids, knock down the lead target (CRISPRi) and read out A\u03b242/40 ratio + p-tau217 by MSD at 6 weeks; kill if neither moves beyond vehicle \u00b12SD.",
+    "provenance": {
+      "pi4ad": "offline_snapshot",
+      "alphafold": "offline_snapshot",
+      "repurposing": "offline_snapshot"
+    },
+    "caveat": "Decision-support only: prioritized molecular follow-ups for a promoted imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated target, and never derived from the imaging embedding itself."
+  }
 }

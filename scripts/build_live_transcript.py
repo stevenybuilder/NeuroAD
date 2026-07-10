@@ -43,7 +43,7 @@ def main() -> int:
                     "from non-converters."),
         target="conversion", group_a="MCI converters",
         group_b="MCI non-converters")
-    claim.substrate = "frozen Neuro-JEPA structural embeddings"
+    claim.substrate = loaders.honest_substrate("synthetic:KILL")
 
     card = pipeline.run_referee(df, claim)
 

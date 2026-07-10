@@ -1,0 +1,75 @@
+gene,priority_score,rank,evidence_note,source
+EGFR,10,1,Core PI4AD target (epidermal growth factor receptor),offline_snapshot
+SRC,9.461,2,"Peripheral PI4AD target (SRC proto-oncogene, non-receptor tyrosine kinase)",offline_snapshot
+GRB2,9.332,3,Peripheral PI4AD target (growth factor receptor bound protein 2),offline_snapshot
+AKT1,9.208,4,Peripheral PI4AD target (AKT serine/threonine kinase 1),offline_snapshot
+CD4,9.201,5,Peripheral PI4AD target (CD4 molecule),offline_snapshot
+ACTB,9.125,6,Peripheral PI4AD target (actin beta),offline_snapshot
+B2M,9.065,7,Peripheral PI4AD target (beta-2-microglobulin),offline_snapshot
+TP53,8.981,8,Peripheral PI4AD target (tumor protein p53),offline_snapshot
+FN1,8.972,9,Peripheral PI4AD target (fibronectin 1),offline_snapshot
+ITGB1,8.895,10,Peripheral PI4AD target (integrin subunit beta 1),offline_snapshot
+FYN,8.798,11,"Peripheral PI4AD target (FYN proto-oncogene, Src family tyrosine kinase)",offline_snapshot
+INS,8.785,12,Peripheral PI4AD target (insulin),offline_snapshot
+PTK2,8.687,13,Peripheral PI4AD target (protein tyrosine kinase 2),offline_snapshot
+SYK,8.678,14,Peripheral PI4AD target (spleen associated tyrosine kinase),offline_snapshot
+CTNNB1,8.67,15,Peripheral PI4AD target (catenin beta 1),offline_snapshot
+ERBB2,8.662,16,Peripheral PI4AD target (erb-b2 receptor tyrosine kinase 2),offline_snapshot
+HSP90AA1,8.617,17,Peripheral PI4AD target (heat shock protein 90 alpha family class A member 1),offline_snapshot
+APP,8.597,18,Core PI4AD target (amyloid beta precursor protein),offline_snapshot
+CBL,8.595,19,Peripheral PI4AD target (Cbl proto-oncogene),offline_snapshot
+PIK3R1,8.586,20,Peripheral PI4AD target (phosphoinositide-3-kinase regulatory subunit 1),offline_snapshot
+PTPN11,8.554,21,Peripheral PI4AD target (protein tyrosine phosphatase non-receptor type 11),offline_snapshot
+PLCG2,8.542,22,Core PI4AD target (phospholipase C gamma 2),offline_snapshot
+CRK,8.502,23,"Peripheral PI4AD target (CRK proto-oncogene, adaptor protein)",offline_snapshot
+CALM1,8.481,24,Peripheral PI4AD target (calmodulin 1),offline_snapshot
+FGB,8.48,25,Peripheral PI4AD target (fibrinogen beta chain),offline_snapshot
+CALR,8.471,26,Core PI4AD target (calreticulin),offline_snapshot
+PTPRC,8.462,27,Peripheral PI4AD target (protein tyrosine phosphatase receptor type C),offline_snapshot
+IGHV4-38-2,8.45,28,Peripheral PI4AD target (None),offline_snapshot
+STAT3,8.45,28,Peripheral PI4AD target (signal transducer and activator of transcription 3),offline_snapshot
+KRAS,8.437,30,"Peripheral PI4AD target (KRAS proto-oncogene, GTPase)",offline_snapshot
+MAPK3,8.435,31,Core PI4AD target (mitogen-activated protein kinase 3),offline_snapshot
+LYN,8.385,32,"Peripheral PI4AD target (LYN proto-oncogene, Src family tyrosine kinase)",offline_snapshot
+JUN,8.319,33,"Peripheral PI4AD target (Jun proto-oncogene, AP-1 transcription factor subunit)",offline_snapshot
+PLCG1,8.291,34,Peripheral PI4AD target (phospholipase C gamma 1),offline_snapshot
+PTEN,8.281,35,Peripheral PI4AD target (phosphatase and tensin homolog),offline_snapshot
+TLR4,8.274,36,Peripheral PI4AD target (toll like receptor 4),offline_snapshot
+EGF,8.264,37,Peripheral PI4AD target (epidermal growth factor),offline_snapshot
+SHC1,8.259,38,Peripheral PI4AD target (SHC adaptor protein 1),offline_snapshot
+CRKL,8.243,39,"Peripheral PI4AD target (CRK like proto-oncogene, adaptor protein)",offline_snapshot
+NFKB1,8.236,40,Peripheral PI4AD target (nuclear factor kappa B subunit 1),offline_snapshot
+ITGB3,8.22,41,Peripheral PI4AD target (integrin subunit beta 3),offline_snapshot
+PIK3CA,8.219,42,"Peripheral PI4AD target (phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit alpha)",offline_snapshot
+PECAM1,8.216,43,Peripheral PI4AD target (platelet and endothelial cell adhesion molecule 1),offline_snapshot
+RHOA,8.199,44,Peripheral PI4AD target (ras homolog family member A),offline_snapshot
+HRAS,8.19,45,"Peripheral PI4AD target (HRas proto-oncogene, GTPase)",offline_snapshot
+CDC42,8.167,46,Peripheral PI4AD target (cell division cycle 42),offline_snapshot
+NCK1,8.149,47,Peripheral PI4AD target (NCK adaptor protein 1),offline_snapshot
+CSF1R,8.139,48,Peripheral PI4AD target (colony stimulating factor 1 receptor),offline_snapshot
+TREM2,8.135,49,Core PI4AD target (triggering receptor expressed on myeloid cells 2),offline_snapshot
+PIK3CB,8.128,50,"Peripheral PI4AD target (phosphatidylinositol-4,5-bisphosphate 3-kinase catalytic subunit beta)",offline_snapshot
+HSP90AB1,8.119,51,Peripheral PI4AD target (heat shock protein 90 alpha family class B member 1),offline_snapshot
+UBB,8.084,52,Peripheral PI4AD target (ubiquitin B),offline_snapshot
+ITGAM,8.066,53,Core PI4AD target (integrin subunit alpha M),offline_snapshot
+BCL2,8.06,54,Core PI4AD target (BCL2 apoptosis regulator),offline_snapshot
+NRAS,8.051,55,"Peripheral PI4AD target (NRAS proto-oncogene, GTPase)",offline_snapshot
+PIK3R2,8.042,56,Peripheral PI4AD target (phosphoinositide-3-kinase regulatory subunit 2),offline_snapshot
+HDAC1,8.025,57,Peripheral PI4AD target (histone deacetylase 1),offline_snapshot
+MYC,8.025,57,"Peripheral PI4AD target (MYC proto-oncogene, bHLH transcription factor)",offline_snapshot
+GAPDH,8.015,59,Peripheral PI4AD target (glyceraldehyde-3-phosphate dehydrogenase),offline_snapshot
+TLR2,8.006,60,Peripheral PI4AD target (toll like receptor 2),offline_snapshot
+ESR1,7.992,61,Peripheral PI4AD target (estrogen receptor 1),offline_snapshot
+MAPK1,7.966,64,Peripheral PI4AD target (mitogen-activated protein kinase 1),offline_snapshot
+KIT,7.766,95,"Peripheral PI4AD target (KIT proto-oncogene, receptor tyrosine kinase)",offline_snapshot
+PDGFRB,7.743,100,Peripheral PI4AD target (platelet derived growth factor receptor beta),offline_snapshot
+SORL1,7.388,133,Core PI4AD target (sortilin related receptor 1),offline_snapshot
+MAPT,7.304,151,Core PI4AD target (microtubule associated protein tau),offline_snapshot
+APOE,7.151,185,Core PI4AD target (apolipoprotein E),offline_snapshot
+BIN1,6.754,287,Core PI4AD target (bridging integrator 1),offline_snapshot
+CLU,6.738,292,Core PI4AD target (clusterin),offline_snapshot
+PICALM,6.683,308,Core PI4AD target (phosphatidylinositol binding clathrin assembly protein),offline_snapshot
+CD33,6.677,311,Core PI4AD target (CD33 molecule),offline_snapshot
+PSEN1,6.211,492,Peripheral PI4AD target (presenilin 1),offline_snapshot
+ABCA7,5.716,757,Core PI4AD target (ATP binding cassette subfamily A member 7),offline_snapshot
+PSEN2,4.645,1801,Peripheral PI4AD target (presenilin 2),offline_snapshot

@@ -213,7 +213,12 @@ def _cmd_demo(_args) -> int:
     for name, seed in presets:
         try:
             df = _load(name, seed=seed)
-            card = pipeline.run_referee(df, _DEMO_CLAIM)
+            # Parse the shared demo claim, then stamp the truthful per-preset
+            # substrate BEFORE the referee copies it: synthetic cohorts must not
+            # read as Neuro-JEPA (mirrors _cmd_run's honest-substrate stamp).
+            claim = pipeline._parse_claim(_DEMO_CLAIM, df)
+            claim.substrate = _honest_substrate(name)
+            card = pipeline.run_referee(df, claim)
         except Exception as exc:  # noqa: BLE001
             print(f"[{name}] could not run: {exc}", file=sys.stderr)
             continue
@@ -268,14 +273,10 @@ def _cmd_reproduce_finding(args) -> int:
 
 
 def _honest_substrate(dataset: str) -> str:
-    """The truthful substrate label per feeder — never mislabel real OASIS
-    morphometry as Neuro-JEPA embeddings."""
-    low = dataset.lower()
-    if low.startswith("oasis") and ":neurojepa" not in low:
-        return "OASIS structural-derived features (weight-free feeder; nWBV/eTIV/ASF)"
-    if low.startswith("openbhb") and ":neurojepa" not in low:
-        return "OpenBHB structural-derived features (weight-free feeder)"
-    return "frozen Neuro-JEPA structural embeddings"
+    """The truthful substrate label per feeder — delegates to the shared,
+    canonical map (also covers ADNI FreeSurfer + synthetic, not just OASIS)."""
+    from neuroad.data.loaders import honest_substrate
+    return honest_substrate(dataset)
 
 
 def _cmd_run(args) -> int:

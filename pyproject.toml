@@ -21,6 +21,14 @@ dependencies = [
 [project.optional-dependencies]
 claude = ["anthropic>=0.40"]
 dev = ["pytest>=8.0"]
+# Translation-layer adapters (src/neuroad/integrations). All four adapters run
+# OFFLINE with only the core deps — these extras unlock their LIVE paths:
+#   fusion — real multimodal transformer (vkola-lab/ncomms2025) instead of the
+#            logistic surrogate. Also needs a gated checkpoint (NCOMMS2025_CKPT).
+#   gnn    — live TxGNN inference instead of the curated repurposing snapshot.
+#            Heavy; needs a pretrained checkpoint (TXGNN_CKPT_DIR) + PyG.
+fusion = ["torch>=2.1", "monai>=1.3"]
+gnn = ["torch>=2.1", "torch-geometric>=2.5"]
 
 [project.scripts]
 neuroad = "neuroad.cli:main"

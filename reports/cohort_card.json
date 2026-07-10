@@ -1,6 +1,6 @@
 {
   "badge": "SYNTHETIC HARNESS",
-  "substrate_line": "frozen Neuro-JEPA structural embeddings (contract feeder)",
+  "substrate_line": "synthetic contract embeddings (badged demo cohort \u2014 NOT Neuro-JEPA)",
   "n_subjects": 360,
   "embedding_dim": 48,
   "n_sites": 2,
