@@ -1,0 +1,190 @@
+{
+  "claim_id": "adni_conv_001",
+  "claim_text": "MCI patients who convert to AD show a distinct structural-MRI embedding signature versus non-converters.",
+  "substrate": "frozen Neuro-JEPA structural embeddings",
+  "head": "linear probe",
+  "population": {
+    "group_a": "MCI converters",
+    "group_b": "MCI non-converters"
+  },
+  "naive_effect": {
+    "metric": "AUC",
+    "value": 0.707,
+    "target": "conversion",
+    "n": 1199,
+    "head": "linear probe",
+    "substrate": "frozen Neuro-JEPA structural embeddings"
+  },
+  "robustness": {
+    "age_sex": "passed",
+    "site_scanner": "failed",
+    "brain_age": "passed",
+    "biomarker_anchor": "passed",
+    "replication": "failed"
+  },
+  "robustness_detail": {
+    "age_sex": {
+      "detail": "effect retained 96% after age/sex adjustment (AUC 0.71 -> 0.70)",
+      "stats": {
+        "auc_before": 0.7065,
+        "auc_after": 0.6981,
+        "retained": 0.959,
+        "n": 1199
+      }
+    },
+    "site_scanner": {
+      "detail": "scanner predicted as well as outcome (margin -0.28 [95% CI -0.31, -0.25]); likely acquisition artifact",
+      "stats": {
+        "outcome_auc": 0.7065,
+        "scanner_auc": 0.9894,
+        "margin": -0.2829,
+        "confound": "scanner",
+        "outcome_ci": [
+          0.6758,
+          0.7367
+        ],
+        "scanner_ci": [
+          0.9864,
+          0.9923
+        ],
+        "outcome_p_perm": 0.001,
+        "scanner_p_perm": 0.001,
+        "scanner_ci_excludes_chance": true,
+        "margin_ci_lo": -0.3141,
+        "margin_ci_hi": -0.2524,
+        "margin_p": 0.001,
+        "margin_ci_excludes_zero": false
+      }
+    },
+    "brain_age": {
+      "detail": "brain-age R2=0.24, MAE=4.7yr; effect retained 93% after brain-age-GAP control (Franke/Gaser standard), 90% under the stricter predicted-brain-age control",
+      "stats": {
+        "r2": 0.236,
+        "mae_yr": 4.71,
+        "auc_before": 0.7065,
+        "auc_after": 0.692,
+        "retained": 0.93,
+        "auc_after_gap": 0.692,
+        "retained_gap": 0.93,
+        "auc_after_pred": 0.6866,
+        "retained_pred": 0.903,
+        "n_healthy": 1153
+      }
+    },
+    "biomarker_anchor": {
+      "detail": "p-tau217 correlation r=+0.26 (95% CI lower +0.18, n=490)",
+      "stats": {
+        "ptau217_r": 0.263,
+        "ptau217_n": 490,
+        "ptau217_ci_lo": 0.179,
+        "gfap_r": 0.183,
+        "gfap_n": 490,
+        "gfap_ci_lo": 0.096,
+        "synthetic": false,
+        "provenance": "measured"
+      }
+    },
+    "replication": {
+      "detail": "held-out cohort AUC=0.88 [95% CI 0.50, 1.00] (train 0.70); n_test=6",
+      "stats": {
+        "train_auc": 0.7027,
+        "test_auc": 0.875,
+        "test_auc_ci_lo": 0.5,
+        "test_auc_ci_hi": 1.0,
+        "n_train": 1193,
+        "n_test": 6
+      }
+    }
+  },
+  "robustness_score": 39,
+  "verdict": "fragile",
+  "promoted": false,
+  "biology_hypothesis": "",
+  "next_experiment": [],
+  "falsification": [],
+  "caveats": [
+    "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+    "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+    "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+    "Any biomarker anchor is complete-case only and may not generalize.",
+    "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+    "The brain-age control is a proxy, not a gold standard: it is embedding-derived (this cohort's fit: R2=0.24, MAE=4.7yr), so residual generic-aging signal can survive the adjustment and masquerade as disease-specific.",
+    "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+    "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+    "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  ],
+  "evidence_ledger": [
+    {
+      "test": "age_sex",
+      "metric": "effect retained (age/sex)",
+      "value": 0.959,
+      "result": "passed",
+      "n_used": 1199,
+      "n_missing": null,
+      "detail": "effect retained 96% after age/sex adjustment (AUC 0.71 -> 0.70)"
+    },
+    {
+      "test": "site_scanner",
+      "metric": "leakage margin (outcome-scanner AUC)",
+      "value": -0.2829,
+      "result": "failed",
+      "n_used": null,
+      "n_missing": null,
+      "detail": "scanner predicted as well as outcome (margin -0.28 [95% CI -0.31, -0.25]); likely acquisition artifact"
+    },
+    {
+      "test": "brain_age",
+      "metric": "effect retained (brain-age)",
+      "value": 0.93,
+      "result": "passed",
+      "n_used": 1153,
+      "n_missing": null,
+      "detail": "brain-age R2=0.24, MAE=4.7yr; effect retained 93% after brain-age-GAP control (Franke/Gaser standard), 90% under the stricter predicted-brain-age control"
+    },
+    {
+      "test": "biomarker_anchor",
+      "metric": "p-tau217 correlation r",
+      "value": 0.263,
+      "result": "passed",
+      "n_used": 490,
+      "n_missing": null,
+      "detail": "p-tau217 correlation r=+0.26 (95% CI lower +0.18, n=490)",
+      "ci_lo": 0.179,
+      "synthetic": false,
+      "source": "measured"
+    },
+    {
+      "test": "replication",
+      "metric": "held-out cohort AUC",
+      "value": 0.875,
+      "result": "failed",
+      "n_used": 6,
+      "n_missing": null,
+      "detail": "held-out cohort AUC=0.88 [95% CI 0.50, 1.00] (train 0.70); n_test=6"
+    }
+  ],
+  "double_dissociation": {
+    "auc_before": 0.7065,
+    "auc_after": 0.7064,
+    "retained": 0.999,
+    "confound": "scanner",
+    "n": 1199
+  },
+  "confound_leaderboard": [
+    {
+      "confound": "scanner",
+      "variance_explained": 0.1731
+    },
+    {
+      "confound": "age",
+      "variance_explained": 0.0619
+    },
+    {
+      "confound": "sex",
+      "variance_explained": 0.0028
+    }
+  ],
+  "novelty_class": "",
+  "atn_profile": {},
+  "honesty_rung": ""
+}

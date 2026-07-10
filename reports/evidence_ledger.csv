@@ -4,4 +4,4 @@ age_sex,passed,"effect retained (age/sex)",1.102,,130,synthetic:SURVIVOR,0,engin
 site_scanner,weakened,"leakage margin (outcome-scanner AUC)",0.063,-0.0353,,synthetic:SURVIVOR,0,engine,true,"outcome only narrowly exceeds scanner; margin CI includes zero (margin +0.06 [95% CI -0.04, +0.16])"
 brain_age,passed,"effect retained (brain-age)",1.035,,137,synthetic:SURVIVOR,0,engine,true,"brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control (Franke/Gaser standard), 102% under the stricter predicted-brain-age control"
 biomarker_anchor,passed,"p-tau217 correlation r (Fisher-z CI)",0.404,0.197,77,synthetic:SURVIVOR,0,engine,true,"p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS: calibration target, not measured plasma]"
-replication,weakened,"held-out cohort AUC",0.7229,,62,synthetic:SURVIVOR,0,engine,true,"held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62"
+replication,weakened,"held-out cohort AUC",0.7229,,62,synthetic:SURVIVOR,0,engine,true,"held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62 over 1 aggregated held-out site(s)"
