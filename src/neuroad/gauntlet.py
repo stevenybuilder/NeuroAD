@@ -52,6 +52,17 @@ except Exception:                                       # pragma: no cover - def
 _ANCHOR_CI_PASS = 0.12                              # CI lower bound >= this -> PASSED
 _ANCHOR_CI_WEAK = 0.0                               # CI lower bound > this   -> WEAKENED
 
+# A brain-age control can only "control for aging" if the brain-age model is
+# itself predictive. A non-predictive model (out-of-fold R2 at/below chance)
+# scrubs essentially nothing, so ANY effect trivially "survives" and the control
+# would earn full STAR credit while proving nothing — a negative R2 literally
+# predicts age worse than the cohort mean. Require the model to clear a small
+# positive out-of-fold R2 floor; below it the control is UNINFORMATIVE -> NA
+# (dropped from numerator+denominator in contract.robustness_score), never a fake
+# PASS. 0.10 = the model must explain at least ~10% of age variance out-of-fold
+# to be treated as a working age predictor whose residualization means something.
+_BRAIN_AGE_R2_FLOOR = 0.10
+
 
 def _retained_fraction(auc_before: float, auc_after: float) -> float:
     eff = max(auc_before - 0.5, 1e-6)
@@ -160,8 +171,10 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
     if len(np.unique(yo)) < 2:
         return TestEvidence("brain_age", TestResult.NA, "target has <2 classes")
 
-    # Train brain-age on cognitively-normal / healthy subjects only.
-    healthy = df["dx"].astype("string").eq("CN").to_numpy()
+    # Train brain-age on cognitively-normal / healthy subjects only. Coerce the
+    # nullable-boolean mask to a dense bool (NaN dx -> not-healthy) so a partial
+    # dx column (real cohorts carry <NA>) can't poison the boolean `train` mask.
+    healthy = df["dx"].astype("string").eq("CN").fillna(False).to_numpy(dtype=bool)
     age_all = df["age"].to_numpy(float)
     train = healthy & np.isfinite(age_all)
     Xall = contract.embedding_matrix(df)
@@ -177,6 +190,20 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
     ss_tot = float(((age_all[train] - age_all[train].mean()) ** 2).sum())
     r2 = float(1 - ss_res / ss_tot) if ss_tot > 0 else 0.0
     mae = float(np.mean(np.abs(age_all[train] - yhat_cv)))
+
+    # If the brain-age model itself does not predict age (out-of-fold R2 below the
+    # floor), "controlling for brain age" removes nothing and the effect survives
+    # by construction — that is not a passed control, it is an UNINFORMATIVE one.
+    # Return NA (dropped from the score) rather than banking full STAR credit for a
+    # control that does not work.
+    if r2 < _BRAIN_AGE_R2_FLOOR:
+        return TestEvidence("brain_age", TestResult.NA,
+                            f"brain-age model not predictive (out-of-fold "
+                            f"R2={r2:.2f} < {_BRAIN_AGE_R2_FLOOR:.2f}, "
+                            f"MAE={mae:.1f}yr) — controlling for it removes nothing; "
+                            f"uninformative control",
+                            {"r2": round(r2, 3), "mae_yr": round(mae, 2),
+                             "n_healthy": int(train.sum())})
 
     # Predicted brain age for every outcome subject. We compute BOTH the
     # embedding-derived apparent brain age (the strict control) and the
@@ -361,22 +388,33 @@ def test_replication(df: pd.DataFrame, target: str) -> TestEvidence:
         return TestEvidence("replication", TestResult.NA,
                             "single site/cohort — no held-out split available")
 
-    # Hold out the smallest usable site; train on the rest.
-    order = uniq[np.argsort(counts)]
-    test_site = None
-    for g in order:
-        te = groups == g
-        tr = ~te
-        if (len(np.unique(yo[te])) >= 2 and len(np.unique(yo[tr])) >= 2
-                and te.sum() >= 6 and tr.sum() >= 6):
-            test_site = g
-            break
-    if test_site is None:
-        return TestEvidence("replication", TestResult.NA,
-                            "no site split yields two-class train and test folds")
-
-    te = groups == test_site
+    # Build a held-out fold by AGGREGATING whole sites (group-disjoint) until the
+    # held-out set reaches a meaningful size with both classes, training on the
+    # remaining sites. On a many-small-site cohort (ADNI: every individual site is
+    # tiny) no single site is large enough to replicate on, so holding out one site
+    # is always NA and the star never runs. Pooling the smallest sites into one
+    # held-out cohort — while leaving the larger sites to train on — makes the
+    # replication star actually informative, and it stays a genuine held-out-SITE
+    # test: no site appears in both folds (group-disjoint), not row-level CV.
+    MIN_TEST = 40                       # target held-out n for a meaningful fold
+    order = uniq[np.argsort(counts)]    # smallest sites first -> largest sites train
+    test_sites: list = []
+    te = np.zeros(len(groups), dtype=bool)
     tr = ~te
+    ok = False
+    for g in order:
+        test_sites.append(g)
+        te = np.isin(groups, test_sites)
+        tr = ~te
+        if (te.sum() >= MIN_TEST and tr.sum() >= 6
+                and len(np.unique(yo[te])) >= 2 and len(np.unique(yo[tr])) >= 2):
+            ok = True
+            break
+    if not ok:
+        return TestEvidence("replication", TestResult.NA,
+                            "no aggregated held-out site fold reaches a two-class "
+                            "cohort of sufficient size with a two-class train set")
+    n_test_sites = len(test_sites)
     train_auc = cross_val_auc(Xo[tr], yo[tr], groups=None)
     probe = LinearProbe().fit(Xo[tr], yo[tr])
     from sklearn.metrics import roc_auc_score
@@ -419,7 +457,18 @@ def test_replication(df: pd.DataFrame, target: str) -> TestEvidence:
     else:
         ci_lo = ci_hi = None
 
-    if ci_lo is None:
+    # A tiny, perfectly-separable held-out site yields a DEGENERATE bootstrap:
+    # every valid resample returns the same boundary AUC, so the CI collapses to
+    # a near-zero-width point (e.g. [1.00, 1.00]) that would spuriously clear the
+    # PASS threshold. A handful of trivially-separable points is not evidence of
+    # generalization — report it as uninformative (NA), dropped from the score.
+    # A genuinely small-but-noisy site keeps its wide CI and is still judged
+    # normally (typically FAILED when the CI includes chance).
+    MIN_INFORMATIVE_TEST = 12
+    degenerate = (ci_lo is not None and (ci_hi - ci_lo) < 0.02
+                  and n_te < MIN_INFORMATIVE_TEST)
+
+    if ci_lo is None or degenerate:
         res = TestResult.NA
     elif ci_lo >= REPL_PASS:               # CI lower bound clears the threshold
         res = TestResult.PASSED
@@ -428,13 +477,20 @@ def test_replication(df: pd.DataFrame, target: str) -> TestEvidence:
     else:                                  # CI includes chance
         res = TestResult.FAILED
     ci_txt = "" if ci_lo is None else f" [95% CI {ci_lo:.2f}, {ci_hi:.2f}]"
-    detail = (f"held-out cohort AUC={test_auc:.2f}{ci_txt} (train {train_auc:.2f}); "
-              f"n_test={n_te}")
+    if degenerate:
+        detail = (f"held-out site perfectly separable at n_test={n_te} "
+                  f"(AUC={test_auc:.2f}, CI width ~0) — too small to be "
+                  f"informative; reported NA")
+    else:
+        detail = (f"held-out cohort AUC={test_auc:.2f}{ci_txt} "
+                  f"(train {train_auc:.2f}); n_test={n_te} "
+                  f"over {n_test_sites} aggregated held-out site(s)")
     return TestEvidence("replication", res, detail, {
         "train_auc": round(train_auc, 4), "test_auc": round(test_auc, 4),
         "test_auc_ci_lo": None if ci_lo is None else round(ci_lo, 4),
         "test_auc_ci_hi": None if ci_hi is None else round(ci_hi, 4),
         "n_train": int(tr.sum()), "n_test": n_te,
+        "n_test_sites": n_test_sites,
     })
 
 

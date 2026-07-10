@@ -408,10 +408,20 @@ def _stability_floor() -> float:
 
 
 def _confound_survivor(tests: dict) -> bool:
-    """The three confound tests (age/sex + the two STAR tests) all survive —
-    each PASSED / WEAKENED / MIXED, none FAILED or NA (rung-3 evidence)."""
-    ok = {TestResult.PASSED, TestResult.WEAKENED, TestResult.MIXED}
-    return all(tests.get(k) in ok for k in ("age_sex", "site_scanner", "brain_age"))
+    """The confound tests (age/sex + the two STAR tests) survive — none FAILED,
+    and at least one was actually testable and survived (rung-3 evidence).
+
+    NA is NEUTRAL, not disqualifying: an untestable confound (e.g. a brain-age
+    control whose model is non-predictive -> NA) is missing evidence, not evidence
+    against — exactly as contract.robustness_score drops NA rather than penalizing
+    it. Treating NA like FAILED would let one uninformative control silently sink
+    a card that cleanly survives the confounds it COULD test."""
+    keys = ("age_sex", "site_scanner", "brain_age")
+    results = [tests.get(k) for k in keys]
+    if any(r == TestResult.FAILED for r in results):
+        return False
+    survived = {TestResult.PASSED, TestResult.WEAKENED, TestResult.MIXED}
+    return any(r in survived for r in results)
 
 
 def compute_honesty_rung(card: ClaimCard, *, mode: str,
