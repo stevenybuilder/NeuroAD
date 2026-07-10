@@ -1,54 +1,92 @@
-claim_id: claim-x
-claim_text: x
-substrate: frozen Neuro-JEPA structural embeddings
+claim_id: claim-scanner-is-decodable-from-openbh
+claim_text: scanner is decodable from OpenBHB structural features
+substrate: OpenBHB structural-derived features (weight-free feeder)
 head: linear probe
 population:
-  group_a: AD
-  group_b: CN
+  group_a: scanner A
+  group_b: scanner B
 naive_effect:
   metric: AUC
-  value: 0.5
-  target: dx_binary
+  value: 0.891
+  target: scanner
   n: 3984
   head: linear probe
-  substrate: frozen Neuro-JEPA structural embeddings
+  substrate: OpenBHB structural-derived features (weight-free feeder)
 robustness:
-  age_sex: not_available
+  age_sex: failed
   site_scanner: failed
-  brain_age: not_available
+  brain_age: passed
   biomarker_anchor: not_available
   replication: not_available
 robustness_detail:
   age_sex:
-    detail: target has <2 classes
-    stats: {}
-  site_scanner:
-    detail: scanner predicted as well as outcome (margin -0.39); likely acquisition
-      artifact
+    detail: effect retained 17% after age/sex adjustment (AUC 0.89 -> 0.56)
     stats:
-      outcome_auc: 0.5
+      auc_before: 0.8911
+      auc_after: 0.565
+      retained: 0.166
+      n: 3984
+  site_scanner:
+    detail: scanner predicted as well as outcome (margin +0.00 [95% CI +0.00, +0.00]);
+      likely acquisition artifact
+    stats:
+      outcome_auc: 0.8911
       scanner_auc: 0.8911
-      margin: -0.3911
+      margin: 0.0
       confound: scanner
+      outcome_ci:
+      - 0.8734
+      - 0.9082
+      scanner_ci:
+      - 0.8734
+      - 0.9082
+      outcome_p_perm: 0.001
+      scanner_p_perm: 0.001
+      scanner_ci_excludes_chance: true
+      margin_ci_lo: 0.0
+      margin_ci_hi: 0.0
+      margin_p: 0.001
+      margin_ci_excludes_zero: false
   brain_age:
-    detail: target has <2 classes
-    stats: {}
+    detail: brain-age R2=0.60, MAE=6.3yr; effect retained 100% after brain-age-GAP
+      control (Franke/Gaser standard), 41% under the stricter predicted-brain-age
+      control
+    stats:
+      r2: 0.602
+      mae_yr: 6.26
+      auc_before: 0.8911
+      auc_after: 0.8916
+      retained: 1.001
+      auc_after_gap: 0.8916
+      retained_gap: 1.001
+      auc_after_pred: 0.6608
+      retained_pred: 0.411
+      n_healthy: 3984
   biomarker_anchor:
-    detail: target has <2 classes
-    stats: {}
+    detail: "no plasma p-tau217 / GFAP coverage at usable n \u2014 cannot anchor (route\
+      \ to ADNI/EPAD)"
+    stats:
+      ptau217_r: null
+      ptau217_n: 0
+      ptau217_ci_lo: null
+      gfap_r: null
+      gfap_n: 0
+      gfap_ci_lo: null
+      synthetic: false
+      provenance: measured
   replication:
     detail: no site/cohort grouping to split on
     stats: {}
-robustness_score: 0
+robustness_score: 38
 verdict: fragile
 promoted: false
 biology_hypothesis: ''
 next_experiment: []
 falsification: []
 caveats:
-- 'Biomarker anchor unavailable (no plasma p-tau217/GFAP coverage): claim cannot be
-  promoted until molecularly anchored.'
-- 'Completeness: 4/5 gauntlet tests could not run; score is renormalized over the
+- "Not corroborated: no molecular anchor (no open plasma data) and no passing cross-cohort\
+  \ replication \u2014 cannot be promoted."
+- 'Completeness: 2/5 gauntlet tests could not run; score is renormalized over the
   tests that did.'
 - Verdict is provisional and conditional on the scanner/site distribution of any replication
   cohort.
@@ -57,44 +95,53 @@ caveats:
 - "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits\
   \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
   \ (2026))."
+- 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
+  (this cohort''s fit: R2=0.60, MAE=6.3yr), so residual generic-aging signal can survive
+  the adjustment and masquerade as disease-specific.'
 - "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate is\
   \ unmet \u2014 the finding rests on imaging alone."
 - "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation\
   \ on a modest cohort leaves each fold thin."
 - "The leakage test audits the embeddings with the same linear-probe family it uses\
   \ for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding;\
-  \ this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking\u2019\
-  \ (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  \ this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing\
+  \ Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189\
+  \ (2026)), which we cite rather than claim."
 evidence_ledger:
 - test: age_sex
   metric: effect retained (age/sex)
-  value: null
-  result: not_available
-  n_used: null
+  value: 0.166
+  result: failed
+  n_used: 3984
   n_missing: null
-  detail: target has <2 classes
+  detail: effect retained 17% after age/sex adjustment (AUC 0.89 -> 0.56)
 - test: site_scanner
   metric: leakage margin (outcome-scanner AUC)
-  value: -0.3911
+  value: 0.0
   result: failed
   n_used: null
   n_missing: null
-  detail: scanner predicted as well as outcome (margin -0.39); likely acquisition
-    artifact
+  detail: scanner predicted as well as outcome (margin +0.00 [95% CI +0.00, +0.00]);
+    likely acquisition artifact
 - test: brain_age
   metric: effect retained (brain-age)
-  value: null
-  result: not_available
-  n_used: null
+  value: 1.001
+  result: passed
+  n_used: 3984
   n_missing: null
-  detail: target has <2 classes
+  detail: brain-age R2=0.60, MAE=6.3yr; effect retained 100% after brain-age-GAP control
+    (Franke/Gaser standard), 41% under the stricter predicted-brain-age control
 - test: biomarker_anchor
   metric: p-tau217 correlation r
   value: null
   result: not_available
   n_used: 0
   n_missing: null
-  detail: target has <2 classes
+  detail: "no plasma p-tau217 / GFAP coverage at usable n \u2014 cannot anchor (route\
+    \ to ADNI/EPAD)"
+  ci_lo: null
+  synthetic: false
+  source: unavailable
 - test: replication
   metric: held-out cohort AUC
   value: null
@@ -102,14 +149,60 @@ evidence_ledger:
   n_used: null
   n_missing: null
   detail: no site/cohort grouping to split on
-narration: "The claim \u201Cx\u201D lands at \u201Cfragile\u201D (0/100). The naive\
-  \ effect (AUC 0.50 separating AD from CN) is real on paper, but the referee's job\
-  \ is to ask what else could produce it. It sits below the promotion floor, so the\
-  \ honest read is that acquisition, demographics or generic aging can plausibly account\
-  \ for it, and it should not consume a scientist's quarter without stronger evidence.\
-  \ Where it stops being true: that the scanner/site mix in any new cohort matches\
-  \ this one \u2014 the leakage margin is only -0.39 AUC, so a different scanner distribution\
-  \ could erase the effect. That the same frozen embeddings can predict scanner/site\
-  \ as well as outcome is documented prior art (\u201CBatch Effects in Brain Foundation\
-  \ Model Embeddings,\u201D arXiv:2604.14441 (2026)); NeuroAD Referee only runs the\
-  \ audit and issues the verdict."
+double_dissociation:
+  auc_before: 0.8911
+  auc_after: 0.891
+  retained: 1.0
+  confound: scanner
+  n: 3984
+confound_leaderboard:
+- confound: age
+  variance_explained: 0.6003
+- confound: scanner
+  variance_explained: 0.2257
+- confound: sex
+  variance_explained: 0.0104
+novelty_class: ''
+atn_profile: {}
+honesty_rung: ''
+translation: {}
+narration: "The claim \u201Cscanner is decodable from OpenBHB structural features\u201D\
+  \ lands at \u201Cfragile\u201D (38/100). The naive effect (AUC 0.89 separating scanner\
+  \ A from scanner B) is real on paper, but the referee's job is to ask what else\
+  \ could produce it. It sits below the promotion floor, so the honest read is that\
+  \ acquisition, demographics or generic aging can plausibly account for it, and it\
+  \ should not consume a scientist's quarter without stronger evidence. Where it stops\
+  \ being true: that the scanner/site mix in any new cohort matches this one \u2014\
+  \ the leakage margin is only +0.00 AUC, so a different scanner distribution could\
+  \ erase the effect. That the same frozen embeddings can predict scanner/site as\
+  \ well as outcome is documented prior art (\u201CBatch Effects in Brain Foundation\
+  \ Model Embeddings,\u201D arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only\
+  \ runs the audit and issues the verdict."
+reviewer:
+  critique:
+  - 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
+    (this cohort''s fit: R2=0.60, MAE=6.3yr), so residual generic-aging signal can
+    survive the adjustment and masquerade as disease-specific.'
+  - "There is no usable plasma p-tau217 / GFAP anchor here, so the molecular gate\
+    \ is unmet \u2014 the finding rests on imaging alone."
+  - "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation\
+    \ on a modest cohort leaves each fold thin."
+  - "The leakage test audits the embeddings with the same linear-probe family it uses\
+    \ for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared\
+    \ confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still\
+    \ Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019\
+    \ (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  revised_caveats:
+  - Verdict is provisional and conditional on the scanner/site distribution of any
+    replication cohort.
+  - Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.
+  - Any biomarker anchor is complete-case only and may not generalize.
+  - "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits\
+    \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
+    \ (2026))."
+claude:
+  live: false
+  configured_live: false
+  model: offline-template
+  path: deterministic offline template (no ANTHROPIC_API_KEY)
+  last_call_live: false

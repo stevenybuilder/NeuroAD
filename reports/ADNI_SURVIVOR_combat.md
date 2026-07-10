@@ -12,9 +12,9 @@
 |---|---|---|
 | age_sex | passed | auc_before=0.922, auc_after=0.897, retained=0.939 |
 | site_scanner | passed | outcome_auc=0.922, scanner_auc=0.374, margin=0.549 |
-| brain_age | passed | r2=-3.779, mae_yr=9.05, auc_before=0.922 |
+| brain_age | not_available | r2=-3.779, mae_yr=9.05, n_healthy=1153 |
 | biomarker_anchor | passed | ptau217_r=0.449, ptau217_n=873, ptau217_ci_lo=0.394 |
-| replication | not_available | train_auc=0.923, test_auc=1.0, test_auc_ci_lo=1.0 |
+| replication | passed | train_auc=0.928, test_auc=0.92, test_auc_ci_lo=0.783 |
 
 ## Why this survives when the full cohort is killed
 

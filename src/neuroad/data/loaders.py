@@ -83,6 +83,35 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
     )
 
 
+def honest_substrate(name: str) -> str:
+    """The TRUTHFUL substrate label for a dataset name — never mislabel one
+    feeder's features as another's.
+
+    The frozen-contract default (``Claim.substrate``) says "frozen Neuro-JEPA
+    structural embeddings", which is only accurate for the ``*:neurojepa``
+    feeders. This maps every registered name to what its ``emb_*`` columns
+    ACTUALLY are, so a card/report can be stamped before the naive effect copies
+    ``claim.substrate``. Anti-overclaim: ADNI/OASIS/OpenBHB tabular feeders are
+    morphometry, not the foundation model, and must say so.
+    """
+    low = (name or "").strip().lower()
+    if low.startswith("synthetic:"):
+        return "synthetic contract embeddings (badged demo cohort)"
+    if ":neurojepa" in low or ":jepa" in low:
+        return "frozen Neuro-JEPA structural embeddings"
+    if low.startswith("adni"):
+        return ("ADNI z-standardized FreeSurfer morphometry "
+                "(UCSFFSX7 ST regions; weight-free feeder)")
+    if low.startswith(("oasis3", "nacc", "epad", "gated:")):
+        return "gated cohort FreeSurfer morphometry (weight-free feeder)"
+    if low.startswith("oasis"):
+        return ("OASIS structural-derived features "
+                "(weight-free feeder; nWBV/eTIV/ASF)")
+    if low.startswith("openbhb"):
+        return "OpenBHB structural-derived features (weight-free feeder)"
+    return "structural-derived features (weight-free feeder)"
+
+
 #: Human-facing catalogue (kept in sync with data/registry.yaml notation).
 AVAILABLE = [
     "synthetic:SURVIVOR",

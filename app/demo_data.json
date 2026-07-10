@@ -42,7 +42,7 @@
       "badge": "SYNTHETIC HARNESS",
       "cohort": {
         "badge": "SYNTHETIC HARNESS",
-        "substrate_line": "frozen Neuro-JEPA structural embeddings (contract feeder)",
+        "substrate_line": "synthetic contract embeddings (badged demo cohort \u2014 NOT Neuro-JEPA)",
         "n_subjects": 360,
         "embedding_dim": 48,
         "n_sites": 2,
@@ -78,7 +78,7 @@
             "target": "conversion",
             "group_a": "MCI converters",
             "group_b": "MCI non-converters",
-            "substrate": "frozen Neuro-JEPA structural embeddings",
+            "substrate": "synthetic contract embeddings (badged demo cohort)",
             "head": "linear probe"
           },
           "naive_effect": {
@@ -87,7 +87,7 @@
             "target": "conversion",
             "n": 130,
             "head": "linear probe",
-            "substrate": "frozen Neuro-JEPA structural embeddings"
+            "substrate": "synthetic contract embeddings (badged demo cohort)"
           },
           "leakage_margin": {
             "outcome_auc": 0.739,
@@ -300,7 +300,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that frozen Neuro-JEPA structural embeddings separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only +0.06 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (weakened), Replication split (weakened). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that synthetic contract embeddings (badged demo cohort) separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only +0.06 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (weakened), Replication split (weakened). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Age / sex adjustment, Brain-age control, Biomarker anchor. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.40) \u2014 molecular pathology, not pixels.",
             "judge_reasoning": "Robustness score 80/100 places this finding at 'robust enough for follow-up'. The +0.06 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
           },
@@ -327,7 +327,7 @@
                 "group_a": "MCI converters",
                 "group_b": "MCI non-converters"
               },
-              "features": "frozen Neuro-JEPA structural embeddings",
+              "features": "synthetic contract embeddings (badged demo cohort)",
               "confounds": [
                 "age",
                 "sex",
@@ -375,7 +375,7 @@
             "target": "conversion",
             "group_a": "MCI converters",
             "group_b": "MCI non-converters",
-            "substrate": "frozen Neuro-JEPA structural embeddings",
+            "substrate": "synthetic contract embeddings (badged demo cohort)",
             "head": "linear probe"
           },
           "naive_effect": {
@@ -384,7 +384,7 @@
             "target": "conversion",
             "n": 137,
             "head": "linear probe",
-            "substrate": "frozen Neuro-JEPA structural embeddings"
+            "substrate": "synthetic contract embeddings (badged demo cohort)"
           },
           "leakage_margin": {
             "outcome_auc": 0.873,
@@ -583,7 +583,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that frozen Neuro-JEPA structural embeddings separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only -0.08 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed), Biomarker anchor (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that synthetic contract embeddings (badged demo cohort) separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only -0.08 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed), Biomarker anchor (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Brain-age control, Replication split. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
             "judge_reasoning": "Robustness score 39/100 places this finding at 'fragile'. The -0.08 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
           },
@@ -610,7 +610,7 @@
                 "group_a": "MCI converters",
                 "group_b": "MCI non-converters"
               },
-              "features": "frozen Neuro-JEPA structural embeddings",
+              "features": "synthetic contract embeddings (badged demo cohort)",
               "confounds": [
                 "age",
                 "sex",
@@ -699,7 +699,7 @@
             "target": "dx_binary",
             "n": 263,
             "head": "linear probe",
-            "substrate": "OASIS structural-derived features (weight-free feeder)"
+            "substrate": "OASIS structural-derived features (weight-free feeder; nWBV/eTIV/ASF)"
           },
           "leakage_margin": {
             "outcome_auc": 0.824,
@@ -915,7 +915,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that OASIS structural-derived features (weight-free feeder) separate AD (CDR>=1) from CN (CDR=0) does not survive scrutiny. Even granting a +0.25 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that OASIS structural-derived features (weight-free feeder; nWBV/eTIV/ASF) separate AD (CDR>=1) from CN (CDR=0) does not survive scrutiny. Even granting a +0.25 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating AD (CDR>=1) from CN (CDR=0) is consistent with real disease biology. It withstood: Age / sex adjustment, Site / scanner leakage, Brain-age control, Replication split. The outcome exceeds the scanner-prediction floor by +0.25 AUC on subject-disjoint splits \u2014 the effect is not merely which machine acquired the scan. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
             "judge_reasoning": "Robustness score 84/100 places this finding at 'robust enough for follow-up'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.25 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding provisionally meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
           },
@@ -999,7 +999,7 @@
             "target": "conversion",
             "n": 86,
             "head": "linear probe",
-            "substrate": "OASIS structural-derived features (weight-free feeder)"
+            "substrate": "OASIS structural-derived features (weight-free feeder; nWBV/eTIV/ASF)"
           },
           "leakage_margin": {
             "outcome_auc": 0.518,
@@ -1190,7 +1190,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that OASIS structural-derived features (weight-free feeder) separate Converted from Nondemented does not survive scrutiny. The subject-disjoint leakage margin is only -0.05 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that OASIS structural-derived features (weight-free feeder; nWBV/eTIV/ASF) separate Converted from Nondemented does not survive scrutiny. The subject-disjoint leakage margin is only -0.05 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Age / sex adjustment (failed), Site / scanner leakage (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating Converted from Nondemented is consistent with real disease biology. It withstood: Brain-age control. The molecular anchor is incomplete, so the defense rests on the imaging survivors alone and asks only for follow-up, not acceptance.",
             "judge_reasoning": "Robustness score 38/100 places this finding at 'fragile'. 2 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The -0.05 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
           },
@@ -1307,7 +1307,7 @@
             "target": "dx_binary",
             "n": 1615,
             "head": "linear probe",
-            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
+            "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)"
           },
           "leakage_margin": {
             "outcome_auc": 0.922,
@@ -1561,7 +1561,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that ADNI UCSF FreeSurfer structural features (weight-free feeder) separate AD from CN does not survive scrutiny. Even granting a +0.55 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder) separate AD from CN does not survive scrutiny. Even granting a +0.55 AUC leakage margin, that headroom is thin enough that acquisition confounds could account for much of the apparent effect. No single dimension cleanly collapses, but absence of a knock-out is not the same as demonstrated biology. The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating AD from CN is consistent with real disease biology. It withstood: Age / sex adjustment, Site / scanner leakage, Biomarker anchor, Replication split. The outcome exceeds the scanner-prediction floor by +0.55 AUC on subject-disjoint splits \u2014 the effect is not merely which machine acquired the scan. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.45) \u2014 molecular pathology, not pixels.",
             "judge_reasoning": "Robustness score 100/100 places this finding at 'strong candidate'. 1 dimension(s) could not be run and were excluded from the denominator \u2014 the verdict reflects only the evidence actually gathered. The +0.55 AUC leakage margin clears the acquisition confound, which is why the defense retains standing. The finding meets the promotion floor and may proceed to the biomarker-gated biology step \u2014 as a hypothesis to test, not a conclusion to bank."
           },
@@ -1587,7 +1587,7 @@
             "target": "dx_binary",
             "n": 1615,
             "head": "linear probe",
-            "substrate": "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
+            "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)"
           },
           "leakage_margin": {
             "outcome_auc": 0.935,
@@ -1836,7 +1836,7 @@
             ]
           },
           "courtroom": {
-            "prosecution": "The claim that ADNI UCSF FreeSurfer structural features (weight-free feeder) separate AD from CN does not survive scrutiny. The subject-disjoint leakage margin is only -0.05 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
+            "prosecution": "The claim that ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder) separate AD from CN does not survive scrutiny. The subject-disjoint leakage margin is only -0.05 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (failed). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
             "defense": "The signal separating AD from CN is consistent with real disease biology. It withstood: Age / sex adjustment, Brain-age control, Biomarker anchor, Replication split. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.46) \u2014 molecular pathology, not pixels.",
             "judge_reasoning": "Robustness score 39/100 places this finding at 'fragile'. The -0.05 AUC leakage margin is the deciding fact: the prosecution's artifact reading is the more defensible one. The finding sits below the promotion floor; it is not carried forward to a mechanism, and would need a stronger leakage margin or molecular anchor to be worth a scientist's quarter."
           },

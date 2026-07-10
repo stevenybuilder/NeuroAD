@@ -159,7 +159,7 @@ def _synthetic_survivor():
                           "embeddings beyond scanner and aging.",
             "target": "conversion", "group_a": "MCI converters",
             "group_b": "MCI non-converters",
-            "substrate": "frozen Neuro-JEPA structural embeddings", "head": "linear probe",
+            "substrate": "synthetic contract embeddings (badged demo cohort)", "head": "linear probe",
         },
         "naive_effect": {"metric": "AUC", "value": conv, "task": "MCI->AD conversion"},
         "leakage_margin": {"outcome_auc": conv, "scanner_auc": scan,
@@ -245,7 +245,7 @@ def _synthetic_kill():
                           "non-converters.",
             "target": "conversion", "group_a": "MCI converters",
             "group_b": "MCI non-converters",
-            "substrate": "frozen Neuro-JEPA structural embeddings", "head": "linear probe"},
+            "substrate": "synthetic contract embeddings (badged demo cohort)", "head": "linear probe"},
         "naive_effect": {"metric": "AUC", "value": conv, "task": "MCI->AD conversion"},
         "leakage_margin": {"outcome_auc": conv, "scanner_auc": scan,
                            "margin": round(conv - scan, 2)},
@@ -541,7 +541,7 @@ def _synthetic_cohort():
     miss = _missingness()
     return {
         "badge": "SYNTHETIC HARNESS",
-        "substrate_line": "frozen Neuro-JEPA structural embeddings (contract feeder)",
+        "substrate_line": "synthetic contract embeddings (badged demo cohort — NOT Neuro-JEPA)",
         "n_subjects": 480, "embedding_dim": 64, "n_sites": 4, "n_scanners": 3,
         "dx_counts": {"CN": 210, "MCI": 180, "AD": 90},
         "age_mean": 72.4, "pct_female": 54.0,
@@ -992,15 +992,11 @@ def _try_engine() -> dict | None:
                 df = loaders.load(loader, seed=seed)
                 loaded[ck] = df
             claim = make_claim(loader, text, target, ga, gb)
-            # Label the substrate honestly per feeder (real OASIS is weight-free
-            # structural features, NOT Neuro-JEPA embeddings). This flows into
-            # naive_effect.substrate and the courtroom text, which read claim.substrate.
-            if loader == "oasis":
-                claim.substrate = "OASIS structural-derived features (weight-free feeder)"
-            elif loader.startswith("adni"):
-                claim.substrate = "ADNI UCSF FreeSurfer structural features (weight-free feeder)"
-            else:
-                claim.substrate = "frozen Neuro-JEPA structural embeddings"
+            # Label the substrate honestly per feeder (real OASIS/ADNI are
+            # weight-free structural features, synthetic is a badged demo cohort —
+            # NOT Neuro-JEPA embeddings). Flows into naive_effect.substrate and the
+            # courtroom text, which read claim.substrate.
+            claim.substrate = loaders.honest_substrate(loader)
             card = pipeline.run_referee(df, claim)
             fb = data["substrates"][sub]["cases"][kind]
             data["substrates"][sub]["cases"][kind] = _real_case(fb, card, df, promoted_cap=cap)

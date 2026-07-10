@@ -1,6 +1,6 @@
-claim_id: claim-a-structural-signature-separates
-claim_text: a structural signature separates converters
-substrate: frozen Neuro-JEPA structural embeddings
+claim_id: claim-does-the-embedding-predict-mci-a
+claim_text: Does the embedding predict MCI->AD conversion?
+substrate: synthetic contract embeddings (badged demo cohort)
 head: linear probe
 population:
   group_a: MCI converters
@@ -11,7 +11,7 @@ naive_effect:
   target: conversion
   n: 137
   head: linear probe
-  substrate: frozen Neuro-JEPA structural embeddings
+  substrate: synthetic contract embeddings (badged demo cohort)
 robustness:
   age_sex: failed
   site_scanner: failed
@@ -75,7 +75,8 @@ robustness_detail:
       provenance: "SYNTHETIC HARNESS \u2014 p-tau217/GFAP are calibration targets\
         \ (calibration.CAL), not measured plasma"
   replication:
-    detail: held-out cohort AUC=0.85 [95% CI 0.75, 0.94] (train 0.89); n_test=64
+    detail: held-out cohort AUC=0.85 [95% CI 0.75, 0.94] (train 0.89); n_test=64 over
+      1 aggregated held-out site(s)
     stats:
       train_auc: 0.8894
       test_auc: 0.8542
@@ -83,8 +84,9 @@ robustness_detail:
       test_auc_ci_hi: 0.9365
       n_train: 73
       n_test: 64
-robustness_score: 40
-verdict: partially robust
+      n_test_sites: 1
+robustness_score: 39
+verdict: fragile
 promoted: false
 biology_hypothesis: ''
 next_experiment: []
@@ -98,7 +100,6 @@ caveats:
   \ the gate MECHANIC, not a real result."
 - "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014\
   \ anchor is suggestive, not confirmatory."
-- "'Partially robust' is not 'robust' \u2014 survives some but not all challenges."
 - Verdict is provisional and conditional on the scanner/site distribution of any replication
   cohort.
 - Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.
@@ -106,9 +107,6 @@ caveats:
 - "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits\
   \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
   \ (2026))."
-- "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes\
-  \ over the tests that ran, so a middling verdict can hide a dimension that quietly\
-  \ failed \u2014 read the per-test results, not just the headline."
 - 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
   (this cohort''s fit: R2=0.81, MAE=2.0yr), so residual generic-aging signal can survive
   the adjustment and masquerade as disease-specific.'
@@ -163,7 +161,8 @@ evidence_ledger:
   result: passed
   n_used: 64
   n_missing: null
-  detail: held-out cohort AUC=0.85 [95% CI 0.75, 0.94] (train 0.89); n_test=64
+  detail: held-out cohort AUC=0.85 [95% CI 0.75, 0.94] (train 0.89); n_test=64 over
+    1 aggregated held-out site(s)
 double_dissociation:
   auc_before: 0.8457
   auc_after: 0.8491
@@ -187,15 +186,16 @@ atn_profile:
   routed_mechanism: amyloid_cascade
   synthetic: true
 honesty_rung: stable_cluster
+translation: {}
 discovery_provenance:
   mode: supervised
   engine: neuroad.pipeline.run_referee
   target: conversion
-  rationale: 'Named-contrast hypothesis (matched: converter, separate) -> supervised
+  rationale: 'Named-contrast hypothesis (matched: conversion, predict) -> supervised
     probe/gauntlet points the head at ''conversion''.'
   signals:
-  - converter
-  - separate
+  - predict
+  - conversion
   dataset: synthetic:KILL
   novelty_class: adjacent
   expected_direction: the structural probe score should track plasma p-tau217 (expected
@@ -217,23 +217,20 @@ discovery_provenance:
       r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects
     kill_criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the
       complete-case subset, the amyloid-cascade routing is wrong
-narration: "The claim \u201Ca structural signature separates converters\u201D lands\
-  \ at \u201Cpartially robust\u201D (40/100). The naive effect (AUC 0.85 separating\
-  \ MCI converters from MCI non-converters) is real on paper, but the referee's job\
-  \ is to ask what else could produce it. It sits below the promotion floor, so the\
-  \ honest read is that acquisition, demographics or generic aging can plausibly account\
-  \ for it, and it should not consume a scientist's quarter without stronger evidence.\
-  \ Where it stops being true: that the scanner/site mix in any new cohort matches\
-  \ this one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution\
+narration: "The claim \u201CDoes the embedding predict MCI->AD conversion?\u201D lands\
+  \ at \u201Cfragile\u201D (39/100). The naive effect (AUC 0.85 separating MCI converters\
+  \ from MCI non-converters) is real on paper, but the referee's job is to ask what\
+  \ else could produce it. It sits below the promotion floor, so the honest read is\
+  \ that acquisition, demographics or generic aging can plausibly account for it,\
+  \ and it should not consume a scientist's quarter without stronger evidence. Where\
+  \ it stops being true: that the scanner/site mix in any new cohort matches this\
+  \ one \u2014 the leakage margin is only -0.08 AUC, so a different scanner distribution\
   \ could erase the effect. That the same frozen embeddings can predict scanner/site\
   \ as well as outcome is documented prior art (\u201CBatch Effects in Brain Foundation\
   \ Model Embeddings,\u201D arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only\
   \ runs the audit and issues the verdict."
 reviewer:
   critique:
-  - "\u2018Partially robust\u2019 is not \u2018robust\u2019. The score renormalizes\
-    \ over the tests that ran, so a middling verdict can hide a dimension that quietly\
-    \ failed \u2014 read the per-test results, not just the headline."
   - 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
     (this cohort''s fit: R2=0.81, MAE=2.0yr), so residual generic-aging signal can
     survive the adjustment and masquerade as disease-specific.'

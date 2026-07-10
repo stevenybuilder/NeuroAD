@@ -11,7 +11,7 @@ claim:
   target: conversion
   group_a: MCI converters
   group_b: MCI non-converters
-  substrate: frozen Neuro-JEPA structural embeddings
+  substrate: synthetic contract embeddings (badged demo cohort)
   head: linear probe
 naive_effect:
   metric: AUC
@@ -19,7 +19,7 @@ naive_effect:
   target: conversion
   n: 130
   head: linear probe
-  substrate: frozen Neuro-JEPA structural embeddings
+  substrate: synthetic contract embeddings (badged demo cohort)
 leakage_margin:
   outcome_auc: 0.739
   scanner_auc: 0.676

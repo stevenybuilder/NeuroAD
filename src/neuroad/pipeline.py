@@ -77,6 +77,22 @@ def _propose_biology(card: ClaimCard, df: pd.DataFrame) -> Optional[dict]:
     return None
 
 
+def _translate(card: ClaimCard, df: pd.DataFrame) -> Optional[dict]:
+    """Promoted survivors ONLY -> chain PI4AD/AlphaFold/repurposing off the
+    Bridge's mechanism routing. Offline-first and exception-safe: a failure here
+    NEVER affects the score/verdict — translation is a read-only side artifact."""
+    try:
+        from neuroad.claude import bridge
+        from neuroad.harness import translation
+        mechanism = bridge._route(df)
+        result = translation.translate(mechanism, df)
+        if isinstance(result, dict):
+            return result
+    except Exception as exc:
+        _log.debug("translation.translate failed, skipping translation: %r", exc)
+    return None
+
+
 def _review(card: ClaimCard) -> Optional[dict]:
     try:
         from neuroad.claude import reviewer
@@ -159,9 +175,11 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     # 4. Survivors only -> Claude adjudication + biology bridge.
     adjudication = None
     biology = None
+    translation = None
     if card.promoted:
         adjudication = _adjudicate(claim, tests)
         biology = _propose_biology(card, df)
+        translation = _translate(card, df)
 
     # 5. Reviewer argues against the verdict (always runs).
     reviewer_out = _review(card)
@@ -186,6 +204,10 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
         card.reviewer = reviewer_out
     if biology is not None:
         card.biology = biology
+    # Translation lead (molecule/wet-lab follow-up) — promoted survivors only,
+    # read-only side artifact; never affects score/verdict.
+    if translation is not None:
+        card.translation = translation
     # Raw test evidence, so downstream (UI/exporter) can adjudicate or re-render
     # any case — including refused ones — without re-running the gauntlet.
     card.tests_evidence = tests

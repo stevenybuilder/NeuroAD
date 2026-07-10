@@ -45,6 +45,7 @@ from ..contract import (
     ClaimCard,
     TestEvidence,
     TestResult,
+    Verdict,
     is_promoted,
     verdict_for,
 )
@@ -252,8 +253,66 @@ def _default_claim(text: str) -> Claim:
 
 
 # ===========================================================================
-# Step 3 — run the referee for the routed mode.
+# Step 2b — refuse out-of-scope targets instead of silently coercing them.
 # ===========================================================================
+
+#: Vocabulary that names a target the head CANNOT point at (no such label column
+#: and no regression head). The engine's supported targets are exactly
+#: {conversion, dx_binary, site, scanner}. Anything below was, historically,
+#: silently re-interpreted as `conversion` — a real honesty hazard.
+_OUT_OF_SCOPE_TARGETS = (
+    "tau-pet", "tau pet", "amyloid-pet", "amyloid pet", "suvr", "centiloid",
+    "csf ", "cerebrospinal", "amyloid-positive", "amyloid positive",
+    "amyloid-negative", "amyloid status", "amyloid positivity",
+    "apoe", "genotype", "genome-wide", "gwas", "allele", "polygenic",
+    "regression", "predict age", "brain-age prediction", "cognitive score",
+    "trajectory", "rate of decline", "slope of", "continuous outcome",
+)
+
+#: If any of these in-scope anchors appear, the hypothesis is plausibly a
+#: supported contrast (or a novel-pattern discovery) — do NOT refuse.
+_IN_SCOPE_ANCHORS = (
+    "conversion", "convert", "mci", "ad vs", "ad-vs", "cn", "diagnos", " dx",
+    "progress to", "site", "scanner", "leakage", "subtype", "phenotype",
+    "cluster", "stratif", "discover",
+)
+
+
+def _out_of_scope_reason(text: str) -> str:
+    """Return a reason string if ``text`` names an unsupported target, else ""."""
+    low = f" {(text or '').lower()} "
+    if any(a in low for a in _IN_SCOPE_ANCHORS):
+        return ""
+    hit = next((t for t in _OUT_OF_SCOPE_TARGETS if t in low), "")
+    if not hit:
+        return ""
+    return (
+        f"names an unsupported target ('{hit.strip()}'): this engine's reused "
+        "head can only be pointed at {conversion, dx_binary, site, scanner} and "
+        "has no regression / molecular / genetic head. Not analyzed (rather than "
+        "silently answering a different question)."
+    )
+
+
+def _unsupported_card(hypothesis: str, dataset: str, reason: str) -> ClaimCard:
+    """A refused card: honest, non-promoted, no fabricated effect or tests."""
+    claim = Claim(
+        claim_id="claim-unsupported",
+        claim_text=hypothesis or "",
+        target="unsupported",
+        substrate="(not analyzed — unsupported target)",
+    )
+    return ClaimCard(
+        claim=claim,
+        naive_effect={"metric": "n/a", "value": None,
+                      "note": "not analyzed — unsupported target"},
+        tests=[],
+        score=0,
+        verdict=Verdict.FRAGILE,
+        promoted=False,
+        caveats=[f"Unsupported hypothesis: {reason}"],
+    )
+
 
 def _run_supervised(df: pd.DataFrame, claim: Claim) -> ClaimCard:
     """Named-contrast: point the reused head at the target via the full referee."""
@@ -541,8 +600,23 @@ def investigate(hypothesis: str, dataset: str, *, api: bool = False,
 
     df = loaders.load(dataset, seed=seed)
 
+    # 0. Refuse out-of-scope targets up front rather than silently coercing them
+    #    to `conversion` (the historical honesty hazard).
+    reason = _out_of_scope_reason(hypothesis)
+    if reason:
+        card = _unsupported_card(hypothesis, dataset, reason)
+        xcard = experiment_card.build_experiment_card(
+            card,
+            novelty_class="unsupported",
+            honesty_rung=HONESTY_LADDER[0] if HONESTY_LADDER else "unsupported",
+            discovery_provenance={"dataset": dataset, "status": "unsupported_target",
+                                  "reason": reason},
+        )
+        return honesty_guard(xcard)
+
     # 1. Parse + enrich the hypothesis.
     claim = _parse_claim(hypothesis, df, api=api)
+    claim.substrate = loaders.honest_substrate(dataset)   # truthful per-feeder label
     novelty = _classify_novelty(claim.claim_text or hypothesis)
     mechanism, expected_direction, kill_criterion = _mechanism_enrichment(df)
 

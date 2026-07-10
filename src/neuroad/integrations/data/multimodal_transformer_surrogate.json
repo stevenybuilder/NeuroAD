@@ -1,0 +1,30 @@
+{
+  "_comment": "Transparent, HAND-SET logistic surrogate for the Jasodanand et al. (Nat Commun 2025, vkola-lab/ncomms2025) multimodal fusion transformer that predicts individual Abeta & tau PET status. These coefficients are set from biomarker directionality (domain knowledge) — they are NOT fitted to any cohort and NOT calibrated to the published transformer's AUROC (paper reports Abeta AUROC~0.79, tau AUROC~0.84; those belong to the REAL model, never to this stand-in). Standardization means/scales are rough plasma/volumetric population anchors, not dataset-derived. Source of the schema/target names: vkola-lab/ncomms2025 dev/data/toml_files/stage_1_eval.toml (targets amy_label, tau_label). This snapshot exists so the offline surrogate is auditable and versioned, NOT because it carries real per-subject data (the repo ships none usable: pseudodata is random, source_data is aggregate).",
+  "version": "1.0.0",
+  "targets": ["abeta", "tau"],
+  "standardization": {
+    "p_tau217": {"mean": 1.0, "scale": 1.0, "note": "plasma p-tau217 pg/mL; elevated ~2-3"},
+    "gfap": {"mean": 150.0, "scale": 90.0, "note": "plasma GFAP pg/mL"},
+    "nfl": {"mean": 20.0, "scale": 12.0, "note": "plasma NfL pg/mL"},
+    "hippocampal_volume": {"mean": 3400.0, "scale": 600.0, "note": "bilateral hippocampus mm^3; lower = more atrophy"},
+    "age": {"mean": 72.0, "scale": 8.0, "note": "years"},
+    "apoe4": {"mean": 0.5, "scale": 0.7, "note": "APOE e4 allele count 0/1/2"}
+  },
+  "abeta": {
+    "bias": -0.4,
+    "coefficients": {
+      "p_tau217": 1.2,
+      "gfap": 0.8,
+      "apoe4": 0.7,
+      "age": 0.3
+    }
+  },
+  "tau": {
+    "bias": -0.4,
+    "coefficients": {
+      "p_tau217": 1.3,
+      "hippocampal_volume": -1.0,
+      "age": 0.3
+    }
+  }
+}

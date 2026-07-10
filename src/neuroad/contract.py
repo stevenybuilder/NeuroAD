@@ -273,6 +273,9 @@ class ClaimCard:
             "novelty_class": self.novelty_class,
             "atn_profile": self.atn_profile,
             "honesty_rung": self.honesty_rung,
+            # Molecule/wet-lab translation lead — a read-only side artifact set by
+            # pipeline.run_referee for promoted survivors only (empty otherwise).
+            "translation": getattr(self, "translation", {}) or {},
         }
 
 
