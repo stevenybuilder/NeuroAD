@@ -11,8 +11,8 @@ Claude is the ADJUDICATOR, not decoration. Each module below makes a
   - reviewer     : argues AGAINST the tool's own verdict (self-referee)
 
 Every module runs live against the Anthropic Messages API when
-``ANTHROPIC_API_KEY`` is set (model ``claude-fable-5``, falling back to
-``claude-opus-4-8`` / ``claude-sonnet-5``), and otherwise returns a
+``ANTHROPIC_API_KEY`` is set (model ``claude-sonnet-5``, retrying once on
+``claude-opus-4-8``), and otherwise returns a
 deterministic, literature-grounded TEMPLATE result so the demo runs fully
 offline. Nothing here is random; nothing here crashes.
 """

@@ -7,14 +7,18 @@ Design contract (relied on by every M3 module):
     USING_LIVE_API: bool
 
 If ``ANTHROPIC_API_KEY`` is set we call the Messages API with model
-``claude-fable-5`` (Anthropic's most capable model). Fable 5 has thinking always
-on, so we never pass a ``thinking`` block; we opt into server-side refusal
-fallbacks to ``claude-opus-4-8`` so a benign life-sciences prompt is never lost
-to a false-positive classifier hit. When a JSON ``schema`` is supplied we force
-structured output through a single strict tool call and return the tool input
-dict. On any transport/parse error we retry once on ``claude-sonnet-5`` and, if
-that also fails, fall through to the deterministic template so the pipeline
-still produces an answer.
+``claude-sonnet-5``. This layer only PARSES hypotheses and NARRATES the
+referee's already-computed verdict (the kill/promote decision, gauntlet, scoring
+and molecule loop are all deterministic Python) — it never decides anything — so
+a balanced-tier model is the right cost/quality point, not a premium one. Sonnet
+5 also avoids the research-biology safety classifiers that make Fable 5 prone to
+false-positive refusals on benign Alzheimer's prompts. When a JSON ``schema`` is
+supplied we force structured output through a single strict tool call and return
+the tool input dict. On any transport/parse error we retry once on
+``claude-opus-4-8`` and, if that also fails, fall through to the deterministic
+template so the pipeline still produces an answer. (To go cheaper, set
+PRIMARY_MODEL to ``claude-haiku-4-5``; the layer is prose-only, so Haiku is
+plenty and ~3x cheaper again.)
 
 If the key is NOT set (the default in the demo environment), ``complete``
 returns a deterministic, prompt-derived template — a well-formed stand-in that
@@ -29,10 +33,11 @@ import os
 from typing import Optional
 
 # --- live-API configuration (read once at import) --------------------------
-PRIMARY_MODEL = "claude-fable-5"
-FALLBACK_MODEL = "claude-opus-4-8"       # server-side refusal fallback target
-RETRY_MODEL = "claude-sonnet-5"          # transport-error retry
-FALLBACK_BETA = "server-side-fallback-2026-06-01"
+# This is a parse + narrate layer, NOT the reasoning that decides a verdict, so a
+# balanced-tier model is the right cost/quality point. Set PRIMARY_MODEL to
+# "claude-haiku-4-5" for the cheapest path (prose-only work; ~pennies/run).
+PRIMARY_MODEL = "claude-sonnet-5"        # adjudication/narration (not the verdict)
+FALLBACK_MODEL = "claude-opus-4-8"       # transport/parse-error retry target
 MAX_TOKENS = 4096
 
 USING_LIVE_API: bool = bool(os.environ.get("ANTHROPIC_API_KEY"))
@@ -56,7 +61,7 @@ def model_badge() -> dict:
         "live": live,
         "configured_live": live,
         "model": PRIMARY_MODEL if live else "offline-template",
-        "path": ("live Anthropic API (claude-fable-5)" if live
+        "path": (f"live Anthropic API ({PRIMARY_MODEL})" if live
                  else "deterministic offline template (no ANTHROPIC_API_KEY)"),
         "last_call_live": bool(LAST_CALL_LIVE),
     }
@@ -130,7 +135,7 @@ def _live_complete(system: str, prompt: str, schema: Optional[dict]):
     client = anthropic.Anthropic()
     full_system = f"{_house_system()}\n\n{system}".strip()
 
-    def _call(model: str, use_fallback: bool):
+    def _call(model: str):
         kwargs: dict = {
             "model": model,
             "max_tokens": MAX_TOKENS,
@@ -145,19 +150,12 @@ def _live_complete(system: str, prompt: str, schema: Optional[dict]):
                 "input_schema": schema,
             }]
             kwargs["tool_choice"] = {"type": "tool", "name": "record"}
-        if use_fallback:
-            # Fable 5: opt into server-side refusal fallback by default.
-            return client.beta.messages.create(
-                betas=[FALLBACK_BETA],
-                fallbacks=[{"model": FALLBACK_MODEL}],
-                **kwargs,
-            )
         return client.messages.create(**kwargs)
 
     try:
-        msg = _call(PRIMARY_MODEL, use_fallback=True)
+        msg = _call(PRIMARY_MODEL)
     except Exception:
-        msg = _call(RETRY_MODEL, use_fallback=False)
+        msg = _call(FALLBACK_MODEL)
 
     return _extract(msg, schema)
 
