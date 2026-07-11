@@ -1,20 +1,20 @@
 """
-NeuroAD Discovery Engine — Claude reasoning layer (M3).
+NeuroAD Discovery Engine — deterministic explanation layer.
 
-Claude is the ADJUDICATOR, not decoration. Each module below makes a
-*consequential* decision in the referee loop:
+These modules turn the referee's evidence into text — WITHOUT calling Claude.
+Claude's ONLY role in the engine is the ORCHESTRATOR (``harness/agent.py``),
+which sequences the engine's capabilities as tools; the referee itself is fully
+deterministic, so every verdict/score/critique/narration below is pure Python:
 
-  - claim_parser : natural-language hunch  -> structured, testable Claim
-  - courtroom    : Prosecution / Defense / Judge personas render the verdict
+  - claim_parser : natural-language hunch  -> structured, testable Claim (keywords)
+  - courtroom    : Prosecution / Defense / Judge text from the gauntlet evidence
   - narrator     : plain-language verdict + the assumption that would break it
   - bridge       : promoted survivors -> ONE biomarker-routed mechanism + experiment
-  - reviewer     : argues AGAINST the tool's own verdict (self-referee)
+  - reviewer     : an adversarial critique of the card's own verdict
 
-Every module runs live against the Anthropic Messages API when
-``ANTHROPIC_API_KEY`` is set (model ``claude-sonnet-5``, retrying once on
-``claude-opus-4-8``), and otherwise returns a
-deterministic, literature-grounded TEMPLATE result so the demo runs fully
-offline. Nothing here is random; nothing here crashes.
+``_client`` now only holds the ORCHESTRATOR's model config + an honest
+``model_badge``; it no longer drives these modules. Nothing here is random;
+nothing here calls the network; nothing here crashes.
 """
 from __future__ import annotations
 

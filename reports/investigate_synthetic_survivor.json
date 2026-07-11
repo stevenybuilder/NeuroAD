@@ -1,6 +1,6 @@
 {
-  "claim_id": "claim-does-the-embedding-predict-mci-a",
-  "claim_text": "Does the embedding predict MCI->AD conversion?",
+  "claim_id": "claim-does-the-embedding-predict-mci-t",
+  "claim_text": "Does the embedding predict MCI to AD conversion?",
   "substrate": "synthetic contract embeddings (badged demo cohort)",
   "head": "linear probe",
   "population": {
@@ -100,7 +100,7 @@
   "robustness_score": 80,
   "verdict": "robust enough for follow-up",
   "promoted": true,
-  "biology_hypothesis": "Survivor \u201cDoes the embedding predict MCI->AD conversion?\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+  "biology_hypothesis": "Survivor \u201cDoes the embedding predict MCI to AD conversion?\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
   "next_experiment": [
     "Cohort: ADNI-3 / EPAD.",
     "Target N: ~120 complete-case subjects with the routing biomarker.",
@@ -353,7 +353,7 @@
       "kill_criterion": "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong"
     }
   },
-  "narration": "The claim \u201cDoes the embedding predict MCI->AD conversion?\u201d lands at \u201crobust enough for follow-up\u201d (80/100). The naive effect (AUC 0.74 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only +0.06 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict.",
+  "narration": "The claim \u201cDoes the embedding predict MCI to AD conversion?\u201d lands at \u201crobust enough for follow-up\u201d (80/100). The naive effect (AUC 0.74 separating MCI converters from MCI non-converters) is real on paper, but the referee's job is to ask what else could produce it. It cleared the gauntlet's promotion floor: the effect exceeds the scanner-prediction floor on subject-disjoint splits and is worth a confirmatory follow-up \u2014 as a hypothesis, not a settled result. Where it stops being true: that the scanner/site mix in any new cohort matches this one \u2014 the leakage margin is only +0.06 AUC, so a different scanner distribution could erase the effect. That the same frozen embeddings can predict scanner/site as well as outcome is documented prior art (\u201cBatch Effects in Brain Foundation Model Embeddings,\u201d arXiv:2604.14441 (2026)); NeuroAD Discovery Engine only runs the audit and issues the verdict.",
   "adjudication": {
     "prosecution": "The claim that synthetic contract embeddings (badged demo cohort) separate MCI converters from MCI non-converters does not survive scrutiny. The subject-disjoint leakage margin is only +0.06 AUC \u2014 the same head predicts the scanner nearly as well as the outcome, exactly the batch-effect mechanic reported in 'Batch Effects in Brain Foundation Model Embeddings' (arXiv:2604.14441 (2026)). It failed or weakened under: Site / scanner leakage (weakened), Replication split (weakened). The parsimonious reading is an acquisition/aging artifact until an orthogonal molecular anchor says otherwise.",
     "defense": "The signal separating MCI converters from MCI non-converters is consistent with real disease biology. It withstood: Age / sex adjustment, Brain-age control, Biomarker anchor. Critically, it is anchored to a plasma p-tau217 / GFAP correlation on the complete subset (r=0.40) \u2014 molecular pathology, not pixels.",
@@ -376,7 +376,7 @@
     ]
   },
   "biology": {
-    "hypothesis": "Survivor \u201cDoes the embedding predict MCI->AD conversion?\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+    "hypothesis": "Survivor \u201cDoes the embedding predict MCI to AD conversion?\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
     "next_experiment": [
       "Cohort: ADNI-3 / EPAD.",
       "Target N: ~120 complete-case subjects with the routing biomarker.",
@@ -391,9 +391,10 @@
   },
   "claude": {
     "live": false,
-    "configured_live": false,
-    "model": "offline-template",
-    "path": "deterministic offline template (no ANTHROPIC_API_KEY)",
-    "last_call_live": false
+    "referee": "deterministic",
+    "orchestrator_live": false,
+    "orchestrator_model": "unavailable (no ANTHROPIC_API_KEY)",
+    "model": "deterministic-referee",
+    "path": "deterministic referee \u2014 Claude runs only in the orchestrator; no key set"
   }
 }

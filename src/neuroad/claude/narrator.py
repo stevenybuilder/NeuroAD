@@ -26,14 +26,10 @@ SYSTEM = (
 
 
 def narrate(card: ClaimCard) -> str:
-    """Return a plain-language verdict paragraph for a ClaimCard."""
-    if _client.USING_LIVE_API:
-        try:
-            txt = _client.complete(SYSTEM, _prompt(card))
-            if isinstance(txt, str) and txt.strip():
-                return txt.strip()
-        except Exception:
-            pass
+    """Return a plain-language verdict paragraph for a ClaimCard.
+
+    DETERMINISTIC — the referee never calls Claude (Claude is orchestrator-only,
+    see harness/agent.py); this is generated from the card's evidence."""
     return _fallback(card)
 
 

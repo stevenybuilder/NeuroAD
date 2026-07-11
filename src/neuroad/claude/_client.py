@@ -50,20 +50,24 @@ LAST_CALL_LIVE: bool = False
 
 
 def model_badge() -> dict:
-    """A truthful, JSON-safe descriptor of which reasoning path is in use.
+    """A truthful, JSON-safe descriptor of the reasoning path.
 
-    ``configured_live`` reflects whether an API key is present; ``model`` and
-    ``path`` name what actually produces the reasoning text so a viewer can see
-    on camera whether Claude ran live or the deterministic offline template did.
+    HONESTY CONTRACT: the REFEREE is fully deterministic — it never calls Claude
+    (every verdict/score/critique/narration is pure Python). Claude's only role in
+    the engine is the ORCHESTRATOR (harness/agent.py), which runs live iff
+    ANTHROPIC_API_KEY is set. This badge reports that state so a viewer never
+    mistakes the referee for an LLM. ``live`` is therefore always False for the
+    referee; ``orchestrator_live`` says whether the tool-runner can run live.
     """
-    live = bool(USING_LIVE_API)
+    key = bool(USING_LIVE_API)
     return {
-        "live": live,
-        "configured_live": live,
-        "model": PRIMARY_MODEL if live else "offline-template",
-        "path": (f"live Anthropic API ({PRIMARY_MODEL})" if live
-                 else "deterministic offline template (no ANTHROPIC_API_KEY)"),
-        "last_call_live": bool(LAST_CALL_LIVE),
+        "live": False,                       # the referee never calls Claude
+        "referee": "deterministic",
+        "orchestrator_live": key,
+        "orchestrator_model": PRIMARY_MODEL if key else "unavailable (no ANTHROPIC_API_KEY)",
+        "model": "deterministic-referee",
+        "path": ("deterministic referee — Claude runs only in the orchestrator"
+                 + (f" ({PRIMARY_MODEL}, key present)" if key else "; no key set")),
     }
 
 #: The house system framing shared by every Claude call in the referee. Kept as
