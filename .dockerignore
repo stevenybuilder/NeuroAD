@@ -1,0 +1,35 @@
+# Keep the backend image lean AND free of gated/licensed/secret data.
+# (The static ./Dockerfile only COPYs nginx.conf + app/index.html + app/demo_data.json,
+#  none of which are excluded here, so it is unaffected.)
+
+# Never ship gated / non-commercial-licensed data into a deployable image.
+data/real/_gated/
+data/real/_stubs/
+data/real/fixtures/
+*neurojepa*.csv
+data/raw/
+data/processed/
+
+# Secrets / local env
+.env
+.env.*
+
+# Build + VCS + caches
+.venv/
+.git/
+.gitignore
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Local scratch / bulky non-runtime artifacts
+scratch/
+Archive/
+download/
+download*/
+notebooks/
+docs/
+reports/
+*.pdf
+.DS_Store
