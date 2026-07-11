@@ -43,6 +43,11 @@ from .gnn_llm import (
     RepurposingCandidate,
     RepurposingEngine,
 )
+from .opentargets import (
+    OpenTargetsClient,
+    TargetAssociation,
+    ad_target_evidence,
+)
 
 __all__ = [
     # AlphaFold — structural layer
@@ -61,4 +66,8 @@ __all__ = [
     # GNN/LLM — drug repurposing
     "RepurposingEngine",
     "RepurposingCandidate",
+    # Open Targets — quantitative target-disease evidence
+    "OpenTargetsClient",
+    "TargetAssociation",
+    "ad_target_evidence",
 ]

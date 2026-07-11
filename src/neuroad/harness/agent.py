@@ -155,6 +155,25 @@ def repurposing_candidates(gene: str) -> str:
                       default=str)
 
 
+def target_evidence(gene: str) -> str:
+    """Quantitative target–disease evidence for a gene from Open Targets.
+
+    Args:
+        gene: An AD target gene symbol (e.g. "APP", "SORL1", "TREM2").
+
+    Returns a JSON object: the Open Targets AD association score (0-1) with its
+    per-datatype breakdown (genetic_association, known_drug, literature, ...) plus
+    known/clinical drugs hitting the target. ``source`` is "live" (real Open
+    Targets fetch) or "offline_snapshot". Use this to justify a target's priority
+    with real evidence, not a curated guess.
+    """
+    from ..integrations.opentargets import ad_target_evidence
+    try:
+        return json.dumps(ad_target_evidence(gene, prefer_offline=False), default=str)
+    except Exception as exc:  # noqa: BLE001
+        return json.dumps({"gene": gene, "error": str(exc)})
+
+
 def seed_experiment_targets(mechanism: str) -> str:
     """Seed the active-learning loop's belief priors for a mechanism's targets.
 
@@ -235,6 +254,7 @@ _TOOL_FNS = [
     referee_hypothesis,
     prioritize_targets,
     protein_structure,
+    target_evidence,
     repurposing_candidates,
     # active-learning experiment loop (the feedback edge)
     seed_experiment_targets,
