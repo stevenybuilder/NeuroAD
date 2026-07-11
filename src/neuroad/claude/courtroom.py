@@ -55,18 +55,10 @@ _SCHEMA = {
 
 
 def adjudicate(claim: Claim, tests: list[TestEvidence]) -> dict:
-    """Return prosecution / defense / judge arguments for a claim + gauntlet."""
-    if _client.USING_LIVE_API:
-        try:
-            data = _client.complete(SYSTEM, _prompt(claim, tests), schema=_SCHEMA)
-            if all(data.get(k) for k in ("prosecution", "defense", "judge_reasoning")):
-                return {
-                    "prosecution": data["prosecution"],
-                    "defense": data["defense"],
-                    "judge_reasoning": data["judge_reasoning"],
-                }
-        except Exception:
-            pass
+    """Return prosecution / defense / judge arguments for a claim + gauntlet.
+
+    DETERMINISTIC — the referee never calls Claude (Claude is orchestrator-only,
+    see harness/agent.py); arguments are synthesized from the gauntlet evidence."""
     return _fallback(claim, tests)
 
 

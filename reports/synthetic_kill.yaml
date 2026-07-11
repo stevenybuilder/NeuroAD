@@ -219,7 +219,9 @@ reviewer:
     \ (2026))."
 claude:
   live: false
-  configured_live: false
-  model: offline-template
-  path: deterministic offline template (no ANTHROPIC_API_KEY)
-  last_call_live: false
+  referee: deterministic
+  orchestrator_live: false
+  orchestrator_model: unavailable (no ANTHROPIC_API_KEY)
+  model: deterministic-referee
+  path: "deterministic referee \u2014 Claude runs only in the orchestrator; no key\
+    \ set"

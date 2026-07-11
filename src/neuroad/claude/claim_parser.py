@@ -60,18 +60,10 @@ def parse_claim(text: str, df: Optional[pd.DataFrame] = None) -> Claim:
     novelty_class, an expected_direction and a pre-registered kill_criterion drawn
     from `policy/` (with hardcoded fallbacks), so the whole step stays offline and
     deterministic."""
+    # DETERMINISTIC parse — the referee never calls Claude (Claude is
+    # orchestrator-only, see harness/agent.py). Keyword router + L3 policy enrich.
     text = (text or "").strip()
-    claim: Optional[Claim] = None
-    if _client.USING_LIVE_API:
-        try:
-            data = _client.complete(
-                SYSTEM, _prompt(text, df), schema=_SCHEMA
-            )
-            claim = _from_dict(text, data)
-        except Exception:
-            claim = None
-    if claim is None:
-        claim = _fallback(text, df)
+    claim = _fallback(text, df)
     _enrich(claim, text, df)
     return claim
 

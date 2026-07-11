@@ -41,17 +41,11 @@ _SCHEMA = {
 
 
 def review(card: ClaimCard) -> dict:
-    """Return an adversarial critique of the card's own verdict + tighter caveats."""
-    if _client.USING_LIVE_API:
-        try:
-            data = _client.complete(SYSTEM, _prompt(card), schema=_SCHEMA)
-            if data.get("critique"):
-                return {
-                    "critique": list(data.get("critique") or []),
-                    "revised_caveats": list(data.get("revised_caveats") or []),
-                }
-        except Exception:
-            pass
+    """Return an adversarial critique of the card's own verdict + tighter caveats.
+
+    DETERMINISTIC: the referee never calls Claude. This produces the critique from
+    the card's own TestEvidence stats. (Claude's only role in the engine is the
+    orchestrator — see harness/agent.py.)"""
     return _fallback(card)
 
 

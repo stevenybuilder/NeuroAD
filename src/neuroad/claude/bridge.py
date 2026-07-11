@@ -143,18 +143,10 @@ def propose_biology(card: ClaimCard, df: Optional[pd.DataFrame] = None) -> dict:
             "falsification": [],
         }
 
+    # DETERMINISTIC: the referee never calls Claude. Mechanism routing +
+    # experiment come from the biomarker-dominance rule below. (Claude's only
+    # role in the engine is the orchestrator — see harness/agent.py.)
     mech_key = _route(df)
-    if _client.USING_LIVE_API:
-        try:
-            data = _client.complete(SYSTEM, _prompt(card, df, mech_key), schema=_SCHEMA)
-            if data.get("hypothesis") and data.get("next_experiment"):
-                return {
-                    "hypothesis": data["hypothesis"],
-                    "next_experiment": list(data.get("next_experiment") or []),
-                    "falsification": list(data.get("falsification") or []),
-                }
-        except Exception:
-            pass
     return _fallback(card, mech_key)
 
 

@@ -227,46 +227,17 @@ class RepurposingEngine:
         return candidates[:max(0, top_n)]
 
     def synthesize_evidence(self, candidate: RepurposingCandidate) -> str:
-        """Return a one-line rationale for ``candidate`` (also stored on it).
+        """Return a one-line, deterministic rationale for ``candidate``.
 
-        Uses the existing Claude bridge when ``ANTHROPIC_API_KEY`` is set;
-        otherwise returns a deterministic template built from the mechanism
-        note. Never raises: any bridge failure falls back to the template.
+        DETERMINISTIC template from the mechanism note — states the hypothesis
+        basis only, never a clinical-efficacy claim. (Claude's only role in the
+        engine is the orchestrator, which sequences the tools that produce these
+        candidates — see harness/agent.py — not per-candidate prose.)
         ``candidate.rationale`` / ``candidate.rationale_source`` are updated.
         """
         text = self._template_rationale(candidate)
-        source = "offline_template"
-
-        try:
-            from ..claude import _client  # lazy: offline path stays dependency-free
-            if getattr(_client, "USING_LIVE_API", False):
-                system = (
-                    "You synthesize one-line drug-repurposing rationales for "
-                    "Alzheimer disease. State the mechanistic hypothesis basis "
-                    "only; never assert clinical efficacy. One sentence, hedged."
-                )
-                prompt = (
-                    f"Compound: {candidate.compound}\n"
-                    f"Primary target: {candidate.target_gene}\n"
-                    f"Related genes: {', '.join(candidate.related_genes) or 'n/a'}\n"
-                    f"Disease: {candidate.disease}\n"
-                    f"Mechanism note: {candidate.mechanism_note}\n"
-                    f"Trial reference: {candidate.trial_ref or 'n/a'}\n"
-                    "Write ONE hedged sentence describing the repurposing "
-                    "hypothesis basis (no efficacy claim)."
-                )
-                out = _client.complete(system, prompt)
-                if getattr(_client, "LAST_CALL_LIVE", False) and isinstance(out, str):
-                    stripped = out.strip()
-                    if stripped:
-                        text = stripped
-                        source = "live_llm"
-        except Exception:
-            # Any import/transport error keeps the deterministic template.
-            pass
-
         candidate.rationale = text
-        candidate.rationale_source = source
+        candidate.rationale_source = "offline_template"
         return text
 
     @staticmethod
