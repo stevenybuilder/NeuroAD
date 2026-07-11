@@ -1,0 +1,1309 @@
+{
+  "_meta": {
+    "captured": "2026-07-10",
+    "endpoint": "https://api.platform.opentargets.org/api/v4/graphql",
+    "disease_id": "MONDO_0004975",
+    "disease_name": "Alzheimer disease",
+    "total_associated_targets": 13367,
+    "note": "Live Open Targets Platform GraphQL capture; scores are real overall target-disease association scores (0-1) with datatype breakdown."
+  },
+  "associated_targets": [
+    {
+      "gene": "APP",
+      "ensembl_id": "ENSG00000142192",
+      "association_score": 0.8722092478154398,
+      "datatype_scores": {
+        "genetic_literature": 0.607930797611621,
+        "clinical": 0.9774319311654196,
+        "affected_pathway": 0.607930797611621,
+        "literature": 0.9972044799896909,
+        "genetic_association": 0.9229130829216265,
+        "animal_model": 0.47538638787264004
+      },
+      "n_known_drugs": 13
+    },
+    {
+      "gene": "PSEN1",
+      "ensembl_id": "ENSG00000080815",
+      "association_score": 0.8669875850999414,
+      "datatype_scores": {
+        "rna_expression": 0.04988096311450684,
+        "genetic_literature": 0.8880632854712809,
+        "clinical": 0.6198003630709226,
+        "literature": 0.9854793952535105,
+        "genetic_association": 0.954428889898166,
+        "animal_model": 0.6968061402275691
+      },
+      "n_known_drugs": 7
+    },
+    {
+      "gene": "PSEN2",
+      "ensembl_id": "ENSG00000143801",
+      "association_score": 0.8180840856428299,
+      "datatype_scores": {
+        "literature": 0.8837535724620864,
+        "genetic_association": 0.9105699129172259,
+        "genetic_literature": 0.7717343736347523,
+        "clinical": 0.6198003630709226
+      },
+      "n_known_drugs": 7
+    },
+    {
+      "gene": "APOE",
+      "ensembl_id": "ENSG00000130203",
+      "association_score": 0.7699520237898497,
+      "datatype_scores": {
+        "rna_expression": 0.017251532679053088,
+        "genetic_literature": 0.607930797611621,
+        "affected_pathway": 0.2670020417823128,
+        "literature": 0.9992053836614199,
+        "genetic_association": 0.8893909787398722,
+        "animal_model": 0.4096062934202789
+      },
+      "n_known_drugs": 0
+    },
+    {
+      "gene": "GRIN1",
+      "ensembl_id": "ENSG00000176884",
+      "association_score": 0.7043366601565315,
+      "datatype_scores": {
+        "literature": 0.8753913488946691,
+        "affected_pathway": 0.5815977506239859,
+        "animal_model": 0.5374519955132447,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "SORL1",
+      "ensembl_id": "ENSG00000137642",
+      "association_score": 0.6861184602782842,
+      "datatype_scores": {
+        "rna_expression": 0.04768036208430157,
+        "genetic_literature": 0.3647584785669727,
+        "literature": 0.9814515094446923,
+        "genetic_association": 0.7564204272164786,
+        "animal_model": 0.3268843898757687
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN3B",
+      "ensembl_id": "ENSG00000116032",
+      "association_score": 0.6827426189622511,
+      "datatype_scores": {
+        "literature": 0.3021303714107068,
+        "animal_model": 0.289131887344087,
+        "genetic_association": 0.5028880551160951,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDK5",
+      "ensembl_id": "ENSG00000164885",
+      "association_score": 0.6802600483000536,
+      "datatype_scores": {
+        "literature": 0.9475694665139466,
+        "affected_pathway": 0.877437422074483,
+        "rna_expression": 0.08977986793197987
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "ADAM10",
+      "ensembl_id": "ENSG00000137845",
+      "association_score": 0.6627156408281735,
+      "datatype_scores": {
+        "literature": 0.9406969958371513,
+        "rna_expression": 0.02040312242200407,
+        "genetic_association": 0.7592810732933327,
+        "genetic_literature": 0.607930797611621
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "ACHE",
+      "ensembl_id": "ENSG00000087085",
+      "association_score": 0.6408894927590979,
+      "datatype_scores": {
+        "literature": 0.9357749601612098,
+        "animal_model": 0.5289747376767766,
+        "clinical": 0.9956708086829915
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN2B",
+      "ensembl_id": "ENSG00000273079",
+      "association_score": 0.6341731366460872,
+      "datatype_scores": {
+        "literature": 0.8917511238282677,
+        "rna_expression": 0.03279389384323798,
+        "animal_model": 0.5021811171583134,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "BCHE",
+      "ensembl_id": "ENSG00000114200",
+      "association_score": 0.6273566221895482,
+      "datatype_scores": {
+        "literature": 0.9433416373339005,
+        "clinical": 0.9847869245008808
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN2A",
+      "ensembl_id": "ENSG00000183454",
+      "association_score": 0.6234275987159364,
+      "datatype_scores": {
+        "literature": 0.5304898664987455,
+        "animal_model": 0.5004442419825704,
+        "rna_expression": 0.01937961546337943,
+        "clinical": 0.9876033394230259
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "SLC6A3",
+      "ensembl_id": "ENSG00000142319",
+      "association_score": 0.6229177529789041,
+      "datatype_scores": {
+        "literature": 0.8904344792442307,
+        "affected_pathway": 0.47462246497174854,
+        "animal_model": 0.4135786990085059,
+        "clinical": 0.8810396207205361
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN2C",
+      "ensembl_id": "ENSG00000161509",
+      "association_score": 0.6199005360614525,
+      "datatype_scores": {
+        "literature": 0.30048697097928156,
+        "rna_expression": 0.03424116316113702,
+        "animal_model": 0.5114842652671974,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN2D",
+      "ensembl_id": "ENSG00000105464",
+      "association_score": 0.6163481011370406,
+      "datatype_scores": {
+        "literature": 0.5367246068720611,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDK5R1",
+      "ensembl_id": "ENSG00000176749",
+      "association_score": 0.6148264309102477,
+      "datatype_scores": {
+        "literature": 0.8200951525411309,
+        "affected_pathway": 0.9549947196932794,
+        "animal_model": 0.6904492132085975
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRIN3A",
+      "ensembl_id": "ENSG00000198785",
+      "association_score": 0.6108729890407243,
+      "datatype_scores": {
+        "literature": 0.3566017337481304,
+        "clinical": 0.987009594803747
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "ACE",
+      "ensembl_id": "ENSG00000159640",
+      "association_score": 0.6060773746886298,
+      "datatype_scores": {
+        "literature": 0.9781659657957694,
+        "genetic_association": 0.8156324041926518,
+        "genetic_literature": 0.607930797611621,
+        "clinical": 0.12158615952232422
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "HFE",
+      "ensembl_id": "ENSG00000010704",
+      "association_score": 0.6036302798912275,
+      "datatype_scores": {
+        "literature": 0.38609892400484624,
+        "animal_model": 0.4102536552849023,
+        "genetic_association": 0.8270002910534164,
+        "genetic_literature": 0.607930797611621
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "APH1B",
+      "ensembl_id": "ENSG00000138613",
+      "association_score": 0.5997189236702485,
+      "datatype_scores": {
+        "literature": 0.4690037193757485,
+        "genetic_association": 0.8211196952767544,
+        "clinical": 0.6198003630709226
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDC25B",
+      "ensembl_id": "ENSG00000101224",
+      "association_score": 0.5990850383690725,
+      "datatype_scores": {
+        "literature": 0.12544472800090656,
+        "affected_pathway": 0.7861293896877616
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "EPHA1",
+      "ensembl_id": "ENSG00000146904",
+      "association_score": 0.5926326948774134,
+      "datatype_scores": {
+        "literature": 0.45996220406359295,
+        "affected_pathway": 0.5531979966234456,
+        "genetic_association": 0.8263149011662344
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "HMGCR",
+      "ensembl_id": "ENSG00000113161",
+      "association_score": 0.5852576208167861,
+      "datatype_scores": {
+        "literature": 0.7851963296655298,
+        "affected_pathway": 0.8055170751528565,
+        "rna_expression": 0.009364719397570819,
+        "clinical": 0.5584856173836418
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CR1",
+      "ensembl_id": "ENSG00000203710",
+      "association_score": 0.583848124684305,
+      "datatype_scores": {
+        "literature": 0.9362926866223935,
+        "genetic_association": 0.9135711973754994
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CD33",
+      "ensembl_id": "ENSG00000105383",
+      "association_score": 0.5781884763724476,
+      "datatype_scores": {
+        "literature": 0.953315671963907,
+        "affected_pathway": 0.5688988359014587,
+        "genetic_association": 0.7876666383025912
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "FOXO3",
+      "ensembl_id": "ENSG00000118689",
+      "association_score": 0.5746458304114456,
+      "datatype_scores": {
+        "literature": 0.7717503923036231,
+        "affected_pathway": 0.9066612367713315
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "ABCA7",
+      "ensembl_id": "ENSG00000064687",
+      "association_score": 0.565061255123546,
+      "datatype_scores": {
+        "literature": 0.9729317018594457,
+        "genetic_association": 0.6488966909068268,
+        "genetic_literature": 0.607930797611621
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "ADRA2B",
+      "ensembl_id": "ENSG00000274286",
+      "association_score": 0.563732831509632,
+      "datatype_scores": {
+        "literature": 0.06839221473130737,
+        "affected_pathway": 0.5284734393254834,
+        "clinical": 0.7936595150254856
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GRN",
+      "ensembl_id": "ENSG00000030582",
+      "association_score": 0.5611414882652689,
+      "datatype_scores": {
+        "literature": 0.951711127731909,
+        "animal_model": 0.45119821667821,
+        "genetic_association": 0.7169968200818724
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "NDUFAB1",
+      "ensembl_id": "ENSG00000004779",
+      "association_score": 0.5594688977486125,
+      "datatype_scores": {
+        "rna_expression": 0.07015121357208141,
+        "clinical": 0.030396539880581056,
+        "affected_pathway": 0.8136276094564562,
+        "literature": 0.31689933133475673,
+        "genetic_association": 0.38861217726864394
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "PSAP",
+      "ensembl_id": "ENSG00000197746",
+      "association_score": 0.558857918205042,
+      "datatype_scores": {
+        "literature": 0.7885150027686245,
+        "affected_pathway": 0.865457038266544,
+        "animal_model": 0.6478223052216499
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "TREM2",
+      "ensembl_id": "ENSG00000095970",
+      "association_score": 0.5582475397334801,
+      "datatype_scores": {
+        "literature": 0.993816359537792,
+        "animal_model": 0.28846316346671425,
+        "genetic_association": 0.8621737028959621
+      },
+      "n_known_drugs": 0
+    },
+    {
+      "gene": "SLC6A2",
+      "ensembl_id": "ENSG00000103546",
+      "association_score": 0.5578343232634521,
+      "datatype_scores": {
+        "literature": 0.26924972701230415,
+        "clinical": 0.9041326173273312
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "GSK3B",
+      "ensembl_id": "ENSG00000082701",
+      "association_score": 0.5542549788984016,
+      "datatype_scores": {
+        "literature": 0.9653840850843345,
+        "affected_pathway": 0.8434018776286261,
+        "rna_expression": 0.01687786532291258,
+        "clinical": 0.17842768909901077
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDKN2B",
+      "ensembl_id": "ENSG00000147883",
+      "association_score": 0.5515481734265494,
+      "datatype_scores": {
+        "literature": 0.11725051853672096,
+        "affected_pathway": 0.8142840046102876,
+        "genetic_association": 0.36146117133686095
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "SMPD1",
+      "ensembl_id": "ENSG00000166311",
+      "association_score": 0.5499323177364711,
+      "datatype_scores": {
+        "literature": 0.8934312011132188,
+        "affected_pathway": 0.8476183455564804,
+        "animal_model": 0.5538149548970008
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDKN1A",
+      "ensembl_id": "ENSG00000124762",
+      "association_score": 0.5491528048661264,
+      "datatype_scores": {
+        "literature": 0.7571525372484278,
+        "affected_pathway": 0.865457038266544
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "PLCG2",
+      "ensembl_id": "ENSG00000197943",
+      "association_score": 0.5478063851344441,
+      "datatype_scores": {
+        "literature": 0.9467820286856653,
+        "genetic_association": 0.8537608054738913
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CDK4",
+      "ensembl_id": "ENSG00000135446",
+      "association_score": 0.5435791278711377,
+      "datatype_scores": {
+        "literature": 0.573787028644952,
+        "affected_pathway": 0.865457038266544
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "PLK1",
+      "ensembl_id": "ENSG00000166851",
+      "association_score": 0.5434751016621139,
+      "datatype_scores": {
+        "literature": 0.5703647243487215,
+        "affected_pathway": 0.865457038266544
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "AXL",
+      "ensembl_id": "ENSG00000167601",
+      "association_score": 0.5360790923662045,
+      "datatype_scores": {
+        "literature": 0.327047250551834,
+        "affected_pathway": 0.865457038266544
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "NDUFS5",
+      "ensembl_id": "ENSG00000168653",
+      "association_score": 0.5360788988340297,
+      "datatype_scores": {
+        "literature": 0.2599128294561829,
+        "affected_pathway": 0.8648140046499787,
+        "rna_expression": 0.04976344044409118,
+        "clinical": 0.030396539880581056
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "CLU",
+      "ensembl_id": "ENSG00000120885",
+      "association_score": 0.5346469504612661,
+      "datatype_scores": {
+        "literature": 0.9864557214242409,
+        "rna_expression": 0.02558786498941004,
+        "genetic_association": 0.663649784651432
+      },
+      "n_known_drugs": 2
+    },
+    {
+      "gene": "NCK2",
+      "ensembl_id": "ENSG00000071051",
+      "association_score": 0.5342777825890229,
+      "datatype_scores": {
+        "literature": 0.24666467544701837,
+        "affected_pathway": 0.3903072934014509,
+        "genetic_association": 0.7757881224071917
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "NDUFA8",
+      "ensembl_id": "ENSG00000119421",
+      "association_score": 0.5318929863081228,
+      "datatype_scores": {
+        "literature": 0.045021393915199194,
+        "affected_pathway": 0.865457038266544,
+        "rna_expression": 0.058708508939063986,
+        "clinical": 0.030396539880581056
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "MS4A6A",
+      "ensembl_id": "ENSG00000110077",
+      "association_score": 0.5313004143809933,
+      "datatype_scores": {
+        "literature": 0.6216215484418909,
+        "genetic_association": 0.8428677609462104
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "NDUFV2",
+      "ensembl_id": "ENSG00000178127",
+      "association_score": 0.5311165760884275,
+      "datatype_scores": {
+        "literature": 0.14521401555537006,
+        "affected_pathway": 0.8628203252428481,
+        "clinical": 0.030396539880581056
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "AURKB",
+      "ensembl_id": "ENSG00000178999",
+      "association_score": 0.5287645007911302,
+      "datatype_scores": {
+        "literature": 0.0864082961244168,
+        "affected_pathway": 0.865457038266544
+      },
+      "n_known_drugs": null
+    },
+    {
+      "gene": "NDUFS1",
+      "ensembl_id": "ENSG00000023228",
+      "association_score": 0.5272829017873657,
+      "datatype_scores": {
+        "literature": 0.10735031538957523,
+        "affected_pathway": 0.8569595671417235,
+        "rna_expression": 0.03168564303187851,
+        "clinical": 0.030396539880581056
+      },
+      "n_known_drugs": null
+    }
+  ],
+  "engine_genes": {
+    "APP": {
+      "gene": "APP",
+      "ensembl_id": "ENSG00000142192",
+      "association_score": 0.8065116821636277,
+      "datatype_scores": {
+        "literature": 0.997186733528388,
+        "affected_pathway": 0.607930797611621,
+        "genetic_association": 0.8656621267342322,
+        "clinical": 0.9774319311654196
+      },
+      "n_known_drugs": 13,
+      "known_drugs": [
+        {
+          "drug": "LECANEMAB",
+          "phase": "APPROVAL",
+          "mechanism": "Amyloid-beta A4 protein inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "TRAMIPROSATE",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein stabiliser",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "DONANEMAB",
+          "phase": "APPROVAL",
+          "mechanism": "Amyloid-beta A4 protein disrupting agent",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "GANTENERUMAB",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "AMILOMOTIDE",
+          "phase": "PHASE_2_3",
+          "mechanism": "Amyloid-beta A4 protein vaccine antigen",
+          "drug_type": "Protein"
+        },
+        {
+          "drug": "GSK933776",
+          "phase": "PHASE_2",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Unknown"
+        },
+        {
+          "drug": "ADUCANUMAB",
+          "phase": "APPROVAL",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "BAPINEUZUMAB",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "VALILTRAMIPROSATE",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein stabiliser",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CRENEZUMAB",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "PONEZUMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "VANUTIDE CRIDIFICAR",
+          "phase": "PHASE_2",
+          "mechanism": "Amyloid-beta A4 protein vaccine antigen",
+          "drug_type": "Protein"
+        },
+        {
+          "drug": "SOLANEZUMAB",
+          "phase": "PHASE_3",
+          "mechanism": "Amyloid-beta A4 protein binding agent",
+          "drug_type": "Antibody"
+        }
+      ]
+    },
+    "MAPT": {
+      "gene": "MAPT",
+      "ensembl_id": "ENSG00000186868",
+      "association_score": 0.3739267574610609,
+      "datatype_scores": {
+        "literature": 0.9996016096718663,
+        "genetic_association": 0.4648121097094541,
+        "clinical": 0.1896418618285458
+      },
+      "n_known_drugs": 6,
+      "known_drugs": [
+        {
+          "drug": "ZAGOTENEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "GOSURANEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "BEPRANEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "TILAVONEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "POSDINEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        },
+        {
+          "drug": "SEMORINEMAB",
+          "phase": "PHASE_2",
+          "mechanism": "Microtubule-associated protein tau inhibitor",
+          "drug_type": "Antibody"
+        }
+      ]
+    },
+    "APOE": {
+      "gene": "APOE",
+      "ensembl_id": "ENSG00000130203",
+      "association_score": 0.6769813809889567,
+      "datatype_scores": {
+        "literature": 0.9991884753655065,
+        "affected_pathway": 0.2670020417823128,
+        "rna_expression": 0.017251532679053088,
+        "genetic_association": 0.8570305637566988
+      },
+      "n_known_drugs": 0,
+      "known_drugs": []
+    },
+    "PSEN1": {
+      "gene": "PSEN1",
+      "ensembl_id": "ENSG00000080815",
+      "association_score": 0.6082619257963434,
+      "datatype_scores": {
+        "literature": 0.9853613003974274,
+        "rna_expression": 0.04988096311450684,
+        "genetic_association": 0.8230741601270066,
+        "clinical": 0.6198003630709226
+      },
+      "n_known_drugs": 7,
+      "known_drugs": [
+        {
+          "drug": "SEMAGACESTAT",
+          "phase": "PHASE_3",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "AVAGACESTAT",
+          "phase": "PHASE_2",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TARENFLURBIL",
+          "phase": "PHASE_3",
+          "mechanism": "Gamma-secretase modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "RG-4733",
+          "phase": "PHASE_2",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "NIROGACESTAT",
+          "phase": "APPROVAL",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "NIROGACESTAT HYDROBROMIDE",
+          "phase": "APPROVAL",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "BEGACESTAT",
+          "phase": "PHASE_1",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "PSEN2": {
+      "gene": "PSEN2",
+      "ensembl_id": "ENSG00000143801",
+      "association_score": 0.41896343143204556,
+      "datatype_scores": {
+        "literature": 0.8833748311786562,
+        "genetic_association": 0.19892846655180269,
+        "clinical": 0.6198003630709226
+      },
+      "n_known_drugs": 7,
+      "known_drugs": [
+        {
+          "drug": "TARENFLURBIL",
+          "phase": "PHASE_3",
+          "mechanism": "Gamma-secretase modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "NIROGACESTAT HYDROBROMIDE",
+          "phase": "APPROVAL",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "AVAGACESTAT",
+          "phase": "PHASE_2",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "SEMAGACESTAT",
+          "phase": "PHASE_3",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "NIROGACESTAT",
+          "phase": "APPROVAL",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "BEGACESTAT",
+          "phase": "PHASE_1",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "RG-4733",
+          "phase": "PHASE_2",
+          "mechanism": "Gamma-secretase inhibitor",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "BACE1": {
+      "gene": "BACE1",
+      "ensembl_id": "ENSG00000186318",
+      "association_score": 0.413895458614435,
+      "datatype_scores": {
+        "literature": 0.9917970443691976,
+        "clinical": 0.6312367488363096
+      },
+      "n_known_drugs": 4,
+      "known_drugs": [
+        {
+          "drug": "VERUBECESTAT",
+          "phase": "PHASE_3",
+          "mechanism": "Beta-secretase 1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ATABECESTAT",
+          "phase": "PHASE_2_3",
+          "mechanism": "Beta-secretase 1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "LANABECESTAT",
+          "phase": "PHASE_3",
+          "mechanism": "Beta-secretase 1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ELENBECESTAT",
+          "phase": "PHASE_3",
+          "mechanism": "Beta-secretase 1 inhibitor",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "TREM2": {
+      "gene": "TREM2",
+      "ensembl_id": "ENSG00000095970",
+      "association_score": 0.5519421902839869,
+      "datatype_scores": {
+        "literature": 0.9937634437432915,
+        "genetic_association": 0.8582148201474947
+      },
+      "n_known_drugs": 0,
+      "known_drugs": []
+    },
+    "HRAS": {
+      "gene": "HRAS",
+      "ensembl_id": "ENSG00000174775",
+      "association_score": 0.03669450876097165,
+      "datatype_scores": {
+        "literature": 0.3017984029196533
+      },
+      "n_known_drugs": 1,
+      "known_drugs": [
+        {
+          "drug": "SALIRASIB",
+          "phase": "PHASE_2",
+          "mechanism": "RAS inhibitor",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "MAPK1": {
+      "gene": "MAPK1",
+      "ensembl_id": "ENSG00000100030",
+      "association_score": 0.08763279364780444,
+      "datatype_scores": {
+        "literature": 0.6804853575909237,
+        "genetic_association": 0.03220887921046474
+      },
+      "n_known_drugs": 6,
+      "known_drugs": [
+        {
+          "drug": "ULIXERTINIB",
+          "phase": "PHASE_2",
+          "mechanism": "MAP kinase ERK1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "RAVOXERTINIB",
+          "phase": "PHASE_1",
+          "mechanism": "MAP kinase ERK1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ASN007",
+          "phase": "PHASE_1",
+          "mechanism": "Mitogen-activated protein kinase; ERK1/ERK2 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TEMUTERKIB",
+          "phase": "PHASE_2",
+          "mechanism": "Mitogen-activated protein kinase; ERK1/ERK2 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "MK-8353",
+          "phase": "PHASE_1",
+          "mechanism": "MAP kinase ERK1 inhibitor",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "KO-947",
+          "phase": "PHASE_1",
+          "mechanism": "Mitogen-activated protein kinase; ERK1/ERK2 inhibitor",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "ESR1": {
+      "gene": "ESR1",
+      "ensembl_id": "ENSG00000091831",
+      "association_score": 0.3639688242696439,
+      "datatype_scores": {
+        "literature": 0.9508852548091724,
+        "clinical": 0.5511568159013357
+      },
+      "n_known_drugs": 51,
+      "known_drugs": [
+        {
+          "drug": "MESTRANOL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ARZOXIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "SYNTHETIC CONJUGATED ESTROGENS, B",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Unknown"
+        },
+        {
+          "drug": "GTX-758",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRIOL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRADIOL ACETATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CLOMIPHENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TOREMIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTROGENS, ESTERIFIED",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Unknown"
+        },
+        {
+          "drug": "TOREMIFENE CITRATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "IDOXIFENE",
+          "phase": "PHASE_3",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "DIENESTROL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTETROL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRADIOL CYPIONATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "AMCENESTRANT",
+          "phase": "PHASE_3",
+          "mechanism": "Estrogen receptor alpha degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TAMOXIFEN CITRATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRADIOL VALERATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "QUINESTROL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTETROL ANHYDROUS",
+          "phase": "UNKNOWN",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "FULVESTRANT",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha antagonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRONE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTROPIPATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "BAZEDOXIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "LASOFOXIFENE TARTRATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ETHINYL ESTRADIOL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "GIREDESTRANT",
+          "phase": "PHASE_3",
+          "mechanism": "Estrogen receptor alpha degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "OSPEMIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ELACESTRANT",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CAMIZESTRANT",
+          "phase": "PREAPPROVAL",
+          "mechanism": "Estrogen receptor alpha degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TAMOXIFEN",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTROGENS, CONJUGATED",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Unknown"
+        },
+        {
+          "drug": "FISPEMIFENE",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "TAS-108",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor alpha antagonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "DIETHYLSTILBESTROL DIPHOSPHATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "BRILANESTRANT",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CYCLOFENIL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "MK-6913",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ENCLOMIPHENE",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor alpha modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ACOLBIFENE",
+          "phase": "PHASE_3",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "POLYESTRADIOL PHOSPHATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "DROLOXIFENE",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "LASOFOXIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CLOMIPHENE CITRATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "CHF4227",
+          "phase": "PHASE_1",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "AFIMOXIFENE",
+          "phase": "PHASE_2",
+          "mechanism": "Estrogen-related receptor gamma antagonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "DIETHYLSTILBESTROL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTRADIOL",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha agonist",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ELACESTRANT HYDROCHLORIDE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor alpha degrader",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "RALOXIFENE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor beta modulator",
+          "drug_type": "Small molecule"
+        },
+        {
+          "drug": "ESTROGENS, CONJUGATED SYNTHETIC A",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor agonist",
+          "drug_type": "Unknown"
+        },
+        {
+          "drug": "BAZEDOXIFENE ACETATE",
+          "phase": "APPROVAL",
+          "mechanism": "Estrogen receptor modulator",
+          "drug_type": "Small molecule"
+        }
+      ]
+    },
+    "CLU": {
+      "gene": "CLU",
+      "ensembl_id": "ENSG00000120885",
+      "association_score": 0.5330726414945091,
+      "datatype_scores": {
+        "literature": 0.9858135426619123,
+        "rna_expression": 0.02558786498941004,
+        "genetic_association": 0.6616037768354032
+      },
+      "n_known_drugs": 2,
+      "known_drugs": [
+        {
+          "drug": "CUSTIRSEN",
+          "phase": "PHASE_3",
+          "mechanism": "Clusterin mRNA antisense inhibitor",
+          "drug_type": "Oligonucleotide"
+        },
+        {
+          "drug": "CUSTIRSEN SODIUM",
+          "phase": "PHASE_2",
+          "mechanism": "Clusterin mRNA antisense inhibitor",
+          "drug_type": "Oligonucleotide"
+        }
+      ]
+    },
+    "BIN1": {
+      "gene": "BIN1",
+      "ensembl_id": "ENSG00000136717",
+      "association_score": 0.5164445062592573,
+      "datatype_scores": {
+        "literature": 0.9794018936863816,
+        "genetic_association": 0.8005419028789131
+      },
+      "n_known_drugs": 0,
+      "known_drugs": []
+    }
+  }
+}
