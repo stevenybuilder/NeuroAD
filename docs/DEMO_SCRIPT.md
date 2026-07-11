@@ -91,7 +91,7 @@ spoken track (also exact, but the caption is what must be on screen).
   refused KILL so the refusal is narratable without a live key. The same courtroom runs
   live and opens the biology gate on the promoted SURVIVOR (Beat 5) when a key is set.
 - **Lower-third:** `Claude argues prosecution and defense — the verdict meter is the judge, then argues against itself.`
-- **Sub-caption:** `● offline template · claude-fable-5 courtroom · runs live when ANTHROPIC_API_KEY is set`
+- **Sub-caption:** `● offline template · claude-sonnet-5 courtroom · runs live when ANTHROPIC_API_KEY is set`
 - **VO:** "Claude runs the courtroom — prosecution and defense, with the verdict meter as judge — and here it is a
   deterministic offline template; Claude runs the same courtroom *live* when an
   ANTHROPIC_API_KEY is set, and the badge flips with no template swap. Then it does the
