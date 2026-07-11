@@ -1,0 +1,35 @@
+# Interactive live backend (app/server.py) for Cloud Run — the Python service
+# that runs investigate() + the molecule/wet-lab translation loop over HTTP.
+#
+# Contrast with ./Dockerfile, which is the static-nginx image (demo replay only).
+# Build:  docker build -f Dockerfile.backend -t neuroad-backend .
+# Run:    docker run -p 8080:8080 neuroad-backend
+#
+# NEVER baked into this image (see .dockerignore): gated ADNI (data/real/_gated),
+# Neuro-JEPA embeddings/fixtures (CC-BY-NC-ND), the .venv, or any secret. The
+# deployed backend therefore serves the SYNTHETIC + open OASIS/OpenBHB feeders
+# live; ADNI runs only where the gated table is mounted at data/real/_gated/.
+FROM python:3.12-slim
+
+WORKDIR /srv
+
+# Core runtime deps first (better layer caching). anthropic (the live adjudicator)
+# is intentionally omitted — the backend runs offline-deterministic without it and
+# only calls Claude when ANTHROPIC_API_KEY is provided AND the [claude] extra is
+# installed. Add `pip install anthropic` to the RUN below to enable live Claude.
+COPY requirements.txt pyproject.toml README.md ./
+COPY src/ ./src/
+RUN pip install --no-cache-dir -e .
+
+# App + the vendored open data / policy the referee reads at runtime.
+COPY app/ ./app/
+COPY policy/ ./policy/
+COPY data/registry.yaml ./data/registry.yaml
+COPY data/real/ ./data/real/
+
+ENV PYTHONPATH=/srv/src
+ENV PORT=8080
+EXPOSE 8080
+
+# ThreadingHTTPServer, no extra process manager needed for the demo.
+CMD ["python", "-m", "app.server"]
