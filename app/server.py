@@ -12,6 +12,9 @@ Routes
     GET  /api/datasets            -> {datasets: [...]}  (loaders.AVAILABLE)
     POST /api/investigate         -> ExperimentCard.to_dict()
          body: {"hypothesis": str, "dataset": str, "seed"?: int, "api"?: bool}
+    POST /api/orchestrate         -> Claude-as-orchestrator tool-runner result
+         body: {"goal": str, "api"?: bool}   (live iff ANTHROPIC_API_KEY set,
+         else a scripted deterministic pipeline over the same tools)
     GET  / and static assets      -> app/index.html, app/demo_data.json
 
 Honesty / cost contract:
@@ -119,7 +122,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         route = urlparse(self.path).path
-        if route != "/api/investigate":
+        if route not in ("/api/investigate", "/api/orchestrate"):
             self._send_json({"error": f"not found: {route}"}, 404)
             return
         try:
@@ -127,6 +130,10 @@ class Handler(BaseHTTPRequestHandler):
             payload = json.loads(self.rfile.read(length) or b"{}")
         except Exception as exc:  # noqa: BLE001
             self._send_json({"error": f"bad JSON body: {exc}"}, 400)
+            return
+
+        if route == "/api/orchestrate":
+            self._handle_orchestrate(payload)
             return
 
         hypothesis = str(payload.get("hypothesis", "")).strip()
@@ -172,6 +179,31 @@ class Handler(BaseHTTPRequestHandler):
             _log.exception("investigate failed")
             self._send_json(
                 {"error": f"investigate failed: {exc}", "dataset": dataset}, 500)
+
+    def _handle_orchestrate(self, payload: dict) -> None:
+        """Claude-as-orchestrator: sequence the engine's tools toward a goal.
+
+        Runs the live tool-runner iff a key is present (or api=true is forced and
+        a key exists); otherwise a scripted deterministic pipeline over the same
+        tools. The response's ``path`` says which drove it — never faked."""
+        goal = str(payload.get("goal", "")).strip()
+        if not goal:
+            self._send_json({"error": "goal is required"}, 400)
+            return
+        if len(goal) > _MAX_HYPOTHESIS_CHARS:
+            self._send_json({"error": "goal too long"}, 400)
+            return
+        # api: None -> auto (live iff key present); an explicit true only takes
+        # effect when a key is actually configured.
+        raw_api = payload.get("api", None)
+        api = None if raw_api is None else (bool(raw_api) and _claude_live())
+        try:
+            from neuroad.harness import agent
+            result = agent.orchestrate(goal, api=api)
+            self._send_json(result)
+        except Exception as exc:  # noqa: BLE001
+            _log.exception("orchestrate failed")
+            self._send_json({"error": f"orchestrate failed: {exc}"}, 500)
 
 
 def main(argv: list[str] | None = None) -> int:
