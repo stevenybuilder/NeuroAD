@@ -155,6 +155,77 @@ def repurposing_candidates(gene: str) -> str:
                       default=str)
 
 
+def seed_experiment_targets(mechanism: str) -> str:
+    """Seed the active-learning loop's belief priors for a mechanism's targets.
+
+    Args:
+        mechanism: "amyloid_cascade" | "glial" | "vascular".
+
+    Fuses PI4AD priority + AlphaFold confidence (+ Open Targets when available)
+    into a Beta prior per candidate gene, and persists the loop state. Returns the
+    seeded targets with their composite prior scores. Call this before proposing
+    experiments for a newly promoted survivor's mechanism.
+    """
+    from .discovery_loop import DiscoveryLoop
+    loop = DiscoveryLoop.load()
+    seeded = loop.seed_mechanism(mechanism)
+    loop.save()
+    return json.dumps({"mechanism": mechanism,
+                       "seeded": [tb.to_dict() for tb in seeded]}, default=str)
+
+
+def propose_experiment(mechanism: str = "", strategy: str = "ucb") -> str:
+    """Select the most valuable next wet-lab experiment (active learning).
+
+    Args:
+        mechanism: if the loop is empty, seed this mechanism first (optional).
+        strategy: "ucb" (exploit+explore, default), "uncertainty" (most-informative
+            first), or "greedy" (follow the best lead).
+
+    Returns the chosen ExperimentSpec (target, model system, perturbation, readout,
+    kill criterion) with its acquisition score + rationale. The pick is
+    deterministic given the current belief state.
+    """
+    from .discovery_loop import DiscoveryLoop
+    loop = DiscoveryLoop.load()
+    if not loop.beliefs and mechanism:
+        loop.seed_mechanism(mechanism)
+    spec = loop.propose_next_experiment(strategy=strategy)
+    loop.save()
+    if spec is None:
+        return json.dumps({"error": "no targets seeded; call seed_experiment_targets first"})
+    return json.dumps(spec.to_dict(), default=str)
+
+
+def record_wetlab_result(experiment_id: str, hit: bool,
+                         effect_size: float = 0.0) -> str:
+    """Fold a wet-lab result back into the loop's beliefs (the feedback edge).
+
+    Args:
+        experiment_id: the id from a prior ``propose_experiment``.
+        hit: whether the perturbation moved the readout beyond the kill criterion.
+        effect_size: optional |standardized effect|; weights the belief update.
+
+    Returns the target's updated posterior + the new target ranking.
+    """
+    from .discovery_loop import DiscoveryLoop
+    loop = DiscoveryLoop.load()
+    try:
+        tb = loop.record_result(experiment_id, hit=bool(hit),
+                                effect_size=effect_size or None)
+    except KeyError as exc:
+        return json.dumps({"error": str(exc)})
+    loop.save()
+    return json.dumps({"updated": tb.to_dict(), "ranking": loop.ranking()},
+                      default=str)
+
+
+def target_ranking() -> str:
+    """Return the loop's current posterior ranking of targets (best-supported first)."""
+    from .discovery_loop import DiscoveryLoop
+    return json.dumps(DiscoveryLoop.load().summary(), default=str)
+
+
 #: The orchestration tool surface. Plain functions (offline-safe); wrapped with
 #: anthropic.beta_tool only inside the live path so importing this module never
 #: needs the SDK.
@@ -165,6 +236,11 @@ _TOOL_FNS = [
     prioritize_targets,
     protein_structure,
     repurposing_candidates,
+    # active-learning experiment loop (the feedback edge)
+    seed_experiment_targets,
+    propose_experiment,
+    record_wetlab_result,
+    target_ranking,
 ]
 
 ORCHESTRATOR_SYSTEM = (
@@ -177,8 +253,13 @@ ORCHESTRATOR_SYSTEM = (
     "Typical flow: describe_cohort to check feasibility -> referee_hypothesis for "
     "the kill/promote verdict -> ONLY IF it is promoted, follow the returned "
     "mechanism to prioritize_targets -> protein_structure on the top gene -> "
-    "repurposing_candidates on that gene -> finish with a falsifiable wet-lab "
-    "experiment (named organoid model, readout, and an explicit kill criterion). "
+    "repurposing_candidates on that gene. To PLAN the wet-lab campaign, use the "
+    "active-learning loop: seed_experiment_targets(mechanism) -> propose_experiment "
+    "(it picks the most informative next target by fusing PI4AD/AlphaFold/Open-"
+    "Targets evidence with any prior results) -> report that experiment; when a "
+    "result comes back, record_wetlab_result folds it in and target_ranking shows "
+    "the updated posterior. Finish with the proposed experiment's named model "
+    "system, readout, and explicit kill criterion. "
     "If referee_hypothesis returns promoted=false, STOP the molecular chain and "
     "report the kill honestly — a killed imaging signal must never reach target "
     "discovery. If it returns an unsupported-target note, say so plainly. Keep the "
