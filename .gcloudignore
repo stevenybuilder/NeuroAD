@@ -33,6 +33,10 @@ data/processed/
 data/real/_gated/
 data/real/_stubs/
 data/real/fixtures/
+# ADNI ingestion manifests carry DUA-protected subject/image identifiers
+# (PTID/RID/IMAGEUID) + per-subject biomarkers. Not needed to serve the demo
+# (server.py/src never read them). NEVER ship them in the image.
+data/real/_manifests/
 
 # --- everything not needed to serve the static demo ---
 .git/
