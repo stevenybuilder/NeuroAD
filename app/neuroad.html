@@ -8,6 +8,10 @@
   @keyframes zpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(1.7)} }
   @keyframes rshimmer { 0%{background-position:180% 0} 100%{background-position:-80% 0} }
   @keyframes rdot { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.15)} }
+  @keyframes stickyIn { from{opacity:0;transform:rotate(-2.4deg) scale(.82) translateY(-6px)} to{opacity:1;transform:rotate(-2.4deg) scale(1) translateY(0)} }
+  @keyframes stickyOut { 30%{transform:rotate(-1deg) scale(1.03)} 100%{opacity:0;transform:rotate(7deg) scale(.7) translateY(150px)} }
+  @keyframes pinDrop { from{transform:translate(-50%,-50%) scale(0) rotate(-30deg)} to{transform:translate(-50%,-50%) scale(1) rotate(0)} }
+  @keyframes noteCardIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
   .r-verb { background:linear-gradient(90deg,#8A877D 20%,#26241F 45%,#C96442 50%,#26241F 55%,#8A877D 80%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:rshimmer 2.1s linear infinite; }
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; }
@@ -1765,7 +1769,7 @@ class Component extends React.Component {
   state = {
     stage:'entry', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
     data:null, card:null, claudeLive:false, substrate:'adni',
-    pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false,
+    pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, scanNote:null, scanNoteSaving:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
@@ -1991,6 +1995,24 @@ class Component extends React.Component {
   setBrainView=(v)=>this.setState({brainView:v});
   setSubstrate=(key)=>{ this.setState({substrate:key, card:null}, ()=>{ if(this.state.data) this.applyRealLabels(this.state.data); this.forceUpdate(); }); };
   selectRoi=(id)=>this.setState({selRoi:this.state.selRoi===id?null:id});
+  // ---- scan notes: double-click the scan to pin a location-anchored note ----
+  onScanDblClick=(node,e)=>{
+    const r=e.currentTarget.getBoundingClientRect();
+    const x=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));
+    const y=Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100));
+    this.setState({scanNote:{nodeId:node.id, x, y, draft:''}, scanNoteSaving:false});
+  };
+  setScanDraft=(e)=>{ const sn=this.state.scanNote; if(!sn) return; this.setState({scanNote:{...sn, draft:e.target.value}}); };
+  cancelScanNote=()=>this.setState({scanNote:null, scanNoteSaving:false});
+  saveScanNote=(node)=>{
+    const sn=this.state.scanNote; if(!sn) return;
+    const text=(sn.draft||'').trim();
+    if(!text){ this.setState({scanNote:null, scanNoteSaving:false}); return; }
+    const commit=()=>{ const notes={...this.state.notes}; notes[node.id]=(notes[node.id]||[]).concat([{text, ts:Date.now(), x:sn.x, y:sn.y}]); this.saveNotes(notes); this.setState({notes, scanNote:null, scanNoteSaving:false}); };
+    if(this.reduced){ commit(); } else { this.setState({scanNoteSaving:true}); setTimeout(commit, 360); }  // let the sticky peel away first
+  };
+  onScanNoteKey=(node,e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.saveScanNote(node); } else if(e.key==='Escape'){ e.preventDefault(); this.cancelScanNote(); } };
+  delScanNote=(node,idx)=>{ const notes={...this.state.notes}; notes[node.id]=(notes[node.id]||[]).filter((_,i)=>i!==idx); this.saveNotes(notes); this.setState({notes}); };
   setNoteDraft=(e)=>this.setState({noteDraft:e.target.value});
   addNote=()=>{
     const t=(this.state.noteDraft||'').trim(); const id=this.state.pinned; if(!t||!id) return;
@@ -2443,6 +2465,57 @@ class Component extends React.Component {
       el('button',{key:o[0],onClick:()=>this.setSubstrate(o[0]),style:s===o[0]?on:off},o[1])
     ));
   }
+  // Numbered pins for every saved scan note (dimmed) + the in-progress one (dropping in).
+  scanPins(node){
+    const out=[]; const list=(this.state.notes[node.id]||[]);
+    list.forEach((n,i)=>{ if(typeof n.x!=='number') return;
+      out.push(el('div',{key:'pin'+i,title:n.text,style:{position:'absolute',left:n.x+'%',top:n.y+'%',transform:'translate(-50%,-50%)',width:'20px',height:'20px',borderRadius:'50% 50% 50% 2px',background:C.clay,opacity:.62,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(0,0,0,.4)',zIndex:6,pointerEvents:'none'}}, String(i+1)));
+    });
+    const sn=this.state.scanNote;
+    if(sn && sn.nodeId===node.id){
+      out.push(el('div',{key:'pinA',style:{position:'absolute',left:sn.x+'%',top:sn.y+'%',transform:'translate(-50%,-50%)',width:'22px',height:'22px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'11px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 8px rgba(0,0,0,.45)',zIndex:8,pointerEvents:'none',animation:this.reduced?'none':'pinDrop .32s cubic-bezier(.2,1.3,.4,1) both'}}, String(list.length+1)));
+    }
+    return out;
+  }
+  // The floating, slightly-tilted sticky-note editor at the double-click point.
+  scanSticky(node){
+    const sn=this.state.scanNote; if(!sn || sn.nodeId!==node.id) return null;
+    const saving=this.state.scanNoteSaving;
+    const left=Math.min(Math.max(sn.x,3), 60), top=Math.min(Math.max(sn.y+5,3), 58);
+    const anim=this.reduced?'none':(saving?'stickyOut .42s cubic-bezier(.5,0,.75,0) forwards':'stickyIn .28s cubic-bezier(.2,1.15,.35,1) both');
+    return el('div',{key:'sticky',style:{position:'absolute',left:left+'%',top:top+'%',width:'186px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 14px 30px rgba(40,36,28,.3)',padding:'10px 11px 9px',zIndex:12,transform:'rotate(-2.4deg)',transformOrigin:'top left',animation:anim}},[
+      el('div',{key:'tape',style:{position:'absolute',top:'-7px',left:'20px',width:'32px',height:'13px',background:'rgba(201,132,21,.16)',borderRadius:'2px',transform:'rotate(-3deg)'}}),
+      el('textarea',{key:'ta',autoFocus:true,value:sn.draft,onChange:this.setScanDraft,onKeyDown:(e)=>this.onScanNoteKey(node,e),placeholder:'Note on this location…',style:{width:'100%',border:'none',outline:'none',resize:'none',background:'transparent',fontFamily:'inherit',fontSize:'12.5px',lineHeight:1.45,color:'#5b4a1f',height:'50px',boxSizing:'border-box'}}),
+      el('div',{key:'row',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'5px'}},[
+        el('span',{key:'k',style:{fontSize:'10px',color:'#a98c4a'}},'Enter to pin · Esc'),
+        el('button',{key:'s',onMouseDown:(e)=>{e.preventDefault();this.saveScanNote(node);},style:{fontSize:'11px',fontWeight:600,color:'#fff',background:C.clay,border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer'}},'Pin note')
+      ])
+    ]);
+  }
+  // The "Scan notes" subsection that lives under the scan in the Brain data tab.
+  scanNotesSection(node){
+    const list=(this.state.notes[node.id]||[]);
+    const fmt=(ts)=>{ try{ return new Date(ts).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+    return el('div',{key:'scannotes',style:{marginTop:'16px',borderTop:'1px solid '+C.edge,paddingTop:'13px'}},[
+      el('div',{key:'hd',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'9px'}},[
+        el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Scan notes'),
+        el('div',{key:'b',style:{fontSize:'11px',color:C.mute}}, list.length?(list.length+(list.length===1?' note':' notes')):'double-click the scan to add')
+      ]),
+      list.length===0 ? null
+        : el('div',{key:'l',style:{display:'flex',flexDirection:'column',gap:'8px'}}, list.map((n,i)=>el('div',{key:i,style:{display:'flex',gap:'10px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'10px',padding:'9px 11px',animation:this.reduced?'none':'noteCardIn .34s ease both'}},[
+            (typeof n.x==='number')
+              ? el('div',{key:'bd',style:{flex:'0 0 auto',width:'20px',height:'20px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}},String(i+1))
+              : el('span',{key:'bd',style:{flex:'0 0 auto',width:'6px',height:'6px',marginTop:'6px',borderRadius:'50%',background:C.clay}}),
+            el('div',{key:'m',style:{flex:1,minWidth:0}},[
+              el('div',{key:'t',style:{fontSize:'13px',lineHeight:1.45,color:C.ink,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
+              el('div',{key:'meta',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px'}},[
+                el('span',{key:'ts',style:{fontSize:'11px',color:C.mute}}, fmt(n.ts)+(typeof n.x==='number'?(' · x'+Math.round(n.x)+'% y'+Math.round(n.y)+'%'):'')),
+                el('button',{key:'del',onClick:()=>this.delScanNote(node,i),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer',padding:0}},'Delete')
+              ])
+            ])
+          ])))
+    ]);
+  }
   brainViewer(node){
     const regs=this.brainRegions(node); const sel=this.state.selRoi;
     const selReg=regs.find(r=>r.id===sel);
@@ -2457,21 +2530,24 @@ class Component extends React.Component {
         el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Structural MRI · live 3D'),
         el('div',{key:'b',style:{fontSize:'11px',color:C.mute}}, this.state.brainView==='render'?'drag to rotate':'scroll to scrub')]),
       this.viewToggle(),
-      el('div',{key:'vp',style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
+      el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
         el(BrainViewer,{key:'nv',mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
-        el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢')
+        el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
+        ...this.scanPins(node),
+        this.scanSticky(node)
       ]),
       el('div',{key:'cap',style:{marginTop:'7px',fontSize:'10.5px',color:C.mute,lineHeight:1.4}},'Warm overlay = attentive-probe attribution · expected effect, not a measured spatial attention map'),
       el('div',{key:'prov',style:{marginTop:'5px',fontSize:'10.5px',color:C.mute,display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
         el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
-        'Click the scan for a blue crosshair · select a region to fly there'
+        'Single-click for a blue crosshair · double-click to pin a note · select a region to fly there'
       ]),
       el('div',{key:'sig',style:{marginTop:'11px',fontSize:'11px',color:C.ink2,fontWeight:600}}, this.pathwayLabel(node)),
       el('div',{key:'chips',style:{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'7px'}}, regs.map(rg=>{
         const on=sel===rg.id;
         return el('button',{key:rg.id,onClick:()=>this.selectRoi(rg.id),style:{fontSize:'11px',padding:'5px 10px',borderRadius:'999px',border:'1px solid '+(on?C.clay:C.edge2),background:on?C.clay:C.card,color:on?'#fff':C.ink2,cursor:'pointer',whiteSpace:'nowrap'}}, rg.short||rg.l);
       })),
-      this.selectedReadout(node)
+      this.selectedReadout(node),
+      this.scanNotesSection(node)
     ]);
   }
   // ---- silent-failure guard: LIVE imaging QC flags from the SFG backend ----
