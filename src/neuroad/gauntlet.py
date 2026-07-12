@@ -31,7 +31,8 @@ from .calibration import CAL
 from .contract import TestEvidence, TestResult
 from .harness import policy
 from .leakage import leakage_margin
-from .probe import LinearProbe, N_BOOT, N_PERM, cross_val_auc, point_head
+from .probe import (LinearProbe, N_BOOT, N_PERM, cross_val_auc, point_head,
+                    residualized_cross_val_auc)
 
 # Retained-fraction bands (fraction of the naive effect that survives a control) —
 # the flag thresholds for the confound tests (age/sex, brain-age). Read from the
@@ -117,7 +118,10 @@ def test_age_sex(df: pd.DataFrame, target: str) -> TestEvidence:
 
     C = np.column_stack(cov_cols)
     auc_before = cross_val_auc(Xo, yo, groups=go)
-    auc_after = cross_val_auc(_residualize(Xo, C), yo, groups=go)
+    # Fold-honest: the age/sex residualization is fit inside each CV fold on the
+    # train rows only, never on the held-out fold (the whole-cohort residualize-
+    # then-CV pattern let the control peek at the test rows).
+    auc_after = residualized_cross_val_auc(Xo, C, yo, go, kind="covariate")
     retained = _retained_fraction(auc_before, auc_after)
     res = _result_from_retained(retained)
     detail = (f"effect retained {retained:.0%} after age/sex adjustment "
@@ -237,8 +241,14 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
     #     and the one the verdict is based on; the strict predicted-brain-age
     #     retained fraction is reported alongside as a secondary, conservative view.
     auc_before = cross_val_auc(Xo, yo, groups=go)
-    auc_after_gap = cross_val_auc(_residualize(Xo, gap), yo, groups=go)
-    auc_after_pred = cross_val_auc(_residualize(Xo, control_pred), yo, groups=go)
+    # Fold-honest brain-age controls: residualize against the gap / predicted
+    # brain age with the nuisance regression fit inside each fold on train rows
+    # only. NOTE the brain-age model itself (yhat_cv above) is already out-of-fold
+    # on the CN training set; here the per-fold residualization of the OUTCOME
+    # probe is what becomes leakage-honest.
+    auc_after_gap = residualized_cross_val_auc(Xo, gap, yo, go, kind="covariate")
+    auc_after_pred = residualized_cross_val_auc(Xo, control_pred, yo, go,
+                                                kind="covariate")
     retained_gap = _retained_fraction(auc_before, auc_after_gap)
     retained_pred = _retained_fraction(auc_before, auc_after_pred)
 
@@ -294,25 +304,48 @@ def _anchor_corr(score: np.ndarray, marker: np.ndarray) -> tuple[Optional[float]
     return float(r), n, ci_lo
 
 
-def _oof_scores(X: np.ndarray, y: np.ndarray) -> np.ndarray:
+def _oof_scores(X: np.ndarray, y: np.ndarray,
+                groups: Optional[np.ndarray] = None) -> np.ndarray:
     """Out-of-fold P(positive) so the anchor cannot correlate with overfit
     in-sample residuals — a spurious anchor is exactly what we must not credit.
 
     Uses the SAME automatic PCA front-end as the rest of the probe path so the
     anchor correlation on a p >> n cohort is computed on the defensible reduced
-    representation, not the inflated raw 768-d one.
+    representation, not the inflated raw 768-d one. When site ``groups`` are
+    supplied and there are enough distinct sites, the OOF folds are made
+    site-disjoint (StratifiedGroupKFold) exactly like the headline probe, so the
+    anchor score never rides on within-site leakage; otherwise it falls back to
+    the plain StratifiedKFold path (unchanged for site/scanner-less cohorts).
     """
     from .probe import _n_splits, build_probe_pipeline
+    from sklearn.model_selection import StratifiedGroupKFold
     X = np.asarray(X, dtype=float)
     y_codes = np.searchsorted(np.unique(y), y)
-    k = _n_splits(y_codes, None)
+    k = _n_splits(y_codes, groups)
     pipe, _ = build_probe_pipeline(X.shape[0], X.shape[1])
-    proba = cross_val_predict(pipe, X, y_codes, cv=k, method="predict_proba")
+    splits = None
+    if groups is not None and len(np.unique(groups)) >= k:
+        cv = StratifiedGroupKFold(n_splits=k, shuffle=True, random_state=0)
+        candidate = list(cv.split(X, y_codes, np.asarray(groups)))
+        # cross_val_predict cannot skip folds, so a site-disjoint split that
+        # leaves ANY single-class training fold would crash the fit. Only use the
+        # grouped splits when every train fold carries both classes; otherwise
+        # fall back to the historical (non-grouped) path so sparsely-labelled
+        # sub-cohorts still complete.
+        if all(len(np.unique(y_codes[tr])) >= 2 for tr, _ in candidate):
+            splits = candidate
+    if splits is not None:
+        proba = cross_val_predict(pipe, X, y_codes, cv=splits,
+                                  method="predict_proba")
+    else:
+        # Preserve the historical fallback exactly: integer cv -> default
+        # StratifiedKFold (no shuffle) for site/scanner-less cohorts.
+        proba = cross_val_predict(pipe, X, y_codes, cv=k, method="predict_proba")
     return proba[:, 1] if proba.shape[1] == 2 else proba.max(axis=1)
 
 
 def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
-    Xo, yo, _ = point_head(df, target)
+    Xo, yo, go = point_head(df, target)
     classes, counts = np.unique(yo, return_counts=True)
     if len(classes) < 2:
         return TestEvidence("biomarker_anchor", TestResult.NA, "target has <2 classes")
@@ -327,7 +360,8 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
                             "(singleton) — cannot anchor")
 
     # Out-of-fold probe score on the outcome-kept subset, correlated with markers.
-    score = _oof_scores(Xo, yo)
+    # Site-disjoint OOF (like the headline) when site groups are available.
+    score = _oof_scores(Xo, yo, go)
     keep = _outcome_keep_mask(df, target)
     sub = df.loc[keep]
 

@@ -2,10 +2,10 @@
 """
 build_demo_data.py — engine -> app/demo_data.json + reports/*.
 
-Runs the NeuroAD Discovery Engine on the synthetic SURVIVOR + KILL cohorts (and, if it
-loads, real OASIS) and serializes a single deterministic JSON the offline
-workbench (app/index.html) renders. Every headline number is pulled from
-`neuroad.calibration` so nothing on screen is free-floating.
+Runs the NeuroAD Discovery Engine on the REAL substrates only (OASIS + ADNI) and
+serializes a single deterministic JSON the offline workbench (app/index.html)
+renders. Every headline number is refereed engine output or pulled from
+`neuroad.calibration` so nothing on screen is free-floating or synthetic.
 
 Design contract:
   * Fully guarded imports. If the engine (neuroad.pipeline / neuroad.data.*)
@@ -121,173 +121,6 @@ def _test(key, result, effect, effect_label, detail, stats):
 # FALLBACK dataset — calibrated, deterministic, the guaranteed-offline payload.
 # The embedded copy in index.html is generated from exactly this output.
 # ---------------------------------------------------------------------------
-def _synthetic_survivor():
-    conv = T("conversion_auc", 0.74)
-    scan = T("site_auc_survivor", 0.64)
-    ptau_r = T("ptau217_r", 0.43)
-    tests = [
-        _test("age_sex", "passed", 0.72, "outcome AUC after covariates",
-              f"Signal holds after age + sex covariates (AUC {conv:.2f} -> 0.72).",
-              {"pre_auc": conv, "post_auc": 0.72}),
-        _test("site_scanner", "weakened", 0.70, "outcome AUC, scanner-scrubbed",
-              f"Positive leakage margin (+{conv - scan:.2f}); survives scanner-direction "
-              f"scrub at 0.70. Some batch structure remains.",
-              {"scanner_auc": scan, "outcome_auc": conv, "margin": round(conv - scan, 2),
-               "residual_outcome_auc": 0.70}),
-        _test("brain_age", "weakened", 0.71, "outcome AUC, brain-age regressed",
-              f"Retains ~{int(T('survivor_retained', 0.80) * 100)}% of effect after "
-              f"regressing structural brain-age (proxy control).",
-              {"retained": T("survivor_retained", 0.80), "post_auc": 0.71,
-               "brain_age_r2": T("brain_age_r2", 0.85), "brain_age_mae_yr": T("brain_age_mae_yr", 3.0)}),
-        _test("biomarker_anchor", "passed", round(0.5 + ptau_r, 2), "anchor bar (0.5 + r)",
-              f"Anchored to p-tau217 (r={ptau_r:.2f}, n=44 complete) "
-              f"[SYNTHETIC HARNESS: calibration target, not measured plasma].",
-              {"ptau217_r": ptau_r, "ptau217_n": 44, "gfap_r": T("gfap_r", 0.35),
-               "n_complete": 44, "synthetic": True,
-               "provenance": "SYNTHETIC HARNESS — calibration target, not measured plasma"}),
-        _test("replication", "passed", 0.69, "held-out cohort AUC",
-              "Reproduces on a held-out acquisition site (AUC 0.69).",
-              {"heldout_auc": 0.69}),
-    ]
-    results = {t["key"]: t["result"] for t in tests}
-    score = score_from_results(results)
-    return {
-        "id": "SYN-A", "label": "Case A", "kind": "SURVIVOR",
-        "substrate_badge": "SYNTHETIC HARNESS",
-        "claim": {
-            "claim_id": "SYN-A",
-            "claim_text": "MCI->AD conversion is decodable from frozen structural "
-                          "embeddings beyond scanner and aging.",
-            "target": "conversion", "group_a": "MCI converters",
-            "group_b": "MCI non-converters",
-            "substrate": "synthetic contract embeddings (badged demo cohort)", "head": "linear probe",
-        },
-        "naive_effect": {"metric": "AUC", "value": conv, "task": "MCI->AD conversion"},
-        "leakage_margin": {"outcome_auc": conv, "scanner_auc": scan,
-                           "margin": round(conv - scan, 2)},
-        "tests": tests,
-        "score": score, "verdict": verdict_from_score(score), "promoted": True,
-        "confound_leaderboard": [
-            {"confound": "scanner", "variance_explained": 0.11},
-            {"confound": "age", "variance_explained": 0.08},
-            {"confound": "sex", "variance_explained": 0.02}],
-        "double_dissociation": {"residual_outcome_auc": 0.70,
-                                "note": "still predicts outcome after removing the scanner direction"},
-        "biology_hypothesis": "Medial-temporal atrophy trajectory consistent with a "
-                              "tau-driven (p-tau217-anchored) conversion phenotype, not "
-                              "generic aging.",
-        "next_experiment": [
-            "Replicate the probe on an independent ADNI/EPAD cohort with plasma p-tau217.",
-            "Test whether the probe score adds prognostic value over p-tau217 alone (nested model)."],
-        "falsification": [
-            "If leakage margin goes <= 0 on the independent cohort, the finding is scanner batch.",
-            "If p-tau217 partial correlation drops to ~0 given brain-age, it is aging, not tau."],
-        "caveats": [
-            "'Robust enough for follow-up' is not 'robust' — two star tests only weakened.",
-            f"Brain-age control is a structural-feature proxy, not a trained model.",
-            f"p-tau217 anchor rests on n=44 complete cases ({int(_missingness()*100)}% missing)."],
-        "reviewer": {
-            "critique": [
-                "Brain-age control is a proxy (structural-feature regression), not a "
-                "trained brain-age model — treat 'more than aging' as provisional.",
-                f"p-tau217 anchor rests on n=44 complete cases ({int(_missingness()*100)}% "
-                "missing); the r=0.43 confidence interval is wide.",
-                "'Robust enough for follow-up' is NOT 'robust'. Both star tests only weakened."],
-            "revised_caveats": [
-                "Report the leakage margin (+0.10) alongside the outcome AUC, never the AUC alone.",
-                "State the p-tau217 completeness (n=44) on every slide the anchor appears."]},
-        "courtroom": {
-            "prosecution": "The scanner probe still reaches AUC 0.64 and after age+sex the "
-                           "outcome slips to 0.72 — part of this rides on acquisition covariates.",
-            "defense": "The leakage margin is positive (+0.10): the outcome is decoded better "
-                       "than the scanner, it survives scanner-direction scrubbing (0.70), and it "
-                       "is anchored to plasma p-tau217 (r=0.43, n=44) — a molecular corroboration.",
-            "judge_reasoning": "Survives four of five challenges with a positive leakage margin "
-                               "and a molecular anchor. Verdict: robust enough for follow-up — not "
-                               "'robust'. Two star tests only weakened; treat as a lead, not a result."},
-        "scatter": {"n": 90, "n_scanners": 2, "seed": 101,
-                    "outcome_gap": 3.0, "scanner_gap": 0.6, "converter_frac": 0.42},
-    }
-
-
-def _synthetic_kill():
-    conv = 0.72
-    scan = T("site_auc_kill", 0.92)
-    tests = [
-        _test("age_sex", "weakened", 0.66, "outcome AUC after covariates",
-              "Effect shrinks under age + sex (AUC 0.72 -> 0.66) — converters skew older.",
-              {"pre_auc": conv, "post_auc": 0.66}),
-        _test("site_scanner", "failed", 0.55, "outcome AUC, scanner-scrubbed",
-              f"Scanner decoded at AUC {scan:.2f} vs {conv:.2f} outcome — leakage margin "
-              f"{conv - scan:+.2f}. Scrub the scanner direction and the outcome collapses to 0.55.",
-              {"scanner_auc": scan, "outcome_auc": conv, "margin": round(conv - scan, 2),
-               "residual_outcome_auc": 0.55}),
-        _test("brain_age", "failed", 0.58, "outcome AUC, brain-age regressed",
-              f"Loses ~{int((1 - T('kill_retained', 0.25)) * 100)}% of effect after brain-age "
-              f"regression; post-adjustment AUC ~{T('kill_post_auc', 0.58):.2f} (near chance).",
-              {"retained": T("kill_retained", 0.25), "post_auc": T("kill_post_auc", 0.58)}),
-        _test("biomarker_anchor", "failed", 0.58, "anchor bar (0.5 + r)",
-              "No molecular anchor: p-tau217 correlation r=0.08 (n=41), not significant "
-              "[SYNTHETIC HARNESS: calibration target, not measured plasma].",
-              {"ptau217_r": 0.08, "ptau217_n": 41, "n_complete": 41, "synthetic": True,
-               "provenance": "SYNTHETIC HARNESS — calibration target, not measured plasma"}),
-        _test("replication", "failed", 0.57, "held-out cohort AUC",
-              "Does not reproduce on the held-out acquisition site (AUC 0.57).",
-              {"heldout_auc": 0.57}),
-    ]
-    results = {t["key"]: t["result"] for t in tests}
-    score = score_from_results(results)
-    return {
-        "id": "SYN-B", "label": "Case B", "kind": "KILL",
-        "substrate_badge": "SYNTHETIC HARNESS",
-        "claim": {
-            "claim_id": "SYN-B",
-            "claim_text": "A structural embedding signature separates MCI converters from "
-                          "non-converters.",
-            "target": "conversion", "group_a": "MCI converters",
-            "group_b": "MCI non-converters",
-            "substrate": "synthetic contract embeddings (badged demo cohort)", "head": "linear probe"},
-        "naive_effect": {"metric": "AUC", "value": conv, "task": "MCI->AD conversion"},
-        "leakage_margin": {"outcome_auc": conv, "scanner_auc": scan,
-                           "margin": round(conv - scan, 2)},
-        "tests": tests,
-        "score": score, "verdict": verdict_from_score(score), "promoted": False,
-        "confound_leaderboard": [
-            {"confound": "scanner", "variance_explained": 0.41},
-            {"confound": "age", "variance_explained": 0.19},
-            {"confound": "sex", "variance_explained": 0.03}],
-        "double_dissociation": {"residual_outcome_auc": 0.55,
-                                "note": "collapses to chance after removing the scanner direction"},
-        "biology_hypothesis": "",
-        "next_experiment": [],
-        "falsification": [],
-        "caveats": [
-            "Fails both star tests with a negative leakage margin (-0.20).",
-            "No molecular anchor and no replication — do not promote to biology."],
-        "reviewer": {
-            "critique": [
-                "The naive AUC (0.72) is indistinguishable from the survivor at first glance — "
-                "this is exactly why the gauntlet exists.",
-                "Negative leakage margin (-0.20) means the head decodes the scanner better than "
-                "the disease. This is acquisition structure, not biology.",
-                "Correctly blocked at the biomarker gate: r=0.08 fails the hard anchor requirement."],
-            "revised_caveats": [
-                "Do not report the 0.72 AUC without the -0.20 leakage margin next to it."]},
-        "courtroom": {
-            "prosecution": "Scanner decoded at AUC 0.92 vs 0.72 for the outcome — margin -0.20. "
-                           "Scrub the scanner direction and it collapses to 0.55; regress brain-age "
-                           "and it is chance; no plasma anchor (r=0.08). Acquisition structure in a "
-                           "diagnosis costume.",
-            "defense": "The naive 0.72 is not nothing and age+sex only partly explain it — but the "
-                       "defense cannot produce a molecular anchor or a replication.",
-            "judge_reasoning": "Fails both star tests, negative leakage margin, no anchor, no "
-                               "replication. Verdict: fragile — the imaging 'finding' is, on this "
-                               "evidence, the scanner. Do not spend a quarter on it."},
-        "scatter": {"n": 90, "n_scanners": 2, "seed": 202,
-                    "outcome_gap": 0.6, "scanner_gap": 3.0, "converter_frac": 0.42},
-    }
-
-
 def _oasis_survivor():
     dxauc = T("diagnosis_auc", 0.89)
     tests = [
@@ -535,22 +368,6 @@ def _adni_cohort():
         "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). "
                 "Multi-site with real plasma p-tau217 — the biomarker anchor no open cohort "
                 "ships. The 3T/1.5T split dominates the full cohort (SURVIVOR restricts to 3T).",
-    }
-
-
-def _synthetic_cohort():
-    miss = _missingness()
-    return {
-        "badge": "SYNTHETIC HARNESS",
-        "substrate_line": "synthetic contract embeddings (badged demo cohort — NOT Neuro-JEPA)",
-        "n_subjects": 480, "embedding_dim": 64, "n_sites": 4, "n_scanners": 3,
-        "dx_counts": {"CN": 210, "MCI": 180, "AD": 90},
-        "age_mean": 72.4, "pct_female": 54.0,
-        "label_coverage": {"conversion": 0.375},
-        "biomarker_coverage": {"amyloid": 0.62, "p_tau217": round(1 - miss, 3),
-                               "gfap": 0.48, "nfl": 0.40, "apoe4": 0.71},
-        "note": "Ground-truth scanner-confound KILL + p-tau217 anchor live here "
-                "(no open cohort has plasma markers). Guaranteed offline path.",
     }
 
 
@@ -1443,11 +1260,6 @@ def fallback_demo_data() -> dict:
             "claude": _claude_badge(),
         },
         "substrates": {
-            "synthetic": {
-                "key": "synthetic", "badge": "SYNTHETIC HARNESS",
-                "cohort": _synthetic_cohort(),
-                "cases": {"SURVIVOR": _synthetic_survivor(), "KILL": _synthetic_kill()},
-            },
             "oasis": {
                 "key": "oasis", "badge": "REAL OASIS",
                 "cohort": _oasis_cohort(),
@@ -1475,9 +1287,7 @@ def fallback_demo_data() -> dict:
     # hypothesis-entry surface always has something to render, even offline.
     for sub_key, sub in data["substrates"].items():
         for kind, case in sub["cases"].items():
-            if sub_key == "synthetic":
-                dataset = f"synthetic:{kind}"
-            elif sub_key == "adni":
+            if sub_key == "adni":
                 dataset = "adni:combat" if kind == "SURVIVOR" else "adni"
             else:
                 dataset = sub_key
@@ -1695,16 +1505,10 @@ def _try_engine() -> dict | None:
                          group_a=ga, group_b=gb)
 
     # (substrate, kind, loader, seed, claim_text, target, group_a, group_b, promoted_cap)
-    # Demo seeds are pinned for a clean, deterministic story: the KILL uses a seed
-    # whose naive AUC (~0.82) is HIGHER than the survivor's (~0.71) yet is still
-    # refused — the punchline — with a cleanly failed biomarker anchor.
+    # Real substrates only (OASIS + ADNI). The ADNI KILL is the punchline: the full
+    # cohort's structural feeder predicts 3T-vs-1.5T field strength better than
+    # disease, so the STAR site/scanner test fails and the honesty cap floors it.
     plan = [
-        ("synthetic", "SURVIVOR", "synthetic:SURVIVOR", 0,
-         "MCI->AD conversion is decodable from frozen structural embeddings beyond "
-         "scanner and aging.", "conversion", "MCI converters", "MCI non-converters", None),
-        ("synthetic", "KILL", "synthetic:KILL", 6,
-         "A structural embedding signature separates MCI converters from non-converters.",
-         "conversion", "MCI converters", "MCI non-converters", None),
         ("oasis", "SURVIVOR", "oasis", 0,
          "AD vs CN diagnosis is decodable from OASIS structural-derived features.",
          "dx_binary", "AD (CDR>=1)", "CN (CDR=0)",
@@ -1734,9 +1538,9 @@ def _try_engine() -> dict | None:
                 loaded[ck] = df
             claim = make_claim(loader, text, target, ga, gb)
             # Label the substrate honestly per feeder (real OASIS/ADNI are
-            # weight-free structural features, synthetic is a badged demo cohort —
-            # NOT Neuro-JEPA embeddings). Flows into naive_effect.substrate and the
-            # courtroom text, which read claim.substrate.
+            # weight-free structural features — NOT Neuro-JEPA embeddings). Flows
+            # into naive_effect.substrate and the courtroom text, which read
+            # claim.substrate.
             claim.substrate = loaders.honest_substrate(loader)
             card = pipeline.run_referee(df, claim)
             fb = data["substrates"][sub]["cases"][kind]
@@ -1758,15 +1562,6 @@ def _try_engine() -> dict | None:
     # Real cohort cards from the loaded tables.
     try:
         from neuroad import contract
-        if ("synthetic:SURVIVOR", 0) in loaded:
-            cs = contract.cohort_summary(loaded[("synthetic:SURVIVOR", 0)])
-            syn = data["substrates"]["synthetic"]["cohort"]
-            syn.update({"n_subjects": cs["n_subjects"], "embedding_dim": cs["embedding_dim"],
-                        "n_sites": cs["n_sites"], "n_scanners": cs["n_scanners"],
-                        "dx_counts": cs["dx_counts"], "age_mean": cs["age_mean"],
-                        "pct_female": cs["pct_female"],
-                        "label_coverage": cs["label_coverage"],
-                        "biomarker_coverage": cs["biomarker_coverage"]})
         if ("oasis", 0) in loaded:
             co = contract.cohort_summary(loaded[("oasis", 0)])
             oc = data["substrates"]["oasis"]["cohort"]
@@ -1787,23 +1582,6 @@ def _try_engine() -> dict | None:
                        "biomarker_coverage": ca["biomarker_coverage"]})
     except Exception as exc:
         print(f"[build_demo_data] cohort overlay failed ({exc}); keeping fallback cohorts.")
-
-    # SEED-SWEEP STABILITY: run the referee across 20 seeds of the synthetic
-    # SURVIVOR and KILL and report the score distribution + verdict-flip rate, so
-    # the demo can show "verdict stable across 20 seeds" instead of a single-seed
-    # point. Reduced bootstrap/permutation budget keeps this a ~30s build step.
-    try:
-        from neuroad import pipeline
-        data["seed_sweep"] = {
-            "SURVIVOR": pipeline.seed_sweep("SURVIVOR", n_seeds=20, n_boot=200, n_perm=200),
-            "KILL": pipeline.seed_sweep("KILL", n_seeds=20, n_boot=200, n_perm=200),
-        }
-        ss = data["seed_sweep"]
-        print(f"[build_demo_data]   seed_sweep: SURVIVOR modal="
-              f"{ss['SURVIVOR']['modal_verdict']} flip={ss['SURVIVOR']['flip_rate']} | "
-              f"KILL modal={ss['KILL']['modal_verdict']} flip={ss['KILL']['flip_rate']}")
-    except Exception as exc:
-        print(f"[build_demo_data]   seed_sweep skipped ({exc})")
 
     # REAL-DATA EVIDENCE: the batch effect on healthy OpenBHB (no disease at all).
     try:
@@ -1993,19 +1771,18 @@ def _try_engine() -> dict | None:
 # ---------------------------------------------------------------------------
 def _write_reports(data: dict) -> None:
     REPORTS.mkdir(parents=True, exist_ok=True)
-    syn = data["substrates"]["synthetic"]
-    survivor = syn["cases"]["SURVIVOR"]
-    cohort = syn["cohort"]
+    sub = data["substrates"]["adni"]
+    survivor = sub["cases"]["SURVIVOR"]
+    cohort = sub["cohort"]
+    badge = survivor.get("substrate_badge") or sub.get("badge") or "REAL ADNI"
 
     # cohort_card.json
     (REPORTS / "cohort_card.json").write_text(json.dumps(cohort, indent=2))
 
     # claim.yaml (survivor) — the most-clickable export in the repo. It serializes
-    # the SYNTHETIC HARNESS survivor, so it MUST carry a synthetic stamp: an
-    # unbadged promoted "strong candidate" here is the exact clone-liability that
-    # contradicts "honesty IS the product / refuse our own claims". Top-level
-    # badge/synthetic/provenance keys, the survivor's caveats, and an explicit note
-    # that the leakage-margin CI includes zero travel with the verdict.
+    # the REAL ADNI (ComBat-harmonized AD-vs-CN) survivor. Top-level
+    # badge/provenance keys, the survivor's caveats, and an explicit note that the
+    # leakage-margin CI band travels with the verdict.
     lm = survivor.get("leakage_margin", {}) or {}
     ci_lo = lm.get("margin_ci_lo")
     ci_hi = lm.get("margin_ci_hi")
@@ -2025,9 +1802,8 @@ def _write_reports(data: dict) -> None:
     else:
         leakage_note = "Leakage-margin CI unavailable for this build."
     claim_doc = {
-        "badge": "SYNTHETIC HARNESS",
-        "synthetic": True,
-        "provenance": "SYNTHETIC HARNESS — calibrated survivor, not a real result",
+        "badge": badge,
+        "provenance": f"{badge} — refereed survivor (real cohort).",
         "claim": survivor["claim"],
         "naive_effect": survivor["naive_effect"],
         "leakage_margin": survivor["leakage_margin"],
@@ -2040,13 +1816,12 @@ def _write_reports(data: dict) -> None:
     try:
         import yaml
         (REPORTS / "claim.yaml").write_text(
-            "# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.\n"
-            "# The verdict below is a positive control on a synthetic cohort; the\n"
-            "# leakage-margin CI includes zero. Do not read as a real finding.\n"
+            f"# {badge} — refereed survivor over a real cohort.\n"
+            "# The leakage-margin CI note below travels with the verdict.\n"
             + yaml.safe_dump(claim_doc, sort_keys=False))
     except Exception:
         (REPORTS / "claim.yaml").write_text(
-            "# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.\n"
+            f"# {badge} — refereed survivor over a real cohort.\n"
             "# pyyaml unavailable\n" + json.dumps(claim_doc, indent=2))
 
     # evidence_ledger.csv — self-describing + fully traceable. The biomarker row
@@ -2055,9 +1830,9 @@ def _write_reports(data: dict) -> None:
     # |r|). Provenance columns (dataset/seed/source/synthetic) let a downloaded
     # ledger stand alone as an audit artifact.
     src = data.get("meta", {}).get("source", "fallback")
-    ledger_dataset = "synthetic:SURVIVOR"
+    ledger_dataset = "adni:combat"
     ledger_seed = 0
-    ledger_synthetic = survivor.get("substrate_badge", "") == "SYNTHETIC HARNESS"
+    ledger_synthetic = False
 
     def _honest_metric(key: str, st: dict):
         """(metric_label, value, ci_lo, n) — the DEFENSIBLE headline per test,
@@ -2086,9 +1861,9 @@ def _write_reports(data: dict) -> None:
 
     hdr = ("test,result,metric,value,ci_lo,n,dataset,seed,source,synthetic,detail")
     lines = [
-        "# NeuroAD evidence ledger — SYNTHETIC HARNESS (calibrated demo cohort). "
-        "The p-tau217/GFAP anchor is a CALIBRATION TARGET, not a measured plasma "
-        "value; no open cohort pairs MRI with plasma markers.",
+        f"# NeuroAD evidence ledger — {badge} (ComBat-harmonized AD-vs-CN survivor). "
+        "Every value is refereed engine output over a real cohort with real plasma "
+        "p-tau217/GFAP; the synthetic column is false on every row.",
         hdr,
     ]
     for t in survivor["tests"]:
@@ -2124,8 +1899,8 @@ def _write_reports(data: dict) -> None:
     # reviewer_report.md
     rlines = ["# Reviewer (Claude) — peer-review critique\n",
               f"## {survivor['claim']['claim_id']} — {survivor['verdict']} "
-              "[SYNTHETIC HARNESS]\n"]
-    for c in survivor["reviewer"]["critique"]:
+              f"[{badge}]\n"]
+    for c in (survivor.get("reviewer", {}) or {}).get("critique", []):
         rlines.append(f"- {c}")
     (REPORTS / "reviewer_report.md").write_text("\n".join(rlines) + "\n")
 
@@ -2134,11 +1909,12 @@ def _write_reports(data: dict) -> None:
         "cells": [
             {"cell_type": "markdown", "metadata": {},
              "source": ["# NeuroAD Discovery Engine — reproducible run\n",
-                        "Runs the referee on the synthetic SURVIVOR cohort."]},
+                        "Runs the referee on the real ComBat-harmonized ADNI "
+                        "AD-vs-CN cohort."]},
             {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
              "source": ["from neuroad import pipeline\n",
                         "from neuroad.data import loaders\n",
-                        "df = loaders.load('synthetic:SURVIVOR')\n",
+                        "df = loaders.load('adni:combat')\n",
                         "card = pipeline.run_referee(df, claim=None)\n",
                         "print(card.verdict, card.score)"]},
         ],

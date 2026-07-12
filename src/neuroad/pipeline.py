@@ -141,14 +141,39 @@ def _naive_effect(df: pd.DataFrame, claim: Claim) -> dict:
     they are paired ratios where the split-seed cancels, and they anchor the
     calibrated retained-fraction thresholds.
     """
+    import numpy as np
     from neuroad import probe
     target = claim.target if claim.target in contract.LABEL_TARGETS else "conversion"
     X, y, groups = probe.point_head(df, target)
     auc = probe.cross_val_auc(X, y, groups=groups,
                               n_repeats=probe.N_REPEATS_ENSEMBLE)
+
+    # Age/sex-residualized primary AUC (fold-honest: the nuisance regression is
+    # fit inside each fold on train rows only). Reported ALONGSIDE the naive AUC
+    # so a headline driven by demographic confounding is visible at a glance;
+    # None when there is no age/sex variation to adjust for.
+    auc_adjusted = None
+    if target in ("conversion", "dx_binary"):
+        keep = (pd.to_numeric(df["conversion"], errors="coerce").notna().to_numpy()
+                if target == "conversion"
+                else df["dx"].astype("string").map({"AD": 1, "CN": 0}).notna().to_numpy())
+        sub = df.loc[keep]
+        cov_cols = []
+        age = sub["age"].to_numpy(float)
+        if np.isfinite(age).sum() >= 3 and np.nanstd(age) > 0:
+            cov_cols.append(np.nan_to_num(age, nan=np.nanmean(age)))
+        if sub["sex"].nunique(dropna=True) > 1:
+            cov_cols.append((sub["sex"].astype("string") == "F").to_numpy(float))
+        if cov_cols:
+            C = np.column_stack(cov_cols)
+            auc_adjusted = round(float(probe.residualized_cross_val_auc(
+                X, C, y, groups, kind="covariate")), 3)
+
     return {
         "metric": "AUC",
         "value": round(float(auc), 3),
+        "value_adjusted": auc_adjusted,
+        "adjusted_note": "age/sex-residualized (fold-honest)",
         "target": target,
         "n": int(len(y)),
         "head": claim.head,

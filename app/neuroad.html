@@ -1740,16 +1740,16 @@ class Component extends React.Component {
     { id:'root', x:270, y:700, role:'root', label:'p-tau217 → hippocampal atrophy', sub:'Root hypothesis', story:'cohort' },
     { id:'syn',  x:720, y:190, role:'green', label:'Synaptic-loss pathway', sub:'survives gauntlet', story:'confound' },
     { id:'synk', x:1120,y:320, role:'gray', label:'Tau-PET redundant', sub:'pruned' },
-    { id:'syn2', x:1200,y:190, role:'green', label:'Confirmed pathway', sub:'AUC 0.83' },
+    { id:'syn2', x:1200,y:190, role:'green', label:'Confirmed pathway', sub:'' },
     { id:'cand1',x:1740,y:190, role:'clay', label:'Ranked protein targets', sub:'3 proteins', story:'proteins' },
     { id:'neuro',x:720, y:440, role:'gold', label:'Neuroinflammation offshoot', sub:'iterated · GFAP', story:'iterate' },
     { id:'neurk',x:1120,y:565, role:'gray', label:'Microglial subtype', sub:'underpowered n' },
-    { id:'neur2',x:1200,y:440, role:'green', label:'Refined · GFAP anchor', sub:'AUC 0.79' },
+    { id:'neur2',x:1200,y:440, role:'green', label:'Refined · GFAP anchor', sub:'' },
     { id:'cand2',x:1740,y:440, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
     { id:'scan', x:720, y:700, role:'gray', label:'Scanner-site artifact', sub:'killed', story:'kill' },
     { id:'scand',x:1060,y:760, role:'gray', label:'site batch', sub:'' },
     { id:'vasc', x:720, y:950, role:'green', label:'Vascular contribution', sub:'survives', story:'confound2' },
-    { id:'vasc2',x:1200,y:950, role:'green', label:'WMH-linked pathway', sub:'AUC 0.76' },
+    { id:'vasc2',x:1200,y:950, role:'green', label:'WMH-linked pathway', sub:'' },
     { id:'cand3',x:1740,y:950, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
     { id:'age',  x:720, y:1210,role:'gray', label:'Age-only confound', sub:'killed', story:'kill2' },
     { id:'aged', x:1060,y:1270,role:'gray', label:'cohort skew', sub:'' }
@@ -1763,8 +1763,8 @@ class Component extends React.Component {
   ];
 
   state = {
-    stage:'entry', dataMode:'synthetic', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
-    data:null, claudeLive:false, substrate:'synthetic',
+    stage:'entry', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
+    data:null, card:null, claudeLive:false, substrate:'adni',
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
@@ -1831,11 +1831,16 @@ class Component extends React.Component {
       fetch('demo_data.json').then(r=>r.ok?r.json():null).then(d=>{ if(d){ this.applyRealLabels(d); this.setState({data:d}); } }).catch(()=>{});
       fetch('/api/health').then(r=>r.ok?r.json():null).then(h=>{ if(h) this.setState({claudeLive:!!h.claude_live}); }).catch(()=>{});
     } catch(e){}
+    // Optional prefill from Claude Science: open with /?h=<hypothesis text>. No-op when the param is absent.
+    try {
+      var _hm=(window.location.search||'').match(/[?&]h=([^&#]*)/);
+      if(_hm){ var _h=decodeURIComponent(_hm[1].replace(/\+/g,' ')).trim(); if(_h) this.setState({entryValue:_h}); }
+    } catch(e){}
   }
   // ---- real-data accessors (null until demo_data.json loads) ----
-  heroCase(){ try{ return this.state.data.substrates[this.state.substrate].cases.SURVIVOR; }catch(e){ return null; } }
+  heroCase(){ try{ if(this.state.card&&this.state.card.case) return this.state.card.case; return this.state.data.substrates[this.state.substrate].cases.SURVIVOR; }catch(e){ return null; } }
   heroTx(){ const c=this.heroCase(); return c?c.translation:null; }
-  heroCohort(){ try{ return this.state.data.substrates[this.state.substrate].cohort; }catch(e){ return null; } }
+  heroCohort(){ try{ if(this.state.card&&this.state.card.case&&this.state.card.case.cohort) return this.state.card.case.cohort; return this.state.data.substrates[this.state.substrate].cohort; }catch(e){ return null; } }
   srcBadge(s){ const m={offline_snapshot:'SNAPSHOT',live:'LIVE',surrogate:'SURROGATE',candidate_only:'CANDIDATE'}; return m[s]||(s?String(s).toUpperCase():'SNAPSHOT'); }
   shortDesc(t){ const n=(t&&t.evidence_note)||''; const m=n.match(/\(([^)]+)\)/); return m?m[1]:n; }
   nctUrl(ref){ const m=(ref||'').match(/NCT\d{8}/); return m?('https://clinicaltrials.gov/study/'+m[0]):'https://clinicaltrials.gov/'; }
@@ -1845,12 +1850,18 @@ class Component extends React.Component {
     const rt=tx.ranked_targets||[];
     return { biomarkers:Math.min(3, rt.length), compounds:(tx.repurposing||[]).length, experiments:tx.wet_lab_experiment?1:0 };
   }
-  // Patch the candidate node sub-labels from the real translation counts,
-  // consistent with verdictCounts(). Falls back to the static subs if absent.
+  // Patch the candidate node sub-labels + branch AUC subs from the REAL case
+  // (translation counts + naive_effect). Reads the demo_data payload passed at
+  // mount; the live-card path routes through _applyCaseToTree directly.
   applyRealLabels(data){
-    const key=this.state.substrate||'synthetic';
-    let tx=null; try{ tx=data.substrates[key].cases.SURVIVOR.translation; }catch(e){}
-    if(!tx) return;
+    let sv=null; try{ sv=data.substrates[this.state.substrate].cases.SURVIVOR; }catch(e){}
+    this._applyCaseToTree(sv);
+  }
+  // Push the real case onto the fixed-topology tree: candidate counts + the
+  // branch AUC subs come straight from the card — never a fabricated number.
+  _applyCaseToTree(sv){
+    if(!sv) return;
+    const tx=sv.translation||{};
     const nB=Math.min(3, (tx.ranked_targets||[]).length);
     const nC=(tx.repurposing||[]).length;
     const nE=tx.wet_lab_experiment?1:0;
@@ -1859,7 +1870,26 @@ class Component extends React.Component {
     set('cand1', plur(nB,'protein'));
     set('cand2', plur(nC,'compound'));
     set('cand3', plur(nE,'experiment'));
+    const auc=sv.naive_effect&&sv.naive_effect.value;
+    const aucLabel=(auc!=null)?('AUC '+auc.toFixed(2)):'';
+    set('syn2', aucLabel); set('neur2', aucLabel); set('vasc2', aucLabel);
   }
+  // Real gauntlet helpers (no fabricated numbers): mark + Δ from case.tests[] stats.
+  _testMark(r){ return r==='passed'?'✓' : r==='failed'?'✗' : '—'; }
+  _testDelta(t){
+    const s=t.stats||{};
+    switch(t.key){
+      case 'site_scanner': return Math.max(0, (s.scanner_auc!=null?s.scanner_auc:0.5)-0.5);
+      case 'age_sex':      return (s.retained!=null? Math.max(0,1-s.retained) : 0);
+      case 'brain_age':    return (s.r2!=null? Math.max(0,Math.min(1,s.r2)) : 0);
+      case 'biomarker_anchor': { const e=(t.effect!=null?t.effect:1); return Math.max(0,Math.min(1,1-Math.min(1,e))); }
+      case 'replication':  return (s.train_auc!=null&&s.test_auc!=null)? Math.abs(s.train_auc-s.test_auc) : 0;
+      default: { const e=t.effect; return e!=null? Math.max(0,Math.min(1,Math.abs(e))) : 0; }
+    }
+  }
+  // Map the existing substrate control to a real registered dataset for the live
+  // /api/investigate call. adni:combat is the promoted AD-vs-CN survivor.
+  _investigateDataset(){ return ({adni:'adni:combat', oasis:'oasis'})[this.state.substrate] || 'adni:combat'; }
   // Count killed branch-heads directly from the tree structure (derived, not
   // hardcoded): gray nodes whose story is a kill reason.
   killedCount(){
@@ -1947,7 +1977,7 @@ class Component extends React.Component {
   };
   setDrawerTab=(t)=>this.setState({drawerTab:t});
   setBrainView=(v)=>this.setState({brainView:v});
-  setSubstrate=(key)=>{ this.setState({substrate:key}, ()=>{ if(this.state.data) this.applyRealLabels(this.state.data); this.forceUpdate(); }); };
+  setSubstrate=(key)=>{ this.setState({substrate:key, card:null}, ()=>{ if(this.state.data) this.applyRealLabels(this.state.data); this.forceUpdate(); }); };
   selectRoi=(id)=>this.setState({selRoi:this.state.selRoi===id?null:id});
   setNoteDraft=(e)=>this.setState({noteDraft:e.target.value});
   addNote=()=>{
@@ -1994,8 +2024,6 @@ class Component extends React.Component {
   onOpenTop=()=>{ this.setState({showVerdict:false, revealed:null}); this.onNodeClick('cand1'); };
   onCloseDrawer=()=>this.setState({pinned:null});
 
-  setSynthetic=()=>this.setState({dataMode:'synthetic'});
-  setReal=()=>this.setState({dataMode:'real'});
   toggleRail=()=>this.setState({railOpen:!this.state.railOpen});
   setChatDraft=(e)=>this.setState({chatDraft:e.target.value});
   setEntry=(e)=>this.setState({entryValue:e.target.value});
@@ -2061,6 +2089,19 @@ class Component extends React.Component {
   }
   onInvestigate=(seed)=>{
     if(typeof seed==='string' && seed) this.setState({entryValue:seed});
+    // Fire the REAL investigate call, non-blocking (mirrors the /api/orchestrate
+    // call in onChatSend). On success we overlay the live ExperimentCard so every
+    // accessor lights up with real data; on error/timeout we do nothing, leaving
+    // the real demo_data-backed view intact — no spinner, no synthetic.
+    try {
+      const hyp=(typeof seed==='string'&&seed)?seed:this.state.entryValue;
+      let ctrl=null; try{ ctrl=(typeof AbortController!=='undefined')?new AbortController():null; }catch(e){}
+      const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 25000);
+      fetch('/api/investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hypothesis:hyp,dataset:this._investigateDataset(),seed:0}),signal:ctrl?ctrl.signal:undefined})
+        .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
+        .then(result=>{ clearTimeout(to); if(result&&result.case){ this.setState({card:result},()=>{ this._applyCaseToTree(this.heroCase()); }); } })
+        .catch(()=>{ clearTimeout(to); });
+    } catch(e){}
     clearTimeout(this._timer); clearTimeout(this._revealTimer);
     this._playing=false;
     this.setState({stage:'canvas', playing:false, pinned:null, showVerdict:false, stepIndex:0, revealed:['root'], reasoning:this.growSeq[0].verb});
@@ -2132,55 +2173,67 @@ class Component extends React.Component {
     const k=node.story;
     if(k==='cohort'){
       const co=this.heroCohort();
-      if(co) return this.storyShell(node,'Cohort & datasets',[
+      if(!co) return null;
+      return this.storyShell(node,'Cohort & datasets',[
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'Root of the investigation. Everything below inherits this provenance.'),
+        co.badge? el('div',{key:'bd',style:{marginBottom:'10px'}}, this.chip(co.badge,'real')) : null,
         el('div',{key:'grid',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}},[
           this.kv('participants', co.n_subjects!=null?String(co.n_subjects):'—'),
           this.kv('sites', co.n_sites!=null?String(co.n_sites):'—'),
           this.kv('scanners', co.n_scanners!=null?String(co.n_scanners):'—'),
           this.kv('mean age', co.age_mean!=null?co.age_mean.toFixed(1):'—'),
         ]),
-        this.disclaimer(co.note || 'Provenance bound to the source cohort — every downstream node inherits it.')
-      ]);
-      return this.storyShell(node,'Cohort & datasets',[
-        el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'Root of the investigation. Everything below inherits this provenance.'),
-        el('div',{key:'grid',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}},[
-          this.kv('participants','1,864'), this.kv('sites','61'),
-          this.kv('cohorts','multi-site'), this.kv('modality','sMRI + plasma'),
-        ]),
-        this.disclaimer('Provenance bound to the source cohort — every downstream node inherits it.')
+        this.disclaimer(co.substrate_line || co.note || 'Provenance bound to the source cohort — every downstream node inherits it.')
       ]);
     }
-    if(k==='confound') return this.storyShell(node,'Confound gauntlet — 5 tests',[
-      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Does the signal survive when we strip each nuisance explanation? Lower Δ = less confounded.'),
-      this.checkRow('✓','Scanner leakage','Disease signal, or just which machine took the scan?',0.16),
-      this.checkRow('✓','Age & sex','Is it aging, not disease?',0.22),
-      this.checkRow('✓','Head motion','Could motion be faking the signal?',0.14),
-      this.checkRow('—','Site batch','Are site effects fully removed?',0.53),
-      this.checkRow('✓','Reverse causation','Could atrophy drive the biomarker, not the reverse?',0.27),
-      this.disclaimer('Passed 4/5 cleanly; site batch partially residual — flagged, not fatal.')
-    ]);
-    if(k==='confound2') return this.storyShell(node,'Confound gauntlet — vascular',[
-      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'White-matter hyperintensity route, re-checked against nuisance signals.'),
-      this.checkRow('✓','Scanner leakage','Disease signal, or acquisition artifact?',0.19),
-      this.checkRow('✓','Age & sex','Vascular burden vs plain aging?',0.31),
-      this.checkRow('✓','Reverse causation','Does atrophy precede WMH?',0.24),
-      this.disclaimer('Survives with a modest margin — routed to experiment design rather than a protein target.')
-    ]);
+    if(k==='confound'){
+      const c=this.heroCase(); const tests=(c&&c.tests)||[];
+      const nPass=tests.filter(t=>t.result==='passed').length;
+      const rows = tests.length
+        ? tests.map(t=> this.checkRow(this._testMark(t.result), t.label, t.question, this._testDelta(t)))
+        : [el('div',{key:'na',style:{fontSize:'12px',color:C.mute}},'Gauntlet not evaluated for this cohort.')];
+      return this.storyShell(node,'Confound gauntlet — 5 tests',[
+        el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Does the signal survive when we strip each nuisance explanation? Lower Δ = less confounded.'),
+        ...rows,
+        this.disclaimer(tests.length? ('Passed '+nPass+'/'+tests.length+' — every mark and Δ comes from the referee on the loaded cohort.') : 'No gauntlet result available for this cohort.')
+      ]);
+    }
+    if(k==='confound2'){
+      const c=this.heroCase(); const t=(c&&c.tests||[]).find(x=>x.key==='brain_age');
+      const na = !t || t.result==='not_available';
+      return this.storyShell(node,'Confound gauntlet — vascular',[
+        el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'White-matter hyperintensity route, re-checked against nuisance signals.'),
+        na ? el('div',{key:'na',style:{fontSize:'12px',color:C.mute,marginBottom:'8px'}},'Brain-age control not evaluated for this cohort.')
+           : this.checkRow(this._testMark(t.result), t.label, t.question, this._testDelta(t)),
+        this.disclaimer('Routed to experiment design rather than a protein target.')
+      ]);
+    }
     if(k==='kill'||k==='kill2'){
       const isScan=k==='kill';
+      const c=this.heroCase();
+      const lk=(c&&c.leakage_margin)||{};
+      const ageT=(c&&c.tests||[]).find(x=>x.key==='age_sex'); const ageS=(ageT&&ageT.stats)||{};
+      const hypAuc = isScan ? (lk.outcome_auc!=null?lk.outcome_auc:0) : (ageS.auc_before!=null?ageS.auc_before:0);
+      const cfAuc  = isScan ? (lk.scanner_auc!=null?lk.scanner_auc:0) : (ageS.auc_after!=null?ageS.auc_after:0);
       return this.storyShell(node, isScan?'Kill reason — scanner confound':'Kill reason — age confound',[
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink,lineHeight:1.5,marginBottom:'12px'}}, isScan?'A classifier that only sees the scanner site predicts the outcome better than the hypothesis does. The signal is the machine, not the disease.':'Chronological age alone explains the atrophy at least as well as the biomarker. No disease-specific signal remains.'),
-        el('div',{key:'a',style:{marginBottom:'9px'}},[ this.auc(isScan?'Hypothesis AUC':'Hypothesis AUC', isScan?0.71:0.68, C.green), this.auc(isScan?'Scanner-site classifier':'Age-only baseline', isScan?0.86:0.79, C.gray) ]),
+        el('div',{key:'a',style:{marginBottom:'9px'}},[ this.auc(isScan?'Hypothesis AUC':'Hypothesis AUC', hypAuc, C.green), this.auc(isScan?'Scanner-site classifier':'Age-only baseline', cfAuc, C.gray) ]),
         el('div',{key:'v',style:{fontSize:'12px',fontWeight:600,color:C.clayDeep,background:C.claySoft,padding:'8px 10px',borderRadius:'8px'}}, 'Confound ≥ signal → branch killed. Pruned from candidate generation.'),
         this.disclaimer('Killed branches stay visible (gray, dashed) so the reasoning is auditable — not hidden.')
       ]);
     }
-    if(k==='iterate') return this.storyShell(node,'Iterated offshoot',[
-      el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-ran the gauntlet.'),
-      el('div',{key:'a'},[ this.auc('Before · p-tau217 only',0.61,C.gold), this.auc('After · +GFAP anchor',0.79,C.green) ]),
-      this.disclaimer('A follow-up question spawns exactly this kind of gold offshoot — try the Claude · ask rail.')
-    ]);
+    if(k==='iterate'){
+      const c=this.heroCase();
+      const atn=c&&c.atn_profile;
+      let gfap=(atn&&atn.I_gfap_r!=null)?atn.I_gfap_r:null;
+      if(gfap==null){ const t=(c&&c.tests||[]).find(x=>x.key==='biomarker_anchor'); if(t&&t.stats&&t.stats.gfap_r!=null) gfap=t.stats.gfap_r; }
+      return this.storyShell(node,'Iterated offshoot',[
+        el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-ran the gauntlet.'),
+        gfap!=null ? el('div',{key:'a'},[ this.auc('GFAP astrocyte anchor · r', gfap, C.green) ])
+                   : el('div',{key:'na',style:{fontSize:'12px',color:C.mute}},'GFAP re-anchor not evaluated for this cohort.'),
+        this.disclaimer('A follow-up question spawns exactly this kind of gold offshoot — try the Claude · ask rail.')
+      ]);
+    }
     if(k==='proteins'){
       const tx=this.heroTx();
       if(tx){
@@ -2203,17 +2256,7 @@ class Component extends React.Component {
           this.disclaimer('Candidate targets to test — not validated.')
         ]);
       }
-      return this.storyShell(node,'Candidate protein targets',[
-        el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Ranked by PI4AD priority score — hypotheses to test, not validated targets.'),
-        this.rankRow('1','SYT1','synaptotagmin-1',0.91),
-        this.rankRow('2','SNAP25','SNARE complex',0.84),
-        this.rankRow('3','VAMP2','vesicle membrane',0.77),
-        el('div',{key:'af',style:{marginTop:'12px',padding:'10px',background:C.paper2,borderRadius:'8px'}},[
-          el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · SYT1'),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},'88.4')]),
-          this.bar(0.884,C.green)
-        ]),
-        this.disclaimer('Candidate targets to test — not validated.')
-      ]);
+      return null;
     }
     if(k==='compounds'){
       const tx=this.heroTx();
@@ -2228,18 +2271,7 @@ class Component extends React.Component {
           this.disclaimer('Repurposing hypotheses for evaluation — not treatment recommendations.')
         ]);
       }
-      return this.storyShell(node,'Repurposing compounds',[
-        el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Existing drugs that engage the surviving neuroinflammation pathway.'),
-        el('div',{key:'c1',style:{marginBottom:'11px'}},[
-          el('div',{key:'l',style:{fontSize:'13px'}},[el('b',{key:'a'},'Fasudil'),' ',el('span',{key:'b',style:{color:C.mute,fontSize:'12px'}},'ROCK inhibitor')]),
-          el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center'}},[ el('a',{key:'n',href:'https://clinicaltrials.gov/',target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},'NCT02598438'), this.chip('COMPLETED','plain') ])
-        ]),
-        el('div',{key:'c2'},[
-          el('div',{key:'l',style:{fontSize:'13px'}},[el('b',{key:'a'},'Riluzole'),' ',el('span',{key:'b',style:{color:C.mute,fontSize:'12px'}},'glutamate modulator')]),
-          el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center'}},[ el('a',{key:'n',href:'https://clinicaltrials.gov/',target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},'NCT01703117'), this.chip('RECRUITING','plain') ])
-        ]),
-        this.disclaimer('Repurposing hypotheses for evaluation — not treatment recommendations.')
-      ]);
+      return null;
     }
     if(k==='experiments'){
       const tx=this.heroTx();
@@ -2251,14 +2283,7 @@ class Component extends React.Component {
           this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.')
         ]);
       }
-      return this.storyShell(node,'Testable wet-lab experiments',[
-        el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Concrete next steps that would falsify or support the survivors.'),
-        this.expRow('iPSC-neuron SYT1 knockdown → synaptic-density readout (ICC).','SURROGATE','plain'),
-        this.expRow('CSF SYT1 ELISA vs hippocampal volume, prospective n=120.','SNAPSHOT','plain'),
-        this.expRow('Fasudil in 5xFAD mice → LTP rescue at 8 weeks.','SURROGATE','plain'),
-        this.expRow('Retrospective Riluzole EHR cohort → atrophy-slope contrast.','EHR','plain'),
-        this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.')
-      ]);
+      return null;
     }
     return null;
   }
@@ -2386,7 +2411,7 @@ class Component extends React.Component {
     const on={fontSize:'11px',padding:'5px 10px',border:'1px solid '+C.clay,borderRadius:'7px',background:C.clay,color:'#fff',cursor:'pointer'};
     const off={fontSize:'11px',padding:'5px 10px',border:'1px solid '+C.edge2,borderRadius:'7px',background:C.card,color:C.ink2,cursor:'pointer'};
     const s=this.state.substrate;
-    const opts=[['synthetic','Synthetic'],['oasis','OASIS'],['adni','ADNI']];
+    const opts=[['oasis','OASIS'],['adni','ADNI']];
     return el('div',{key:'sub',style:{display:'flex',gap:'5px'}}, opts.map(o=>
       el('button',{key:o[0],onClick:()=>this.setSubstrate(o[0]),style:s===o[0]?on:off},o[1])
     ));
