@@ -342,7 +342,7 @@ function wireOpen(){
   if(openBtn){
     openBtn.addEventListener('click', ()=>{
       const ds = (state.matched||[]).join(',');
-      window.open('/?h=' + encodeURIComponent(state.hypothesis) + '&ds=' + ds, '_blank');
+      window.open('/neuroad.html?h=' + encodeURIComponent(state.hypothesis) + '&ds=' + ds, '_blank');
     });
   }
 }
