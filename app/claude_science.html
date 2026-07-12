@@ -1,0 +1,432 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Science</title>
+<style>
+:root{
+  --cream:#FAF9F5;--paper:#F5F4ED;--card:#FFFFFF;--edge:#E7E4DA;--edge2:#D9D5C7;
+  --ink:#141413;--ink2:#5B584F;--mute:#8A877D;
+  --clay:#C96442;--clay-deep:#A94E30;--clay-soft:#F0DACF;
+  --green:#12936A;--green-soft:#DCF0E7;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  --serif:"Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--cream);font-family:var(--sans);color:var(--ink);
+  -webkit-font-smoothing:antialiased}
+.app{min-height:100vh;height:100vh;display:flex;flex-direction:column}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--edge)}
+.spark{width:22px;height:22px;flex:0 0 22px}
+.brand{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.brand b{color:var(--clay)}
+.pill-ctx{margin-left:6px;font-size:11.5px;color:var(--clay-deep);background:#FBEDE6;
+  border:1px solid var(--clay-soft);border-radius:999px;padding:3px 10px;font-weight:600}
+.top .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.avatar{width:28px;height:28px;border-radius:50%;background:var(--clay);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+/* conversation column */
+.stage{flex:1;overflow:auto;display:flex;justify-content:center}
+.col{width:740px;max-width:100%;padding:22px 20px 0;display:flex;flex-direction:column}
+.col.center{justify-content:center;align-items:center;padding-bottom:80px}
+.greet{font-family:var(--serif);font-size:33px;color:#3A382F;margin-bottom:26px;text-align:center;font-weight:500}
+.greet .sp{color:var(--clay)}
+/* messages */
+.msg{display:flex;gap:12px;margin:0 0 20px}
+.msg .who{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.msg.user .who{background:#E7E2D6;color:var(--ink2)}
+.msg.ai .who{background:transparent}
+.msg .body{flex:1;font-size:15px;line-height:1.6;color:var(--ink);padding-top:2px}
+.msg .body .name{font-weight:600;font-size:12px;color:var(--mute);margin-bottom:3px;text-transform:uppercase;letter-spacing:.05em}
+.chip-conn{display:inline-flex;align-items:center;gap:7px;background:var(--green-soft);
+  color:var(--green);border:1px solid #Bfe6d6;border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;margin-bottom:10px}
+.chip-conn .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+/* composer */
+.composer-wrap{width:740px;max-width:100%;margin:0 auto;padding:10px 20px 22px;position:relative}
+.composer{background:var(--card);border:1px solid var(--edge2);border-radius:22px;
+  box-shadow:0 10px 34px rgba(40,36,28,.08);padding:14px 14px 12px}
+.composer .field{font-size:15.5px;color:var(--ink);width:100%;min-height:24px;padding:2px 4px 10px;
+  outline:none;border:none;background:transparent;font-family:var(--sans);resize:none;line-height:1.4}
+.composer .field::placeholder{color:#A9A599}
+.composer .row{display:flex;align-items:center;gap:10px;padding-top:2px}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--edge2);background:var(--cream);
+  display:flex;align-items:center;justify-content:center;color:var(--ink2);font-size:16px}
+.tools-hint{font-size:12px;color:var(--mute);display:flex;align-items:center;gap:6px}
+.kbd{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--edge2);border-radius:5px;padding:1px 6px;color:var(--ink2)}
+.send{margin-left:auto;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:#E4E0D5;color:#fff;font-size:17px;font-weight:700;border:none;cursor:pointer}
+.send.on{background:var(--clay)}
+.foothint{text-align:center;font-size:11px;color:var(--mute);margin-top:9px}
+/* slash menu */
+.slash{position:absolute;left:20px;right:20px;bottom:116px;background:var(--card);
+  border:1px solid var(--edge);border-radius:14px;box-shadow:0 18px 50px rgba(40,36,28,.16);
+  padding:7px;z-index:5}
+.sfoot{display:flex;gap:16px;align-items:center;padding:9px 12px 5px;margin-top:4px;border-top:1px solid var(--edge);font-size:11px;color:var(--mute)}
+.sfoot .kb{display:inline-flex;align-items:center;gap:5px}
+.sfoot .kb b{font-family:var(--mono);font-weight:400;background:var(--paper);border:1px solid var(--edge2);border-radius:4px;padding:0 5px;color:var(--ink2)}
+.srow{display:flex;align-items:center;gap:12px;padding:9px 11px;border-radius:10px;cursor:pointer}
+.srow.sel{background:#FBEDE6;outline:1px solid var(--clay-soft)}
+.srow .ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 30px}
+.srow .ic.nad{background:var(--clay);color:#fff;font-weight:800;font-size:12px}
+.srow .ic.gen{background:var(--paper);color:var(--ink2);border:1px solid var(--edge2)}
+.srow .tt{font-size:13.5px;font-weight:600;color:var(--ink);flex:0 0 auto}
+.srow .badge{margin-left:auto;font-size:10.5px;font-family:var(--mono);color:var(--clay-deep);background:#FBEDE6;border-radius:5px;padding:2px 6px}
+.slash .feat{margin-left:auto;font:600 10px/1 var(--sans);letter-spacing:.05em;text-transform:uppercase;
+  color:var(--mute);background:var(--paper);border:1px solid var(--edge);padding:5px 9px;border-radius:999px;white-space:nowrap}
+/* tool-use card */
+.toolcard{border:1px solid var(--edge);background:#FBFAF6;border-radius:12px;overflow:hidden;margin-top:10px}
+.toolcard .thd{display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--edge);background:var(--card)}
+.toolcard .thd .ic{width:22px;height:22px;border-radius:6px;background:var(--clay);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.toolcard .thd .nm{font-size:13px;font-weight:700}
+.toolcard .thd .st{margin-left:auto;font-size:11.5px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:6px}
+.spin{width:11px;height:11px;border:2px solid var(--green-soft);border-top-color:var(--green);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toolcard .res{padding:10px 13px;font-size:13px;color:var(--ink2);display:flex;flex-direction:column;gap:9px}
+.openbtn{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:var(--clay);color:#fff;
+  border:none;border-radius:10px;padding:10px 15px;font-size:13.5px;font-weight:600;cursor:pointer}
+.openbtn:hover{background:var(--clay-deep)}
+/* ---- dataset-connect: shimmer scan sequence ---- */
+.scanblk{display:flex;flex-direction:column;gap:9px;padding:2px 0 2px}
+.shim{font-size:13.5px;font-weight:600;letter-spacing:-.005em;line-height:1.4;
+  background:linear-gradient(90deg,#BAB6AA 0%,#BAB6AA 38%,#141413 50%,#BAB6AA 62%,#BAB6AA 100%);
+  background-size:200% 100%;-webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  animation:shimmer 1.25s linear infinite}
+@keyframes shimmer{from{background-position:150% 0}to{background-position:-150% 0}}
+.dschips{display:flex;flex-wrap:wrap;gap:6px}
+.dschip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+  color:var(--green);background:var(--green-soft);border:1px solid #Bfe6d6;
+  border-radius:999px;padding:3px 10px;animation:chipIn .34s ease both}
+.dschip .ck{font-size:10px}
+.dschips .dschip:nth-child(2){animation-delay:.16s}
+.dschips .dschip:nth-child(3){animation-delay:.32s}
+.dschips .dschip:nth-child(4){animation-delay:.48s}
+@keyframes chipIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+/* ---- dataset-connect: banner rows ---- */
+.dsbanner .thd .st{color:var(--green)}
+.dshead{font-size:12.5px;font-weight:700;color:var(--ink)}
+.dsrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--edge)}
+.dsic{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:var(--paper);
+  border:1px solid var(--edge2);color:var(--ink2);font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center}
+.dsname{font-size:13px;font-weight:600;color:var(--ink)}
+.dsn{font-size:11.5px;color:var(--mute);font-family:var(--mono)}
+.dsdesc{margin-left:auto;font-size:10.5px;font-family:var(--mono);color:var(--clay-deep);
+  background:#FBEDE6;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.dsnote{font-size:10.5px;color:var(--mute);margin-top:2px}
+@media (prefers-reduced-motion: reduce){
+  .shim{animation:none;background:none;-webkit-text-fill-color:var(--ink2);color:var(--ink2)}
+  .dschip{animation:none}
+}
+</style></head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+const SPARK = '<svg class="spark" viewBox="0 0 24 24" fill="none"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1" stroke="#C96442" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+// ---- state ----
+const state = {
+  phase: 'empty',        // 'empty' | 'connected' | 'result'
+  connected: false,
+  hypothesis: '',
+  showSlash: false,
+  resultStage: null,     // 'pulling' | 'researching' | 'connecting' | 'ready' (only in 'result')
+  matched: []            // dataset keys matched to the hypothesis
+};
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---- demo datasets (real reference cohorts, presented as the researcher's workspace) ----
+const DATASETS = {
+  adni:    {name:'ADNI',    mono:'AD', n:'~1,600 subjects', desc:'plasma p-tau217'},
+  oasis1:  {name:'OASIS-1', mono:'O1', n:'210 subjects',    desc:'structural MRI'},
+  oasis2:  {name:'OASIS-2', mono:'O2', n:'150 subjects',    desc:'conversion'},
+  openbhb: {name:'OpenBHB', mono:'OB', n:'3,984 subjects',  desc:'brain-age control'}
+};
+const DS_ORDER = ['adni','oasis1','oasis2','openbhb'];
+
+// keyword -> dataset matching (scripted demo; Beat D of the handoff doc)
+function matchDatasets(hypothesis){
+  const t = (hypothesis||'').toLowerCase();
+  const hit = new Set();
+  const has = (kws)=>kws.some(k=>t.indexOf(k)!==-1);
+  if(has(['plasma','p-tau','ptau','biomarker'])) hit.add('adni');
+  if(has(['atrophy','hippocamp','structural','mri','volume'])){ hit.add('adni'); hit.add('oasis1'); }
+  if(has(['conversion','mci','progress'])){ hit.add('adni'); hit.add('oasis2'); }
+  if(has(['scanner','healthy','brain age','brain-age','control'])) hit.add('openbhb');
+  if(hit.size===0) hit.add('adni'); // default: primary AD substrate
+  return DS_ORDER.filter(k=>hit.has(k));
+}
+
+// ---- static fragments ----
+function topbar(){
+  return '<div class="top">'+SPARK+'<span class="brand">Claude</span>'+
+    '<span class="pill-ctx">Science</span>'+
+    '<div class="right"><div class="avatar">S</div></div></div>';
+}
+function slashMenu(){
+  const skills=[['AF','AlphaFold2'],['B','Boltz'],['Bz','Borzoi'],['C1','Chai-1'],['⚙','Compute Env Setup']];
+  const rows=skills.map(([ic,name])=>
+    '<div class="srow" data-tool="'+esc(name)+'"><div class="ic gen">'+esc(ic)+'</div><div class="tt">'+esc(name)+'</div><span class="feat">Featured</span></div>').join('');
+  return '<div class="slash">'+
+    '<div class="srow sel" data-tool="NeuroAD"><div class="ic nad">N</div><div class="tt">NeuroAD</div><span class="badge">connector</span></div>'+
+    rows+
+    '<div class="sfoot"><span class="kb"><b>↑</b><b>↓</b> navigate</span><span class="kb"><b>↵</b> select</span><span class="kb"><b>esc</b> close</span></div>'+
+  '</div>';
+}
+function aiMsg(inner){
+  return '<div class="msg ai"><div class="who">'+SPARK+'</div><div class="body"><div class="name">Claude</div>'+inner+'</div></div>';
+}
+function userMsg(t){
+  return '<div class="msg user"><div class="who">S</div><div class="body">'+esc(t)+'</div></div>';
+}
+
+// ---- render ----
+function placeholder(){
+  if(state.phase==='empty') return state.connected ? 'e.g. p-tau217 predicts hippocampal atrophy' : 'Ask Claude, or type / to bring in a tool…';
+  if(state.phase==='connected') return 'e.g. p-tau217 predicts hippocampal atrophy';
+  return 'Ask a follow-up…';
+}
+
+function conversationHTML(){
+  if(state.phase==='empty'){
+    return '<div class="stage"><div class="col center">'+
+      '<div class="greet">What would you like to <span class="sp">investigate</span>?</div>'+
+    '</div></div>';
+  }
+  let msgs='';
+  msgs += aiMsg('<div class="chip-conn"><span class="dot"></span>NeuroAD connected</div>'+
+    '<div>Great — I\'ve connected the <b>NeuroAD</b> discovery engine. State an Alzheimer\'s hypothesis and I\'ll run it through the referee, then open the full analysis.</div>');
+  if(state.phase==='result'){
+    msgs += userMsg(state.hypothesis);
+    msgs += aiMsg('<div>I\'ll investigate that with NeuroAD.</div>'+
+      '<div id="resultFlow">'+resultFlowHTML()+'</div>');
+  }
+  return '<div class="stage"><div class="col">'+msgs+'</div></div>';
+}
+
+// scan phrases keyed by stage
+const SCAN_PHRASE = {
+  pulling:    'Pulling your relevant datasets…',
+  researching:'Researching…',
+  connecting: 'Connecting to NeuroAD…'
+};
+
+// content of #resultFlow, driven by state.resultStage
+function resultFlowHTML(){
+  const stage = state.resultStage;
+  if(stage!=='ready'){
+    // shimmer status + (from 'connecting' on) the datasets appearing as they connect
+    const chips = (stage==='connecting')
+      ? '<div class="dschips">'+state.matched.map(k=>
+          '<span class="dschip"><span class="ck">✓</span>'+esc(DATASETS[k].name)+'</span>').join('')+'</div>'
+      : '';
+    return '<div class="scanblk">'+
+      '<div class="shim">'+esc(SCAN_PHRASE[stage]||SCAN_PHRASE.pulling)+'</div>'+
+      chips+
+    '</div>';
+  }
+  // ready: minimal dataset banner, then the existing open widget
+  const rows = state.matched.map(k=>{
+    const d = DATASETS[k];
+    return '<div class="dsrow">'+
+      '<div class="dsic">'+esc(d.mono)+'</div>'+
+      '<div class="dsname">'+esc(d.name)+'</div>'+
+      '<div class="dsn">'+esc(d.n)+'</div>'+
+      '<span class="dsdesc">'+esc(d.desc)+'</span>'+
+    '</div>';
+  }).join('');
+  const banner = '<div class="toolcard dsbanner">'+
+    '<div class="thd"><div class="ic">N</div><div class="nm">NeuroAD · workspace</div>'+
+      '<div class="st">✓ connected</div></div>'+
+    '<div class="res">'+
+      '<div class="dshead">Connected '+state.matched.length+' of your datasets</div>'+
+      rows+
+      '<div class="dsnote">demo workspace · real ADNI/OASIS/OpenBHB cohorts</div>'+
+    '</div>'+
+  '</div>';
+  const investigate = '<div class="toolcard">'+
+      '<div class="thd"><div class="ic">N</div><div class="nm">NeuroAD · investigate</div>'+
+        '<div class="st"><span class="spin"></span>running</div></div>'+
+      '<div class="res">'+
+        '<div>Opening the full analysis…</div>'+
+        '<button class="openbtn" id="openBtn">Open in NeuroAD ↗</button>'+
+      '</div>'+
+    '</div>';
+  return banner+investigate;
+}
+
+function composerHTML(){
+  const val = state.phase==='empty' ? state.rawInput||'' : '';
+  const slash = state.showSlash ? slashMenu() : '';
+  const sendOn = (val.trim().length>0 && !state.showSlash) || false;
+  return '<div class="composer-wrap">'+slash+
+    '<div class="composer">'+
+      '<textarea class="field" id="field" rows="1" placeholder="'+esc(placeholder())+'"></textarea>'+
+      '<div class="row">'+
+        '<div class="iconbtn">+</div>'+
+        '<div class="tools-hint">Type <span class="kbd">/</span> for tools &amp; connectors</div>'+
+        '<button class="send'+(sendOn?' on':'')+'" id="sendBtn">↑</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="foothint">Claude can make mistakes. Claude Science surface.</div>'+
+  '</div>';
+}
+
+function render(){
+  document.getElementById('root').innerHTML =
+    '<div class="app">'+topbar()+conversationHTML()+composerHTML()+'</div>';
+  wire();
+  // scroll conversation to bottom
+  const st = document.querySelector('.stage');
+  if(st) st.scrollTop = st.scrollHeight;
+}
+
+// ---- interaction ----
+function connectNeuroAD(){
+  state.connected = true;
+  state.phase = 'connected';
+  state.showSlash = false;
+  state.rawInput = '';
+  render();
+  focusField();
+}
+
+function submitInput(){
+  const field = document.getElementById('field');
+  const text = (field ? field.value : '').trim();
+  if(state.phase==='empty'){
+    if(!text) return;
+    // typing a slash-only path is handled via slash menu; plain text stays in empty
+    state.rawInput = field.value;
+    return;
+  }
+  if(state.phase==='connected'){
+    if(!text) return;
+    state.hypothesis = text;
+    state.matched = matchDatasets(text);
+    state.phase = 'result';
+    state.resultStage = 'pulling';
+    render();
+    startTimeline();
+    return;
+  }
+}
+
+// ---- scripted scan timeline (deterministic, screen-recordable) ----
+let timelineTimers = [];
+function clearTimeline(){ timelineTimers.forEach(clearTimeout); timelineTimers = []; }
+function setStage(stage){
+  state.resultStage = stage;
+  const el = document.getElementById('resultFlow');
+  if(el){
+    el.innerHTML = resultFlowHTML();     // surgical update — no focus/scroll churn
+    if(stage==='ready') wireOpen();
+    const st = document.querySelector('.stage');
+    if(st) st.scrollTop = st.scrollHeight;
+  }
+}
+function startTimeline(){
+  clearTimeline();
+  // pulling shown immediately by render(); advance through the sequence, then reveal.
+  const steps = [
+    [800,  'researching'],  // pull ~0.8s
+    [1650, 'connecting'],   // research ~0.85s, then chips appear as they connect
+    [2450, 'ready']         // connecting ~0.8s, then banner + open widget
+  ];
+  steps.forEach(([ms,stage])=> timelineTimers.push(setTimeout(()=>setStage(stage), ms)));
+}
+
+function focusField(){
+  const field = document.getElementById('field');
+  if(field){ field.focus(); const l=field.value.length; try{field.setSelectionRange(l,l);}catch(e){} }
+}
+
+function wireOpen(){
+  const openBtn = document.getElementById('openBtn');
+  if(openBtn){
+    openBtn.addEventListener('click', ()=>{
+      const ds = (state.matched||[]).join(',');
+      window.open('/?h=' + encodeURIComponent(state.hypothesis) + '&ds=' + ds, '_blank');
+    });
+  }
+}
+
+function wire(){
+  const field = document.getElementById('field');
+  const sendBtn = document.getElementById('sendBtn');
+
+  if(field){
+    if(state.phase==='empty') field.value = state.rawInput||'';
+    field.addEventListener('input', ()=>{
+      state.rawInput = field.value;
+      const wantSlash = state.phase==='empty' && field.value.trim().startsWith('/');
+      if(wantSlash !== state.showSlash){
+        state.showSlash = wantSlash;
+        rerenderComposerKeepFocus();
+      } else {
+        // just toggle send button highlight
+        updateSend();
+      }
+    });
+    field.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && !e.shiftKey){
+        e.preventDefault();
+        if(state.showSlash){ connectNeuroAD(); return; }
+        if(state.phase==='connected'){ submitInput(); return; }
+        // empty phase, plain text + enter: do nothing meaningful yet (no tool)
+        return;
+      }
+      if(e.key==='Escape' && state.showSlash){
+        state.showSlash = false;
+        rerenderComposerKeepFocus();
+      }
+    });
+  }
+
+  if(sendBtn){
+    sendBtn.addEventListener('click', ()=>{
+      if(state.showSlash){ connectNeuroAD(); return; }
+      submitInput();
+    });
+  }
+
+  wireOpen();
+
+  document.querySelectorAll('.srow').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const tool = row.getAttribute('data-tool');
+      if(tool==='NeuroAD'){ connectNeuroAD(); }
+      // other tools are demo-inert (featured, not wired)
+    });
+  });
+}
+
+function updateSend(){
+  const field = document.getElementById('field');
+  const sendBtn = document.getElementById('sendBtn');
+  if(!field||!sendBtn) return;
+  const on = field.value.trim().length>0 && !state.showSlash;
+  sendBtn.classList.toggle('on', on);
+}
+
+function rerenderComposerKeepFocus(){
+  const wrap = document.querySelector('.composer-wrap');
+  if(!wrap) { render(); focusField(); return; }
+  const caret = (function(){const f=document.getElementById('field');return f?f.selectionStart:null;})();
+  const holder = document.createElement('div');
+  holder.innerHTML = composerHTML();
+  wrap.replaceWith(holder.firstChild);
+  wire();
+  const f = document.getElementById('field');
+  if(f){ f.value = state.rawInput||''; f.focus(); if(caret!=null){try{f.setSelectionRange(caret,caret);}catch(e){}} }
+}
+
+// ---- boot ----
+state.rawInput = '';
+render();
+focusField();
+</script>
+</body></html>
