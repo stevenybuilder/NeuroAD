@@ -23,6 +23,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import StratifiedGroupKFold, StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 
 from . import contract
@@ -112,6 +113,14 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
         null_margin = o_perm - scanner_auc
         margin_p = float((1 + int(np.sum(null_margin >= margin))) / (1 + o_perm.size))
 
+    # Benjamini-Hochberg FDR correction across the three genuine permutation
+    # p-values the star emits (outcome, scanner, margin). These are the only
+    # true label-permutation p's in the gauntlet; the other tests gate on
+    # retained-fraction / CI, not p_perm, so are not part of this family.
+    from .harness.validation import benjamini_hochberg
+    outcome_q, scanner_q, margin_q = benjamini_hochberg(
+        [o["p_perm"], s["p_perm"], margin_p])
+
     return {
         "outcome_auc": round(float(outcome_auc), 4),
         "scanner_auc": round(float(scanner_auc), 4),
@@ -121,12 +130,34 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
         "scanner_ci": None if s["ci_lo"] is None else [s["ci_lo"], s["ci_hi"]],
         "outcome_p_perm": o["p_perm"],
         "scanner_p_perm": s["p_perm"],
+        "outcome_q": None if outcome_q is None else round(outcome_q, 4),
+        "scanner_q": None if scanner_q is None else round(scanner_q, 4),
+        "margin_q": None if margin_q is None else round(margin_q, 4),
         "scanner_ci_excludes_chance": bool(s["ci_excludes_chance"]),
         "margin_ci_lo": None if margin_ci_lo is None else round(margin_ci_lo, 4),
         "margin_ci_hi": None if margin_ci_hi is None else round(margin_ci_hi, 4),
         "margin_p": None if margin_p is None else round(margin_p, 4),
         "margin_ci_excludes_zero": bool(margin_ci_lo is not None and margin_ci_lo > 0),
     }
+
+
+# ---------------------------------------------------------------------------
+def label_shuffle_auc(df: pd.DataFrame, target: str = "conversion",
+                      seed: int = 0) -> float:
+    """Negative control: cross-validated AUC with the outcome labels PERMUTED.
+
+    Under a leakage-free pipeline a shuffled label carries no signal, so this
+    must sit near chance (~0.5). A value materially above chance flags residual
+    leakage — e.g. a whole-cohort harmonization that let the batch correction
+    peek at the held-out fold — because the probe is then decoding structure that
+    survives label destruction. Uses the SAME site-disjoint CV machinery as the
+    headline so the control is measured on equal footing.
+    """
+    X, y, go = point_head(df, target)
+    if len(np.unique(y)) < 2:
+        return 0.5
+    y_shuffled = np.random.default_rng(seed).permutation(y)
+    return cross_val_auc(X, y_shuffled, groups=go)
 
 
 # ---------------------------------------------------------------------------
@@ -193,15 +224,13 @@ def double_dissociation(df: pd.DataFrame, target: str) -> dict:
     conf_codes = conf_col.fillna("__na__").to_numpy()[keep]
     _, conf_codes = np.unique(conf_codes, return_inverse=True)
 
-    dirs = _scanner_directions(Xo, conf_codes)
-    if dirs.shape[1] == 0:
-        X_res = Xo
-    else:
-        # project each row out of the scanner subspace
-        proj = Xo @ dirs @ dirs.T
-        X_res = Xo - proj
-
-    auc_after = cross_val_auc(X_res, yo, groups=go)
+    # Fold-honest: fit the scanner-direction (StandardScaler+LDA) on TRAIN rows of
+    # each fold only and project the scanner subspace out of both train and test,
+    # instead of the whole-cohort _scanner_directions fit + full-X projection
+    # (which let the scrub see the held-out rows).
+    from .probe import residualized_cross_val_auc
+    auc_after = residualized_cross_val_auc(Xo, conf_codes, yo, go,
+                                           kind="scanner_lda")
 
     eff_before = max(auc_before - 0.5, 1e-6)
     retained = float(np.clip((auc_after - 0.5) / eff_before, 0.0, 1.5))
@@ -249,10 +278,35 @@ def confound_leaderboard(df: pd.DataFrame, target: str = "conversion") -> list[d
     confounds considered are the acquisition batch (scanner or site), age, and
     sex — the three most likely to masquerade as biology.
     """
-    Xo, yo, _ = point_head(df, target)
+    Xo, yo, go = point_head(df, target)
     if len(np.unique(yo)) < 2:
         return []
-    score = LinearProbe().fit(Xo, yo).decision_scores(Xo)
+    # Out-of-fold, site-disjoint probe score (mirrors gauntlet._oof_scores but
+    # honors the site groups): an in-sample score would let overfit residuals
+    # inflate every confound's apparent variance-explained. A full-length OOF
+    # vector keeps the metadata alignment below unchanged.
+    from sklearn.model_selection import cross_val_predict
+    from .probe import _n_splits, build_probe_pipeline
+    y_codes = np.searchsorted(np.unique(yo), yo)
+    n_splits = _n_splits(y_codes, go)
+    pipe, _ = build_probe_pipeline(Xo.shape[0], Xo.shape[1])
+    splits = None
+    if go is not None and len(np.unique(go)) >= n_splits:
+        splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True,
+                                        random_state=0)
+        candidate = list(splitter.split(Xo, y_codes, np.asarray(go)))
+        # cross_val_predict cannot skip folds, so only use the site-disjoint
+        # splits when every train fold carries both classes; otherwise fall back
+        # to plain stratified CV so sparsely-labelled sub-cohorts still complete.
+        if all(len(np.unique(y_codes[tr])) >= 2 for tr, _ in candidate):
+            splits = candidate
+    if splits is None:
+        splitter = StratifiedKFold(n_splits=n_splits, shuffle=True,
+                                   random_state=0)
+        splits = list(splitter.split(Xo, y_codes))
+    proba = cross_val_predict(pipe, Xo, y_codes, cv=splits,
+                              method="predict_proba")
+    score = proba[:, 1] if proba.shape[1] == 2 else proba.max(axis=1)
 
     # Recover the outcome-kept rows to align metadata with the score.
     if target == "conversion":

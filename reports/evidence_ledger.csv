@@ -1,7 +1,7 @@
-# NeuroAD evidence ledger — SYNTHETIC HARNESS (calibrated demo cohort). The p-tau217/GFAP anchor is a CALIBRATION TARGET, not a measured plasma value; no open cohort pairs MRI with plasma markers.
+# NeuroAD evidence ledger — REAL ADNI (ComBat-harmonized AD-vs-CN survivor). Every value is refereed engine output over a real cohort with real plasma p-tau217/GFAP; the synthetic column is false on every row.
 test,result,metric,value,ci_lo,n,dataset,seed,source,synthetic,detail
-age_sex,passed,"effect retained (age/sex)",1.102,,130,synthetic:SURVIVOR,0,engine,true,"effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)"
-site_scanner,weakened,"leakage margin (outcome-scanner AUC)",0.063,-0.0353,,synthetic:SURVIVOR,0,engine,true,"outcome only narrowly exceeds scanner; margin CI includes zero (margin +0.06 [95% CI -0.04, +0.16])"
-brain_age,passed,"effect retained (brain-age)",1.035,,137,synthetic:SURVIVOR,0,engine,true,"brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control (Franke/Gaser standard), 102% under the stricter predicted-brain-age control"
-biomarker_anchor,passed,"p-tau217 correlation r (Fisher-z CI)",0.404,0.197,77,synthetic:SURVIVOR,0,engine,true,"p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS: calibration target, not measured plasma]"
-replication,weakened,"held-out cohort AUC",0.7229,,62,synthetic:SURVIVOR,0,engine,true,"held-out cohort AUC=0.72 [95% CI 0.60, 0.84] (train 0.73); n_test=62 over 1 aggregated held-out site(s)"
+age_sex,passed,"effect retained (age/sex)",0.958,,1615,adni:combat,0,engine,false,"effect retained 96% after age/sex adjustment (AUC 0.92 -> 0.90)"
+site_scanner,passed,"leakage margin (outcome-scanner AUC)",0.549,0.5217,,adni:combat,0,engine,false,"outcome exceeds scanner and the margin CI excludes zero (margin +0.55 [95% CI +0.52, +0.57])"
+brain_age,not_available,"effect retained (brain-age)",,,1153,adni:combat,0,engine,false,"brain-age model not predictive (out-of-fold R2=-3.78 < 0.10, MAE=9.1yr) — controlling for it removes nothing; uninformative control"
+biomarker_anchor,passed,"p-tau217 correlation r (Fisher-z CI)",0.492,0.44,876,adni:combat,0,engine,false,"p-tau217 correlation r=+0.49 (95% CI lower +0.44, n=876)"
+replication,passed,"held-out cohort AUC",0.9205,,41,adni:combat,0,engine,false,"held-out cohort AUC=0.92 [95% CI 0.78, 1.00] (train 0.93); n_test=41 over 11 aggregated held-out site(s)"

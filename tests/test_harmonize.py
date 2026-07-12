@@ -20,7 +20,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_auc_score
 
 from neuroad import contract
-from neuroad.data.harmonize import harmonize
+from neuroad.data.harmonize import combat_cv_auc, harmonize
 
 
 def _planted_cohort(n=240, d=12, seed=0):
@@ -78,6 +78,22 @@ def test_harmonize_reduces_batch_signal_preserves_biology():
     assert _auc(Xh, b2) < _auc(Xr, b2) - 0.05, "batch signal not reduced"
     # The age-linked biology (AD label tracks age) is preserved.
     assert _auc(Xh, y_ad) > 0.65, "biological signal destroyed by harmonization"
+
+
+def test_combat_cv_auc_is_fold_honest_and_not_inflated():
+    # The fold-honest ComBat (fit inside each fold on train rows only) must run,
+    # return a finite AUC, and sit AT OR BELOW the whole-cohort-harmonized AUC —
+    # whole-cohort ComBat peeks at the held-out rows, which inflates the naive
+    # number. Relational assert (seed-robust), not a fixed value.
+    from neuroad import probe
+    df = _planted_cohort()
+    honest = combat_cv_auc(df, "dx_binary", batch="scanner", covariates=("age", "sex"))
+    assert np.isfinite(honest)
+    Xh, yh, gh = probe.point_head(harmonize(df, batch="scanner",
+                                            covariates=("age", "sex")), "dx_binary")
+    whole = probe.cross_val_auc(Xh, yh, groups=gh)
+    assert honest <= whole + 1e-9, (
+        f"fold-honest AUC {honest} should not exceed whole-cohort {whole}")
 
 
 def test_harmonize_handles_singleton_batch():

@@ -59,6 +59,11 @@ _STATIC = {
     "/neuroad.html": ("neuroad.html", "text/html; charset=utf-8"),
     "/zui.html": ("zui.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
+    # claude_science.html is the "Start" / Claude entry surface. Additive routing
+    # only — "/" (neuroad.html) and all existing routes are unchanged.
+    "/start": ("claude_science.html", "text/html; charset=utf-8"),
+    "/claude": ("claude_science.html", "text/html; charset=utf-8"),
+    "/claude_science.html": ("claude_science.html", "text/html; charset=utf-8"),
     "/demo_data.json": ("demo_data.json", "application/json"),
     # Frontend assets for the live 3D brain viewer (NiiVue + a bundled real
     # MNI152 T1). Routing only — not part of the science pipeline.
@@ -75,6 +80,67 @@ def _claude_live() -> bool:
 def _available_datasets() -> list[str]:
     from neuroad.data import loaders
     return list(loaders.AVAILABLE)
+
+
+def _enrich_case(xcard, hypothesis: str, dataset: str, seed: int) -> dict:
+    """Build the rich ``case`` shape the tree / story UI renders from a refereed
+    ExperimentCard, reusing the already-tested build_demo_data transformers (DRY).
+
+    Returns a dict with the real ``tests[]`` (leakage/anchor/replication), a top
+    level ``leakage_margin``/``score``/``verdict``, ``cohort`` summary,
+    ``courtroom``/``narration``/``translation`` (when the survivor carries them),
+    an ``investigate`` plan-out block, and a normalized decision ``tree``. Purely
+    additive — the caller attaches it as ``result['case']`` and every existing
+    top-level key of the plain card is preserved. Raises on failure (the caller
+    degrades to the plain card rather than 500-ing)."""
+    from neuroad.data import loaders
+    from neuroad import contract
+    import app.build_demo_data as B
+
+    df = loaders.load(dataset, seed=seed)
+    card = xcard.card
+    claim = card.claim
+    badge = loaders.honest_substrate(dataset)
+    promoted = bool(card.to_dict().get("promoted"))
+    scaffold = {
+        "id": getattr(claim, "claim_id", "case") or "case",
+        "label": "Case",
+        "kind": "SURVIVOR" if promoted else "KILL",
+        "substrate_badge": badge,
+        "claim": {
+            "claim_id": getattr(claim, "claim_id", "") or "",
+            "claim_text": getattr(claim, "claim_text", "") or "",
+            "target": getattr(claim, "target", "") or "",
+            "group_a": getattr(claim, "group_a", "") or "",
+            "group_b": getattr(claim, "group_b", "") or "",
+            "substrate": getattr(claim, "substrate", "") or badge,
+            "head": getattr(claim, "head", "linear probe") or "linear probe",
+        },
+        "naive_effect": {},
+        "leakage_margin": {},
+        "score": 0,
+        "verdict": "",
+        "promoted": False,
+        "tests": [B._test(k, "not_available", 0.5, l, "", {})
+                  for (k, l, q, w, s) in B.GAUNTLET_META],
+        "confound_leaderboard": [],
+        "double_dissociation": {},
+        "caveats": [],
+        "scatter": {"n": 90, "n_scanners": 2, "seed": seed,
+                    "outcome_gap": 2.0, "scanner_gap": 1.0, "converter_frac": 0.35},
+    }
+    case = B._real_case(scaffold, card, df)  # real tests/leakage/score/courtroom/…
+    case["investigate"] = B._investigate_block(hypothesis, dataset, seed, case)
+    cohort = contract.cohort_summary(df)
+    # Short cohort stamp ("REAL ADNI" / "REAL OASIS"), matching the demo_data
+    # payload so the frontend badge chip renders identically on the live path;
+    # the long honest substrate description rides in ``substrate_line``.
+    _fam = (dataset.split(":")[0].strip().upper() or "COHORT")
+    cohort["badge"] = f"REAL {_fam}"
+    cohort["substrate_line"] = badge
+    case["cohort"] = cohort
+    case["tree"] = B._derive_tree(case)  # UI ignores it, but honest / audit-complete
+    return case
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -237,6 +303,14 @@ class Handler(BaseHTTPRequestHandler):
                 "dataset": dataset,
                 "hypothesis": hypothesis,
             }
+            # Additive: attach the rich `case` shape the tree / story UI renders
+            # (tests[], cohort, leakage_margin, courtroom, narration, translation,
+            # tree). Every existing top-level key of the plain card is preserved;
+            # a failure here degrades to the plain card (never a 500 regression).
+            try:
+                result["case"] = _enrich_case(xcard, hypothesis, dataset, seed)
+            except Exception:  # noqa: BLE001
+                _log.exception("investigate case enrichment failed; plain card")
             self._send_json(result)
         except ValueError as exc:  # unknown dataset name from loaders.load
             self._send_json(

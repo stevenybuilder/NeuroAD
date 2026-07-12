@@ -12,7 +12,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from neuroad import contract, gauntlet
+from neuroad import contract, gauntlet, leakage
 from neuroad.contract import TestResult as Result
 
 D = 16
@@ -90,6 +90,15 @@ def test_replication_aggregates_many_small_sites():
     assert ev.stats["n_test"] >= 40
     assert ev.stats["n_test_sites"] >= 2, "must aggregate multiple whole sites"
     assert ev.stats["n_train"] >= 6
+
+
+def test_label_shuffle_sits_near_chance():
+    # Negative control: with a real disease direction but PERMUTED labels the
+    # site-disjoint probe must collapse to ~chance. A materially-above-chance
+    # value would flag residual leakage in the CV machinery itself.
+    df = _base_cohort(240, ["s0", "s1", "s2"], seed=5, age_signal=True)
+    auc = leakage.label_shuffle_auc(df, "dx_binary", seed=0)
+    assert abs(auc - 0.5) < 0.12, f"shuffled-label AUC not near chance: {auc}"
 
 
 def test_replication_group_disjoint():

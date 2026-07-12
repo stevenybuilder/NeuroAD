@@ -1,54 +1,54 @@
-# SYNTHETIC HARNESS — calibrated survivor, NOT a real result.
-# The verdict below is a positive control on a synthetic cohort; the
-# leakage-margin CI includes zero. Do not read as a real finding.
-badge: SYNTHETIC HARNESS
-synthetic: true
-provenance: "SYNTHETIC HARNESS \u2014 calibrated survivor, not a real result"
+# REAL ADNI — refereed survivor over a real cohort.
+# The leakage-margin CI note below travels with the verdict.
+badge: REAL ADNI
+provenance: "REAL ADNI \u2014 refereed survivor (real cohort)."
 claim:
-  claim_id: SYN-A
-  claim_text: MCI->AD conversion is decodable from frozen structural embeddings beyond
-    scanner and aging.
-  target: conversion
-  group_a: MCI converters
-  group_b: MCI non-converters
-  substrate: synthetic contract embeddings (badged demo cohort)
+  claim_id: ADNI-A
+  claim_text: AD vs CN diagnosis is decodable from the full ComBat-harmonized ADNI
+    cohort.
+  target: dx_binary
+  group_a: AD
+  group_b: CN
+  substrate: ADNI FreeSurfer features, ComBat-harmonized (weight-free feeder)
   head: linear probe
 naive_effect:
   metric: AUC
-  value: 0.739
-  target: conversion
-  n: 130
+  value: 0.932
+  value_adjusted: 0.905
+  adjusted_note: age/sex-residualized (fold-honest)
+  target: dx_binary
+  n: 1615
   head: linear probe
-  substrate: synthetic contract embeddings (badged demo cohort)
+  substrate: ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free
+    feeder)
 leakage_margin:
-  outcome_auc: 0.739
-  scanner_auc: 0.676
-  margin: 0.063
+  outcome_auc: 0.922
+  scanner_auc: 0.374
+  margin: 0.549
   confound: scanner
   outcome_ci:
-  - 0.6534
-  - 0.8185
+  - 0.9061
+  - 0.9383
   scanner_ci:
-  - 0.6243
-  - 0.7305
+  - 0.3531
+  - 0.3948
   outcome_p_perm: 0.001
-  scanner_p_perm: 0.001
-  scanner_ci_excludes_chance: true
-  margin_ci_lo: -0.035
-  margin_ci_hi: 0.161
+  scanner_p_perm: 1.0
+  outcome_q: 0.002
+  scanner_q: 1.0
+  margin_q: 0.002
+  scanner_ci_excludes_chance: false
+  margin_ci_lo: 0.522
+  margin_ci_hi: 0.575
   margin_p: 0.001
-  margin_ci_excludes_zero: false
-leakage_margin_note: "The leakage-margin 95% CI includes zero (-0.035..0.161) \u2014\
-  \ the outcome is NOT confidently decoded better than the scanner; treat the positive\
-  \ point margin as provisional."
-verdict: robust enough for follow-up
-score: 80
+  margin_ci_excludes_zero: true
+leakage_margin_note: Leakage-margin 95% CI 0.522..0.575 (excludes zero).
+verdict: strong candidate
+score: 100
 promoted: true
 caveats:
-- "SYNTHETIC HARNESS: the p-tau217 / GFAP anchor is a CALIBRATION TARGET (drawn to\
-  \ sit inside a literature range in calibration.CAL), not a measured plasma value\
-  \ \u2014 no open cohort pairs MRI with plasma markers. The molecular anchor demonstrates\
-  \ the gate MECHANIC, not a real result."
+- 'Completeness: 1/5 gauntlet tests could not run; score is renormalized over the
+  tests that did.'
 - "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014\
   \ anchor is suggestive, not confirmatory."
 - Verdict is provisional and conditional on the scanner/site distribution of any replication
@@ -59,16 +59,13 @@ caveats:
   \ (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441\
   \ (2026))."
 - Promotion authorizes one confirmatory experiment, not adoption of the finding.
-- "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not\
-  \ to conclude \u2014 the referee promotes hypotheses, it does not confirm them."
-- 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
-  (this cohort''s fit: R2=0.78, MAE=2.9yr), so residual generic-aging signal can survive
-  the adjustment and masquerade as disease-specific.'
+- "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude\
+  \ \u2014 the referee promotes hypotheses, it does not confirm them."
 - The biomarker anchor likely rests on a partial complete-case subset; with realistic
   p-tau217 missingness the correlation is estimated on far fewer subjects than the
   headline cohort.
-- "N is small (~130); at this size AUCs are noisy and a single site's idiosyncrasy\
-  \ can dominate \u2014 treat effect sizes as wide-interval estimates."
+- "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation\
+  \ on a modest cohort leaves each fold thin."
 - "The leakage test audits the embeddings with the same linear-probe family it uses\
   \ for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding;\
   \ this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing\

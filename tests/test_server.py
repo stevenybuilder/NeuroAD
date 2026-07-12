@@ -69,6 +69,40 @@ def test_investigate_synthetic_returns_refereed_card_with_translation(base_url):
         assert d["translation"]["top_target"]
 
 
+def test_investigate_returns_rich_case_for_tree(base_url):
+    """The additive `case` enrichment carries the rich shape the tree/story UI
+    renders, without dropping any existing top-level card key."""
+    status, d = _post(f"{base_url}/api/investigate", {
+        "hypothesis": "Does the embedding predict MCI to AD conversion?",
+        "dataset": "synthetic:SURVIVOR",
+    })
+    assert status == 200
+    # Existing plain-card keys are still present (purely additive).
+    for k in ("substrate", "verdict", "robustness_score", "promoted",
+              "novelty_class", "_meta"):
+        assert k in d
+    case = d["case"]
+    assert isinstance(case, dict)
+    # Real gauntlet: five tests, each with a result the tree colors nodes by.
+    assert len(case["tests"]) == 5
+    assert {t["key"] for t in case["tests"]} == {
+        "age_sex", "site_scanner", "brain_age", "biomarker_anchor", "replication"}
+    for t in case["tests"]:
+        assert t["result"] in (
+            "passed", "weakened", "mixed", "failed", "not_available")
+    # Cohort summary + leakage margin + score/verdict the panels read.
+    assert case["cohort"]["n_subjects"]
+    assert case["cohort"]["badge"]
+    assert "outcome_auc" in case["leakage_margin"]
+    assert case["score"] is not None and case["verdict"]
+    # Normalized decision tree (audit-complete): hypothesis -> gates -> verdict.
+    tree = case["tree"]
+    assert tree["root"] == "hypothesis"
+    assert any(n["type"] == "verdict" for n in tree["nodes"])
+    # The over-HTTP case stays honest about its substrate label.
+    assert "Neuro-JEPA" not in case["claim"]["substrate"]
+
+
 def test_out_of_scope_hypothesis_refused_over_http(base_url):
     status, d = _post(f"{base_url}/api/investigate", {
         "hypothesis": "tau-PET SUVR trajectory",

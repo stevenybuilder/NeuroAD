@@ -379,6 +379,127 @@ def cross_val_auc(X: np.ndarray, y: np.ndarray,
 
 
 # ---------------------------------------------------------------------------
+# Fold-honest residualized AUC (nuisance regression fit inside each fold only)
+# ---------------------------------------------------------------------------
+def _fit_covariate_resid(X_tr: np.ndarray, C_tr: np.ndarray):
+    """Fit the lstsq covariate-residualization on TRAIN rows only.
+
+    Returns ``(scaler, beta)`` so the SAME fitted map can be applied to the held-
+    out rows — the fold-honest analog of gauntlet._residualize, which standardizes
+    and regresses on the whole cohort at once.
+    """
+    C_tr = np.asarray(C_tr, dtype=float)
+    if C_tr.ndim == 1:
+        C_tr = C_tr.reshape(-1, 1)
+    scaler = StandardScaler().fit(C_tr)
+    Cs = np.column_stack([np.ones(len(C_tr)), scaler.transform(C_tr)])
+    beta, *_ = np.linalg.lstsq(Cs, X_tr, rcond=None)
+    return scaler, beta
+
+
+def _apply_covariate_resid(X: np.ndarray, C: np.ndarray, scaler, beta) -> np.ndarray:
+    C = np.asarray(C, dtype=float)
+    if C.ndim == 1:
+        C = C.reshape(-1, 1)
+    Cs = np.column_stack([np.ones(len(C)), scaler.transform(C)])
+    return X - Cs @ beta
+
+
+def _residualize_folds(X: np.ndarray, nuisance: np.ndarray,
+                       tr: np.ndarray, te: np.ndarray, kind: str):
+    """Residualize a nuisance out of train+test embeddings, fit on train only."""
+    if kind == "covariate":
+        scaler, beta = _fit_covariate_resid(X[tr], nuisance[tr])
+        return (_apply_covariate_resid(X[tr], nuisance[tr], scaler, beta),
+                _apply_covariate_resid(X[te], nuisance[te], scaler, beta))
+    if kind == "scanner_lda":
+        from .leakage import _scanner_directions
+        _, codes_tr = np.unique(nuisance[tr], return_inverse=True)
+        dirs = _scanner_directions(X[tr], codes_tr)
+        if dirs.shape[1] == 0:
+            return X[tr], X[te]
+        proj = dirs @ dirs.T
+        return X[tr] - X[tr] @ proj, X[te] - X[te] @ proj
+    raise ValueError(f"unknown residualization kind {kind!r}")
+
+
+def residualized_cross_val_auc(X: np.ndarray, nuisance: np.ndarray,
+                               y: np.ndarray, groups: Optional[np.ndarray] = None,
+                               kind: str = "covariate",
+                               n_repeats: int = N_REPEATS) -> float:
+    """Cross-validated AUC after residualizing a nuisance out of the embedding,
+    with the nuisance model FIT INSIDE EACH FOLD on the training rows only.
+
+    This is the leakage-honest replacement for the whole-cohort residualize-then-
+    cross-validate pattern (gauntlet._residualize + cross_val_auc,
+    leakage.double_dissociation): fitting the nuisance regression on all rows —
+    including the held-out fold — lets the control peek at the test rows and
+    slightly inflates the retained fraction. Here the fit never sees the held-out
+    fold.
+
+    * ``kind='covariate'`` — ``nuisance`` is an ``(n, n_cov)`` covariate matrix
+      (e.g. age / sex); an lstsq residualization is fit on train rows and applied
+      to both partitions.
+    * ``kind='scanner_lda'`` — ``nuisance`` is an ``(n,)`` scanner/site code
+      vector; StandardScaler+LDA scanner directions are fit on train rows and
+      projected out of both partitions.
+
+    Returns a float AUC (0.5 when the data is too thin to evaluate honestly),
+    matching the :func:`cross_val_auc` contract.
+    """
+    X = np.asarray(X, dtype=float)
+    y = np.asarray(y)
+    nuisance = np.asarray(nuisance)
+    classes = np.unique(y)
+    if len(classes) < 2 or len(y) < 4:
+        return 0.5
+    y_codes = np.searchsorted(classes, y)
+    n_splits = _n_splits(y_codes, groups)
+    if n_splits < 2:
+        return 0.5
+
+    n_reps = max(1, int(n_repeats))
+    proba_sum = np.zeros((len(y), len(classes)), dtype=float)
+    proba_cnt = np.zeros((len(y), len(classes)), dtype=float)
+    got_any = False
+    for r in range(n_reps):
+        seed = RANDOM_STATE + r
+        use_groups = groups is not None and len(np.unique(groups)) >= n_splits
+        if use_groups:
+            splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True,
+                                            random_state=seed)
+            split_iter = splitter.split(X, y_codes, groups)
+        else:
+            splitter = StratifiedKFold(n_splits=n_splits, shuffle=True,
+                                       random_state=seed)
+            split_iter = splitter.split(X, y_codes)
+        oof = np.full((len(y_codes), len(classes)), np.nan)
+        for tr, te in split_iter:
+            if len(np.unique(y_codes[tr])) < 2:
+                continue
+            X_tr, X_te = _residualize_folds(X, nuisance, tr, te, kind)
+            probe = LinearProbe().fit(X_tr, y_codes[tr])
+            proba = probe.predict_proba(X_te)
+            for j, cls in enumerate(probe.classes_):
+                oof[te, cls] = proba[:, j]
+        seen = ~np.isnan(oof)
+        if seen.any():
+            got_any = True
+            proba_sum[seen] += oof[seen]
+            proba_cnt[seen] += 1.0
+
+    if not got_any:
+        return 0.5
+    with np.errstate(invalid="ignore"):
+        oof = np.where(proba_cnt > 0, proba_sum / proba_cnt, np.nan)
+    evaluated = ~np.isnan(oof).any(axis=1)
+    if evaluated.sum() < 2 or len(np.unique(y_codes[evaluated])) < 2:
+        return 0.5
+    auc = _auc_from_oof(y_codes[evaluated], oof[evaluated], classes)
+    return 0.5 if auc is None else auc
+
+
+# ---------------------------------------------------------------------------
 # Uncertainty: bootstrap CI + stratified label-permutation null on the AUC
 # ---------------------------------------------------------------------------
 #: Default resample counts. Deliberately modest so the headline metrics stay
