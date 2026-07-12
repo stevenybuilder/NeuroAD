@@ -155,6 +155,52 @@ the paper" is the wrong yardstick for most of what we built.
   slice + 4 novel downstream layers + real 3-assay plasma + rigor that kills its own
   weak claims. Rubric: Demo 30% / Impact 25% / Claude 25% / Depth 20%.
 
+- **"How can 1,600 subjects generalize to new/unseen data without a priori (external)
+  validation?"** → It can't, and we don't claim it does. Bigger n tightens the
+  *in-distribution* estimate (ADNI-like subjects); it does **nothing** for
+  *distribution shift*. Internal site-disjoint CV ≈ transfer across ADNI *sites*, NOT
+  to a new cohort/scanner/population. The honest claim is ADNI-internal; true
+  generalization is an **external-cohort test** (OASIS today; AIBL/NACC next), and the
+  referee **measures and reports** transfer rather than assuming it. "Not proven
+  out-of-distribution" is an *output*, not a bug. (See §9.)
+
+- **"If it doesn't generalize, what's the point when a researcher enters a
+  hypothesis?"** → Because the tool is a **falsification engine, not a predictor**. It
+  never promises a model that works everywhere; it tells a researcher whether the
+  signal in *their* data survives adversarial scrutiny (leakage, permutation,
+  replication, molecular anchor) — *before* they burn a quarter chasing an artifact.
+  The **method is cohort-agnostic** and generalizes even when a specific *finding* is
+  cohort-limited. In a field where most brain-ML doesn't replicate, an honest referee
+  that says "this is scanner leakage, don't chase it" IS the product.
+
+- **"Does NeuroJEPA (and the layers) fix the sample-size problem?"** → For
+  *efficiency*, yes; for *power/generalization*, no. Transfer learning off a frozen
+  foundation model means *hundreds* of labels suffice where a from-scratch CNN needs
+  *tens of thousands*; PCA + ComBat + fusion further stretch small cohorts. But nothing
+  manufactures statistical power for a thin claim (58 converters stays a wide CI) or
+  proves out-of-distribution transfer. Sample-**efficient**, honest about the ceiling.
+
+- **"Does the 5.7× AD expansion help the conversion result?"** → No — it strengthens
+  *diagnosis* (AD-vs-CN imaging arm: 87 → 494 embedded AD, tighter CIs), not
+  *conversion*. Cross-sectional AD can't join a baseline-MCI cohort. Conversion's
+  binding lever is converters-with-plasma → external cohorts (AIBL/NACC). Do **not**
+  point the AD number at the conversion claim.
+
+- **"What's your backend pipeline — how does a number actually get produced?"** → A
+  hypothesis + dataset flows through a **five-stage referee**: (0) standardize into the
+  data contract → (1) probe for a leakage-honest OOF signal → (2) attack it with the
+  **5-test gauntlet** → (3) score with a **hard honesty gate** → (4) Claude narrates/
+  argues (read-only, never scores) → (5) if it survives, a **composite multi-signal
+  ranker** emits the ranked 1–5 targets. Full detail + module names in §12.
+
+- **"What if I enter a hypothesis the data can't measure — say a random protein?"** →
+  It's parsed onto the nearest measurable target (`dx_binary`/`conversion`), but the
+  **substrate check refuses to fabricate a result** for a predictor that isn't a
+  measured analyte or a wired target. Known analyte (p-tau217/GFAP/NfL) → supervised
+  probe; known AD target/gene → the evidence-ranker (STRING/LINCS/OpenTargets);
+  neither → honest "no substrate to test this here." The tool says "I can't test that"
+  rather than invent a correlation — same ethos as everything else. See §12.
+
 ---
 
 ## 7. Honesty guardrails (the non-negotiables)
@@ -188,3 +234,137 @@ Owning these *is* the credibility, and credibility is the product.
 | Biomarker blind-spot (p-tau low) | imaging 0.77 vs plasma 0.64 | `conversion_biomarker_negative.json` |
 | ComBat cohort-leakage drop | 0.9996 → 0.563 | `adni_neurojepa_crosscohort.json` |
 | Plasma p-tau217 (real, 3 assays) | 1,377 subjects | `plasma_ensemble.py` |
+
+---
+
+## 9. Sample hypotheses a researcher can enter (input → meaningful output)
+
+The unit of input is a **Claim** (`contract.Claim(claim_text, target=…, group_a/b=…)`);
+the output is a **verdict card** (OOF AUC + bootstrap CI + permutation p + leakage /
+replication / anchor tests → promoted / fragile / killed, scored /100). These all run
+on real wired data *today* — they are demo inputs, not aspirations:
+
+| Hypothesis you type | What the tool returns | Why it's meaningful |
+|---|---|---|
+| "AD is decodable from structural MRI" (`dx_binary`, AD/CN) | Naive AUC **0.935**, then scanner-leakage test fires (scanner AUC **0.989**) → **fragile / not promoted, 39/100** | The flagship: the tool **catches its own feeder cheating** — flags a flashy result as scanner artifact before anyone ships it |
+| "MCI→AD conversion is predictable from baseline MRI" (`conversion`) | OOF AUC ~**0.72–0.82**, p_perm=0.001, site-disjoint, honest CI | A **real but modest** prognostic signal, reported with the uncertainty the sample supports |
+| "Plasma p-tau217 anchors the imaging AD axis" (anchor test) | Correlation **r≈0.46** (AD/CN), r≈0.26 (conversion) on measured plasma | The imaging signal aligns with **tau biology** — not purely artifact; this is what survives the KILL |
+| "Fusion (imaging+plasma) beats plasma alone" (fusion + leave-one-out) | Fused **0.82** vs plasma **0.80**, Δ≈+0.001, CIs overlap → **no CI-supported gain** | An **honest negative** — the tool refuses the overclaim; complementarity, not superiority |
+| "The imaging signal generalizes across cohorts" (train ADNI → test OASIS) | Cross-cohort AUC + cohort-leakage **0.9996→0.563** after ComBat | Turns "does it generalize?" into a **measured out-of-cohort number**, not an assumption |
+| "MAPT / tau is a prioritized target for AD" (`rank_candidates`) | Ranked druggable targets (APP, MAPT, APOE, BACE1…) + evidence adapters (STRING/LINCS/Boltz) + suggested experiment | A **falsifiable target shortlist** for the bench — the discovery-engine output |
+
+The strongest three for the demo: the **self-catching AD artifact** (rigor story), the
+**honest fusion negative** (credibility story), and the **target ranking** (the "so
+what — feeds the wet lab" story).
+
+---
+
+## 10. Generalization & external validity — the referee reframe
+
+The sharpest line of attack, and the answer that turns it into a strength:
+
+- **Internal CV ≠ external validation.** Our numbers are site-disjoint OOF *within*
+  ADNI — they estimate transfer to new **ADNI-like** subjects (and, because whole sites
+  are held out, give partial evidence against scanner overfitting). They do **not**
+  prove out-of-distribution transfer. **n does not buy generalization** — a model
+  trained on a million ADNI scans can still fail on a new scanner. Only an external
+  cohort answers it.
+- **The tool measures generalization; it doesn't promise it.** Cross-cohort transfer
+  is one of the referee's *tests* (OASIS-1/2 + OpenBHB embeddings exist;
+  `run_adni_crosscohort.py`), with AIBL/NACC as the roadmap (`data/gated.py` drop-in).
+- **Sample size: efficiency vs power vs generalization.** The frozen NeuroJEPA encoder
+  (transfer learning) + PCA + ComBat + fusion make the tool **sample-efficient** —
+  hundreds of labels suffice where a from-scratch CNN needs tens of thousands. They do
+  **not** manufacture statistical power for a thin claim (58 converters stays a wide
+  CI) or prove distribution-shift transfer. Sample-efficient, honest about the ceiling.
+- **One-liner:** *"We don't assume generalization — we adversarially test it, and
+  report the honest out-of-cohort number rather than the flattering in-sample one."*
+
+---
+
+## 11. Recent findings (session 2026-07-12)
+
+- **AD imaging expansion (diagnosis arm) — precision, NOT discrimination or
+  generalization.** Pulled **407 new AD MPRAGEs** from IDA (verified, 0 missing),
+  embedded via frozen NeuroJEPA on Colab; embedded AD **87 → 494 (5.7×)**. Adversarial
+  verification (3 skeptics, `reports/AD_EXPANSION_ANALYSIS.md`) **caught our own
+  headline as overclaimed**: the raw pooled AUC "gain" 0.857 → 0.891 does NOT survive
+  scanner matching. 40% of the added AD are **1.5T** while **100% of CN are 3T**, so
+  field strength (readable at AUC **0.990**) became a partial AD proxy. Honest numbers:
+  down-sampled to original n → ~0.853 (≈ baseline); **scanner-matched 3T-only → 0.861
+  [0.835, 0.885]** vs 0.857 baseline (**+0.004**, not +0.034). The **one real win** is
+  precision: the 95% CI **halved (0.081 → 0.039)**, an audited √n gain on balanced,
+  site-disjoint folds (not a Card-A degenerate split). The expansion bought a *more
+  precise estimate of a partly-confounded quantity* — it did **not** de-confound (needs
+  ComBat) or prove OOD transfer (needs an external cohort). **Report 0.861 (3T-matched),
+  not 0.891.** This is the tool working as designed: our own referee refused our own
+  inflated number. Strengthens *precision* of the imaging arm — **not** conversion
+  (cross-sectional AD can't join a baseline-MCI cohort).
+- **Conversion NeuroJEPA-fusion** (334-subject slice, 58 converters / 276 stable):
+  attention fusion of imaging(FreeSurfer) + plasma + NeuroJEPA. Fused **AUC 0.82
+  [0.76, 0.88], p_perm=0.001**; plasma dominant (gate 0.50, leave-one-out −0.069);
+  **NeuroJEPA adds +0.0008** (LOO −0.0008) → no incremental signal over FreeSurfer +
+  plasma. Honest negative. `reports/ADNI_CONVERSION_FUSION.md`.
+- **CIs + permutation nulls confirmed present** everywhere (`probe.auc_ci_perm`), with
+  a self-honest caveat that `p_perm` is a lower bound.
+- **Demo-hardening TODO** (targets the exact judge questions above): (a) surface CI
+  bars + p-values next to every verdict in the UI; (b) a visible "connected to real
+  ADNI/OASIS (n=…)" indicator + the bring-your-own-cohort drop-in; (c) an
+  external-validation slide (train-ADNI / test-OASIS transfer number).
+
+---
+
+## 12. The pipeline — how a hypothesis becomes a verdict (backend data-science layer)
+
+The whole engine in one line: **standardize → probe for a signal → attack it with 5
+adversarial tests → score behind a hard honesty gate → (if it survives) rank druggable
+targets by a transparent multi-signal composite.** The referee decides *whether to
+believe it*; the ranker decides *what to do about it*.
+
+### The five stages (`pipeline.run_referee`)
+
+| Stage | Module | What it does |
+|---|---|---|
+| **0. Data contract** | `data/loaders.py`, `gated.py`, `contract.py` | Any cohort (ADNI/OASIS or a user CSV) → one standard table: `subject_id, dx, conversion, site, scanner, plasma (p-tau217/GFAP/NfL), age/sex`, and `emb_*` feature columns (FreeSurfer or frozen NeuroJEPA). Cohort-agnostic. |
+| **1. Probe (naive effect)** | `probe.py` | Deliberately simple, leakage-honest classifier (StandardScaler + in-fold PCA + logistic) through **site-disjoint, repeated OOF CV** → headline AUC + bootstrap 95% CI + permutation p. |
+| **2. Gauntlet (5 tests)** | `gauntlet.py` | The adversarial battery (below). |
+| **3. Scoring + honesty caps** | `scoring.py` | Weighted **score /100** + **verdict** (promoted/fragile/killed). **HARD GATE:** a claim that fails leakage or lacks a biomarker anchor **cannot be promoted** no matter how high the score. |
+| **4. Claude layer** | `claude/` | `claim_parser` (NL→Claim), `courtroom`/`reviewer` (argue *against* the verdict), `narrator` (explain). **Read-only — never changes the numbers.** |
+| **5. Translation → targets** | `harness/translation.py`, `harness/ranking.py`, `integrations/*` | Validated phenotype → the ranked **1–5 druggable targets** (composite below). |
+
+### The 5 gauntlet tests (`gauntlet.py`)
+1. **Naive effect** — the raw OOF signal from Stage 1.
+2. **Site/scanner leakage (STAR)** — can the same features predict acquisition hardware? (Caught the AD-expansion field-strength confound at AUC 0.990.)
+3. **Permutation null** — above chance?
+4. **Biomarker anchor (HARD GATE)** — correlates with measured plasma p-tau217/GFAP, judged on the CI *lower bound* so lucky small-n noise can't pass?
+5. **Replication** — holds on a held-out site/cohort?
+
+### The ranked 1–5 (`harness/ranking.py`) — a transparent composite, not a black box
+`Composite = Σ wᵢ · normalized_signalᵢ` over the signals present (weights renormalized if
+some are missing): **PI4AD priority**, **STRING-RWR network centrality (0.20)**, **LINCS
+L1000 drug-signature reversal**, **Boltz-2/AlphaFold structural confidence**, **OpenTargets
+evidence**. Each min-max normalized to [0,1]; sorted → targets 1–5, each with component
+values, a source stamp, and a suggested wet-lab experiment. Gated behind the gauntlet, so
+only validated phenotypes reach it.
+
+### How a hypothesis is categorized & routed (entry point)
+On entry, two classifications happen before any number is computed:
+1. **Parse → structured Claim** (`claude/claim_parser.py`): free text → `target` (must be
+   an allowed label column: `dx_binary`, `conversion`, …), `group_a`/`group_b`,
+   `covariates`. The hypothesis is *coerced onto a measurable outcome*.
+2. **Novelty + mode**: `novelty_class` = **known** (re-measuring prior art —
+   scanner/site/leakage) / **novel** (undiscovered structure — subtype/latent/cluster) /
+   **adjacent**; and `discovery_router.route` picks the engine — **novel-pattern** →
+   unsupervised **Detective** (`discovery.discover_and_referee`, clusters embeddings and
+   referees each recovered phenotype); **named-contrast** → supervised
+   **`pipeline.run_referee`**.
+
+**Edge case — "X random protein correlated to Alzheimer's":** the phenotype parses to
+`dx_binary`; the protein is the predictor, and it branches on what X is — a **measured
+analyte** (p-tau217/GFAP/NfL) → supervised probe/anchor; a **known AD target/gene** → the
+evidence-ranker (STRING/LINCS/OpenTargets); **neither** → **no substrate**, and the tool
+says so instead of fabricating a correlation. Because `target` is constrained to real
+label columns and predictors to measured features, the engine **cannot silently invent a
+result for an ungrounded input** — by design. (Caveat: the parser maps vague inputs to the
+*nearest* target by default; the substrate check is what stops that from producing a
+meaningless number.)
