@@ -104,10 +104,13 @@ Calibrated targets: p-tau217 r ≈ **0.43** (`ptau217_r`, 0.30–0.55) and GFAP
 r ≈ **0.35** (`gfap_r`, 0.25–0.45) — a **modest** structural↔molecular link, not
 redundancy (plasma p-tau217 alone reaches AD-vs-CU AUC ~0.93–0.98). Realistic
 missingness is high (`PTAU217_MISSINGNESS` ≈ 0.45), so the completeness caveat is
-surfaced on every card. No open cohort ships plasma markers, so the live
-open-data path treats the anchor as `not_available` and routes to ADNI/EPAD. The
-synthetic harness demonstrates the molecular-anchor mechanic, but it is labeled
-as a harness rather than treated as evidence.
+surfaced on every card. The **gated ADNI cohort ships real *measured* plasma
+p-tau217** (~1,377 non-null of 2,951 subjects), so the served ADNI substrate
+anchors on measurement, not calibration — the demo card reports r=+0.49, n=876,
+`"synthetic": false, "provenance": "measured"`. Open-only cohorts that lack
+plasma treat the anchor as `not_available` and rely on leakage-clean held-out
+replication instead. The synthetic harness demonstrates the molecular-anchor
+mechanic offline and is labeled as a harness rather than treated as evidence.
 
 **Biomarker routing** (used by the biology bridge, survivors only):
 amyloid + p-tau → amyloid-cascade; GFAP / weak-amyloid → neuroinflammatory /

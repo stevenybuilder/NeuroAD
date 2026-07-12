@@ -2,21 +2,21 @@
 
 **Track:** Builder ("Build Beyond the Bench").
 
-For a translational Alzheimer's researcher who has brain MRI and partial
-metadata, one question recurs: *is this signal worth a quarter of my time, or is
-it scanner noise, generic aging, or atrophy in disguise?* NeuroAD Discovery Engine answers
-it in one command. It points a single linear head at a frozen embedding table —
-at the outcome to find the signal, at the scanner label to expose leakage, at a
-plasma biomarker when the cohort has one — and runs a five-test adversarial
-gauntlet (age/sex, star site/scanner leakage, star brain-age, biomarker anchor,
-replication). It issues a hedged fragile-to-robust verdict and requires
-independent corroboration before biology is allowed: a p-tau217/GFAP anchor when
-available, or leakage-clean held-out replication when open cohorts lack plasma.
-For what survives, **Claude adjudicates** the likely mechanism and the single
-falsifiable next experiment that would confirm or kill it. Claude is the adjudicator —
-Prosecution, Defense, and Judge subagents plus a reviewer that argues against the
-verdict — not just the coder. The workbench boots on real vendored OASIS data,
-includes real OpenBHB/Neuro-JEPA scanner-leakage evidence, and keeps the
-synthetic KILL/SURVIVOR pair as a labeled harness for the biomarker mechanic. It
-cites the batch-effect prior art openly and ships the runnable referee nobody
-else did.
+For a translational Alzheimer's researcher with brain MRI and partial metadata,
+one question recurs: *is this signal worth a quarter of my time, or is it scanner
+noise, generic aging, or atrophy in disguise?* NeuroAD answers it in one command.
+It points a linear head at a frozen NeuroJEPA embedding table — at the
+outcome to find signal, at the scanner label to expose leakage, at a plasma
+biomarker to anchor it — and runs a five-test gauntlet (age/sex,
+star site/scanner leakage, star brain-age, biomarker anchor, replication) with
+fold-honest CV and permutation nulls. It issues a
+hedged verdict and refuses to promote biology until a finding
+clears leakage plus an independent anchor: a real *measured* ADNI p-tau217
+correlation, or leakage-clean held-out replication where cohorts lack plasma.
+
+Every verdict is deterministic Python — we deliberately kept Claude *out* of the
+referee so it can never fabricate a promote or kill. Instead Claude is the
+**orchestrator**: a live tool-runner that sequences the engine and halts the
+molecular chain when a finding is killed, plus a live, source-grounded
+"Ask Claude" rail. It boots on real OASIS and ADNI data, cites the batch-effect
+prior art openly, and ships the runnable referee nobody else did.
