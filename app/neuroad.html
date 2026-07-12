@@ -2616,8 +2616,39 @@ class Component extends React.Component {
       ])
     );
   }
+  // Honest per-pathway effect-size table — REAL region signatures for the branch
+  // this candidate was routed through (brainRegions is candidate-driven), labelled
+  // as expected (probe attribution) effects, NOT measured on these scans. No rng,
+  // no fabricated subjects: every row is a real region · signal · expected Cohen's d.
+  regionEffectTable(node){
+    const regs=this.brainRegions(node); const sel=this.state.selRoi;
+    const head=(t)=>el('div',{key:'h'+t,style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,fontWeight:600}},t);
+    return el('div',{key:'ret',style:{marginTop:'16px'}},[
+      el('div',{key:'lab',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'7px'}},[
+        el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Region effect sizes · '+this.pathwayLabel(node)),
+        el('div',{key:'b',style:{fontSize:'10px',color:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},regs.length+' ROI · expected d')]),
+      el('div',{key:'w',style:{border:'1px solid '+C.edge,borderRadius:'8px',overflow:'hidden'}},[
+        el('div',{key:'hr',style:{display:'grid',gridTemplateColumns:'1.4fr 1fr auto',gap:'8px',padding:'7px 11px',background:C.paper2,borderBottom:'1px solid '+C.edge}},[head('Region'),head('Signal'),head("Expected d")]),
+        ...regs.map((r,i)=>el('div',{key:r.id,onClick:(e)=>{e.stopPropagation();this.selectRoi(r.id);},style:{display:'grid',gridTemplateColumns:'1.4fr 1fr auto',gap:'8px',padding:'8px 11px',borderTop:i?('1px solid '+C.edge):'none',background:sel===r.id?C.claySoft:'transparent',cursor:'pointer',alignItems:'center'}},[
+          el('div',{key:'l',style:{fontSize:'13px',color:C.ink,fontWeight:sel===r.id?600:400}},r.l),
+          el('div',{key:'s',style:{fontSize:'12px',color:C.ink2}},r.stat),
+          el('div',{key:'d',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'13px',color:C.ink,textAlign:'right'}},r.d)
+        ]))
+      ]),
+      this.disclaimer('Expected effect sizes for this pathway (attentive-probe attribution) — not measured on the uploaded scans.')
+    ]);
+  }
   brainDataEl(node){
-    return el('div',{}, [ this.brainViewer(node), el('div',{key:'sp',style:{height:'20px'}}), this.scanQC(node), el('div',{key:'sp2',style:{height:'20px'}}), this.clusterPlot(node), this.dataTable(node) ]);
+    return el('div',{}, [
+      this.brainViewer(node),
+      el('div',{key:'sp',style:{height:'20px'}}), this.scanQC(node),
+      el('div',{key:'sp2',style:{height:'20px'}}), this.regionEffectTable(node),
+      el('div',{key:'up',style:{marginTop:'20px',borderTop:'1px solid '+C.edge,paddingTop:'14px'}},[
+        el('div',{key:'l',style:{fontSize:'11px',color:C.mute,marginBottom:'8px'}},'Add your own — attach a scan or dataset preview'),
+        el('div',{key:'w',style:{width:'100%',height:'104px',borderRadius:'10px',overflow:'hidden'}},
+          el('image-slot',{id:'attach-'+node.id,shape:'rounded',placeholder:'Drop a NIfTI / DICOM export or CSV preview (PNG)',style:{width:'100%',height:'104px',display:'block'}}))
+      ])
+    ]);
   }
   notesEl(node){
     const list=this.state.notes[node.id]||[];
@@ -2637,12 +2668,7 @@ class Component extends React.Component {
             el('div',{key:'t',style:{fontSize:'13px',lineHeight:1.5,color:C.ink,whiteSpace:'pre-wrap'}},n.text),
             el('div',{key:'m',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'8px'}},[
               el('span',{key:'d',style:{fontSize:'11px',color:C.mute}},fmt(n.ts)),
-              el('button',{key:'x',onClick:()=>this.delNote(i),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer'}},'Delete')])]))),
-      el('div',{key:'up',style:{marginTop:'18px',borderTop:'1px solid '+C.edge,paddingTop:'14px'}},[
-        el('div',{key:'l',style:{fontSize:'11px',color:C.mute,marginBottom:'8px'}},'Add your own — attach a scan or dataset preview'),
-        el('div',{key:'w',style:{width:'100%',height:'104px',borderRadius:'10px',overflow:'hidden'}},
-          el('image-slot',{id:'attach-'+node.id,shape:'rounded',placeholder:'Drop a NIfTI / DICOM export or CSV preview (PNG)',style:{width:'100%',height:'104px',display:'block'}}))
-      ])
+              el('button',{key:'x',onClick:()=>this.delNote(i),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer'}},'Delete')])])))
     ]);
   }
   // ---- Summary + Artifacts tabs (bound to the live case; no fabricated values) ----
@@ -2871,8 +2897,6 @@ class Component extends React.Component {
     defs.push(['artifacts','Artifacts']);
     if(node.story) defs.push(['reason','Reasoning']);
     defs.push(['data','Brain data']);
-    const nc=(this.state.notes[node.id]||[]).length;
-    defs.push(['notes', nc?('Notes · '+nc):'Notes']);
     return defs.map(d=>({ label:d[1], onClick:()=>this.setDrawerTab(d[0]), style:cur===d[0]?on:off }));
   }
   drawerContent(node){
@@ -2880,7 +2904,6 @@ class Component extends React.Component {
     if(t==='summary') return this.summaryEl(node);
     if(t==='artifacts') return this.artifactsEl(node);
     if(t==='data') return this.brainDataEl(node);
-    if(t==='notes') return this.notesEl(node);
     return this.storyEl(node) || this.summaryEl(node);
   }
 
