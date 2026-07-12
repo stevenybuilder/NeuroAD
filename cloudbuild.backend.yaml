@@ -13,4 +13,4 @@ steps:
 images:
   - us-central1-docker.pkg.dev/project-flash-490419/cloud-run-source-deploy/neuroad-demo:backend
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: GCS_ONLY
