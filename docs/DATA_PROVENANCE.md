@@ -50,12 +50,21 @@ evidence.
 
 ## Why the synthetic parts exist (and can't currently be real)
 
+> **UPDATE (2026-07-12): the biomarker anchor now runs on REAL gated ADNI.**
+> The served demo ships a **REAL ADNI substrate** (2,951 subjects) carrying
+> **real *measured* plasma p-tau217** (~1,377 non-null; DUA-gated, so the raw
+> table stays gitignored). The ADNI SURVIVOR card's anchor is measured, not
+> synthetic (r=+0.49, n=876, `"synthetic": false`). The synthetic SURVIVOR/KILL
+> pair below is retained only as an **offline fallback demonstrator** for the
+> open-only path — it is no longer the demo's biomarker evidence. Sections 1–3
+> above predate this substrate and undercount how real the served demo is.
+
 The **biomarker anchor** (plasma p-tau217/GFAP correlated with an imaging signal)
-is the one thing with **no open dataset**: cohorts that pair MRI with plasma
-biomarkers (ADNI, OASIS-3, A4, EPAD) are all access-gated. The synthetic
-SURVIVOR case exists to show that molecular gate. The current open-data
-promotion path instead uses leakage-clean cross-cohort replication when the
-biomarker anchor is unavailable.
+has **no fully-open dataset**: cohorts that pair MRI with plasma biomarkers
+(ADNI, OASIS-3, A4, EPAD) are all access-gated. NeuroAD uses **gated ADNI under
+its DUA** for the real anchor; the synthetic SURVIVOR case remains to show the
+same molecular gate offline. The open-only promotion path instead uses
+leakage-clean cross-cohort replication when no plasma anchor is available.
 
 ## Roadmap to MORE real data (prioritized)
 
