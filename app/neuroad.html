@@ -1831,10 +1831,21 @@ class Component extends React.Component {
       fetch('demo_data.json').then(r=>r.ok?r.json():null).then(d=>{ if(d){ this.applyRealLabels(d); this.setState({data:d}); } }).catch(()=>{});
       fetch('/api/health').then(r=>r.ok?r.json():null).then(h=>{ if(h) this.setState({claudeLive:!!h.claude_live}); }).catch(()=>{});
     } catch(e){}
-    // Optional prefill from Claude Science: open with /?h=<hypothesis text>. No-op when the param is absent.
+    // Optional prefill from Claude Science: open with /?h=<hypothesis>&ds=<real dataset>.
+    // No-op when a param is absent. `ds` is honored ONLY for a real registered cohort
+    // (never synthetic:*) so the prefilled happy-path runs the registry's real feeder.
     try {
-      var _hm=(window.location.search||'').match(/[?&]h=([^&#]*)/);
+      var _q=window.location.search||'';
+      var _hm=_q.match(/[?&]h=([^&#]*)/);
       if(_hm){ var _h=decodeURIComponent(_hm[1].replace(/\+/g,' ')).trim(); if(_h) this.setState({entryValue:_h}); }
+      var _dm=_q.match(/[?&]ds=([^&#]*)/);
+      if(_dm){
+        var _ds=decodeURIComponent(_dm[1].replace(/\+/g,' ')).trim();
+        if(/^(adni|oasis|openbhb)(:|$)/.test(_ds)){          // real cohorts only
+          this._urlDataset=_ds;
+          this.setState({substrate: _ds.indexOf('oasis')===0 ? 'oasis' : 'adni'});
+        }
+      }
     } catch(e){}
   }
   // ---- real-data accessors (null until demo_data.json loads) ----
@@ -1889,7 +1900,7 @@ class Component extends React.Component {
   }
   // Map the existing substrate control to a real registered dataset for the live
   // /api/investigate call. adni:combat is the promoted AD-vs-CN survivor.
-  _investigateDataset(){ return ({adni:'adni:combat', oasis:'oasis'})[this.state.substrate] || 'adni:combat'; }
+  _investigateDataset(){ return this._urlDataset || ({adni:'adni:combat', oasis:'oasis'})[this.state.substrate] || 'adni:combat'; }
   // Count killed branch-heads directly from the tree structure (derived, not
   // hardcoded): gray nodes whose story is a kill reason.
   killedCount(){
@@ -2097,7 +2108,7 @@ class Component extends React.Component {
     try {
       const hyp=(typeof seed==='string'&&seed)?seed:this.state.entryValue;
       let ctrl=null; try{ ctrl=(typeof AbortController!=='undefined')?new AbortController():null; }catch(e){}
-      const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 25000);
+      const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 40000);  // real feeders (e.g. adni:neurojepa) run ~20-30s; graceful fallback to real demo_data on abort
       fetch('/api/investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hypothesis:hyp,dataset:this._investigateDataset(),seed:0}),signal:ctrl?ctrl.signal:undefined})
         .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
         .then(result=>{ clearTimeout(to); if(result&&result.case){ this.setState({card:result},()=>{ this._applyCaseToTree(this.heroCase()); }); } })

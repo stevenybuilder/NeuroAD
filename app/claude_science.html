@@ -142,6 +142,51 @@ const DATASETS = {
 };
 const DS_ORDER = ['adni','oasis1','oasis2','openbhb'];
 
+// ---- hypothesis registry (real hypothesis -> real wired cohort -> cited verdict) ----
+// Loaded from app/hypothesis_registry.json so the prefilled happy-path maps to a REAL
+// registered cohort instead of a hardcoded string. Degrades gracefully if absent.
+let REGISTRY = null;          // [{id, hypothesis, dataset:{name,n,cohort}, demo_priority}]
+let REGISTRY_DEFAULT = null;  // the lead entry we prefill
+// dataset names the live backend can actually load (never synthetic:*).
+const LOADABLE_DS = ['adni:neurojepa','adni:conversion','adni','oasis','oasis:oasis1','oasis:oasis2','oasis:neurojepa','openbhb','openbhb:neurojepa'];
+function loadableDs(name){ return LOADABLE_DS.indexOf(name)!==-1; }
+function pickDefaultEntry(list){
+  const ok=(e)=> e && e.dataset && loadableDs(e.dataset.name);
+  return list.filter(e=>e.demo_priority==='lead' && ok(e))[0] || list.filter(ok)[0] || list[0] || null;
+}
+function loadRegistry(){
+  fetch('hypothesis_registry.json').then(r=>r.ok?r.json():null).then(d=>{
+    if(!d || !Array.isArray(d.hypotheses)) return;
+    REGISTRY = d.hypotheses;
+    REGISTRY_DEFAULT = pickDefaultEntry(REGISTRY);
+    if(REGISTRY_DEFAULT && REGISTRY_DEFAULT.hypothesis){
+      PREFILL = REGISTRY_DEFAULT.hypothesis;                 // real, cited default hypothesis
+      // If NeuroAD is already connected and untouched, swap the prefill in place.
+      if(state.phase==='connected' && !state.hypothesis){ state.rawInput = PREFILL; render(); focusField(); }
+    }
+  }).catch(()=>{});
+}
+// Resolve the real, loadable dataset a typed hypothesis should run against: registry
+// match first (shared keywords with a registry entry), else a keyword->cohort fallback.
+function realDatasetFor(hypothesis){
+  const t=(hypothesis||'').toLowerCase();
+  if(REGISTRY){
+    if(REGISTRY_DEFAULT && REGISTRY_DEFAULT.dataset && (REGISTRY_DEFAULT.hypothesis||'').toLowerCase()===t) return REGISTRY_DEFAULT.dataset.name;
+    const KW=['conversion','mci','p-tau217','ptau','anchor','oasis','generaliz','external','fusion','plasma','decodable','embedding','biomarker','target'];
+    let best=null, bestScore=0;
+    REGISTRY.forEach(e=>{
+      if(!e.dataset || !loadableDs(e.dataset.name)) return;
+      const h=(e.hypothesis||'').toLowerCase(); let s=0;
+      KW.forEach(k=>{ if(t.indexOf(k)!==-1 && h.indexOf(k)!==-1) s++; });
+      if(s>bestScore){ bestScore=s; best=e; }
+    });
+    if(best) return best.dataset.name;
+  }
+  if(/(conversion|mci|progress)/.test(t)) return 'adni:conversion';
+  if(/(oasis|external|generaliz)/.test(t)) return 'oasis:oasis1';
+  return 'adni:neurojepa';
+}
+
 // keyword -> dataset matching (scripted demo; Beat D of the handoff doc)
 function matchDatasets(hypothesis){
   const t = (hypothesis||'').toLowerCase();
@@ -277,7 +322,7 @@ function render(){
 }
 
 // ---- interaction ----
-const PREFILL = 'p-tau217 predicts hippocampal atrophy';
+let PREFILL = 'p-tau217 predicts hippocampal atrophy';   // overridden by the registry lead entry once it loads
 function connectNeuroAD(){
   state.connected = true;
   state.phase = 'connected';
@@ -341,8 +386,10 @@ function wireOpen(){
   const openBtn = document.getElementById('openBtn');
   if(openBtn){
     openBtn.addEventListener('click', ()=>{
-      const ds = (state.matched||[]).join(',');
-      window.open('/neuroad.html?h=' + encodeURIComponent(state.hypothesis) + '&ds=' + ds, '_blank');
+      // Pass the REAL registered cohort (from the registry) so NeuroAD runs the
+      // hypothesis against real data — not the display-only banner keys.
+      const ds = realDatasetFor(state.hypothesis);
+      window.open('/neuroad.html?h=' + encodeURIComponent(state.hypothesis) + '&ds=' + encodeURIComponent(ds), '_blank');
     });
   }
 }
@@ -419,6 +466,7 @@ function rerenderComposerKeepFocus(){
 
 // ---- boot ----
 state.rawInput = '';
+loadRegistry();     // async: sets PREFILL to the registry lead hypothesis when it lands
 render();
 focusField();
 </script>

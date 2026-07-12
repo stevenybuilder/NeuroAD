@@ -65,6 +65,9 @@ _STATIC = {
     "/claude": ("claude_science.html", "text/html; charset=utf-8"),
     "/claude_science.html": ("claude_science.html", "text/html; charset=utf-8"),
     "/demo_data.json": ("demo_data.json", "application/json"),
+    # Demo-drivable hypothesis -> real-cohort -> cited-verdict registry, fetched by
+    # the Claude Science (/start) prefill so the happy-path maps to real data.
+    "/hypothesis_registry.json": ("hypothesis_registry.json", "application/json"),
     # Frontend assets for the live 3D brain viewer (NiiVue + a bundled real
     # MNI152 T1). Routing only — not part of the science pipeline.
     "/vendor/niivue.umd.js": ("vendor/niivue.umd.js", "text/javascript; charset=utf-8"),
