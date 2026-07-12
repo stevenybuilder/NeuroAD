@@ -48,3 +48,23 @@ data/real/_gated/
 # The name-based *embeddings*.csv rule missed the pca10 fixture; this catches all.
 *neurojepa*.csv
 data/real/fixtures/
+
+# ==================== BEGIN mri_visualizations module (Silent-Failure Guard) ====================
+# Vendored sub-project under mri_visualizations/. Everything below is heavy imaging
+# data, model weights, derived caches, build output, and private working notes that
+# must never be committed — only the source + docs are tracked.
+# To un-vendor / drop the module, delete this entire block (BEGIN..END).
+mri_visualizations/data/*
+!mri_visualizations/data/README.md
+mri_visualizations/Neuro-JEPA/
+mri_visualizations/backend/models/*
+!mri_visualizations/backend/models/README.md
+mri_visualizations/backend/.cache/
+mri_visualizations/context/
+mri_visualizations/**/node_modules/
+mri_visualizations/frontend/dist/
+mri_visualizations/**/.vite/
+mri_visualizations/**/__pycache__/
+mri_visualizations/**/.ruff_cache/
+mri_visualizations/**/.pytest_cache/
+# ==================== END mri_visualizations module ====================

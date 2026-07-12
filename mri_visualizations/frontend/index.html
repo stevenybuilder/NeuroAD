@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Silent-Failure Guard</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Left: cohort + controls -->
+      <aside id="sidebar-left" class="panel">
+        <header class="brand">
+          <span class="brand-mark">SFG</span>
+          <div class="brand-text">
+            <div class="brand-title">Silent-Failure Guard</div>
+            <div class="brand-sub">MRI verification harness</div>
+          </div>
+        </header>
+
+        <section class="ctl">
+          <label class="ctl-label" for="scan-select">Scan</label>
+          <select id="scan-select"></select>
+          <div id="scan-meta" class="meta-block"></div>
+        </section>
+
+        <section class="ctl">
+          <label class="ctl-label">Modality</label>
+          <div id="modality-row" class="chip-row"></div>
+        </section>
+
+        <section class="ctl">
+          <label class="ctl-label">View</label>
+          <div class="chip-row">
+            <button class="chip" data-view="multi">Multiplanar</button>
+            <button class="chip" data-view="render">3D render</button>
+            <button class="chip" data-view="axial">Axial</button>
+          </div>
+          <label class="ctl-label" for="clip-range" style="margin-top:10px">Clip plane (3D)</label>
+          <input id="clip-range" type="range" min="-0.5" max="0.5" step="0.02" value="0.5" />
+        </section>
+
+        <section class="ctl">
+          <label class="ctl-label">Verification</label>
+          <div id="check-list" class="check-list"></div>
+          <div class="btn-row">
+            <button id="run-checks" class="btn btn-primary">Run checks</button>
+            <button id="load-gallery" class="btn">Annotation gallery</button>
+          </div>
+          <div id="run-status" class="run-status"></div>
+        </section>
+      </aside>
+
+      <!-- Center: viewer -->
+      <main id="viewer-wrap">
+        <canvas id="gl"></canvas>
+        <div id="viewer-hud" class="hud"></div>
+      </main>
+
+      <!-- Right: flags + adjudication -->
+      <aside id="sidebar-right" class="panel">
+        <header class="flags-header">
+          <span>Flags</span>
+          <span id="flags-count" class="count-badge">0</span>
+        </header>
+        <div id="flags-list" class="flags-list">
+          <div class="empty-hint">Run checks or load the annotation gallery to populate flags.</div>
+        </div>
+        <div id="detail-panel" class="detail-panel"></div>
+      </aside>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
