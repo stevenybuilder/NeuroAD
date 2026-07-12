@@ -248,7 +248,7 @@ ADNI T1w collection is already on this machine (and mirrored in Google Drive fol
 - `adni_t1_mprage_n=590_IDA_Metadata.zip` (678 KB) — per-scan `.xml` metadata.
 
 The two image zips are **complementary halves (0 overlap → 590 unique subjects total)**.
-Layout is standard IDA: `ADNI/<RID e.g. 027_S_6001>/<sequence>/<date>/<imageID>/*.dcm`.
+Layout is standard IDA: `ADNI/<RID e.g. 000_S_0000>/<sequence>/<date>/<imageID>/*.dcm`.
 Subject RIDs join directly to `data/real/_gated/adni.csv` (biomarkers). Sequences are
 all **T1-weighted** (Accelerated Sagittal MPRAGE dominant, plus IR-FSPGR / Sagittal 3D
 MPRAGE) — a Siemens/Philips/**GE multi-vendor 3T** mix, i.e. a genuine cross-scanner

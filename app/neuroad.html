@@ -2580,11 +2580,11 @@ class Component extends React.Component {
   // state. Badged `cached` so it is never presented as live.
   sfgSnapshot(){
     return [
-      {check_id:'1.1.orientation', scan_id:'003_S_10082_T1-LRFLIP', severity:'error', explanation:'sform (PIL) and qform (PIR) encode different orientations - L/R may be silently mirrored between tools. Confirm sidedness against the L/R markers.'},
-      {check_id:'1.2.skull_strip', scan_id:'ADNI_003_S_10082', severity:'error', explanation:'Weak classical strip on raw T1: implausible brain volume 3250 cc (expected 900-1950).'},
-      {check_id:'1.4.volume_sanity', scan_id:'003_S_10082_T1-CORRUPT', severity:'error', explanation:'1728 non-finite (NaN/Inf) voxels - these corrupt any downstream statistic.'},
-      {check_id:'1.3.intensity_consistency', scan_id:'ADNI_003_S_10082', severity:'warn', explanation:'Raw T1 intensities differ systematically across 4 scanners (per-scanner median CoV 42%). Un-normalized, this is a scanner signature a model can exploit instead of biology. Percentile normalization rescales every scan to a common intensity range, collapsing the per-scanner offset - apply it before any cross-site analysis.'},
-      {check_id:'1.4.volume_sanity', scan_id:'003_S_10082_T1-CORRUPT', severity:'warn', explanation:'1 dead/dropout slice(s) inside the brain along k (e.g. index 108) - likely acquisition or export corruption.'}
+      {check_id:'1.1.orientation', scan_id:'DEMO_0001_T1-LRFLIP', severity:'error', explanation:'sform (PIL) and qform (PIR) encode different orientations - L/R may be silently mirrored between tools. Confirm sidedness against the L/R markers.'},
+      {check_id:'1.2.skull_strip', scan_id:'ADNI_DEMO_0001', severity:'error', explanation:'Weak classical strip on raw T1: implausible brain volume 3250 cc (expected 900-1950).'},
+      {check_id:'1.4.volume_sanity', scan_id:'DEMO_0001_T1-CORRUPT', severity:'error', explanation:'1728 non-finite (NaN/Inf) voxels - these corrupt any downstream statistic.'},
+      {check_id:'1.3.intensity_consistency', scan_id:'ADNI_DEMO_0001', severity:'warn', explanation:'Raw T1 intensities differ systematically across 4 scanners (per-scanner median CoV 42%). Un-normalized, this is a scanner signature a model can exploit instead of biology. Percentile normalization rescales every scan to a common intensity range, collapsing the per-scanner offset - apply it before any cross-site analysis.'},
+      {check_id:'1.4.volume_sanity', scan_id:'DEMO_0001_T1-CORRUPT', severity:'warn', explanation:'1 dead/dropout slice(s) inside the brain along k (e.g. index 108) - likely acquisition or export corruption.'}
     ];
   }
   ensureSfgFlags(){

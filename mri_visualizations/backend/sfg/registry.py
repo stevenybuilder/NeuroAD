@@ -131,7 +131,7 @@ class Registry:
         if not self.adni_root.is_dir():
             return
         for f in sorted(self.adni_root.glob("*.nii.gz")):
-            stem = f.name[: -len(".nii.gz")]           # e.g. 003_S_10082_T1
+            stem = f.name[: -len(".nii.gz")]           # e.g. DEMO_0001_T1
             subj = stem[: -len("_T1")] if stem.endswith("_T1") else stem
             site_code = subj.split("_")[0]              # ADNI site number, e.g. 003
             self._scans[f"ADNI_{subj}"] = Scan(

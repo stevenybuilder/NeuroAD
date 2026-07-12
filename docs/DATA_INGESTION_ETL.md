@@ -151,7 +151,7 @@ whole chain in a single exec so a preemption can't strand half-converted data be
 - **`subject_id == ADNI RID` everywhere** — contract, manifest, and embeddings all key on
   the RID. (That's why the AD/CN 590 (RIDs 6001, 6005…) and the MCI-conversion cohort
   (RIDs 6002, 6033…) are disjoint: adjacent enrollment, genuinely different subjects.)
-- **PTID format:** `<site>_S_<RID>` — e.g. `027_S_6002` → RID `6002`.
+- **PTID format:** `<site>_S_<RID>` — e.g. `000_S_0000` → RID `0000`.
 - **Metadata zip paths** give PTID↔IMAGEUID: `ADNI/<PTID>/<desc>/<date>/I<IMAGEUID>/…`.
 - **Image manifest** gives RID↔IMAGEUID (+ the plasma/biomarker panel).
 - The **crosswalk (RID, PTID, IMAGEUID)** ties them together and drives the *exact*
