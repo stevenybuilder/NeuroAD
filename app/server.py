@@ -32,6 +32,8 @@ import json
 import logging
 import os
 import sys
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -44,10 +46,24 @@ sys.path.insert(0, str(_ROOT / "src"))
 _log = logging.getLogger("neuroad.server")
 
 _MAX_HYPOTHESIS_CHARS = 2000
+
+# The live Silent-Failure Guard (MRI QC) backend. The frontend talks to it via a
+# same-origin /api/sfg/* proxy so the demo stays one origin and self-contained.
+# Point SFG_BACKEND at a deployed instance to use that instead of a local run.
+_SFG_BASE = os.environ.get("SFG_BACKEND", "http://127.0.0.1:8091").rstrip("/")
+# neuroad.html is the served demo surface; "/" serves it. zui.html and
+# index.html remain reachable at their own paths. Routing only — no other
+# server logic changes.
 _STATIC = {
-    "/": ("index.html", "text/html; charset=utf-8"),
+    "/": ("neuroad.html", "text/html; charset=utf-8"),
+    "/neuroad.html": ("neuroad.html", "text/html; charset=utf-8"),
+    "/zui.html": ("zui.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/demo_data.json": ("demo_data.json", "application/json"),
+    # Frontend assets for the live 3D brain viewer (NiiVue + a bundled real
+    # MNI152 T1). Routing only — not part of the science pipeline.
+    "/vendor/niivue.umd.js": ("vendor/niivue.umd.js", "text/javascript; charset=utf-8"),
+    "/scans/mni152.nii.gz": ("scans/mni152.nii.gz", "application/gzip"),
 }
 
 
@@ -97,6 +113,42 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:  # quieter default logging
         _log.info("%s - %s", self.address_string(), fmt % args)
 
+    def _proxy_sfg(self, method: str, body: bytes | None = None) -> None:
+        """Forward /api/sfg/<rest> -> <SFG_BASE>/api/<rest>, streaming the response
+        through verbatim (JSON for flags, gzip/obj bytes for volumes/overlays)."""
+        parsed = urlparse(self.path)
+        rest = parsed.path[len("/api/sfg/"):]
+        target = f"{_SFG_BASE}/api/{rest}"
+        if parsed.query:
+            target += "?" + parsed.query
+        headers = {}
+        ctype = self.headers.get("Content-Type")
+        if ctype:
+            headers["Content-Type"] = ctype
+        req = urllib.request.Request(target, data=body, headers=headers, method=method)
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                payload = resp.read()
+                self.send_response(resp.status)
+                self.send_header(
+                    "Content-Type", resp.headers.get("Content-Type", "application/octet-stream"))
+                self.send_header("Content-Length", str(len(payload)))
+                self._cors()
+                self.end_headers()
+                self.wfile.write(payload)
+        except urllib.error.HTTPError as exc:  # backend answered with an error
+            payload = exc.read()
+            self.send_response(exc.code)
+            self.send_header("Content-Type", exc.headers.get("Content-Type", "application/json"))
+            self.send_header("Content-Length", str(len(payload)))
+            self._cors()
+            self.end_headers()
+            self.wfile.write(payload)
+        except (urllib.error.URLError, ConnectionError, OSError) as exc:
+            # Backend not running — the frontend degrades to an offline notice.
+            self._send_json({"error": "sfg backend unreachable", "detail": str(exc),
+                             "sfg_base": _SFG_BASE}, 503)
+
     # -- routes -----------------------------------------------------------
     def do_OPTIONS(self) -> None:  # CORS preflight
         self.send_response(204)
@@ -105,6 +157,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:
         route = urlparse(self.path).path
+        if route.startswith("/api/sfg/"):
+            self._proxy_sfg("GET")
+            return
+        # Serve bundled scan/overlay volumes from app/scans/*.nii.gz (frontend
+        # assets for the 3D viewer). Basename-only, so no path traversal.
+        if route.startswith("/scans/") and route.endswith(".nii.gz"):
+            name = route[len("/scans/"):]
+            if "/" not in name and ".." not in name:
+                self._send_static(f"scans/{name}", "application/gzip")
+                return
         if route == "/api/health":
             self._send_json({
                 "status": "ok",
@@ -122,6 +184,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         route = urlparse(self.path).path
+        if route.startswith("/api/sfg/"):
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length) if length else b""
+            self._proxy_sfg("POST", raw)
+            return
         if route not in ("/api/investigate", "/api/orchestrate"):
             self._send_json({"error": f"not found: {route}"}, 404)
             return

@@ -1,0 +1,448 @@
+{
+  "generated_utc": "2026-07-12T03:19:57.078585+00:00",
+  "prefer_offline": false,
+  "source": "live",
+  "params": {
+    "limit": 1000,
+    "n_perm": 1000,
+    "n_boot": 2000,
+    "seed": 0
+  },
+  "signature": {
+    "up": [
+      "GFAP",
+      "TYROBP",
+      "C1QA",
+      "C1QB",
+      "C1QC",
+      "C3",
+      "CD68",
+      "AIF1",
+      "ITGAX",
+      "CTSS",
+      "CTSB",
+      "CTSD",
+      "LAPTM5",
+      "FCER1G",
+      "SERPINA3",
+      "VIM",
+      "CHI3L1",
+      "HLA-DRA",
+      "B2M",
+      "CD74",
+      "TREM2",
+      "CST7",
+      "SPP1",
+      "GPNMB"
+    ],
+    "down": [
+      "SNAP25",
+      "SYT1",
+      "SYN1",
+      "SYP",
+      "NEFL",
+      "NEFM",
+      "NRGN",
+      "GAP43",
+      "CAMK2A",
+      "VSNL1",
+      "RAB3A",
+      "GABRA1",
+      "GRIN1",
+      "DLG4",
+      "SYN2",
+      "STMN2",
+      "NEFH",
+      "RAB3C",
+      "ATP2B2",
+      "CALB1",
+      "PVALB",
+      "ENO2",
+      "MAP2",
+      "TUBB3"
+    ],
+    "citation": "Curated consensus AD brain transcriptomic signature (up = reactive glia / microglial activation / complement, down = synaptic / neuronal), after Zhang et al. 2013 (Cell 153:707; TYROBP causal network), Mathys et al. 2019 (Nature 570:332; single-cell AD), and Mostafavi et al. 2018 (Nat Neurosci 21:811). APPROXIMATION \u2014 not a single-study DE table."
+  },
+  "databases": [
+    "l1000_xpr",
+    "l1000_shRNA"
+  ],
+  "n_proxy_genes": 1567,
+  "n_universe_genes": 2792,
+  "validation": [
+    {
+      "name": "efficacy_vs_gwas",
+      "kind": "clean_orthogonal",
+      "ranking_source": "lincs_l1000",
+      "evidence_mode": "lof_reversal",
+      "gold_set_name": "gwas_ad_bellenguez_2022",
+      "gold_citations": {
+        "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+        "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+        "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+        "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+        "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+        "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+        "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+        "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+        "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+        "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+        "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+        "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+        "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+        "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+        "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+      },
+      "n_gold": 5,
+      "background_size": 2792,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.5826336562612127,
+      "roc_auc_ci": [
+        0.17608303251419696,
+        0.8960648978128362
+      ],
+      "permutation_p": 0.2707292707292707,
+      "q_value": 0.8121878121878121,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2792). Efficacy PROXY (L1000 cancer lines) \u2014 a perturbational axis orthogonal to association."
+    },
+    {
+      "name": "efficacy_vs_drugs",
+      "kind": "clean_orthogonal",
+      "ranking_source": "lincs_l1000",
+      "evidence_mode": "lof_reversal",
+      "gold_set_name": "fda_approved_ad_drug_targets",
+      "gold_citations": {
+        "ACHE": "FDA labels: donepezil (Aricept), rivastigmine (Exelon), galantamine (Razadyne) \u2014 acetylcholinesterase inhibitors",
+        "BCHE": "FDA label: rivastigmine (Exelon) \u2014 also inhibits butyrylcholinesterase",
+        "APP": "FDA labels: lecanemab (Leqembi), aducanumab (Aduhelm), donanemab (Kisunla) \u2014 anti-amyloid-beta (APP/Abeta)",
+        "GRIN1": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2B": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2C": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2D": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN3A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist"
+      },
+      "n_gold": 7,
+      "background_size": 2792,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.37204411387535263,
+      "roc_auc_ci": [
+        0.1324287694681817,
+        0.6472811864971504
+      ],
+      "permutation_p": 0.8751248751248751,
+      "q_value": 0.8751248751248751,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2792). Efficacy PROXY (L1000 cancer lines) \u2014 a perturbational axis orthogonal to association."
+    },
+    {
+      "name": "efficacy_vs_novel2022",
+      "kind": "prospective",
+      "ranking_source": "lincs_l1000",
+      "evidence_mode": "lof_reversal",
+      "gold_set_name": "novel_ad_bellenguez_2022",
+      "gold_citations": {
+        "SORT1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 1 (nearest gene SORT1)",
+        "ADAM17": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 2 (nearest gene ADAM17)",
+        "PRKD3": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 3 (nearest gene PRKD3)",
+        "NCK2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 4 (nearest gene NCK2)",
+        "WDR12": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 5 (nearest gene WDR12)",
+        "MME": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 6 (nearest gene MME)",
+        "IDUA": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 7 (nearest gene IDUA)",
+        "RHOH": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 8 (nearest gene RHOH)",
+        "ANKH": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 9 (nearest gene ANKH)",
+        "COX7C": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 10 (nearest gene COX7C)",
+        "TNIP1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 11 (nearest gene TNIP1)",
+        "RASGEF1C": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 12 (nearest gene RASGEF1C)",
+        "HS3ST5": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 13 (nearest gene HS3ST5)",
+        "UMAD1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 14 (nearest gene UMAD1)",
+        "ICA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 15 (nearest gene ICA1)",
+        "TMEM106B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 16 (nearest gene TMEM106B)",
+        "JAZF1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 17 (nearest gene JAZF1)",
+        "SEC61G": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 18 (nearest gene SEC61G)",
+        "CTSB": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 19 (nearest gene CTSB)",
+        "SHARPIN": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 20 (nearest gene SHARPIN)",
+        "ABCA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 21 (nearest gene ABCA1)",
+        "ANK3": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 22 (nearest gene ANK3)",
+        "TSPAN14": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 23 (nearest gene TSPAN14)",
+        "BLNK": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 24 (nearest gene BLNK)",
+        "PLEKHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 25 (nearest gene PLEKHA1)",
+        "TPCN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 26 (nearest gene TPCN1)",
+        "SNX1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 28 (nearest gene SNX1)",
+        "CTSH": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 29 (nearest gene CTSH)",
+        "DOC2A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 30 (nearest gene DOC2A)",
+        "MAF": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 31 (nearest gene MAF)",
+        "FOXF1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 32 (nearest gene FOXF1)",
+        "PRDM7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 33 (nearest gene PRDM7)",
+        "WDR81": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 34 (nearest gene WDR81)",
+        "MYO15A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 35 (nearest gene MYO15A)",
+        "GRN": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 36 (nearest gene GRN)",
+        "KLF16": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 37 (nearest gene KLF16)",
+        "SIGLEC11": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 38 (nearest gene SIGLEC11)",
+        "LILRB2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 39 (nearest gene LILRB2)",
+        "RBCK1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 40 (nearest gene RBCK1)",
+        "SLC2A4RG": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 41 (nearest gene SLC2A4RG)",
+        "APP": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 locus NOT genome-wide significant in Kunkle 2019 (new in 2022) \u2014 Table 2 new-locus 42 (nearest gene APP)"
+      },
+      "n_gold": 15,
+      "background_size": 2792,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.43161685271876127,
+      "roc_auc_ci": [
+        0.29519688905366653,
+        0.5743702770780856
+      ],
+      "permutation_p": 0.8001998001998002,
+      "q_value": 0.8751248751248751,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2792). Efficacy PROXY (L1000 cancer lines) \u2014 a perturbational axis orthogonal to association."
+    },
+    {
+      "name": "efficacy_vs_DECOY",
+      "kind": "negative_control",
+      "ranking_source": "lincs_l1000",
+      "evidence_mode": "lof_reversal",
+      "gold_set_name": "housekeeping_decoy_negative_control",
+      "gold_citations": {
+        "ACTB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [ACTB]",
+        "GAPDH": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GAPDH]",
+        "B2M": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [B2M]",
+        "RPL13A": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPL13A]",
+        "TUBB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TUBB]",
+        "PGK1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PGK1]",
+        "HPRT1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [HPRT1]",
+        "TBP": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TBP]",
+        "PPIA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PPIA]",
+        "YWHAZ": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [YWHAZ]",
+        "SDHA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [SDHA]",
+        "UBC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [UBC]",
+        "RPLP0": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPLP0]",
+        "GUSB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GUSB]",
+        "TFRC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TFRC]"
+      },
+      "n_gold": 8,
+      "background_size": 2792,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.6046605603448276,
+      "roc_auc_ci": [
+        0.40380422139133876,
+        0.8028814123517689
+      ],
+      "permutation_p": 0.14485514485514486,
+      "q_value": null,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2792). Efficacy PROXY (L1000 cancer lines) \u2014 a perturbational axis orthogonal to association."
+    }
+  ],
+  "top_reversal_efficacy": [
+    {
+      "gene": "MRPL15",
+      "reversal_score": 11.7987,
+      "n_signatures": 2,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "MEI1",
+      "reversal_score": 11.2208,
+      "n_signatures": 2,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "CES1",
+      "reversal_score": 10.7323,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "PRDX2",
+      "reversal_score": 10.6103,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "AGS",
+      "source": "live"
+    },
+    {
+      "gene": "CNTN1",
+      "reversal_score": 10.5461,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "GPR65",
+      "reversal_score": 10.1898,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "WARS2",
+      "reversal_score": 10.0978,
+      "n_signatures": 2,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "PC3",
+      "source": "live"
+    },
+    {
+      "gene": "KRTAP5-2",
+      "reversal_score": 10.0813,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "EHF",
+      "reversal_score": 9.934,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "U251MG",
+      "source": "live"
+    },
+    {
+      "gene": "NDUFA1",
+      "reversal_score": 9.8225,
+      "n_signatures": 3,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "A375",
+      "source": "live"
+    },
+    {
+      "gene": "LPA",
+      "reversal_score": 9.8201,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "ITGA3",
+      "reversal_score": 9.7703,
+      "n_signatures": 4,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "A375",
+      "source": "live"
+    },
+    {
+      "gene": "OGFOD1",
+      "reversal_score": 9.7686,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "PC3",
+      "source": "live"
+    },
+    {
+      "gene": "EPHA8",
+      "reversal_score": 9.7337,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "MUC20",
+      "reversal_score": 9.7281,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "MCF7",
+      "source": "live"
+    },
+    {
+      "gene": "SLC12A3",
+      "reversal_score": 9.6909,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "A549",
+      "source": "live"
+    },
+    {
+      "gene": "GPR143",
+      "reversal_score": 9.6501,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "MAGI1",
+      "reversal_score": 9.6006,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "MMP14",
+      "reversal_score": 9.5821,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "BICR6",
+      "source": "live"
+    },
+    {
+      "gene": "BRD4",
+      "reversal_score": 9.5315,
+      "n_signatures": 1,
+      "best_database": "l1000_xpr",
+      "best_cell_line": "A375",
+      "source": "live"
+    }
+  ]
+}

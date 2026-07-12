@@ -19,6 +19,7 @@ Usage:
 """
 from __future__ import annotations
 
+import copy
 import json
 import sys
 from pathlib import Path
@@ -733,6 +734,699 @@ def _investigate_block(hypothesis: str, dataset: str, seed: int, case: dict) -> 
         return _static_investigate(case, hypothesis, dataset)
 
 
+# ---------------------------------------------------------------------------
+# TRANSLATION + normalized TREE (Track 2) — surface the molecular translation
+# layer (PI4AD -> AlphaFold -> repurposing -> wet-lab) onto promoted survivors,
+# and derive ONE normalized decision-tree shape the UI consumes for every case.
+# ---------------------------------------------------------------------------
+#: mechanism (bridge routing key) -> the dominant fluid biomarker it is routed by.
+_MECH_BIOMARKER = {
+    "amyloid_cascade": "p_tau217",
+    "glial": "gfap",
+    "vascular": "nfl",
+}
+
+_BIOMARKER_LABEL = {"p_tau217": "plasma p-tau217", "gfap": "plasma GFAP",
+                    "nfl": "plasma NfL", "": "the dominant fluid biomarker"}
+
+#: LAST-RESORT calibrated snapshots (mirror the real offline translate() output
+#: for each mechanism) so the build still emits real ranked proteins / AlphaFold
+#: structures / repurposing compounds even when ``neuroad`` is not importable.
+#: Generated verbatim from harness.translation.translate(<mech>, df=None).
+_CALIBRATED_TRANSLATION = json.loads(r'''
+{
+    "amyloid_cascade": {
+        "mechanism": "amyloid_cascade",
+        "dominant_biomarker": "p_tau217",
+        "status": "translated",
+        "ranked_targets": [
+            {
+                "gene": "APP",
+                "priority_score": 8.597,
+                "rank": 18,
+                "evidence_note": "Core PI4AD target (amyloid beta precursor protein)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "ESR1",
+                "priority_score": 7.992,
+                "rank": 61,
+                "evidence_note": "Peripheral PI4AD target (estrogen receptor 1)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "MAPT",
+                "priority_score": 7.304,
+                "rank": 151,
+                "evidence_note": "Core PI4AD target (microtubule associated protein tau)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "APOE",
+                "priority_score": 7.151,
+                "rank": 185,
+                "evidence_note": "Core PI4AD target (apolipoprotein E)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "PSEN1",
+                "priority_score": 6.211,
+                "rank": 492,
+                "evidence_note": "Peripheral PI4AD target (presenilin 1)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "BACE1",
+                "priority_score": null,
+                "rank": null,
+                "evidence_note": "not in PI4AD prioritisation table",
+                "source": "candidate_only"
+            }
+        ],
+        "top_target": "APP",
+        "structure": {
+            "uniprot": "P05067",
+            "gene_symbol": "APP",
+            "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb",
+            "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif",
+            "mean_plddt": 67.38,
+            "model_version": "v6",
+            "plddt_recomputed": false,
+            "n_residues_scored": null,
+            "source": "offline_snapshot",
+            "error": ""
+        },
+        "repurposing": [
+            {
+                "compound": "Nilotinib",
+                "target_gene": "ABL1",
+                "related_genes": [
+                    "ABL1",
+                    "MAPT",
+                    "APP"
+                ],
+                "mechanism_note": "c-Abl tyrosine-kinase inhibitor hypothesized to promote autophagic clearance of misfolded amyloid/tau; explored in small early-phase Alzheimer disease studies.",
+                "evidence_strength": 0.42,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "Georgetown nilotinib phase-2 (NCT02947893)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Bexarotene",
+                "target_gene": "RXRA",
+                "related_genes": [
+                    "RXRA",
+                    "APOE",
+                    "APP"
+                ],
+                "mechanism_note": "RXR agonist hypothesized to enhance APOE-mediated amyloid clearance; small exploratory repurposing study in Alzheimer disease (results equivocal).",
+                "evidence_strength": 0.25,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "Bexarotene pilot (NCT01782742)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            }
+        ],
+        "wet_lab_experiment": "In Tanzi-style 3D human neural organoids, knock down the lead target (CRISPRi) and read out A\u03b242/40 ratio + p-tau217 by MSD at 6 weeks; kill if neither moves beyond vehicle \u00b12SD.",
+        "provenance": {
+            "pi4ad": "offline_snapshot",
+            "alphafold": "offline_snapshot",
+            "repurposing": "offline_snapshot"
+        },
+        "caveat": "Decision-support only: prioritized molecular follow-ups for a promoted imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated target, and never derived from the imaging embedding itself."
+    },
+    "glial": {
+        "mechanism": "glial",
+        "dominant_biomarker": "gfap",
+        "status": "translated",
+        "ranked_targets": [
+            {
+                "gene": "HRAS",
+                "priority_score": 8.19,
+                "rank": 45,
+                "evidence_note": "Peripheral PI4AD target (HRas proto-oncogene, GTPase)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "TREM2",
+                "priority_score": 8.135,
+                "rank": 49,
+                "evidence_note": "Core PI4AD target (triggering receptor expressed on myeloid cells 2)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "MAPK1",
+                "priority_score": 7.966,
+                "rank": 64,
+                "evidence_note": "Peripheral PI4AD target (mitogen-activated protein kinase 1)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "APOE",
+                "priority_score": 7.151,
+                "rank": 185,
+                "evidence_note": "Core PI4AD target (apolipoprotein E)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "CLU",
+                "priority_score": 6.738,
+                "rank": 292,
+                "evidence_note": "Core PI4AD target (clusterin)",
+                "source": "offline_snapshot"
+            }
+        ],
+        "top_target": "HRAS",
+        "structure": {
+            "uniprot": "P01112",
+            "gene_symbol": "HRAS",
+            "model_url": "https://alphafold.ebi.ac.uk/files/AF-P01112-F1-model_v6.pdb",
+            "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P01112-F1-model_v6.cif",
+            "mean_plddt": 91.94,
+            "model_version": "v6",
+            "plddt_recomputed": false,
+            "n_residues_scored": null,
+            "source": "offline_snapshot",
+            "error": ""
+        },
+        "repurposing": [
+            {
+                "compound": "Semaglutide",
+                "target_gene": "GLP1R",
+                "related_genes": [
+                    "GLP1R"
+                ],
+                "mechanism_note": "[disease-level hypothesis; no direct HRAS link in snapshot] GLP-1 receptor agonist hypothesized to reduce neuroinflammation and improve neuronal insulin signaling; being tested for early symptomatic Alzheimer disease.",
+                "evidence_strength": 0.6,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "EVOKE / EVOKE+ (NCT04777396/NCT04777409)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Liraglutide",
+                "target_gene": "GLP1R",
+                "related_genes": [
+                    "GLP1R"
+                ],
+                "mechanism_note": "[disease-level hypothesis; no direct HRAS link in snapshot] GLP-1 receptor agonist proposed to support neuronal glucose metabolism and dampen neuroinflammatory signaling; evaluated in mild Alzheimer disease.",
+                "evidence_strength": 0.55,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "ELAD (NCT01843075)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Metformin",
+                "target_gene": "PRKAA1",
+                "related_genes": [
+                    "PRKAA1",
+                    "PRKAA2",
+                    "IGF1R"
+                ],
+                "mechanism_note": "[disease-level hypothesis; no direct HRAS link in snapshot] Biguanide activating AMPK / modulating brain insulin signaling; repurposing hypothesis for MCI and early Alzheimer disease based on metabolic-dysfunction rationale.",
+                "evidence_strength": 0.5,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "MAP / metformin-in-MCI trials (NCT04098666)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Sodium selenate",
+                "target_gene": "PPP2CA",
+                "related_genes": [
+                    "PPP2CA",
+                    "MAPT"
+                ],
+                "mechanism_note": "[disease-level hypothesis; no direct HRAS link in snapshot] PP2A activator hypothesized to reduce tau hyperphosphorylation; small tau-directed repurposing trials in Alzheimer disease.",
+                "evidence_strength": 0.45,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "ISRCTN / phase-2 selenate (NCT05363293)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Nilotinib",
+                "target_gene": "ABL1",
+                "related_genes": [
+                    "ABL1",
+                    "MAPT",
+                    "APP"
+                ],
+                "mechanism_note": "[disease-level hypothesis; no direct HRAS link in snapshot] c-Abl tyrosine-kinase inhibitor hypothesized to promote autophagic clearance of misfolded amyloid/tau; explored in small early-phase Alzheimer disease studies.",
+                "evidence_strength": 0.42,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "Georgetown nilotinib phase-2 (NCT02947893)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            }
+        ],
+        "wet_lab_experiment": "In iPSC-microglia + neuron co-culture organoids, perturb the lead target and read out secreted GFAP + IL-6/TNF-\u03b1 and synaptic density (synaptophysin puncta) at 6 weeks; kill if glial markers are unchanged.",
+        "provenance": {
+            "pi4ad": "offline_snapshot",
+            "alphafold": "offline_snapshot",
+            "repurposing": "offline_snapshot"
+        },
+        "caveat": "Decision-support only: prioritized molecular follow-ups for a promoted imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated target, and never derived from the imaging embedding itself."
+    },
+    "vascular": {
+        "mechanism": "vascular",
+        "dominant_biomarker": "nfl",
+        "status": "translated",
+        "ranked_targets": [
+            {
+                "gene": "APP",
+                "priority_score": 8.597,
+                "rank": 18,
+                "evidence_note": "Core PI4AD target (amyloid beta precursor protein)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "APOE",
+                "priority_score": 7.151,
+                "rank": 185,
+                "evidence_note": "Core PI4AD target (apolipoprotein E)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "BIN1",
+                "priority_score": 6.754,
+                "rank": 287,
+                "evidence_note": "Core PI4AD target (bridging integrator 1)",
+                "source": "offline_snapshot"
+            },
+            {
+                "gene": "CLU",
+                "priority_score": 6.738,
+                "rank": 292,
+                "evidence_note": "Core PI4AD target (clusterin)",
+                "source": "offline_snapshot"
+            }
+        ],
+        "top_target": "APP",
+        "structure": {
+            "uniprot": "P05067",
+            "gene_symbol": "APP",
+            "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb",
+            "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif",
+            "mean_plddt": 67.38,
+            "model_version": "v6",
+            "plddt_recomputed": false,
+            "n_residues_scored": null,
+            "source": "offline_snapshot",
+            "error": ""
+        },
+        "repurposing": [
+            {
+                "compound": "Nilotinib",
+                "target_gene": "ABL1",
+                "related_genes": [
+                    "ABL1",
+                    "MAPT",
+                    "APP"
+                ],
+                "mechanism_note": "c-Abl tyrosine-kinase inhibitor hypothesized to promote autophagic clearance of misfolded amyloid/tau; explored in small early-phase Alzheimer disease studies.",
+                "evidence_strength": 0.42,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "Georgetown nilotinib phase-2 (NCT02947893)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            },
+            {
+                "compound": "Bexarotene",
+                "target_gene": "RXRA",
+                "related_genes": [
+                    "RXRA",
+                    "APOE",
+                    "APP"
+                ],
+                "mechanism_note": "RXR agonist hypothesized to enhance APOE-mediated amyloid clearance; small exploratory repurposing study in Alzheimer disease (results equivocal).",
+                "evidence_strength": 0.25,
+                "disease": "Alzheimer disease",
+                "disease_node_ids": [
+                    "4975",
+                    "11913",
+                    "7088",
+                    "11743",
+                    "12153"
+                ],
+                "trial_ref": "Bexarotene pilot (NCT01782742)",
+                "rationale": "",
+                "rationale_source": "",
+                "source": "offline_snapshot"
+            }
+        ],
+        "wet_lab_experiment": "In a BBB-on-chip / organoid model, perturb the lead target and read out trans-endothelial resistance + NfL leakage at 6 weeks; kill if barrier integrity and NfL are unchanged.",
+        "provenance": {
+            "pi4ad": "offline_snapshot",
+            "alphafold": "offline_snapshot",
+            "repurposing": "offline_snapshot"
+        },
+        "caveat": "Decision-support only: prioritized molecular follow-ups for a promoted imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated target, and never derived from the imaging embedding itself."
+    }
+}
+''')
+
+
+#: Real 590-subject ADNI cohort for the cohort-level fusion fields, loaded once.
+#: Absent on a fresh clone (gated) -> those fields simply stay empty, never faked.
+_DEMO_DF_LOADED = False
+_DEMO_COHORT_DF = None
+_TRANSLATION_MEMO: dict[str, dict] = {}
+
+
+def _demo_cohort_df():
+    """The real AD/CN imaging cohort for cross-attention / grounding, or None."""
+    global _DEMO_DF_LOADED, _DEMO_COHORT_DF
+    if not _DEMO_DF_LOADED:
+        _DEMO_DF_LOADED = True
+        try:
+            from neuroad.data import loaders
+            _DEMO_COHORT_DF = loaders.load("adni:neurojepa")
+        except Exception as exc:  # noqa: BLE001
+            print(f"[build_demo_data]     cohort df unavailable ({exc}); "
+                  f"cohort-level fusion fields (cross-attention/grounding) skipped.")
+            _DEMO_COHORT_DF = None
+    return _DEMO_COHORT_DF
+
+
+def _static_translation(mechanism: str) -> dict:
+    """Real offline molecular translation for a promoted survivor's mechanism.
+
+    Calls ``neuroad.harness.translation.translate`` (offline, exception-safe) with
+    every real layer surfaced: PI4AD-ranked targets + AlphaFold structure +
+    repurposing (real NCTs) + falsifiable wet-lab readout, PLUS the fleshed-out
+    layers — L5 pathway enrichment (ORA), L6 structure-based target druggability,
+    and (for the amyloid hero case, on the real 590 ADNI cohort) L3 cross-attention
+    fusion + attentive-probe grounding + the multimodal biomarker fusion. Boltz-2
+    interaction/affinity already surface by default from the committed snapshot.
+
+    The cohort-level fields are the AD/CN imaging story (mechanism-independent) and
+    the CV they run is a few seconds, so they are attached to the amyloid case only.
+    Memoized per mechanism. Falls back to the calibrated snapshot when the engine is
+    not importable. Field names mirror ``TranslationLead.to_dict``.
+    """
+    mech = mechanism if mechanism in _MECH_BIOMARKER else "amyloid_cascade"
+    if mech in _TRANSLATION_MEMO:
+        return copy.deepcopy(_TRANSLATION_MEMO[mech])
+    result = None
+    try:
+        from neuroad.harness import translation as _translation
+        df = _demo_cohort_df() if mech == "amyloid_cascade" else None
+        out = _translation.translate(
+            mech, df=df, prefer_offline=True,
+            include_targeting=True, include_pathways=True,
+            include_grounding=df is not None,
+            include_cross_attention=df is not None)
+        if isinstance(out, dict) and out.get("ranked_targets"):
+            if not out.get("dominant_biomarker"):
+                out["dominant_biomarker"] = _MECH_BIOMARKER[mech]
+            result = out
+    except Exception as exc:  # noqa: BLE001
+        print(f"[build_demo_data]     translation engine unavailable ({exc}); "
+              f"using calibrated snapshot for {mech}.")
+    if result is None:
+        result = copy.deepcopy(_CALIBRATED_TRANSLATION.get(mech)
+                               or _CALIBRATED_TRANSLATION["amyloid_cascade"])
+    _TRANSLATION_MEMO[mech] = result
+    return copy.deepcopy(result)
+
+
+def _cluster_mechanism(cluster: dict) -> str:
+    """Route a Detective cluster to a mechanism from its biomarker effect sizes:
+    GFAP-dominant -> glial, otherwise amyloid_cascade (matches bridge routing)."""
+    bio = cluster.get("biomarker", {}) or {}
+    ptau = ((bio.get("p_tau217") or {}).get("d")) or 0.0
+    gfap = ((bio.get("gfap") or {}).get("d")) or 0.0
+    try:
+        return "glial" if float(gfap) > float(ptau) else "amyloid_cascade"
+    except (TypeError, ValueError):
+        return "amyloid_cascade"
+
+
+def _gate_role(result: str) -> str:
+    """Semantic node color role for a gauntlet gate result."""
+    return {"passed": "green", "weakened": "gold", "failed": "gray",
+            "not_available": "gray"}.get(result or "", "gold")
+
+
+_GAUNTLET_LOOKUP = {k: (label, q, w, star) for (k, label, q, w, star) in GAUNTLET_META}
+
+
+def _normalize_tests(tests) -> list[dict]:
+    """Normalize the two test shapes to a rich list[dict]:
+      * cases:    list[dict] with label/question/result/stats/effect (pass through)
+      * clusters: dict{key: result} -> synthesize label/question from GAUNTLET_META.
+    """
+    if isinstance(tests, list):
+        return tests
+    if isinstance(tests, dict):
+        out = []
+        for key, result in tests.items():
+            label, question, weight, star = _GAUNTLET_LOOKUP.get(
+                key, (key, "", None, False))
+            out.append({"key": key, "label": label, "question": question,
+                        "weight": weight, "star": star, "result": result,
+                        "detail": "", "stats": {}})
+        return out
+    return []
+
+
+def _derive_tree(case: dict, *, seed_sweep: dict | None = None) -> dict:
+    """Derive ONE normalized decision-tree shape from a refereed case so the UI
+    consumes a single contract for every case:
+
+        tree = {root, nodes[], edges[], promoted, dead_end}
+
+    Node chain (x strictly increases with depth):
+      hypothesis(root; story = investigate kill_criteria/spec)
+        -> 5 gate nodes (from tests[]; state = result; the site_scanner gate
+           carries leakage_margin + confound_leaderboard, the replication gate
+           carries seed_sweep)
+        -> verdict node (score/verdict/leakage_margin/honesty_rung/
+           double_dissociation + courtroom/caveats)
+        -> terminal candidate node (case.translation verbatim) -- ONLY when the
+           case is promoted AND carries a translation. KILL / unpromoted cases
+           DEAD-END at the verdict node with NO candidate (the honest punchline).
+    """
+    inv = case.get("investigate", {}) or {}
+    promoted = bool(case.get("promoted"))
+    translation = case.get("translation") if promoted else None
+
+    nodes: list[dict] = []
+    edges: list[dict] = []
+
+    # --- root: the hypothesis under investigation -------------------------
+    root_id = "hypothesis"
+    nodes.append({
+        "id": root_id,
+        "type": "hypothesis",
+        "role": "root",
+        "label": "Hypothesis",
+        "sub": (case.get("claim", {}) or {}).get("claim_text")
+               or inv.get("hypothesis", ""),
+        "state": "investigate",
+        "story": {
+            "kind": "hypothesis",
+            "hypothesis": inv.get("hypothesis", ""),
+            "dataset": inv.get("dataset", ""),
+            "novelty_class": inv.get("novelty_class"),
+            "honesty_rung": inv.get("honesty_rung"),
+            "routed_mechanism": inv.get("routed_mechanism"),
+            "expected_direction": inv.get("expected_direction"),
+            "kill_criterion": inv.get("kill_criterion"),
+            "kill_criteria": inv.get("kill_criteria", []),
+            "spec": inv.get("spec", {}),
+            "anchor_gate": inv.get("anchor_gate", {}),
+        },
+    })
+
+    # --- 5 gate nodes (the adversarial gauntlet) --------------------------
+    # Cases carry tests as list[dict]; Detective clusters carry a thin
+    # dict{key: result}. Normalize both to the rich list form.
+    prev_id = root_id
+    for t in _normalize_tests(case.get("tests")):
+        gid = "gate_" + str(t.get("key"))
+        result = t.get("result")
+        story = {
+            "kind": "gate",
+            "key": t.get("key"),
+            "question": t.get("question"),
+            "detail": t.get("detail"),
+            "result": result,
+            "stats": t.get("stats", {}),
+        }
+        # STAR gate: leakage carries the confound leaderboard + margin.
+        if t.get("key") == "site_scanner":
+            story["leakage_margin"] = case.get("leakage_margin", {})
+            story["confound_leaderboard"] = case.get("confound_leaderboard", [])
+        # Replication gate carries the seed sweep (stability under reseeding).
+        if t.get("key") == "replication" and seed_sweep is not None:
+            story["seed_sweep"] = seed_sweep
+        nodes.append({
+            "id": gid,
+            "type": "gate",
+            "role": _gate_role(result),
+            "label": t.get("label"),
+            "sub": t.get("question"),
+            "state": result,
+            "star": bool(t.get("star")),
+            "weight": t.get("weight"),
+            "effect": t.get("effect"),
+            "effect_label": t.get("effect_label"),
+            "story": story,
+        })
+        edges.append({
+            "id": f"e_{prev_id}__{gid}",
+            "from": prev_id, "to": gid,
+            "kind": "gauntlet", "label": "test",
+            "state": result,
+        })
+        prev_id = gid
+
+    # --- verdict node -----------------------------------------------------
+    verdict_id = "verdict"
+    nodes.append({
+        "id": verdict_id,
+        "type": "verdict",
+        "role": "green" if promoted else "gray",
+        "label": "Verdict",
+        "sub": case.get("verdict"),
+        "state": case.get("verdict"),
+        "score": case.get("score"),
+        "promoted": promoted,
+        "story": {
+            "kind": "verdict",
+            "score": case.get("score"),
+            "verdict": case.get("verdict"),
+            "leakage_margin": case.get("leakage_margin", {}),
+            "honesty_rung": inv.get("honesty_rung"),
+            "double_dissociation": case.get("double_dissociation", {}),
+            "courtroom": case.get("courtroom", {}),
+            "caveats": case.get("caveats", []),
+            "gate_note": case.get("gate_note"),
+        },
+    })
+    edges.append({
+        "id": f"e_{prev_id}__{verdict_id}",
+        "from": prev_id, "to": verdict_id,
+        "kind": "gauntlet", "label": "adjudicate",
+        "state": "promoted" if promoted else "dead_end",
+    })
+
+    dead_end = True
+    # --- terminal candidate node (promoted survivors only) ----------------
+    if promoted and isinstance(translation, dict) and translation.get("ranked_targets"):
+        mech = translation.get("mechanism") or inv.get("routed_mechanism") \
+            or "amyloid_cascade"
+        biomarker = translation.get("dominant_biomarker") or _MECH_BIOMARKER.get(mech, "")
+        top = translation.get("top_target") or "candidate targets"
+        cand_id = "candidate"
+        nodes.append({
+            "id": cand_id,
+            "type": "candidate",
+            "role": "clay",
+            "label": top,
+            "sub": f"{mech} -> {top}",
+            "state": "promoted",
+            "translation": translation,   # case.translation VERBATIM
+            "story": {
+                "kind": "candidate",
+                "mechanism": mech,
+                "dominant_biomarker": biomarker,
+                "top_target": top,
+                "ranked_targets": translation.get("ranked_targets", []),
+                "structure": translation.get("structure", {}),
+                "repurposing": translation.get("repurposing", []),
+                "wet_lab_experiment": translation.get("wet_lab_experiment", ""),
+                "provenance": translation.get("provenance", {}),
+                "caveat": translation.get("caveat", ""),
+            },
+        })
+        edges.append({
+            "id": f"e_{verdict_id}__{cand_id}",
+            "from": verdict_id, "to": cand_id,
+            "kind": "translate",
+            # honesty: translation is routed from the fluid biomarker, NOT imaging.
+            "label": f"routed from {_BIOMARKER_LABEL.get(biomarker, biomarker)} -> {mech}",
+            "state": "promoted",
+        })
+        dead_end = False
+
+    return {
+        "root": root_id,
+        "nodes": nodes,
+        "edges": edges,
+        "promoted": promoted,
+        "dead_end": dead_end,
+    }
+
+
 def fallback_demo_data() -> dict:
     """The calibrated, deterministic, guaranteed-offline payload."""
     data = {
@@ -789,6 +1483,13 @@ def fallback_demo_data() -> dict:
                 dataset = sub_key
             case["investigate"] = _static_investigate(
                 case, case["claim"]["claim_text"], dataset)
+            # Promoted survivors carry a REAL molecular translation lead even in
+            # the pure-offline fallback (routed via the case's dominant biomarker
+            # / mechanism). KILL / refused cases DEAD-END with no candidate.
+            if case.get("promoted"):
+                mech = (case["investigate"].get("routed_mechanism")
+                        or "amyloid_cascade")
+                case["translation"] = _static_translation(mech)
     return data
 
 
@@ -924,6 +1625,46 @@ def _real_case(fallback_case: dict, card, df, *, promoted_cap: str | None = None
     narr = getattr(card, "narration", None)
     if isinstance(narr, str) and narr.strip():
         case["narration"] = narr
+    # Real molecular translation lead (PI4AD -> AlphaFold -> repurposing -> wet-lab),
+    # set by the pipeline for promoted survivors ONLY (read-only side artifact; it
+    # never touched the score/verdict). KILL / refused cases carry no translation.
+    if d.get("translation"):
+        tr = d["translation"]
+        # Enrich the orchestrator's translation with the fleshed-out layers, which
+        # its default call does not surface: L5 pathway ORA + L6 target
+        # druggability (mechanism-based, cheap) always; L3 cross-attention fusion +
+        # attentive-probe grounding (cohort-level CV) only when this case's cohort
+        # carries a complete plasma block (i.e. real ADNI). Copied ONLY when the
+        # module returned a genuinely populated result — never an empty/degraded one
+        # — so non-plasma cohorts don't get noise fields. Fully wrapped.
+        try:
+            from neuroad.harness import translation as _tr
+            mech = tr.get("mechanism") or "amyloid_cascade"
+            has_plasma = df is not None and "apoe4" in getattr(df, "columns", []) \
+                and df["apoe4"].notna().any() and "p_tau217" in df.columns \
+                and df["p_tau217"].notna().any()
+            enr = _tr.translate(
+                mech, df=df, prefer_offline=True,
+                include_targeting=True, include_pathways=True,
+                include_grounding=has_plasma, include_cross_attention=has_plasma)
+            for k in ("target_druggability", "pathway_enrichment",
+                      "cross_attention_fusion", "signal_grounding",
+                      "biomarker_fusion"):
+                val = enr.get(k)
+                if val:  # non-empty only
+                    tr[k] = val
+                    src = enr.get("provenance", {}).get(
+                        {"cross_attention_fusion": "cross_attention",
+                         "pathway_enrichment": "pathways",
+                         "target_druggability": "targeting"}.get(k, k))
+                    if src:
+                        tr.setdefault("provenance", {})[
+                            {"cross_attention_fusion": "cross_attention",
+                             "pathway_enrichment": "pathways",
+                             "target_druggability": "targeting"}.get(k, k)] = src
+        except Exception as exc:  # noqa: BLE001
+            print(f"[build_demo_data]     layer enrichment failed ({exc})")
+        case["translation"] = tr
     return case
 
 
@@ -1147,7 +1888,7 @@ def _try_engine() -> dict | None:
             conv = ch.get("conversion", {}) or {}
             bio = ch.get("biomarker", {}) or {}
             art = c.get("artifact", {}) or {}
-            return {
+            payload = {
                 "cluster": c["cluster"], "n": c["n"], "stability": c["stability"],
                 "unstable": bool(c.get("unstable")),
                 "dominant_phenotype": c.get("dominant_phenotype"),
@@ -1174,6 +1915,14 @@ def _try_engine() -> dict | None:
                 },
                 "coords_2d": None,
             }
+            # Route the cluster to a mechanism from its biomarker effect sizes
+            # (GFAP-dominant -> glial, else amyloid_cascade); attach a REAL
+            # molecular translation ONLY for promoted clusters.
+            mech = _cluster_mechanism(payload)
+            payload["mechanism"] = mech
+            if payload.get("promoted"):
+                payload["translation"] = _static_translation(mech)
+            return payload
 
         data["discovery"] = {
             "note": res.get("note"), "ari": res.get("ari"), "ami": res.get("ami"),
@@ -1401,6 +2150,41 @@ def _write_reports(data: dict) -> None:
     print(f"[build_demo_data] wrote 6 report artifacts to {REPORTS}")
 
 
+_TRANSLATION_NOTE = (
+    "Promoted survivors carry a molecular translation lead (PI4AD-ranked targets "
+    "-> AlphaFold structure -> repurposing compounds -> a falsifiable wet-lab "
+    "readout), routed via the dominant fluid biomarker — NOT the imaging "
+    "embedding. It is decision-support, not a validated target. KILL / refused "
+    "cases DEAD-END with no candidate. The molecular source layers "
+    "(PI4AD / TxGNN / AlphaFold / Jasodanand) are not yet in "
+    "docs/CITATIONS_VERIFIED.md — see meta.molecular_sources_unverified."
+)
+
+
+def _bump_translation_meta(meta: dict) -> None:
+    """Bump schema + stamp the translation-honesty footnote (idempotent)."""
+    meta["schema"] = "1.1.0"
+    meta["translation_note"] = _TRANSLATION_NOTE
+    meta["molecular_sources_unverified"] = True
+
+
+def _attach_trees(data: dict) -> None:
+    """Derive ONE normalized decision-tree per case (and per Detective cluster)
+    so the UI consumes a single shape, and bump the translation meta. Idempotent;
+    safe to run over an already-built payload (injection) or a fresh build."""
+    _bump_translation_meta(data.setdefault("meta", {}))
+    seed_sweep = data.get("seed_sweep", {}) or {}
+    for sub in (data.get("substrates", {}) or {}).values():
+        for kind, case in (sub.get("cases", {}) or {}).items():
+            ss = seed_sweep.get(case.get("kind") or kind) if isinstance(seed_sweep, dict) else None
+            case["tree"] = _derive_tree(case, seed_sweep=ss)
+    for dk in ("discovery", "discovery_real"):
+        disc = data.get(dk)
+        if isinstance(disc, dict):
+            for cluster in disc.get("clusters", []) or []:
+                cluster["tree"] = _derive_tree(cluster)
+
+
 def main(argv: list[str] | None = None) -> int:
     import os
     argv = sys.argv[1:] if argv is None else argv
@@ -1414,6 +2198,9 @@ def main(argv: list[str] | None = None) -> int:
         data = fallback_demo_data()
     else:
         data = _try_engine() or fallback_demo_data()
+    # Surface the molecular translation as ONE normalized decision-tree per case
+    # (+ Detective cluster) and bump the schema/honesty meta.
+    _attach_trees(data)
     APP.mkdir(parents=True, exist_ok=True)
     out = APP / "demo_data.json"
     out.write_text(json.dumps(data, indent=2))

@@ -1,0 +1,104 @@
+{
+  "provenance": {
+    "snapshot_source": "ad_pathway_snapshot_v1",
+    "curation_date": "2026-07",
+    "curated_by": "NeuroAD Discovery Engine",
+    "disclaimer": "CURATED OFFLINE SUBSET, NOT FETCHED LIVE. Each gene set below is a hand-curated, publicly-documented SUBSET of the corresponding real KEGG / Reactome / GO pathway membership — it is NOT the complete pathway and NOT a live Enrichr/g:Profiler/STRING-enrichment or GSEA query. Over-representation p-values computed against this snapshot are therefore snapshot-relative and are stamped with pathway_size + background_size + snapshot_source so they are interpretable rather than presented as genome-wide Enrichr p-values. Gene memberships were transcribed from the public pathway pages cited below; no alias/synonym expansion is performed (symbols are matched upper-cased, as-is).",
+    "sources": {
+      "KEGG": "https://www.genome.jp/kegg/pathway.html (KEGG PATHWAY database, hsa* human maps)",
+      "Reactome": "https://reactome.org (Reactome Pathway Knowledgebase, R-HSA-* stable ids)",
+      "GO": "http://geneontology.org (Gene Ontology biological-process terms)"
+    },
+    "license_note": "KEGG identifiers/map names are used for reference only; Reactome is CC-BY 4.0; GO is CC-BY 4.0. Only small, well-known gene-symbol subsets are bundled here for offline over-representation analysis."
+  },
+  "gene_sets": [
+    {
+      "id": "KEGG_ALZHEIMER_DISEASE",
+      "name": "Alzheimer disease",
+      "source": "KEGG",
+      "source_id": "hsa05010",
+      "description": "KEGG canonical Alzheimer disease map (curated subset): APP/PSEN processing, tau, ApoE, excitotoxicity, kinase and mitochondrial arms.",
+      "genes": ["APP", "PSEN1", "PSEN2", "APH1B", "BACE1", "MAPT", "APOE", "GSK3B", "CDK5", "CDK5R1", "CALM1", "GRIN1", "GRIN2A", "GRIN2B", "MAPK1", "MAPK3", "CASP3", "NDUFA8", "NDUFS1"]
+    },
+    {
+      "id": "REACTOME_AMYLOID_FIBER_FORMATION",
+      "name": "Amyloid fiber formation",
+      "source": "Reactome",
+      "source_id": "R-HSA-977225",
+      "description": "Reactome amyloid fiber formation (curated subset): amyloidogenic secretase substrates and aggregation-associated chaperones/carriers.",
+      "genes": ["APP", "PSEN1", "PSEN2", "APH1B", "APOE", "CLU", "A2M", "CST3", "SNCA"]
+    },
+    {
+      "id": "REACTOME_APP_PROCESSING",
+      "name": "Amyloid precursor protein (APP) catabolism / secretase processing",
+      "source": "Reactome",
+      "source_id": "R-HSA-6798695",
+      "description": "Reactome APP catabolic processing (curated subset): alpha/beta/gamma-secretase machinery.",
+      "genes": ["APP", "PSEN1", "PSEN2", "APH1B", "BACE1", "ADAM10", "NCSTN"]
+    },
+    {
+      "id": "GO_TAU_PROTEIN_PHOSPHORYLATION",
+      "name": "Tau protein phosphorylation / tau pathology",
+      "source": "GO",
+      "source_id": "GO:1902949",
+      "description": "Gene Ontology tau-protein phosphorylation (curated subset): MAPT and its principal effector kinases in neurofibrillary-tangle pathology.",
+      "genes": ["MAPT", "GSK3B", "CDK5", "CDK5R1", "FYN", "MAPK1", "MAPK3"]
+    },
+    {
+      "id": "KEGG_MAPK_SIGNALING",
+      "name": "MAPK signaling pathway",
+      "source": "KEGG",
+      "source_id": "hsa04010",
+      "description": "KEGG MAPK signaling (curated subset): RAS-RAF-MEK-ERK and receptor-tyrosine-kinase inputs.",
+      "genes": ["MAPK1", "MAPK3", "HRAS", "KRAS", "NRAS", "GRB2", "SHC1", "EGFR", "EGF", "JUN", "AKT1", "TP53", "CDC42", "RHOA", "MYC", "PDGFRB", "KIT", "ERBB2", "NFKB1"]
+    },
+    {
+      "id": "KEGG_RAS_SIGNALING",
+      "name": "Ras signaling pathway",
+      "source": "KEGG",
+      "source_id": "hsa04014",
+      "description": "KEGG Ras signaling (curated subset): RAS GTPases and downstream PI3K/MAPK/PLC effectors.",
+      "genes": ["HRAS", "KRAS", "NRAS", "GRB2", "SHC1", "EGFR", "PIK3CA", "PIK3CB", "PIK3R1", "PIK3R2", "AKT1", "MAPK1", "MAPK3", "RHOA", "PLCG1", "PLCG2", "KIT", "PDGFRB"]
+    },
+    {
+      "id": "GO_NEUROINFLAMMATION_MICROGLIAL_ACTIVATION",
+      "name": "Neuroinflammatory response / microglial activation",
+      "source": "GO",
+      "source_id": "GO:0150076",
+      "description": "Gene Ontology neuroinflammatory response with microglial-activation AD risk genes (curated subset): TLR/NF-kB innate immunity plus AD microglial loci.",
+      "genes": ["TREM2", "TLR2", "TLR4", "NFKB1", "CSF1R", "ITGAM", "CD33", "MS4A6A", "MAPK1", "MAPK3", "STAT3", "SYK", "IL1B", "TNF", "IL6", "C1QA"]
+    },
+    {
+      "id": "KEGG_AUTOPHAGY",
+      "name": "Autophagy - animal",
+      "source": "KEGG",
+      "source_id": "hsa04140",
+      "description": "KEGG autophagy (curated subset): mTOR/PI3K-regulated ATG core and its AD-relevant regulators.",
+      "genes": ["MTOR", "ULK1", "ATG5", "ATG7", "ATG12", "BECN1", "MAP1LC3B", "PIK3CA", "PIK3CB", "PIK3R1", "AKT1", "GSK3B", "PTEN", "BCL2", "FOXO3"]
+    },
+    {
+      "id": "KEGG_PI3K_AKT_SIGNALING",
+      "name": "PI3K-Akt signaling pathway",
+      "source": "KEGG",
+      "source_id": "hsa04151",
+      "description": "KEGG PI3K-Akt signaling (curated subset): PI3K/AKT axis with RTK inputs and survival effectors.",
+      "genes": ["PIK3CA", "PIK3CB", "PIK3R1", "PIK3R2", "AKT1", "PTEN", "EGFR", "ERBB2", "KIT", "PDGFRB", "GRB2", "HRAS", "KRAS", "NRAS", "GSK3B", "FOXO3", "MYC", "BCL2", "TP53", "CDKN1A"]
+    },
+    {
+      "id": "GO_NMDA_GLUTAMATERGIC_SIGNALING",
+      "name": "NMDA receptor / glutamatergic signaling (excitotoxicity)",
+      "source": "GO",
+      "source_id": "GO:0035235",
+      "description": "Gene Ontology ionotropic glutamate (NMDA) receptor signaling (curated subset): NMDA subunits and calcium/kinase effectors of excitotoxicity.",
+      "genes": ["GRIN1", "GRIN2A", "GRIN2B", "GRIN2C", "GRIN2D", "GRIN3A", "GRIN3B", "CALM1", "CDK5", "CDK5R1", "FYN"]
+    },
+    {
+      "id": "KEGG_OXIDATIVE_PHOSPHORYLATION",
+      "name": "Oxidative phosphorylation (mitochondrial dysfunction)",
+      "source": "KEGG",
+      "source_id": "hsa00190",
+      "description": "KEGG oxidative phosphorylation (curated subset): Complex I NADH-dehydrogenase subunits implicated in AD mitochondrial dysfunction.",
+      "genes": ["NDUFA8", "NDUFAB1", "NDUFS1", "NDUFS5", "NDUFV2", "NDUFB1", "NDUFC1"]
+    }
+  ]
+}

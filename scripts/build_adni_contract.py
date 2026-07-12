@@ -72,6 +72,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "src"))
 
 from neuroad.data import gated  # noqa: E402
+from neuroad.data import plasma_ensemble  # noqa: E402
 from neuroad import contract  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -87,6 +88,9 @@ _DEFAULTS = {
     "plasma": _DL_A / "UPENN_PLASMA_FUJIREBIO_QUANTERIX_09Jul2026.csv",
     "pet": _DL_A / "ADSP_PHC_PET_Amyloid_Simple_09Jul2026.csv",
     "adnimerge_tar": _DL_A / "ADNIMERGE2.tar.gz",
+    # Dir holding the three raw plasma assay CSVs for the triangulated ensemble
+    # (UPenn + C2N PrecivityAD2 + Lilly MSD600). Defaults to the same download dir.
+    "plasma_download": _DL_A,
     "out": _REPO_ROOT / "data" / "real" / "_gated" / "adni.csv",
 }
 
@@ -375,10 +379,28 @@ def assemble(paths: dict[str, Path]) -> pd.DataFrame:
     out = pd.concat([frame.reset_index(drop=True),
                      emb.reset_index(drop=True)], axis=1)
 
+    # Triangulate the plasma ensemble (C2N PrecivityAD2 + Lilly MSD600 alongside
+    # UPenn) INTO the anchor: p_tau217 is upgraded to the higher-coverage,
+    # z-harmonized ensemble value and plasma Aβ42/40 + %p-tau217 are added as extra
+    # contract biomarker signals. Degrades to the single-assay column if the gated
+    # download dir is absent. See data/plasma_ensemble.merge_into_contract.
+    out, ens_stats = plasma_ensemble.merge_into_contract(
+        out, download_dir=paths.get("plasma_download"))
+    if ens_stats.assays_present:
+        print(f"[ensemble] assays={ens_stats.assays_present} "
+              f"ptau217_union={ens_stats.ptau217_union} "
+              f"triangulated(>=2)={ens_stats.ptau217_triangulated} "
+              f"ab42_40={ens_stats.ab42_40_coverage} "
+              f"pct_ptau217={ens_stats.pct_ptau217_coverage}")
+    else:
+        print("[ensemble] no gated plasma download found — single-assay p_tau217")
+
     # Report coverage before handing to the seam.
-    for col in ("dx", "conversion", "age", "sex", "amyloid",
-                "p_tau217", "gfap", "nfl", "apoe4"):
-        print(f"[coverage] {col:>10}: {int(out[col].notna().sum())}/{len(out)}")
+    cov_cols = ["dx", "conversion", "age", "sex", "amyloid",
+                "p_tau217", "gfap", "nfl", "apoe4"]
+    cov_cols += [c for c in ("ab42_40", "pct_ptau217") if c in out.columns]
+    for col in cov_cols:
+        print(f"[coverage] {col:>12}: {int(out[col].notna().sum())}/{len(out)}")
     return out
 
 
@@ -392,16 +414,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--pet", type=Path, default=_DEFAULTS["pet"])
     ap.add_argument("--adnimerge-tar", type=Path,
                     default=_DEFAULTS["adnimerge_tar"], dest="adnimerge_tar")
+    ap.add_argument("--plasma-download", type=Path,
+                    default=_DEFAULTS["plasma_download"], dest="plasma_download")
     ap.add_argument("--out", type=Path, default=_DEFAULTS["out"])
     args = ap.parse_args(argv)
 
     paths = {
         "dxsum": args.dxsum, "fs": args.fs, "apoe": args.apoe,
         "plasma": args.plasma, "pet": args.pet,
-        "adnimerge_tar": args.adnimerge_tar, "out": args.out,
+        "adnimerge_tar": args.adnimerge_tar,
+        "plasma_download": args.plasma_download, "out": args.out,
     }
+    # plasma_download is OPTIONAL (the ensemble degrades to single-assay p_tau217).
     missing = [str(p) for k, p in paths.items()
-               if k != "out" and not Path(p).exists()]
+               if k not in ("out", "plasma_download") and not Path(p).exists()]
     if missing:
         print("ERROR: missing raw files:\n  " + "\n  ".join(missing),
               file=sys.stderr)

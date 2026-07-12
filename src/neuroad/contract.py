@@ -45,7 +45,10 @@ METADATA_COLUMNS: dict[str, str] = {
     "site": "category",         # acquisition site / study
     "scanner": "category",      # scanner model / field strength label
     "amyloid": "Int8",          # amyloid positivity: 1/0/<NA>
-    "p_tau217": "float64",      # plasma p-tau217 (pg/mL), <NA> allowed
+    "p_tau217": "float64",      # plasma p-tau217; native pg/mL, OR z-harmonized
+                                #   triangulated ensemble when a feeder merges the
+                                #   multi-assay anchor (native pg/mL kept in
+                                #   p_tau217_native). Anchor uses scale-free r. <NA> ok
     "gfap": "float64",          # plasma GFAP (pg/mL), <NA> allowed
     "nfl": "float64",           # plasma NfL (pg/mL), <NA> allowed
     "apoe4": "Int8",            # APOE e4 allele count 0/1/2, <NA> allowed
@@ -56,6 +59,14 @@ SEX_LEVELS = ["M", "F"]
 
 #: Columns that carry molecular/protein evidence (biomarker anchor + routing).
 BIOMARKER_COLUMNS = ["amyloid", "p_tau217", "gfap", "nfl", "apoe4"]
+
+#: OPTIONAL plasma biomarker signals a richer feeder may triangulate in (the ADNI
+#: plasma ensemble adds these). Not part of METADATA_COLUMNS, so a table without
+#: them still validates — the referee's biomarker anchor and the Bridge's
+#: mechanism-dominance router read them only when present.
+#:   ab42_40      — plasma Aβ42/40 ratio (amyloid "A" axis)
+#:   pct_ptau217  — C2N %p-tau217 (one of the best-validated plasma tau markers)
+EXTENDED_BIOMARKER_COLUMNS = ["ab42_40", "pct_ptau217"]
 
 #: Label columns the ONE reused head can be pointed at (contract of the probe).
 #: Pointing the same head at these different targets is the whole product.
@@ -328,6 +339,9 @@ def cohort_summary(df: pd.DataFrame) -> dict:
         "pct_female": round(100 * float((df["sex"] == "F").mean()), 1) if n else None,
         "label_coverage": {"conversion": cov("conversion")},
         "biomarker_coverage": {b: round(cov(b), 3) for b in BIOMARKER_COLUMNS},
+        # Optional triangulated signals, reported only when a feeder provides them.
+        "extended_biomarker_coverage": {
+            b: round(cov(b), 3) for b in EXTENDED_BIOMARKER_COLUMNS if b in df.columns},
     }
 
 

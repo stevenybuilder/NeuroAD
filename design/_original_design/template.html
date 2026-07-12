@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="15183097-0fe0-4201-8731-6437495d078a"></script>
+
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+  @keyframes zpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(1.7)} }
+  @keyframes rshimmer { 0%{background-position:180% 0} 100%{background-position:-80% 0} }
+  @keyframes rdot { 0%,100%{opacity:.3;transform:scale(.8)} 50%{opacity:1;transform:scale(1.15)} }
+  .r-verb { background:linear-gradient(90deg,#8A877D 20%,#26241F 45%,#C96442 50%,#26241F 55%,#8A877D 80%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:rshimmer 2.1s linear infinite; }
+  * { box-sizing:border-box; }
+  body { margin:0; }
+  a { color:#C96442; text-decoration:none; }
+  a:hover { color:#A94E30; }
+</style>
+<script src="ae1fca04-d4b4-4324-94a3-9b373a72807b"></script>
+</helmet>
+<div style="--paper:#F5F4EE;--paper2:#EFEDE4;--card:#FFFFFF;--edge:#E6E3D8;--edge2:#D9D5C7;--ink:#26241F;--ink2:#5B584F;--mute:#8A877D;--clay:#C96442;--clay-soft:#F0DACF;--clay-deep:#A94E30;--green:#12936A;--green-edge:#1BA97A;--green-soft:#DCF0E7;--gold:#C08415;--gold-edge:#D69A1F;--gray:#B0ABA1;--gray-edge:#CBC7BC; position:relative; width:100%; height:100vh; overflow:hidden; display:flex; flex-direction:column; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased;">
+
+  <header style="flex:0 0 auto; height:56px; display:flex; align-items:center; justify-content:space-between; padding:0 24px; background:rgba(255,255,255,.72); backdrop-filter:saturate(180%) blur(20px); -webkit-backdrop-filter:saturate(180%) blur(20px); border-bottom:1px solid rgba(230,227,216,.7); z-index:40;">
+    <div style="display:flex; align-items:baseline; gap:13px;">
+      <div style="font-size:20px; font-weight:600; letter-spacing:-.03em;">Neuro<span style="color:var(--clay);">AD</span></div>
+      <div style="width:1px; height:13px; background:var(--edge2); align-self:center;"></div>
+      <div style="font-size:14px; color:var(--mute); letter-spacing:.01em;">Alzheimer's imaging discovery engine</div>
+    </div>
+  </header>
+
+  <div style="flex:1 1 auto; display:flex; position:relative; overflow:hidden;">
+
+    <aside style="{{ railStyle }}">
+      <div style="padding:16px 16px 10px; border-bottom:1px solid var(--edge); display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--mute);">Claude · ask</div>
+        <button sc-camel-on-click="{{ toggleRail }}" style="font-size:15px; color:var(--mute); background:none; border:none; cursor:pointer; line-height:1;">‹</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="1">
+          <div style="{{ m.wrap }}">
+            <div style="{{ m.bubble }}">{{ m.text }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="padding:12px; border-top:1px solid var(--edge); display:flex; gap:8px;">
+        <input value="{{ chatDraft }}" sc-camel-on-input="{{ setChatDraft }}" sc-camel-on-key-down="{{ onChatKey }}" placeholder="Ask a follow-up…" style="flex:1; font-size:13px; padding:9px 11px; border:1px solid var(--edge2); border-radius:8px; background:var(--paper); color:var(--ink); outline:none; font-family:inherit;">
+        <button sc-camel-on-click="{{ onChatSend }}" style="font-size:13px; padding:0 12px; border:none; border-radius:8px; background:var(--clay); color:#fff; cursor:pointer;">→</button>
+      </div>
+    </aside>
+
+    <button sc-camel-on-click="{{ toggleRail }}" style="{{ handleStyle }}">Ask Claude</button>
+
+    <div ref="{{ setCanvas }}" style="flex:1 1 auto; position:relative; overflow:hidden; background:radial-gradient(120% 90% at 50% 8%, #FAF9F4 0%, #F5F4EE 46%, #EEECE2 100%); cursor:grab;">
+      <svg style="position:absolute; inset:0; width:100%; height:100%; display:block;">
+        <g transform="{{ camTransform }}">{{ sceneEls }}</g>
+      </svg>
+      <div style="position:absolute; inset:0; pointer-events:none; overflow:hidden;">{{ overlayEls }}</div>
+
+      <div style="{{ hintStyle }}">
+        <span style="width:9px; height:9px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 4px var(--clay-soft);"></span>
+        Click any node to open its <b style="font-weight:600; color:var(--ink);">MRI scans, data &amp; notes</b>
+      </div>
+
+      <div style="{{ reasonStyle }}">
+        <span style="display:inline-flex; gap:3px; align-items:center;">
+          <span style="width:5px; height:5px; border-radius:50%; background:var(--clay); animation:rdot 1.1s ease-in-out infinite;"></span>
+          <span style="width:5px; height:5px; border-radius:50%; background:var(--clay); animation:rdot 1.1s ease-in-out .18s infinite;"></span>
+          <span style="width:5px; height:5px; border-radius:50%; background:var(--clay); animation:rdot 1.1s ease-in-out .36s infinite;"></span>
+        </span>
+        <span class="r-verb" style="font-size:13px; font-weight:600; letter-spacing:.005em;">{{ reasonText }}</span>
+      </div>
+
+
+
+      <svg sc-camel-on-click="{{ onMiniClick }}" style="position:absolute; right:16px; bottom:16px; width:196px; height:140px; background:var(--card); border:1px solid var(--edge); border-radius:10px; box-shadow:0 6px 24px rgba(40,36,28,.08); z-index:20; cursor:pointer;">{{ miniEls }}</svg>
+
+      <sc-if value="{{ showVerdict }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; top:74px; left:50%; transform:translateX(-50%); width:520px; max-width:calc(100% - 48px); background:rgba(255,255,255,.86); backdrop-filter:saturate(180%) blur(24px); -webkit-backdrop-filter:saturate(180%) blur(24px); border:1px solid rgba(230,227,216,.9); border-radius:20px; box-shadow:0 24px 70px rgba(40,36,28,.18), 0 4px 12px rgba(40,36,28,.06); z-index:28; overflow:hidden;">
+          <div style="padding:22px 24px 18px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:var(--green); color:#fff; font-size:13px;">✓</span>
+                <span style="font-size:19px; font-weight:600; letter-spacing:-.02em; color:var(--ink);">Investigation complete</span>
+              </div>
+              <button sc-camel-on-click="{{ onDismissVerdict }}" style="font-size:17px; color:var(--mute); background:none; border:none; cursor:pointer; line-height:1;">×</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); padding:0 24px;">
+            <div style="padding:4px 0 20px;"><div style="font-size:44px; font-weight:600; letter-spacing:-.03em; color:var(--clay); line-height:1;">3</div><div style="font-size:13px; color:var(--ink2); margin-top:6px;">biomarkers</div></div>
+            <div style="padding:4px 0 20px;"><div style="font-size:44px; font-weight:600; letter-spacing:-.03em; color:var(--clay); line-height:1;">2</div><div style="font-size:13px; color:var(--ink2); margin-top:6px;">compounds</div></div>
+            <div style="padding:4px 0 20px;"><div style="font-size:44px; font-weight:600; letter-spacing:-.03em; color:var(--clay); line-height:1;">4</div><div style="font-size:13px; color:var(--ink2); margin-top:6px;">experiments</div></div>
+          </div>
+          <div style="padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid var(--edge);">
+            <div style="font-size:12px; color:var(--mute);">2 branches killed as confounded</div>
+            <button sc-camel-on-click="{{ onOpenTop }}" style="font-size:14px; font-weight:500; padding:10px 18px; border:none; border-radius:10px; background:var(--clay); color:#fff; cursor:pointer;">See top candidate →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pinned }}" hint-placeholder-val="{{ false }}">
+        <div data-drawer="1" style="position:absolute; top:0; right:0; width:352px; height:100%; background:var(--card); border-left:1px solid var(--edge); box-shadow:-12px 0 40px rgba(40,36,28,.08); z-index:30; display:flex; flex-direction:column;">
+          <div style="flex:0 0 auto; padding:14px 16px 10px; border-bottom:1px solid var(--edge);">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+              <div style="font-size:15px; font-weight:600; color:var(--ink); line-height:1.25;">{{ drawerTitle }}</div>
+              <button sc-camel-on-click="{{ onCloseDrawer }}" style="flex:0 0 auto; font-size:16px; color:var(--mute); background:none; border:none; cursor:pointer; line-height:1; margin-top:1px;">×</button>
+            </div>
+            <div style="display:flex; gap:4px; margin-top:12px;">
+              <sc-for list="{{ drawerTabs }}" as="t" hint-placeholder-count="3">
+                <button sc-camel-on-click="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div data-drawer="1" style="flex:1; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; padding:16px;">{{ drawerEl }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isEntry }}" hint-placeholder-val="{{ true }}">
+        <div style="position:absolute; inset:0; z-index:50; background:radial-gradient(120% 90% at 50% 0%, #FAF9F4 0%, #F5F4EE 55%, #EEECE2 100%); display:flex; align-items:center; justify-content:center; padding:40px;">
+          <div style="width:100%; max-width:620px; margin-top:-4vh;">
+            <h1 style="font-size:44px; line-height:1.05; letter-spacing:-.035em; font-weight:600; margin:0 0 14px;">State an Alzheimer's Disease hypothesis.</h1>
+            <p style="font-size:18px; line-height:1.45; letter-spacing:-.01em; color:var(--ink2); margin:0 0 32px; max-width:520px;">NeuroAD clears confounds and returns ranked biomarkers and testable experiments.</p>
+            <div style="display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--edge2); border-radius:16px; padding:7px 7px 7px 20px; box-shadow:0 12px 40px rgba(40,36,28,.09), 0 2px 6px rgba(40,36,28,.04);">
+              <input value="{{ entryValue }}" sc-camel-on-input="{{ setEntry }}" sc-camel-on-key-down="{{ onEntryKey }}" placeholder="e.g. p-tau217 predicts hippocampal atrophy" style="flex:1; border:none; outline:none; font-size:16px; letter-spacing:-.01em; color:var(--ink); font-family:inherit; background:transparent; padding:11px 0;">
+              <button sc-camel-on-click="{{ onInvestigate }}" style="flex:0 0 auto; font-size:15px; font-weight:500; padding:12px 22px; border:none; border-radius:11px; background:var(--clay); color:#fff; cursor:pointer; white-space:nowrap;" style-hover="{{ investHover }}">Investigate →</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="">
+const el = React.createElement;
+const C = { clay:'#C96442', claySoft:'#F0DACF', clayDeep:'#A94E30', green:'#12936A', greenEdge:'#1BA97A', greenSoft:'#DCF0E7', gold:'#C08415', goldEdge:'#D69A1F', gray:'#B0ABA1', grayEdge:'#CBC7BC', ink:'#26241F', ink2:'#5B584F', mute:'#8A877D', edge:'#E6E3D8', edge2:'#D9D5C7', paper2:'#EFEDE4', card:'#FFFFFF' };
+const RADIUS = { root:24, green:19, gold:19, gray:15, clay:30 };
+const FILL = { green:C.green, gold:C.gold, gray:C.gray };
+
+function interpolateZoom(p0, p1){
+  const rho=1.42, rho2=rho*rho, rho4=rho2*rho2, eps=1e-9;
+  const ux0=p0[0],uy0=p0[1],w0=p0[2], ux1=p1[0],uy1=p1[1],w1=p1[2];
+  const dx=ux1-ux0, dy=uy1-uy0, d2=dx*dx+dy*dy; let i,S;
+  if(d2<eps){ S=Math.abs(Math.log(w1/w0))/rho; i=function(t){ return [ux0+t*dx, uy0+t*dy, w0*Math.exp(rho * (Math.log(w1/w0)>=0?1:-1) * t*S)]; }; }
+  else{
+    const d1=Math.sqrt(d2);
+    const b0=(w1*w1-w0*w0+rho4*d2)/(2*w0*rho2*d1);
+    const b1=(w1*w1-w0*w0-rho4*d2)/(2*w1*rho2*d1);
+    const r0=Math.log(Math.sqrt(b0*b0+1)-b0);
+    const r1=Math.log(Math.sqrt(b1*b1+1)-b1);
+    S=(r1-r0)/rho;
+    i=function(t){ const s=t*S, ch0=Math.cosh(r0), u=w0/(rho2*d1)*(ch0*Math.tanh(rho*s+r0)-Math.sinh(r0)); return [ux0+u*dx, uy0+u*dy, w0*ch0/Math.cosh(rho*s+r0)]; };
+  }
+  i.S = S;
+  return i;
+}
+
+class GlassBrain extends React.Component {
+  constructor(p){
+    super(p);
+    this.yaw=0.6; this.pitch=0.25; this.zoom=1; this.dragging=false; this.moved=false; this.markerProj=[];
+    this.points=[];
+    const rnd=()=>Math.random();
+    // cerebrum — two hemispheres, gyri bumps, longitudinal fissure
+    for(let i=0;i<3400;i++){
+      const u=rnd()*2-1, t=rnd()*6.2831853, s=Math.sqrt(1-u*u);
+      let x=s*Math.cos(t), y=u, z=s*Math.sin(t);
+      x*=0.82; y*=0.74; z*=1.07;
+      if(y<0) y*=0.9;                                   // flatter underside
+      const bump=1+0.05*Math.sin(x*9+z*3)*Math.sin(z*7)+0.038*Math.sin(y*10+x*5); // gyri
+      x*=bump; y*=bump; z*=bump;
+      z-=0.05;                                          // frontal fuller than occipital
+      if(Math.abs(x)<0.05 && y>0.12){ if(rnd()<0.72) continue; y-=0.05; } // midline fissure
+      this.points.push([x,y,z,0]);
+    }
+    // cerebellum — posterior-inferior, foliated
+    for(let i=0;i<560;i++){
+      const u=rnd()*2-1, t=rnd()*6.2831853, s=Math.sqrt(1-u*u);
+      let x=s*Math.cos(t)*0.54, y=u*0.34-0.48, z=s*Math.sin(t)*0.42-0.92;
+      const b=1+0.06*Math.sin(z*22);
+      this.points.push([x*b,y,z*b,1]);
+    }
+    // brainstem
+    for(let i=0;i<130;i++){
+      this.points.push([(rnd()-0.5)*0.12, -0.5-rnd()*0.5, -0.55+(rnd()-0.5)*0.12, 2]);
+    }
+  }
+  rrect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  regs(){ return (this.props.regions||[]).map(rg=>{
+    let p;
+    if(rg.px!==undefined){ p=[rg.px,rg.py,rg.pz]; }
+    else { const nx=(rg.x-110)/95, ny=(rg.y-96)/95; const zz=Math.sqrt(Math.max(0.05,0.92-nx*nx-ny*ny)); p=[nx,ny,(rg.id.length%2?zz:-zz)*0.72]; }
+    return {rg,p};
+  }); }
+  rot(p){ const cp=Math.cos(this.pitch),sp=Math.sin(this.pitch),cyw=Math.cos(this.yaw),syw=Math.sin(this.yaw);
+    let x=p[0],y=p[1],z=p[2]; let x1=x*cyw+z*syw, z1=-x*syw+z*cyw; let y1=y*cp-z1*sp, z2=y*sp+z1*cp; return [x1,y1,z2]; }
+  draw(){
+    const cv=this.canvas; if(!cv) return;
+    const dpr=window.devicePixelRatio||1; const w=cv.clientWidth||300, h=this.props.height||230;
+    if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
+    const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#141311'; ctx.fillRect(0,0,w,h);
+    const cx=w/2, cy=h/2, R=Math.min(w,h)*0.4*this.zoom;
+    const proj=this.points.map(p=>{ const r=this.rot(p); return [cx+r[0]*R, cy+r[1]*R, r[2]]; });
+    const COL=['#caa993','#c39a86','#9fa9a0'];
+    const order=[...proj.keys()].sort((a,b)=>proj[a][2]-proj[b][2]);
+    for(const i of order){ const q=proj[i]; const d=(q[2]+1)/2; ctx.globalAlpha=0.10+0.36*d; ctx.fillStyle=COL[q[3]]||COL[0]; ctx.fillRect(q[0],q[1],1.6,1.6); }
+    ctx.globalAlpha=1;
+    this.markerProj=this.regs().map(m=>{ const r=this.rot(m.p); return {rg:m.rg, x:cx+r[0]*R, y:cy+r[1]*R, z:r[2]}; });
+    ctx.font='600 11px -apple-system,system-ui,sans-serif'; ctx.textBaseline='middle';
+    this.markerProj.slice().sort((a,b)=>a.z-b.z).forEach(m=>{
+      const on=this.props.selRoi===m.rg.id; const rad=on?8:6; const dep=0.55+0.45*((m.z+1)/2);
+      const left=m.x>cx; const lx=m.x+(left?-14:14), ly=m.y-14;
+      ctx.strokeStyle=on?'#C96442':'rgba(216,137,95,'+(0.55*dep)+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(lx,ly); ctx.stroke();
+      ctx.beginPath(); ctx.arc(m.x,m.y,rad+4,0,6.2831853); ctx.fillStyle=on?'rgba(201,100,66,.38)':'rgba(216,137,95,'+(0.12*dep+0.06)+')'; ctx.fill();
+      ctx.beginPath(); ctx.arc(m.x,m.y,rad,0,6.2831853); ctx.fillStyle=on?'#C96442':'rgba(216,137,95,'+dep+')'; ctx.fill();
+      if(on){ ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke(); }
+      const txt=m.rg.short||m.rg.l, tw=ctx.measureText(txt).width, pad=5, hh=16, boxW=tw+pad*2;
+      const px=left?lx-boxW:lx, py=ly-hh/2;
+      ctx.fillStyle=on?'#C96442':'rgba(20,19,17,0.74)'; this.rrect(ctx,px,py,boxW,hh,4); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.fillText(txt,px+pad,py+hh/2+0.5);
+    });
+  }
+  componentDidMount(){
+    this.draw();
+    this.onDown=(e)=>{ this.dragging=true; this.moved=false; this.lx=e.clientX; this.ly=e.clientY; e.preventDefault(); };
+    this.onMove=(e)=>{ if(!this.dragging) return; const dx=e.clientX-this.lx, dy=e.clientY-this.ly; if(Math.abs(dx)+Math.abs(dy)>3) this.moved=true; this.lx=e.clientX; this.ly=e.clientY; this.yaw+=dx*0.01; this.pitch=Math.max(-1.35,Math.min(1.35,this.pitch+dy*0.01)); this.draw(); };
+    this.onUp=(e)=>{ if(!this.dragging) return; this.dragging=false; if(!this.moved){ const r=this.canvas.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top; let best=null,bd=16; this.markerProj.forEach(m=>{ const d=Math.hypot(m.x-mx,m.y-my); if(d<bd){bd=d;best=m;} }); if(best&&this.props.onSelect) this.props.onSelect(best.rg.id); } };
+    this.canvas.addEventListener('mousedown',this.onDown);
+    window.addEventListener('mousemove',this.onMove);
+    window.addEventListener('mouseup',this.onUp);
+    this._ro=new ResizeObserver(()=>this.draw()); this._ro.observe(this.canvas);
+  }
+  componentDidUpdate(){ this.draw(); }
+  componentWillUnmount(){ this.canvas&&this.canvas.removeEventListener('mousedown',this.onDown); window.removeEventListener('mousemove',this.onMove); window.removeEventListener('mouseup',this.onUp); this._ro&&this._ro.disconnect(); }
+  render(){ return React.createElement('canvas',{ ref:(c)=>this.canvas=c, style:{width:'100%',height:(this.props.height||230)+'px',display:'block',cursor:'grab',touchAction:'none'} }); }
+}
+
+class Component extends DCLogic {
+  W = 1200; H = 640;
+  reduced = false;
+
+  nodes = [
+    { id:'root', x:270, y:700, role:'root', label:'p-tau217 → hippocampal atrophy', sub:'Root hypothesis', story:'cohort' },
+    { id:'syn',  x:720, y:190, role:'green', label:'Synaptic-loss pathway', sub:'survives gauntlet', story:'confound' },
+    { id:'synk', x:1120,y:320, role:'gray', label:'Tau-PET redundant', sub:'pruned' },
+    { id:'syn2', x:1200,y:190, role:'green', label:'Confirmed pathway', sub:'AUC 0.83' },
+    { id:'cand1',x:1740,y:190, role:'clay', label:'Ranked protein targets', sub:'3 proteins', story:'proteins' },
+    { id:'neuro',x:720, y:440, role:'gold', label:'Neuroinflammation offshoot', sub:'iterated · GFAP', story:'iterate' },
+    { id:'neurk',x:1120,y:565, role:'gray', label:'Microglial subtype', sub:'underpowered n' },
+    { id:'neur2',x:1200,y:440, role:'green', label:'Refined · GFAP anchor', sub:'AUC 0.79' },
+    { id:'cand2',x:1740,y:440, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
+    { id:'scan', x:720, y:700, role:'gray', label:'Scanner-site artifact', sub:'killed', story:'kill' },
+    { id:'scand',x:1060,y:760, role:'gray', label:'site batch', sub:'' },
+    { id:'vasc', x:720, y:950, role:'green', label:'Vascular contribution', sub:'survives', story:'confound2' },
+    { id:'vasc2',x:1200,y:950, role:'green', label:'WMH-linked pathway', sub:'AUC 0.76' },
+    { id:'cand3',x:1740,y:950, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
+    { id:'age',  x:720, y:1210,role:'gray', label:'Age-only confound', sub:'killed', story:'kill2' },
+    { id:'aged', x:1060,y:1270,role:'gray', label:'cohort skew', sub:'' }
+  ];
+  edges = [
+    ['root','syn','green'],['root','neuro','gold','iterate'],['root','scan','gray'],['root','vasc','green'],['root','age','gray'],
+    ['syn','syn2','green'],['syn','synk','gray'],['syn2','cand1','clay','translate'],
+    ['neuro','neur2','green'],['neuro','neurk','gray'],['neur2','cand2','clay','translate'],
+    ['vasc','vasc2','green'],['vasc2','cand3','clay','translate'],
+    ['scan','scand','gray'],['age','aged','gray']
+  ];
+
+  state = {
+    stage:'entry', dataMode:'synthetic', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
+    pinned:null, drawerTab:'reason', brainView:'brain3d', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[],
+    entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
+    chatDraft:'',
+    chatMsgs:[ { role:'assistant', text:'I grew the tree from your hypothesis. Green branches survived the confound gauntlet; gray ones were killed; clay nodes are candidate targets to test. Ask a follow-up to spawn a new branch.' } ],
+    cam:{ cx:900, cy:700, scale:0.35 }
+  };
+
+  get nmap(){ const m={}; this.allNodes().forEach(n=>m[n.id]=n); return m; }
+  allNodes(){ return this.nodes.concat(this.state.extra); }
+  allEdges(){ return this.edges.concat(this.state.extraEdges); }
+  visNodes(){ const r=this.state.revealed; if(!r) return this.allNodes(); return this.allNodes().filter(n=>r.indexOf(n.id)>=0); }
+  visEdges(){ const r=this.state.revealed; if(!r) return this.allEdges(); return this.allEdges().filter(e=>r.indexOf(e[0])>=0 && r.indexOf(e[1])>=0); }
+
+  bbox(list){
+    const ns = list || this.visNodes();
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    ns.forEach(n=>{ const r=RADIUS[n.role]||18; x0=Math.min(x0,n.x-r); y0=Math.min(y0,n.y-r); x1=Math.max(x1,n.x+r); y1=Math.max(y1,n.y+r); });
+    return {x0,y0,x1,y1, cx:(x0+x1)/2, cy:(y0+y1)/2, w:x1-x0, h:y1-y0};
+  }
+  overviewCam(){
+    const b=this.bbox(); const pad=90;
+    const s=Math.min(this.W/(b.w+pad*2), this.H/(b.h+pad*2));
+    return { cx:b.cx, cy:b.cy, scale:s*0.96 };
+  }
+  frameNodes(ids, pad){
+    const b=this.bbox(ids.map(id=>this.nmap[id]).filter(Boolean)); pad=pad||120;
+    const s=Math.min(this.W/(b.w+pad*2), this.H/(b.h+pad*2));
+    return { cx:b.cx, cy:b.cy, scale:Math.min(s,1.6) };
+  }
+  frameDetail(n, scale, offX){ return { cx:n.x+(offX||0)/scale, cy:n.y, scale }; }
+
+  minScale(){ return this.overviewCam().scale*0.55; }
+
+  stepCam(i){
+    const m=this.nmap;
+    switch(i){
+      case 0: return this.overviewCam();
+      case 1: return this.frameNodes(['root','syn','neuro','scan','vasc','age'], 70);
+      case 2: return this.frameDetail(m.scan, 1.15, 150);
+      case 3: return this.frameDetail(m.syn, 1.1, 150);
+      case 4: return this.frameDetail(m.cand1, 1.05, 160);
+      case 5: return this.frameNodes(['neuro','neur2','neurk'], 60);
+      case 6: return this.frameDetail(m.cand2, 1.05, 160);
+      case 7: return this.frameDetail(m.cand3, 1.05, 160);
+      default: return this.overviewCam();
+    }
+  }
+  stepTitles = ['The whole investigation','Your hypothesis, fanned out','A branch dies — scanner confound','A branch survives the gauntlet','Ranked protein targets','An offshoot iterates on GFAP','Repurposing compounds','Testable wet-lab experiments'];
+  stepVerbs = ['Mapping the investigation…','Fanning out candidate branches…','Testing for a scanner confound…','Clearing confounds on the survivor…','Ranking protein targets…','Re-anchoring the offshoot on GFAP…','Matching repurposing compounds…','Designing testable experiments…'];
+  revealVerbs = ['Reading the hypothesis…','Pulling the imaging cohort…','Running the confound gauntlet…','Pruning dead branches…','Growing the decision tree…'];
+
+  componentDidMount(){
+    try { this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){}
+    this.setState({ notes:this.loadNotes() });
+    this._onResize = ()=>{ this.measure(); };
+    window.addEventListener('resize', this._onResize);
+  }
+  loadNotes(){ try{ return JSON.parse(localStorage.getItem('neuroad-notes')||'{}'); }catch(e){ return {}; } }
+  saveNotes(n){ try{ localStorage.setItem('neuroad-notes', JSON.stringify(n)); }catch(e){} }
+  componentWillUnmount(){
+    window.removeEventListener('resize', this._onResize);
+    cancelAnimationFrame(this._raf); clearTimeout(this._timer); clearTimeout(this._revealTimer);
+  }
+
+  measure = ()=>{
+    if(!this.canvasEl) return;
+    const r=this.canvasEl.getBoundingClientRect();
+    if(r.width>0){ this.W=r.width; this.H=r.height; if(this.state.stage==='entry'){ this.setState({cam:this.overviewCam()}); } else { this.forceUpdate(); } }
+  };
+
+  setCanvas = (elm)=>{
+    if(elm && elm!==this.canvasEl){
+      this.canvasEl=elm; this.measure();
+      elm.addEventListener('wheel', this.onWheel, {passive:false});
+      elm.addEventListener('mousedown', this.onDown);
+    }
+  };
+
+  project(wx,wy){ const c=this.state.cam; return [ (wx-c.cx)*c.scale + this.W/2, (wy-c.cy)*c.scale + this.H/2 ]; }
+  unproject(sx,sy){ const c=this.state.cam; return [ (sx-this.W/2)/c.scale + c.cx, (sy-this.H/2)/c.scale + c.cy ]; }
+
+  cancelAnim(){ cancelAnimationFrame(this._raf); this._raf=null; }
+  camToVW(c){ return [c.cx, c.cy, this.W/c.scale]; }
+
+  animateTo(target, onDone){
+    this.cancelAnim();
+    const cur=this.state.cam;
+    if(this.reduced){ this.setState({cam:target}); if(onDone) onDone(); return; }
+    const p0=this.camToVW(cur), p1=this.camToVW(target);
+    const interp=interpolateZoom(p0,p1);
+    const dur = Math.max(420, Math.min(2600, Math.abs(interp.S)*760 + 260));
+    const t0=performance.now();
+    const tick=(now)=>{
+      let t=(now-t0)/dur; if(t>=1) t=1;
+      const e = t<0.5 ? 2*t*t : 1-Math.pow(-2*t+2,2)/2; // smootherstep-ish, path already const velocity
+      const v=interp(e);
+      this.setState({ cam:{ cx:v[0], cy:v[1], scale:this.W/v[2] } });
+      if(t<1){ this._raf=requestAnimationFrame(tick); } else { this._raf=null; if(onDone) onDone(); }
+    };
+    this._raf=requestAnimationFrame(tick);
+  }
+
+  onWheel = (e)=>{
+    e.preventDefault(); this.cancelAnim(); clearTimeout(this._timer); if(this.state.playing) this.setState({playing:false});
+    const rect=this.canvasEl.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const [wx,wy]=this.unproject(mx,my);
+    const c=this.state.cam;
+    const factor=Math.exp(-e.deltaY*0.0016);
+    let s=c.scale*factor; s=Math.max(this.minScale(), Math.min(2.6, s));
+    const cx=wx-(mx-this.W/2)/s, cy=wy-(my-this.H/2)/s;
+    this.setState({cam:{cx,cy,scale:s}});
+  };
+
+  onDown = (e)=>{
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest('[data-story],[data-mini],[data-drawer],button,a,input,textarea')) return;
+    this.cancelAnim(); clearTimeout(this._timer); if(this.state.playing) this.setState({playing:false});
+    const start={x:e.clientX,y:e.clientY,cam:{...this.state.cam}};
+    let moved=false;
+    if(this.canvasEl) this.canvasEl.style.cursor='grabbing';
+    const move=(ev)=>{ const dx=ev.clientX-start.x, dy=ev.clientY-start.y; if(Math.abs(dx)+Math.abs(dy)>3) moved=true; this.setState({cam:{cx:start.cam.cx-dx/start.cam.scale, cy:start.cam.cy-dy/start.cam.scale, scale:start.cam.scale}}); };
+    const up=()=>{ window.removeEventListener('mousemove',move); window.removeEventListener('mouseup',up); if(this.canvasEl) this.canvasEl.style.cursor='grab'; };
+    window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  };
+
+  eligible(n){ return !!(n.story || ['root','green','gold'].includes(n.role)); }
+  onNodeClick = (id)=>{
+    const n=this.nmap[id]; if(!n) return;
+    clearTimeout(this._timer); this._playing=false; this._justRevealed=null;
+    const ok=this.eligible(n);
+    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?(n.story?'reason':'data'):'reason', selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false });
+    this.animateTo(this.frameDetail(n, n.role==='clay'?1.05:1.2, ok?150:0));
+  };
+  setDrawerTab=(t)=>this.setState({drawerTab:t});
+  setBrainView=(v)=>this.setState({brainView:v});
+  selectRoi=(id)=>this.setState({selRoi:this.state.selRoi===id?null:id});
+  setNoteDraft=(e)=>this.setState({noteDraft:e.target.value});
+  addNote=()=>{
+    const t=(this.state.noteDraft||'').trim(); const id=this.state.pinned; if(!t||!id) return;
+    let region=null; if(this.state.selRoi){ const r=this.brainRegions(this.nmap[id]).find(x=>x.id===this.state.selRoi); if(r) region=r.l; }
+    const notes={...this.state.notes}; notes[id]=(notes[id]||[]).concat([{text:t,ts:Date.now(),region}]);
+    this.saveNotes(notes); this.setState({notes,noteDraft:''});
+  };
+  delNote=(idx)=>{
+    const id=this.state.pinned; if(!id) return; const notes={...this.state.notes};
+    notes[id]=(notes[id]||[]).filter((_,i)=>i!==idx); this.saveNotes(notes); this.setState({notes});
+  };
+
+  goStep=(i)=>{
+    i=Math.max(0, Math.min(this.stepTitles.length-1, i));
+    this._playing = this.state.playing;
+    this.setState({stepIndex:i, pinned:null, reasoning:this._playing?this.stepVerbs[i]:null});
+    this.animateTo(this.stepCam(i));
+    if(this._playing) this.scheduleAdvance(i);
+  };
+  scheduleAdvance(i){
+    clearTimeout(this._timer);
+    if(i<this.stepTitles.length-1){ this._timer=setTimeout(()=>{ if(this._playing) this.goStep(i+1); }, 2200); }
+    else { this._timer=setTimeout(()=>{ this._playing=false; this.setState({playing:false, reasoning:null, showVerdict:true}); this.animateTo(this.overviewCam()); }, 1600); }
+  }
+  onPrev=()=>{ clearTimeout(this._timer); this._playing=false; this.setState({playing:false, reasoning:null, showVerdict:false},()=>this.goStep(this.state.stepIndex-1)); };
+  onNext=()=>{ clearTimeout(this._timer); this._playing=false; this.setState({playing:false, reasoning:null, showVerdict:false},()=>this.goStep(this.state.stepIndex+1)); };
+  onTogglePlay=()=>{
+    const p=!this.state.playing;
+    clearTimeout(this._timer);
+    if(p){
+      this._playing=true;
+      const i=this.state.stepIndex>=this.stepTitles.length-1?0:this.state.stepIndex;
+      this.setState({playing:true, showVerdict:false},()=>this.goStep(i));
+    } else {
+      this._playing=false;
+      this.cancelAnim();
+      this.setState({playing:false, reasoning:null});
+    }
+  };
+  onReplay=()=>{ clearTimeout(this._timer); this._playing=true; this.setState({playing:true, stepIndex:0, pinned:null, showVerdict:false},()=>{ this.goStep(0); }); };
+  onHome=()=>{ clearTimeout(this._timer); this._playing=false; this._justRevealed=null; this.setState({playing:false, pinned:null, reasoning:null, showVerdict:false, revealed:null}); this.animateTo(this.overviewCam()); };
+  onDismissVerdict=()=>this.setState({showVerdict:false});
+  onOpenTop=()=>{ this.setState({showVerdict:false, revealed:null}); this.onNodeClick('cand1'); };
+  onCloseDrawer=()=>this.setState({pinned:null});
+
+  setSynthetic=()=>this.setState({dataMode:'synthetic'});
+  setReal=()=>this.setState({dataMode:'real'});
+  toggleRail=()=>this.setState({railOpen:!this.state.railOpen});
+  setChatDraft=(e)=>this.setState({chatDraft:e.target.value});
+  setEntry=(e)=>this.setState({entryValue:e.target.value});
+  onChatKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onChatSend(); } };
+
+  onChatSend=()=>{
+    const q=(this.state.chatDraft||'').trim(); if(!q) return;
+    const n=this.state.extra.length;
+    const id='f'+n;
+    const node={ id, x:1180, y:1130+n*150, role:'gold', label:q.length>34?q.slice(0,32)+'…':q, sub:'follow-up · re-entering gauntlet' };
+    const msgs=this.state.chatMsgs.concat([{role:'user',text:q},{role:'assistant',text:'Spawned a gold offshoot for that. It inherits the cohort provenance and re-enters the confound gauntlet before it can produce candidates.'}]);
+    this.setState({ extra:this.state.extra.concat([node]), extraEdges:this.state.extraEdges.concat([['root',id,'gold','follow-up']]), chatMsgs:msgs, chatDraft:'', railOpen:true, playing:false });
+    clearTimeout(this._timer);
+    setTimeout(()=>this.animateTo(this.frameDetail(node,1.0,0)), 40);
+  };
+
+  chips = [
+    { text:'p-tau217 predicts hippocampal atrophy', verdict:'3 biomarkers, 2 compounds' },
+    { text:'GFAP astrocyte reactivity drives cortical thinning', verdict:'2 biomarkers, 4 experiments' },
+    { text:'Amyloid PET burden precedes default-mode disruption', verdict:'1 confound killed, 2 targets' },
+    { text:'Scanner field strength inflates atrophy estimates', verdict:'confound isolated' }
+  ];
+  onEntryKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onInvestigate(); } };
+  growSeq = [
+    { verb:'Reading the hypothesis…', add:['root'] },
+    { verb:'Pulling the imaging cohort…', add:[] },
+    { verb:'Fanning out candidate branches…', add:['syn','neuro','scan','vasc','age'] },
+    { verb:'Running the confound gauntlet…', add:['synk','neurk','syn2','neur2','vasc2'] },
+    { verb:'Pruning confounded branches…', add:['scand','aged'] },
+    { verb:'Ranking biomarkers & experiments…', add:['cand1','cand2','cand3'] }
+  ];
+  growStep(idx){
+    if(idx>=this.growSeq.length){
+      this._justRevealed=null;
+      this._timer=setTimeout(()=>{ this.setState({reasoning:null, showVerdict:true}); this.animateTo(this.overviewCam()); }, 900);
+      return;
+    }
+    const st=this.growSeq[idx];
+    const cur=(this.state.revealed||[]).slice();
+    st.add.forEach(id=>{ if(cur.indexOf(id)<0) cur.push(id); });
+    this._justRevealed = st.add.length?st.add[st.add.length-1]:this._justRevealed;
+    this.setState({revealed:cur, reasoning:st.verb},()=>{ this.animateTo(this.overviewCam()); });
+    this._timer=setTimeout(()=>this.growStep(idx+1), 1350);
+  }
+  onInvestigate=(seed)=>{
+    if(typeof seed==='string' && seed) this.setState({entryValue:seed});
+    clearTimeout(this._timer); clearTimeout(this._revealTimer);
+    this._playing=false;
+    this.setState({stage:'canvas', playing:false, pinned:null, showVerdict:false, stepIndex:0, revealed:['root'], reasoning:this.growSeq[0].verb});
+    setTimeout(()=>{
+      this.measure();
+      this.setState({cam:this.frameDetail(this.nmap.root,1.15,0)});
+      requestAnimationFrame(()=>this.animateTo(this.overviewCam()));
+      this._timer=setTimeout(()=>this.growStep(1), 1200);
+    }, 40);
+  };
+
+  // ---- story block builders ----
+  chip(text, kind){
+    const map={ real:{bg:C.greenSoft,color:'#0d7a58',bd:'#bfe3d5'}, synth:{bg:'#F6ECD2',color:'#8a6410',bd:'#e6d5a8'}, live:{bg:C.greenSoft,color:'#0d7a58',bd:'#bfe3d5'}, plain:{bg:C.paper2,color:C.ink2,bd:C.edge}, cite:{bg:C.card,color:C.clayDeep,bd:C.edge2} };
+    const s=map[kind]||map.plain;
+    return el('span',{style:{fontSize:'11px',padding:'2px 8px',borderRadius:'6px',background:s.bg,color:s.color,border:'1px solid '+s.bd,whiteSpace:'nowrap',display:'inline-flex',alignItems:'center',gap:'5px'}}, kind==='live'?[el('span',{key:'d',style:{width:'6px',height:'6px',borderRadius:'50%',background:C.greenEdge}}),text]:text);
+  }
+  bar(pct, color, w){
+    return el('div',{style:{height:'6px',borderRadius:'4px',background:C.paper2,width:w||'100%',overflow:'hidden'}}, el('div',{style:{height:'100%',width:Math.round(pct*100)+'%',background:color,borderRadius:'4px'}}));
+  }
+  storyShell(node, title, kids){
+    return el('div',{style:{width:'304px',background:C.card,border:'1px solid '+C.edge,borderRadius:'12px',boxShadow:'0 12px 34px rgba(40,36,28,.10)',overflow:'hidden',fontFamily:'inherit'}},[
+      el('div',{key:'h',style:{padding:'12px 14px 10px',borderBottom:'1px solid '+C.edge}},[
+        el('div',{key:'t',style:{fontSize:'15px',fontWeight:600,color:C.ink,marginBottom:'8px'}},title),
+        el('div',{key:'p',style:{display:'flex',flexWrap:'wrap',gap:'5px'}},[
+          this.chip('multi-site cohort','plain'),
+          this.chip('anchor · p-tau217','plain')
+        ])
+      ]),
+      el('div',{key:'b',style:{padding:'12px 14px'}}, kids)
+    ]);
+  }
+  checkRow(mark, label, q, pct){
+    const col = mark==='✓'?C.green : mark==='✗'?C.clay : C.gold;
+    return el('div',{key:label,style:{display:'flex',gap:'9px',marginBottom:'11px'}},[
+      el('div',{key:'m',style:{flex:'0 0 16px',fontSize:'13px',color:col,fontWeight:700,lineHeight:'16px'}},mark),
+      el('div',{key:'x',style:{flex:1}},[
+        el('div',{key:'l',style:{fontSize:'12px',fontWeight:600,color:C.ink,display:'flex',justifyContent:'space-between'}},[el('span',{key:'a'},label),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.mute,fontSize:'11px'}},'Δ '+pct.toFixed(2))]),
+        el('div',{key:'q',style:{fontSize:'12px',color:C.ink2,margin:'3px 0 5px',lineHeight:1.35}},q),
+        this.bar(pct, col)
+      ])
+    ]);
+  }
+  rankRow(rank, name, desc, score){
+    return el('div',{key:name,style:{display:'flex',gap:'10px',alignItems:'center',marginBottom:'11px'}},[
+      el('div',{key:'r',style:{flex:'0 0 22px',height:'22px',borderRadius:'6px',background:C.claySoft,color:C.clayDeep,fontSize:'12px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center'}},rank),
+      el('div',{key:'m',style:{flex:1}},[
+        el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'13px'}},[el('span',{key:'a'},[el('b',{key:'n'},name),' ',el('span',{key:'d',style:{color:C.mute,fontSize:'12px'}},desc)]),el('span',{key:'s',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},score.toFixed(2))]),
+        el('div',{key:'b',style:{marginTop:'5px'}}, this.bar(score, C.clay))
+      ])
+    ]);
+  }
+  expRow(title, tag, tagKind){
+    return el('div',{key:title,style:{display:'flex',gap:'9px',alignItems:'flex-start',marginBottom:'10px'}},[
+      el('div',{key:'d',style:{flex:'0 0 6px',height:'6px',marginTop:'6px',borderRadius:'50%',background:C.green}}),
+      el('div',{key:'x',style:{flex:1,fontSize:'12px',color:C.ink,lineHeight:1.4}},[title,' ',el('span',{key:'t',style:{marginLeft:'2px'}}, this.chip(tag, tagKind||'plain'))])
+    ]);
+  }
+  disclaimer(text){ return el('div',{style:{marginTop:'12px',fontSize:'11px',lineHeight:1.4,color:C.mute,borderTop:'1px solid '+C.edge,paddingTop:'9px'}}, text); }
+
+  storyEl(node){
+    if(!node || !node.story) return null;
+    const k=node.story;
+    if(k==='cohort') return this.storyShell(node,'Cohort & datasets',[
+      el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'Root of the investigation. Everything below inherits this provenance.'),
+      el('div',{key:'grid',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}},[
+        this.kv('participants','1,864'), this.kv('sites','61'),
+        this.kv('cohorts','multi-site'), this.kv('modality','sMRI + plasma'),
+      ]),
+      this.disclaimer('Provenance bound to the source cohort — every downstream node inherits it.')
+    ]);
+    if(k==='confound') return this.storyShell(node,'Confound gauntlet — 5 tests',[
+      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Does the signal survive when we strip each nuisance explanation? Lower Δ = less confounded.'),
+      this.checkRow('✓','Scanner leakage','Disease signal, or just which machine took the scan?',0.16),
+      this.checkRow('✓','Age & sex','Is it aging, not disease?',0.22),
+      this.checkRow('✓','Head motion','Could motion be faking the signal?',0.14),
+      this.checkRow('—','Site batch','Are site effects fully removed?',0.53),
+      this.checkRow('✓','Reverse causation','Could atrophy drive the biomarker, not the reverse?',0.27),
+      this.disclaimer('Passed 4/5 cleanly; site batch partially residual — flagged, not fatal.')
+    ]);
+    if(k==='confound2') return this.storyShell(node,'Confound gauntlet — vascular',[
+      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'White-matter hyperintensity route, re-checked against nuisance signals.'),
+      this.checkRow('✓','Scanner leakage','Disease signal, or acquisition artifact?',0.19),
+      this.checkRow('✓','Age & sex','Vascular burden vs plain aging?',0.31),
+      this.checkRow('✓','Reverse causation','Does atrophy precede WMH?',0.24),
+      this.disclaimer('Survives with a modest margin — routed to experiment design rather than a protein target.')
+    ]);
+    if(k==='kill'||k==='kill2'){
+      const isScan=k==='kill';
+      return this.storyShell(node, isScan?'Kill reason — scanner confound':'Kill reason — age confound',[
+        el('div',{key:'g',style:{fontSize:'13px',color:C.ink,lineHeight:1.5,marginBottom:'12px'}}, isScan?'A classifier that only sees the scanner site predicts the outcome better than the hypothesis does. The signal is the machine, not the disease.':'Chronological age alone explains the atrophy at least as well as the biomarker. No disease-specific signal remains.'),
+        el('div',{key:'a',style:{marginBottom:'9px'}},[ this.auc(isScan?'Hypothesis AUC':'Hypothesis AUC', isScan?0.71:0.68, C.green), this.auc(isScan?'Scanner-site classifier':'Age-only baseline', isScan?0.86:0.79, C.gray) ]),
+        el('div',{key:'v',style:{fontSize:'12px',fontWeight:600,color:C.clayDeep,background:C.claySoft,padding:'8px 10px',borderRadius:'8px'}}, 'Confound ≥ signal → branch killed. Pruned from candidate generation.'),
+        this.disclaimer('Killed branches stay visible (gray, dashed) so the reasoning is auditable — not hidden.')
+      ]);
+    }
+    if(k==='iterate') return this.storyShell(node,'Iterated offshoot',[
+      el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-ran the gauntlet.'),
+      el('div',{key:'a'},[ this.auc('Before · p-tau217 only',0.61,C.gold), this.auc('After · +GFAP anchor',0.79,C.green) ]),
+      this.disclaimer('A follow-up question spawns exactly this kind of gold offshoot — try the Claude · ask rail.')
+    ]);
+    if(k==='proteins') return this.storyShell(node,'Candidate protein targets',[
+      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Ranked by PI4AD priority score — hypotheses to test, not validated targets.'),
+      this.rankRow('1','SYT1','synaptotagmin-1',0.91),
+      this.rankRow('2','SNAP25','SNARE complex',0.84),
+      this.rankRow('3','VAMP2','vesicle membrane',0.77),
+      el('div',{key:'af',style:{marginTop:'12px',padding:'10px',background:C.paper2,borderRadius:'8px'}},[
+        el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · SYT1'),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},'88.4')]),
+        this.bar(0.884,C.green)
+      ]),
+      this.disclaimer('Candidate targets to test — not validated.')
+    ]);
+    if(k==='compounds') return this.storyShell(node,'Repurposing compounds',[
+      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Existing drugs that engage the surviving neuroinflammation pathway.'),
+      el('div',{key:'c1',style:{marginBottom:'11px'}},[
+        el('div',{key:'l',style:{fontSize:'13px'}},[el('b',{key:'a'},'Fasudil'),' ',el('span',{key:'b',style:{color:C.mute,fontSize:'12px'}},'ROCK inhibitor')]),
+        el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center'}},[ el('a',{key:'n',href:'https://clinicaltrials.gov/',target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},'NCT02598438'), this.chip('COMPLETED','plain') ])
+      ]),
+      el('div',{key:'c2'},[
+        el('div',{key:'l',style:{fontSize:'13px'}},[el('b',{key:'a'},'Riluzole'),' ',el('span',{key:'b',style:{color:C.mute,fontSize:'12px'}},'glutamate modulator')]),
+        el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center'}},[ el('a',{key:'n',href:'https://clinicaltrials.gov/',target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},'NCT01703117'), this.chip('RECRUITING','plain') ])
+      ]),
+      this.disclaimer('Repurposing hypotheses for evaluation — not treatment recommendations.')
+    ]);
+    if(k==='experiments') return this.storyShell(node,'Testable wet-lab experiments',[
+      el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Concrete next steps that would falsify or support the survivors.'),
+      this.expRow('iPSC-neuron SYT1 knockdown → synaptic-density readout (ICC).','SURROGATE','plain'),
+      this.expRow('CSF SYT1 ELISA vs hippocampal volume, prospective n=120.','SNAPSHOT','plain'),
+      this.expRow('Fasudil in 5xFAD mice → LTP rescue at 8 weeks.','SURROGATE','plain'),
+      this.expRow('Retrospective Riluzole EHR cohort → atrophy-slope contrast.','EHR','plain'),
+      this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.')
+    ]);
+    return null;
+  }
+  // ---- brain data + fMRI slice + clustering + notes ----
+  rng(seed){ let s=0; for(let i=0;i<seed.length;i++) s=(s*31+seed.charCodeAt(i))>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  brainRegions(node){
+    if(node.id==='vasc'||node.id==='vasc2'||node.story==='confound2') return [
+      {id:'pvwm',l:'Periventricular WM',short:'Periventric. WM',x:110,y:74,r:11,px:0.05,py:0.14,pz:0.0,stat:'WMH load 14.2 cc',d:'−0.34'},
+      {id:'dwm',l:'Deep WM (L)',short:'Deep WM · L',x:80,y:112,r:9,px:-0.32,py:0.05,pz:0.05,stat:'FA 0.41',d:'−0.28'},
+      {id:'dwmr',l:'Deep WM (R)',short:'Deep WM · R',x:140,y:112,r:9,px:0.34,py:0.05,pz:0.05,stat:'FA 0.43',d:'−0.22'} ];
+    if(node.id==='neuro'||node.id==='neur2'||node.story==='iterate') return [
+      {id:'ins',l:'Insula',short:'Insula',x:76,y:96,r:9,px:-0.5,py:-0.04,pz:0.2,stat:'GFAP z +1.9',d:'+0.51'},
+      {id:'acc',l:'Anterior cingulate',short:'Ant. cingulate',x:110,y:66,r:9,px:0.02,py:0.3,pz:0.52,stat:'GFAP z +1.4',d:'+0.44'} ];
+    return [
+      {id:'hpcl',l:'Hippocampus (L)',short:'Hippocampus · L',x:92,y:120,r:10,px:-0.34,py:-0.28,pz:0.08,stat:'−7.8% volume',d:'−0.62'},
+      {id:'hpcr',l:'Hippocampus (R)',short:'Hippocampus · R',x:128,y:120,r:10,px:0.34,py:-0.28,pz:0.08,stat:'−6.1% volume',d:'−0.55'},
+      {id:'ent',l:'Entorhinal cortex',short:'Entorhinal',x:110,y:138,r:8,px:0.0,py:-0.42,pz:0.34,stat:'−9.2% volume',d:'−0.71'} ];
+  }
+  fmriSlice(node){
+    const regs=this.brainRegions(node); const sel=this.state.selRoi;
+    const svg=el('svg',{key:'svg',viewBox:'0 0 220 190',style:{width:'100%',height:'auto',display:'block'}},[
+      el('defs',{key:'d'},el('radialGradient',{id:'braing',cx:'50%',cy:'42%',r:'62%'},[el('stop',{key:'a',offset:'0%',stopColor:'#3a3733'}),el('stop',{key:'b',offset:'70%',stopColor:'#211f1c'}),el('stop',{key:'c',offset:'100%',stopColor:'#141311'})])),
+      el('rect',{key:'bg',x:0,y:0,width:220,height:190,fill:'#141311'}),
+      el('ellipse',{key:'br',cx:110,cy:96,rx:86,ry:92,fill:'url(#braing)',stroke:'#4a463f',strokeWidth:1.5}),
+      el('ellipse',{key:'v1',cx:98,cy:92,rx:9,ry:26,fill:'#0c0b0a',opacity:.85}),
+      el('ellipse',{key:'v2',cx:122,cy:92,rx:9,ry:26,fill:'#0c0b0a',opacity:.85}),
+      el('line',{key:'ml',x1:110,y1:12,x2:110,y2:180,stroke:'#39352f',strokeWidth:1,strokeDasharray:'2 4'}),
+      ...regs.map(rg=>{ const on=sel===rg.id; return el('g',{key:rg.id,style:{cursor:'pointer'},onClick:(e)=>{e.stopPropagation();this.selectRoi(rg.id);}},[
+        el('circle',{key:'glow',cx:rg.x,cy:rg.y,r:rg.r+(on?7:4),fill:C.clay,opacity:on?.32:.16}),
+        el('circle',{key:'c',cx:rg.x,cy:rg.y,r:rg.r,fill:on?C.clay:'#d8895f',opacity:.9,stroke:on?'#fff':'none',strokeWidth:1.4})
+      ]); })
+    ]);
+    const selReg=regs.find(r=>r.id===sel);
+    return el('div',{key:'fmri'},[
+      el('div',{key:'lab',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'7px'}},[
+        el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Structural MRI · axial slice'),
+        el('div',{key:'b',style:{fontSize:'11px',color:C.mute}},'z = +14 · click a region')]),
+      el('div',{key:'wrap',style:{borderRadius:'10px',overflow:'hidden',border:'1px solid '+C.edge}},svg),
+      selReg
+        ? el('div',{key:'sel',style:{marginTop:'8px',padding:'9px 11px',background:C.claySoft,borderRadius:'8px',display:'flex',justifyContent:'space-between',alignItems:'center'}},[
+            el('div',{key:'a'},[el('div',{key:'l',style:{fontSize:'13px',fontWeight:600,color:C.clayDeep}},selReg.l),el('div',{key:'s',style:{fontSize:'12px',color:C.ink2,marginTop:'1px'}},selReg.stat)]),
+            el('div',{key:'d',style:{textAlign:'right'}},[el('div',{key:'k',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute}},"Cohen's d"),el('div',{key:'v',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'15px',color:C.ink}},selReg.d)])])
+        : el('div',{key:'hint',style:{marginTop:'8px',fontSize:'12px',color:C.mute}},regs.length+' regions of interest · tap to inspect effect size'),
+      el('div',{key:'slotlab',style:{fontSize:'11px',color:C.mute,margin:'14px 0 6px'}},'Overlay a real scan'),
+      el('div',{key:'slotwrap',style:{width:'100%',height:'110px',borderRadius:'10px',overflow:'hidden'}},
+        el('image-slot',{id:'scan-'+node.id,shape:'rounded',placeholder:'Drop NIfTI / DICOM export (PNG)',style:{width:'100%',height:'110px',display:'block'}}))
+    ]);
+  }
+  clusterPlot(node){
+    const rnd=this.rng('clus-'+node.id); const pts=[];
+    const cl=[
+      {cx:150,cy:52,rx:44,ry:34,ang:-18,col:C.green,label:'Control-like',n:24},
+      {cx:66,cy:104,rx:50,ry:26,ang:12,col:C.gold,label:'Prodromal',n:22},
+      {cx:158,cy:118,rx:40,ry:30,ang:8,col:C.clay,label:'AD-like',n:26}
+    ];
+    cl.forEach(c=>{ const ca=Math.cos(c.ang*Math.PI/180), sa=Math.sin(c.ang*Math.PI/180);
+      for(let i=0;i<c.n;i++){ const t=rnd()*6.283, rr=Math.sqrt(rnd()); const ex=Math.cos(t)*c.rx*0.5*rr, ey=Math.sin(t)*c.ry*0.5*rr;
+        pts.push({x:c.cx+ex*ca-ey*sa, y:c.cy+ex*sa+ey*ca, col:c.col}); } });
+    return el('div',{key:'clus',style:{marginTop:'4px'}},[
+      el('div',{key:'lab',style:{fontSize:'12px',fontWeight:600,color:C.ink,marginBottom:'7px'}},'Subject clustering · unsupervised'),
+      el('div',{key:'wrap',style:{position:'relative',borderRadius:'10px',border:'1px solid '+C.edge,background:'#FBFAF6',padding:'6px'}},[
+        el('svg',{key:'svg',viewBox:'0 0 220 165',style:{width:'100%',height:'auto',display:'block'}},[
+          ...cl.map((c,ci)=>el('ellipse',{key:'h'+ci,cx:c.cx,cy:c.cy,rx:c.rx,ry:c.ry,fill:c.col,opacity:.10,transform:'rotate('+c.ang+' '+c.cx+' '+c.cy+')'})),
+          ...pts.map((p,i)=>el('circle',{key:i,cx:p.x,cy:p.y,r:2.7,fill:p.col,opacity:.8})),
+          el('text',{key:'cap',x:110,y:159,fill:C.mute,fontSize:8.5,textAnchor:'middle',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'},'frozen-embedding space · PCA 2-D')
+        ]),
+        el('div',{key:'k',style:{position:'absolute',top:'10px',right:'10px',fontSize:'9px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.mute,background:'rgba(255,255,255,.7)',border:'1px solid '+C.edge,borderRadius:'5px',padding:'2px 6px'}},'k=3 · silhouette 0.42')
+      ]),
+      el('div',{key:'leg',style:{display:'flex',flexWrap:'wrap',gap:'12px',marginTop:'8px'}},cl.map(c=>el('div',{key:c.label,style:{display:'flex',alignItems:'center',gap:'6px',fontSize:'12px',color:C.ink2}},[el('span',{key:'d',style:{width:'9px',height:'9px',borderRadius:'50%',background:c.col}}),c.label+' · n='+c.n])))
+    ]);
+  }
+  dataTable(node){
+    const rnd=this.rng('tbl-'+node.id); const rows=[];
+    for(let i=0;i<5;i++){ const grp=rnd()>0.5?'AD':'CN'; rows.push(['S'+(1043+Math.floor(rnd()*900)),grp,(2.4+rnd()*1.6).toFixed(2),(grp==='AD'?0.4+rnd()*0.5:0.05+rnd()*0.2).toFixed(2),grp==='AD'?'1':'0']); }
+    const cols=['subject','grp','ROIvol','p-tau','clust'];
+    const cell=(t,head)=>el('td',{key:Math.random(),style:{padding:'5px 8px',borderBottom:'1px solid '+C.edge,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'11px',color:head?C.mute:C.ink,textAlign:'left',whiteSpace:'nowrap'}},t);
+    return el('div',{key:'tbl',style:{marginTop:'16px'}},[
+      el('div',{key:'lab',style:{fontSize:'12px',fontWeight:600,color:C.ink,marginBottom:'7px'}},'Underlying data'),
+      el('div',{key:'w',style:{border:'1px solid '+C.edge,borderRadius:'8px',overflow:'hidden'}},
+        el('table',{style:{width:'100%',borderCollapse:'collapse'}},[
+          el('thead',{key:'h'},el('tr',{style:{background:C.paper2}},cols.map(c=>cell(c,true)))),
+          el('tbody',{key:'b'},rows.map((r,i)=>el('tr',{key:i},r.map(c=>cell(c,false)))))
+        ])),
+      this.disclaimer('Full table exports to CSV with per-subject provenance.')
+    ]);
+  }
+  selectedReadout(node){
+    const regs=this.brainRegions(node); const selReg=regs.find(r=>r.id===this.state.selRoi);
+    return selReg
+      ? el('div',{key:'sel',style:{marginTop:'8px',padding:'9px 11px',background:C.claySoft,borderRadius:'8px',display:'flex',justifyContent:'space-between',alignItems:'center'}},[
+          el('div',{key:'a'},[el('div',{key:'l',style:{fontSize:'13px',fontWeight:600,color:C.clayDeep}},selReg.l),el('div',{key:'s',style:{fontSize:'12px',color:C.ink2,marginTop:'1px'}},selReg.stat)]),
+          el('div',{key:'d',style:{textAlign:'right'}},[el('div',{key:'k',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute}},"Cohen's d"),el('div',{key:'v',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'15px',color:C.ink}},selReg.d)])])
+      : el('div',{key:'hint',style:{marginTop:'8px',fontSize:'12px',color:C.mute}},regs.length+' regions of interest · click a marker to inspect effect size');
+  }
+  viewToggle(){
+    const on={fontSize:'11px',padding:'5px 10px',border:'1px solid '+C.clay,borderRadius:'7px',background:C.clay,color:'#fff',cursor:'pointer'};
+    const off={fontSize:'11px',padding:'5px 10px',border:'1px solid '+C.edge2,borderRadius:'7px',background:C.card,color:C.ink2,cursor:'pointer'};
+    const v=this.state.brainView;
+    return el('div',{key:'vt',style:{display:'flex',gap:'5px',marginBottom:'8px'}},[
+      el('button',{key:'a',onClick:()=>this.setBrainView('brain3d'),style:v==='brain3d'?on:off},'3D glass brain'),
+      el('button',{key:'b',onClick:()=>this.setBrainView('slice'),style:v==='slice'?on:off},'Axial slice')
+    ]);
+  }
+  brain3dEl(node){
+    return el('div',{key:'b3d'},[
+      el('div',{key:'lab',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'7px'}},[
+        el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Structural MRI · 3D glass brain'),
+        el('div',{key:'b',style:{fontSize:'11px',color:C.mute}},'drag to rotate')]),
+      el('div',{key:'wrap',style:{borderRadius:'10px',overflow:'hidden',border:'1px solid '+C.edge}},
+        el(GlassBrain,{regions:this.brainRegions(node), selRoi:this.state.selRoi, onSelect:this.selectRoi, height:236})),
+      this.selectedReadout(node),
+      el('div',{key:'slotlab',style:{fontSize:'11px',color:C.mute,margin:'14px 0 6px'}},'Overlay a real scan'),
+      el('div',{key:'slotwrap',style:{width:'100%',height:'110px',borderRadius:'10px',overflow:'hidden'}},
+        el('image-slot',{id:'scan-'+node.id,shape:'rounded',placeholder:'Drop NIfTI / DICOM export (PNG)',style:{width:'100%',height:'110px',display:'block'}}))
+    ]);
+  }
+  brainDataEl(node){
+    const view = this.state.brainView==='slice' ? this.fmriSlice(node) : this.brain3dEl(node);
+    return el('div',{}, [ this.viewToggle(), view, el('div',{key:'sp',style:{height:'18px'}}), this.clusterPlot(node), this.dataTable(node) ]);
+  }
+  notesEl(node){
+    const list=this.state.notes[node.id]||[];
+    const fmt=(ts)=>{ const d=new Date(ts); return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); };
+    const activeReg = this.state.selRoi ? (this.brainRegions(node).find(r=>r.id===this.state.selRoi)||{}).l : null;
+    return el('div',{},[
+      activeReg?el('div',{key:'ar',style:{marginBottom:'10px',fontSize:'12px',color:C.clayDeep,background:C.claySoft,borderRadius:'8px',padding:'7px 10px',display:'flex',alignItems:'center',gap:'7px'}},[el('span',{key:'d',style:{width:'6px',height:'6px',borderRadius:'50%',background:C.clay}}),'This note will be pinned to region: '+activeReg]):null,
+      el('div',{key:'in',style:{marginBottom:'14px'}},[
+        el('textarea',{key:'t',value:this.state.noteDraft,onChange:this.setNoteDraft,placeholder:'Add a note on this branch — a caveat, a follow-up, a citation…',style:{width:'100%',height:'74px',resize:'vertical',border:'1px solid '+C.edge2,borderRadius:'9px',padding:'10px',fontSize:'13px',lineHeight:1.5,fontFamily:'inherit',color:C.ink,background:C.paper,outline:'none',boxSizing:'border-box'}}),
+        el('div',{key:'r',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'8px'}},[
+          el('span',{key:'s',style:{fontSize:'11px',color:C.mute}},'Saved to this node · persists locally'),
+          el('button',{key:'b',onClick:this.addNote,style:{fontSize:'13px',padding:'7px 14px',border:'none',borderRadius:'8px',background:C.clay,color:'#fff',cursor:'pointer'}},'Add note')])]),
+      list.length===0
+        ? el('div',{key:'e',style:{fontSize:'13px',color:C.mute,textAlign:'center',padding:'22px 0',border:'1px dashed '+C.edge2,borderRadius:'10px'}},'No annotations yet.')
+        : el('div',{key:'l',style:{display:'flex',flexDirection:'column',gap:'10px'}},list.map((n,i)=>el('div',{key:i,style:{background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'10px',padding:'11px 12px'}},[
+            n.region?el('div',{key:'rg',style:{display:'inline-flex',alignItems:'center',gap:'5px',fontSize:'11px',fontWeight:600,color:C.clayDeep,marginBottom:'6px'}},[el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.clay}}),n.region]):null,
+            el('div',{key:'t',style:{fontSize:'13px',lineHeight:1.5,color:C.ink,whiteSpace:'pre-wrap'}},n.text),
+            el('div',{key:'m',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'8px'}},[
+              el('span',{key:'d',style:{fontSize:'11px',color:C.mute}},fmt(n.ts)),
+              el('button',{key:'x',onClick:()=>this.delNote(i),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer'}},'Delete')])])))
+    ]);
+  }
+  buildTabs(node){
+    const on={fontSize:'12px',padding:'6px 11px',border:'1px solid '+C.clay,borderRadius:'7px',background:C.clay,color:'#fff',cursor:'pointer',whiteSpace:'nowrap'};
+    const off={fontSize:'12px',padding:'6px 11px',border:'1px solid '+C.edge2,borderRadius:'7px',background:C.card,color:C.ink2,cursor:'pointer',whiteSpace:'nowrap'};
+    const cur=this.state.drawerTab; const defs=[];
+    if(node.story) defs.push(['reason','Reasoning']);
+    defs.push(['data','Brain data']);
+    const nc=(this.state.notes[node.id]||[]).length;
+    defs.push(['notes', nc?('Notes · '+nc):'Notes']);
+    return defs.map(d=>({ label:d[1], onClick:()=>this.setDrawerTab(d[0]), style:cur===d[0]?on:off }));
+  }
+  drawerContent(node){
+    const t=this.state.drawerTab;
+    if(t==='data') return this.brainDataEl(node);
+    if(t==='notes') return this.notesEl(node);
+    return this.storyEl(node) || this.brainDataEl(node);
+  }
+
+  kv(k,v){ return el('div',{key:k},[ el('div',{key:'k',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.08em',color:C.mute}},k), el('div',{key:'v',style:{fontSize:'15px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},v) ]); }
+  auc(label,val,color){ return el('div',{key:label,style:{marginBottom:'8px'}},[ el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'4px'}},[el('span',{key:'a'},label),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},val.toFixed(2))]), this.bar(val,color) ]); }
+
+  // ---- scene / overlay / minimap ----
+  buildScene(){
+    const nm=this.nmap; const out=[];
+    out.push(el('defs',{key:'defs'},[
+      el('filter',{key:'sh',id:'nodeShadow',x:'-60%',y:'-60%',width:'220%',height:'220%'},[
+        el('feDropShadow',{key:'d',dx:0,dy:2,stdDeviation:3,floodColor:'#26241F',floodOpacity:0.16})
+      ]),
+      el('radialGradient',{key:'gg',id:'grnGrad',cx:'38%',cy:'32%',r:'75%'},[el('stop',{key:'a',offset:'0%',stopColor:'#3fbf94'}),el('stop',{key:'b',offset:'100%',stopColor:C.green})]),
+      el('radialGradient',{key:'gd',id:'goldGrad',cx:'38%',cy:'32%',r:'75%'},[el('stop',{key:'a',offset:'0%',stopColor:'#e0ab3a'}),el('stop',{key:'b',offset:'100%',stopColor:C.gold})]),
+      el('radialGradient',{key:'cg',id:'clayGrad',cx:'40%',cy:'34%',r:'80%'},[el('stop',{key:'a',offset:'0%',stopColor:'#fbe6dc'}),el('stop',{key:'b',offset:'100%',stopColor:C.claySoft})])
+    ]));
+    this.visEdges().forEach((e,i)=>{
+      const a=nm[e[0]], b=nm[e[1]]; if(!a||!b) return;
+      const type=e[2]; const dead=type==='gray';
+      const col = type==='green'?C.greenEdge : type==='gold'?C.goldEdge : type==='clay'?C.clay : C.grayEdge;
+      const mx=(a.x+b.x)/2;
+      const d=`M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${b.y}, ${b.x} ${b.y}`;
+      out.push(el('path',{key:'e'+i, d, fill:'none', stroke:col, strokeWidth:type==='clay'?2.4:1.6, strokeDasharray:dead?'4 6':null, strokeLinecap:'round', vectorEffect:'non-scaling-stroke', opacity:dead?0.55:0.95}));
+    });
+    this.visNodes().forEach(n=>{
+      const r=RADIUS[n.role]||18; const dead=n.role==='gray'; const fresh=n.id===this._justRevealed;
+      const g=[];
+      if(fresh){ g.push(el('circle',{key:'pulse',cx:n.x,cy:n.y,r:r+6,fill:'none',stroke:C.clay,strokeWidth:2,vectorEffect:'non-scaling-stroke',opacity:0.5,style:{animation:'zpulse 1s ease-out'}})); }
+      if(n.role==='root'){
+        g.push(el('circle',{key:'c',cx:n.x,cy:n.y,r,fill:C.card,stroke:C.clay,strokeWidth:2.5,vectorEffect:'non-scaling-stroke',filter:'url(#nodeShadow)'}));
+        g.push(el('circle',{key:'i',cx:n.x,cy:n.y,r:5,fill:C.clay}));
+      } else if(n.role==='clay'){
+        g.push(el('circle',{key:'halo',cx:n.x,cy:n.y,r:r+3,fill:C.clay,opacity:0.10}));
+        g.push(el('circle',{key:'c',cx:n.x,cy:n.y,r,fill:'url(#clayGrad)',stroke:C.clay,strokeWidth:2,vectorEffect:'non-scaling-stroke',filter:'url(#nodeShadow)'}));
+        g.push(el('text',{key:'g',x:n.x,y:n.y,fill:C.clayDeep,fontSize:22,textAnchor:'middle',dominantBaseline:'central'},'⌾'));
+      } else if(dead){
+        g.push(el('circle',{key:'c',cx:n.x,cy:n.y,r,fill:C.gray,vectorEffect:'non-scaling-stroke',opacity:0.5}));
+      } else {
+        const grad = n.role==='green'?'url(#grnGrad)':'url(#goldGrad)';
+        g.push(el('circle',{key:'c',cx:n.x,cy:n.y,r,fill:grad,vectorEffect:'non-scaling-stroke',filter:'url(#nodeShadow)'}));
+      }
+      out.push(el('g',{key:'n'+n.id, style:{cursor:'pointer'}, onClick:(ev)=>{ev.stopPropagation(); this.onNodeClick(n.id);}}, g));
+    });
+    return out;
+  }
+
+  buildOverlay(){
+    const c=this.state.cam; const out=[]; const showing=new Set();
+    const inView=(sx,sy,m)=> sx>-(m||360) && sx<this.W+(m||60) && sy>-120 && sy<this.H+120;
+    // story blocks
+    if(c.scale>=0.96){
+      this.visNodes().forEach(n=>{
+        if(!n.story) return;
+        const [sx,sy]=this.project(n.x,n.y); if(!inView(sx,sy,360)) return;
+        const r=(RADIUS[n.role]||18)*c.scale;
+        const est = this.storyEl(n); if(!est) return;
+        showing.add(n.id);
+        out.push(el('div',{key:'s'+n.id,'data-story':'1',style:{position:'absolute',left:(sx+r+16)+'px',top:(sy-24)+'px',pointerEvents:'auto',zIndex:12}}, est));
+      });
+    }
+    // node labels
+    if(c.scale>=0.5){
+      this.visNodes().forEach(n=>{
+        if(showing.has(n.id)) return;
+        const [sx,sy]=this.project(n.x,n.y); if(!inView(sx,sy,80)) return;
+        const r=(RADIUS[n.role]||18)*c.scale; const dead=n.role==='gray';
+        const accent = n.role==='clay'?C.clayDeep : n.role==='green'?C.green : n.role==='gold'?C.gold : n.role==='root'?C.ink : C.mute;
+        out.push(el('div',{key:'l'+n.id,style:{position:'absolute',left:sx+'px',top:(sy+r+7)+'px',transform:'translateX(-50%)',textAlign:'center',pointerEvents:'none',opacity:dead?0.72:1,zIndex:8,width:'160px'}},[
+          el('div',{key:'a',style:{fontSize:'13px',fontWeight:600,color:accent,lineHeight:1.2,textShadow:'0 1px 2px '+C.paper2}},n.label),
+          n.sub?el('div',{key:'b',style:{fontSize:'11px',color:C.mute,marginTop:'1px',fontFamily:/AUC|0\.|n$/.test(n.sub)?'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace':'inherit'}},n.sub):null,
+          (this.state.notes[n.id]||[]).length?el('div',{key:'nb',style:{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',fontSize:'10px',fontWeight:600,color:'#8a6410',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'20px',padding:'1px 8px'}},[el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:'#C08415'}}),(this.state.notes[n.id].length)+' note'+(this.state.notes[n.id].length>1?'s':'')]):null
+        ]));
+      });
+    }
+    // edge labels
+    if(c.scale>=0.55){
+      const nm=this.nmap;
+      this.visEdges().forEach((e,i)=>{ if(!e[3]) return; const a=nm[e[0]],b=nm[e[1]]; if(!a||!b) return; const [sx,sy]=this.project((a.x+b.x)/2,(a.y+b.y)/2); if(!inView(sx,sy,60)) return;
+        const col=e[2]==='gold'?C.gold:e[2]==='clay'?C.clayDeep:C.ink2;
+        out.push(el('div',{key:'el'+i,style:{position:'absolute',left:sx+'px',top:sy+'px',transform:'translate(-50%,-50%)',fontSize:'10px',letterSpacing:'.08em',textTransform:'uppercase',color:col,background:C.card,border:'1px solid '+C.edge,borderRadius:'6px',padding:'1px 6px',pointerEvents:'none',zIndex:9}},e[3]));
+      });
+    }
+    return out;
+  }
+
+  buildMini(){
+    const MW=196,MH=140,pad=12;
+    const b=this.bbox();
+    const s=Math.min((MW-pad*2)/b.w,(MH-pad*2)/b.h);
+    const ox=pad+(MW-pad*2-b.w*s)/2 - b.x0*s;
+    const oy=pad+(MH-pad*2-b.h*s)/2 - b.y0*s;
+    this._mini={s,ox,oy};
+    const out=[];
+    this.visEdges().forEach((e,i)=>{ const nm=this.nmap; const a=nm[e[0]],bb=nm[e[1]]; if(!a||!bb)return; out.push(el('line',{key:'ml'+i,x1:a.x*s+ox,y1:a.y*s+oy,x2:bb.x*s+ox,y2:bb.y*s+oy,stroke:C.edge2,strokeWidth:1})); });
+    this.visNodes().forEach(n=>{ const col=n.role==='clay'?C.clay:n.role==='root'?C.clayDeep:FILL[n.role]||C.gray; out.push(el('circle',{key:'m'+n.id,cx:n.x*s+ox,cy:n.y*s+oy,r:n.role==='clay'?4:3,fill:col,opacity:n.role==='gray'?0.5:1})); });
+    // viewport rect
+    const c=this.state.cam;
+    const vx0=(c.cx-(this.W/2)/c.scale)*s+ox, vy0=(c.cy-(this.H/2)/c.scale)*s+oy;
+    const vw=(this.W/c.scale)*s, vh=(this.H/c.scale)*s;
+    out.push(el('rect',{key:'vp',x:vx0,y:vy0,width:vw,height:vh,fill:'rgba(201,100,66,.08)',stroke:C.clay,strokeWidth:1.2,rx:2}));
+    return out;
+  }
+  onMiniClick=(e)=>{
+    if(!this._mini) return; const r=e.currentTarget.getBoundingClientRect();
+    const mx=e.clientX-r.left, my=e.clientY-r.top;
+    const wx=(mx-this._mini.ox)/this._mini.s, wy=(my-this._mini.oy)/this._mini.s;
+    this.setState({playing:false}); clearTimeout(this._timer);
+    this.animateTo({cx:wx,cy:wy,scale:Math.max(this.state.cam.scale,0.7)});
+  };
+
+  renderVals(){
+    const st=this.state;
+    const chat=st.chatMsgs.map((m,i)=>({ text:m.text, wrap:{display:'flex',justifyContent:m.role==='user'?'flex-end':'flex-start'}, bubble:{maxWidth:'85%',fontSize:'13px',lineHeight:1.5,padding:'10px 12px',borderRadius:'12px',background:m.role==='user'?C.clay:C.paper2,color:m.role==='user'?'#fff':C.ink} }));
+    const c=st.cam;
+    const camTransform=`translate(${this.W/2},${this.H/2}) scale(${c.scale}) translate(${-c.cx},${-c.cy})`;
+    const pinnedNode = st.pinned?this.nmap[st.pinned]:null;
+
+    return {
+      isEntry: st.stage==='entry',
+      entryValue: st.entryValue,
+      setEntry: this.setEntry,
+      onInvestigate: this.onInvestigate,
+      investHover:{background:C.clayDeep},
+      onEntryKey: this.onEntryKey,
+      chips: this.chips.map(c=>({
+        text:c.text,
+        onLaunch:()=>this.onInvestigate(c.text),
+        style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px',textAlign:'left',background:'transparent',border:'none',borderRadius:'8px',padding:'11px 12px',cursor:'pointer',transition:'background .12s'},
+        styleHover:{background:C.paper2}
+      })),
+
+      onHome:this.onHome,
+      showVerdict: st.showVerdict,
+      onDismissVerdict: this.onDismissVerdict,
+      onOpenTop: this.onOpenTop,
+      verdictLede: 'From “'+(st.entryValue||'your hypothesis')+'” — confounds cleared, survivors ranked into testable next steps.',
+
+      railStyle:{flex:'0 0 auto',width:st.railOpen?'300px':'0px',overflow:'hidden',background:C.card,borderRight:st.railOpen?'1px solid '+C.edge:'none',display:'flex',flexDirection:'column',transition:'width .28s cubic-bezier(.2,.7,.2,1)',zIndex:35},
+      handleStyle:{position:'absolute',left:'20px',bottom:'20px',display:st.railOpen?'none':'flex',alignItems:'center',gap:'8px',fontSize:'13px',fontWeight:500,letterSpacing:'-.005em',color:'#fff',background:C.clay,border:'none',borderRadius:'100px',padding:'11px 18px',cursor:'pointer',boxShadow:'0 6px 22px rgba(201,100,66,.28)',zIndex:24},
+      toggleRail:this.toggleRail,
+      chatMsgs:chat, chatDraft:st.chatDraft, setChatDraft:this.setChatDraft, onChatSend:this.onChatSend, onChatKey:this.onChatKey,
+
+      setCanvas:this.setCanvas,
+      camTransform,
+      sceneEls:this.buildScene(),
+      overlayEls:this.buildOverlay(),
+      miniEls:this.buildMini(),
+      onMiniClick:this.onMiniClick,
+
+
+      hintStyle:{position:'absolute',left:'50%',top:'20px',transform:'translateX(-50%)',display:(st.stage!=='entry'&&!st.pinned&&!st.playing&&!st.reasoning&&!st.showVerdict)?'flex':'none',alignItems:'center',gap:'9px',background:'rgba(255,255,255,.72)',backdropFilter:'saturate(180%) blur(20px)',WebkitBackdropFilter:'saturate(180%) blur(20px)',border:'1px solid rgba(230,227,216,.8)',borderRadius:'100px',padding:'9px 16px',fontSize:'13px',color:C.ink2,boxShadow:'0 4px 20px rgba(40,36,28,.07)',zIndex:20,whiteSpace:'nowrap'},
+      reasonText: st.reasoning||'',
+      reasonStyle:{position:'absolute',left:'50%',top:'20px',transform:'translateX(-50%)',display:(st.stage!=='entry'&&st.reasoning)?'flex':'none',alignItems:'center',gap:'11px',background:'rgba(255,255,255,.72)',backdropFilter:'saturate(180%) blur(20px)',WebkitBackdropFilter:'saturate(180%) blur(20px)',border:'1px solid rgba(230,227,216,.8)',borderRadius:'100px',padding:'9px 18px',boxShadow:'0 4px 22px rgba(40,36,28,.09)',zIndex:22,whiteSpace:'nowrap'},
+      pinned: !!st.pinned,
+      drawerTitle: pinnedNode?pinnedNode.label:'',
+      drawerTabs: pinnedNode?this.buildTabs(pinnedNode):[],
+      drawerEl: pinnedNode?this.drawerContent(pinnedNode):null,
+      onCloseDrawer:this.onCloseDrawer
+    };
+  }
+}
+</script>
+
+
+</body></html>

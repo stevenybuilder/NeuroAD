@@ -1,0 +1,11 @@
+# PLACEHOLDER STUB - hardcoded, NOT real AIBL data. Pending LONI/IDA download (same portal/DUA as ADNI). See STUBS.md.
+# Columns match src/neuroad/contract.py exactly. Load with: pandas.read_csv(path, comment='#')
+# AIBL is the #1 expansion cohort (docs/DATA_EXPANSION_SPEC.md): plasma p-tau + longitudinal conversion -> powers the fusion-vs-plasma question.
+subject_id,dx,conversion,age,sex,site,scanner,amyloid,p_tau217,gfap,nfl,apoe4,emb_0,emb_1,emb_2,emb_3
+AIBL_STUB_0001,CN,,72.3,F,AIBL_Melbourne,Siemens_TrioTim_3T,0,0.15,82.0,11.2,0,-0.85,-0.29,0.05,-0.31
+AIBL_STUB_0002,CN,,68.7,M,AIBL_Perth,Siemens_Verio_3T,0,0.18,91.5,12.6,0,-0.58,0.08,-0.21,0.33
+AIBL_STUB_0003,MCI,0,74.1,F,AIBL_Melbourne,Siemens_TrioTim_3T,1,0.29,142.3,19.8,1,0.12,0.21,0.27,-0.12
+AIBL_STUB_0004,MCI,1,78.9,M,AIBL_Perth,Siemens_Verio_3T,1,0.47,188.6,27.4,2,0.60,0.66,-0.08,0.24
+AIBL_STUB_0005,AD,,81.5,F,AIBL_Melbourne,Siemens_TrioTim_3T,1,0.56,201.7,30.1,2,1.05,0.88,0.38,0.52
+AIBL_STUB_0006,AD,,79.2,M,AIBL_Perth,Siemens_Verio_3T,1,0.53,193.2,29.0,1,0.90,0.57,-0.32,0.18
+AIBL_STUB_0007,CN,,70.6,F,AIBL_Perth,Siemens_Verio_3T,0,0.19,88.1,11.9,1,-0.41,0.15,0.09,-0.03

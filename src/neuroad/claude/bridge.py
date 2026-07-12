@@ -198,6 +198,12 @@ def _route(df: Optional[pd.DataFrame]) -> str:
         b = amy[~mask].dropna()
         if len(a) >= 2 and len(b) >= 2:
             scores["p_tau217"] += abs(a.mean() - b.mean())
+    # Triangulated plasma ensemble (contract.EXTENDED_BIOMARKER_COLUMNS): plasma
+    # Aβ42/40 (amyloid "A" axis) and C2N %p-tau217 (tau axis) both reinforce the
+    # amyloid-cascade / tau pole, so their separation adds to the p_tau217 score.
+    for extra in ("ab42_40", "pct_ptau217"):
+        if extra in df.columns:
+            scores["p_tau217"] += _effect_size(df[extra], mask)
 
     if max(scores.values()) <= 0:
         return "amyloid_cascade"

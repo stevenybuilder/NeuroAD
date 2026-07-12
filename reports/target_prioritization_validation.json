@@ -1,0 +1,770 @@
+{
+  "generated_utc": "2026-07-11T19:14:09.225172+00:00",
+  "prefer_offline": false,
+  "n_perm": 1000,
+  "seed": 0,
+  "validation": {
+    "honest_tests": {
+      "pi4ad_vs_gwas": {
+        "ranking_source": "pi4ad",
+        "evidence_mode": "priority",
+        "gold_set_name": "gwas_ad_bellenguez_2022",
+        "gold_citations": {
+          "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+          "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+          "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+          "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+          "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+          "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+          "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+          "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+          "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+          "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+          "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+          "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+          "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+          "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+          "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+        },
+        "n_gold": 15,
+        "background_size": 14676,
+        "precision_at_k": {
+          "5": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        },
+        "recall_at_k": {
+          "5": 0.0,
+          "10": 0.0,
+          "20": 0.0
+        },
+        "roc_auc": 0.8693677102516882,
+        "permutation_p": 0.000999000999000999,
+        "source": "live",
+        "optimistic": false,
+        "naive_roc_auc": null,
+        "caveat": "source=live: full-universe evaluation (N=14676)."
+      },
+      "opentargets_vs_gwas_heldout_nongenetic": {
+        "ranking_source": "opentargets",
+        "evidence_mode": "non_genetic",
+        "gold_set_name": "gwas_ad_bellenguez_2022",
+        "gold_citations": {
+          "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+          "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+          "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+          "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+          "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+          "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+          "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+          "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+          "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+          "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+          "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+          "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+          "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+          "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+          "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+        },
+        "n_gold": 15,
+        "background_size": 200,
+        "precision_at_k": {
+          "5": 0.8,
+          "10": 0.5,
+          "20": 0.25
+        },
+        "recall_at_k": {
+          "5": 0.26666666666666666,
+          "10": 0.3333333333333333,
+          "20": 0.3333333333333333
+        },
+        "roc_auc": 0.7282882882882883,
+        "permutation_p": 0.002997002997002997,
+        "source": "live",
+        "optimistic": false,
+        "naive_roc_auc": 0.8580180180180181,
+        "caveat": "source=live: full-universe evaluation (N=200). Held-out: GWAS gold predicted from non-genetic datatypes only; naive_roc_auc is the circular overall-score number."
+      },
+      "opentargets_vs_drugs_heldout_nonclinical": {
+        "ranking_source": "opentargets",
+        "evidence_mode": "non_clinical",
+        "gold_set_name": "fda_approved_ad_drug_targets",
+        "gold_citations": {
+          "ACHE": "FDA labels: donepezil (Aricept), rivastigmine (Exelon), galantamine (Razadyne) \u2014 acetylcholinesterase inhibitors",
+          "BCHE": "FDA label: rivastigmine (Exelon) \u2014 also inhibits butyrylcholinesterase",
+          "APP": "FDA labels: lecanemab (Leqembi), aducanumab (Aduhelm), donanemab (Kisunla) \u2014 anti-amyloid-beta (APP/Abeta)",
+          "GRIN1": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2B": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2C": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2D": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN3A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist"
+        },
+        "n_gold": 9,
+        "background_size": 200,
+        "precision_at_k": {
+          "5": 0.2,
+          "10": 0.1,
+          "20": 0.05
+        },
+        "recall_at_k": {
+          "5": 0.1111111111111111,
+          "10": 0.1111111111111111,
+          "20": 0.1111111111111111
+        },
+        "roc_auc": 0.5159976730657359,
+        "permutation_p": 0.43156843156843155,
+        "source": "live",
+        "optimistic": false,
+        "naive_roc_auc": 0.9674229203025014,
+        "caveat": "source=live: full-universe evaluation (N=200). Held-out: drug gold predicted from non-clinical datatypes only; naive_roc_auc is the circular overall-score number."
+      }
+    },
+    "circular_comparators": {
+      "opentargets_vs_gwas_overall_CIRCULAR": {
+        "ranking_source": "opentargets",
+        "evidence_mode": "overall",
+        "gold_set_name": "gwas_ad_bellenguez_2022",
+        "gold_citations": {
+          "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+          "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+          "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+          "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+          "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+          "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+          "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+          "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+          "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+          "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+          "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+          "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+          "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+          "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+          "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+        },
+        "n_gold": 15,
+        "background_size": 200,
+        "precision_at_k": {
+          "5": 0.2,
+          "10": 0.3,
+          "20": 0.2
+        },
+        "recall_at_k": {
+          "5": 0.06666666666666667,
+          "10": 0.2,
+          "20": 0.26666666666666666
+        },
+        "roc_auc": 0.8580180180180181,
+        "permutation_p": 0.000999000999000999,
+        "source": "live",
+        "optimistic": true,
+        "naive_roc_auc": null,
+        "caveat": "source=live: full-universe evaluation (N=200). OPTIMISTIC/CIRCULAR: the overall association_score is built from the gold-defining datatypes; the held-out-evidence AUC is the honest number."
+      },
+      "opentargets_vs_drugs_overall_CIRCULAR": {
+        "ranking_source": "opentargets",
+        "evidence_mode": "overall",
+        "gold_set_name": "fda_approved_ad_drug_targets",
+        "gold_citations": {
+          "ACHE": "FDA labels: donepezil (Aricept), rivastigmine (Exelon), galantamine (Razadyne) \u2014 acetylcholinesterase inhibitors",
+          "BCHE": "FDA label: rivastigmine (Exelon) \u2014 also inhibits butyrylcholinesterase",
+          "APP": "FDA labels: lecanemab (Leqembi), aducanumab (Aduhelm), donanemab (Kisunla) \u2014 anti-amyloid-beta (APP/Abeta)",
+          "GRIN1": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2B": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2C": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN2D": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+          "GRIN3A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist"
+        },
+        "n_gold": 9,
+        "background_size": 200,
+        "precision_at_k": {
+          "5": 0.4,
+          "10": 0.3,
+          "20": 0.45
+        },
+        "recall_at_k": {
+          "5": 0.2222222222222222,
+          "10": 0.3333333333333333,
+          "20": 1.0
+        },
+        "roc_auc": 0.9674229203025014,
+        "permutation_p": 0.000999000999000999,
+        "source": "live",
+        "optimistic": true,
+        "naive_roc_auc": null,
+        "caveat": "source=live: full-universe evaluation (N=200). OPTIMISTIC/CIRCULAR: the overall association_score is built from the gold-defining datatypes; the held-out-evidence AUC is the honest number."
+      }
+    }
+  },
+  "pi4ad_fleshout": {
+    "pi4ad_table": {
+      "source": "live",
+      "n_genes_loaded": 14676,
+      "top25": [
+        {
+          "gene": "EGFR",
+          "priority_score": 10.0,
+          "rank": 1,
+          "evidence_note": "Core PI4AD target (epidermal growth factor receptor)",
+          "source": "live"
+        },
+        {
+          "gene": "SRC",
+          "priority_score": 9.461,
+          "rank": 2,
+          "evidence_note": "Peripheral PI4AD target (SRC proto-oncogene, non-receptor tyrosine kinase)",
+          "source": "live"
+        },
+        {
+          "gene": "GRB2",
+          "priority_score": 9.332,
+          "rank": 3,
+          "evidence_note": "Peripheral PI4AD target (growth factor receptor bound protein 2)",
+          "source": "live"
+        },
+        {
+          "gene": "AKT1",
+          "priority_score": 9.208,
+          "rank": 4,
+          "evidence_note": "Peripheral PI4AD target (AKT serine/threonine kinase 1)",
+          "source": "live"
+        },
+        {
+          "gene": "CD4",
+          "priority_score": 9.201,
+          "rank": 5,
+          "evidence_note": "Peripheral PI4AD target (CD4 molecule)",
+          "source": "live"
+        },
+        {
+          "gene": "ACTB",
+          "priority_score": 9.125,
+          "rank": 6,
+          "evidence_note": "Peripheral PI4AD target (actin beta)",
+          "source": "live"
+        },
+        {
+          "gene": "B2M",
+          "priority_score": 9.065,
+          "rank": 7,
+          "evidence_note": "Peripheral PI4AD target (beta-2-microglobulin)",
+          "source": "live"
+        },
+        {
+          "gene": "TP53",
+          "priority_score": 8.981,
+          "rank": 8,
+          "evidence_note": "Peripheral PI4AD target (tumor protein p53)",
+          "source": "live"
+        },
+        {
+          "gene": "FN1",
+          "priority_score": 8.972,
+          "rank": 9,
+          "evidence_note": "Peripheral PI4AD target (fibronectin 1)",
+          "source": "live"
+        },
+        {
+          "gene": "ITGB1",
+          "priority_score": 8.895,
+          "rank": 10,
+          "evidence_note": "Peripheral PI4AD target (integrin subunit beta 1)",
+          "source": "live"
+        },
+        {
+          "gene": "FYN",
+          "priority_score": 8.798,
+          "rank": 11,
+          "evidence_note": "Peripheral PI4AD target (FYN proto-oncogene, Src family tyrosine kinase)",
+          "source": "live"
+        },
+        {
+          "gene": "INS",
+          "priority_score": 8.785,
+          "rank": 12,
+          "evidence_note": "Peripheral PI4AD target (insulin)",
+          "source": "live"
+        },
+        {
+          "gene": "PTK2",
+          "priority_score": 8.687,
+          "rank": 13,
+          "evidence_note": "Peripheral PI4AD target (protein tyrosine kinase 2)",
+          "source": "live"
+        },
+        {
+          "gene": "SYK",
+          "priority_score": 8.678,
+          "rank": 14,
+          "evidence_note": "Peripheral PI4AD target (spleen associated tyrosine kinase)",
+          "source": "live"
+        },
+        {
+          "gene": "CTNNB1",
+          "priority_score": 8.67,
+          "rank": 15,
+          "evidence_note": "Peripheral PI4AD target (catenin beta 1)",
+          "source": "live"
+        },
+        {
+          "gene": "ERBB2",
+          "priority_score": 8.662,
+          "rank": 16,
+          "evidence_note": "Peripheral PI4AD target (erb-b2 receptor tyrosine kinase 2)",
+          "source": "live"
+        },
+        {
+          "gene": "HSP90AA1",
+          "priority_score": 8.617,
+          "rank": 17,
+          "evidence_note": "Peripheral PI4AD target (heat shock protein 90 alpha family class A member 1)",
+          "source": "live"
+        },
+        {
+          "gene": "APP",
+          "priority_score": 8.597,
+          "rank": 18,
+          "evidence_note": "Core PI4AD target (amyloid beta precursor protein)",
+          "source": "live"
+        },
+        {
+          "gene": "CBL",
+          "priority_score": 8.595,
+          "rank": 19,
+          "evidence_note": "Peripheral PI4AD target (Cbl proto-oncogene)",
+          "source": "live"
+        },
+        {
+          "gene": "PIK3R1",
+          "priority_score": 8.586,
+          "rank": 20,
+          "evidence_note": "Peripheral PI4AD target (phosphoinositide-3-kinase regulatory subunit 1)",
+          "source": "live"
+        },
+        {
+          "gene": "PTPN11",
+          "priority_score": 8.554,
+          "rank": 21,
+          "evidence_note": "Peripheral PI4AD target (protein tyrosine phosphatase non-receptor type 11)",
+          "source": "live"
+        },
+        {
+          "gene": "PLCG2",
+          "priority_score": 8.542,
+          "rank": 22,
+          "evidence_note": "Core PI4AD target (phospholipase C gamma 2)",
+          "source": "live"
+        },
+        {
+          "gene": "CRK",
+          "priority_score": 8.502,
+          "rank": 23,
+          "evidence_note": "Peripheral PI4AD target (CRK proto-oncogene, adaptor protein)",
+          "source": "live"
+        },
+        {
+          "gene": "CALM1",
+          "priority_score": 8.481,
+          "rank": 24,
+          "evidence_note": "Peripheral PI4AD target (calmodulin 1)",
+          "source": "live"
+        },
+        {
+          "gene": "FGB",
+          "priority_score": 8.48,
+          "rank": 25,
+          "evidence_note": "Peripheral PI4AD target (fibrinogen beta chain)",
+          "source": "live"
+        }
+      ]
+    },
+    "string_rwr_propagation": {
+      "source": "string_live",
+      "seed_genes": [
+        "ABCA7",
+        "ACE",
+        "ADAM10",
+        "APH1B",
+        "APOE",
+        "BIN1",
+        "CD33",
+        "CLU",
+        "CR1",
+        "EPHA1",
+        "MS4A6A",
+        "PICALM",
+        "PLCG2",
+        "SORL1",
+        "TREM2"
+      ],
+      "n_seeds_in_graph": 15,
+      "n_subgraph_nodes": 75,
+      "n_hubs": 8,
+      "hubs": [
+        {
+          "gene": "PSEN1",
+          "propagated_score": 0.011579,
+          "rank": 16,
+          "degree": 34,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "PSEN2",
+          "propagated_score": 0.011501,
+          "rank": 17,
+          "degree": 34,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "APP",
+          "propagated_score": 0.011392,
+          "rank": 18,
+          "degree": 52,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "CD2AP",
+          "propagated_score": 0.010652,
+          "rank": 19,
+          "degree": 39,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "INPP5D",
+          "propagated_score": 0.010643,
+          "rank": 20,
+          "degree": 30,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "MS4A4E",
+          "propagated_score": 0.009906,
+          "rank": 21,
+          "degree": 29,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "MAPT",
+          "propagated_score": 0.009546,
+          "rank": 23,
+          "degree": 29,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        },
+        {
+          "gene": "MS4A4A",
+          "propagated_score": 0.009493,
+          "rank": 25,
+          "degree": 30,
+          "is_seed": false,
+          "is_hub": true,
+          "method": "rwr",
+          "source": "string_live"
+        }
+      ]
+    }
+  },
+  "alphafold_structures": {
+    "api": "https://alphafold.ebi.ac.uk/api/prediction/{accession} (keyless)",
+    "note": "AlphaFold DB = free/keyless precomputed monomer structures (used here, LIVE). AlphaFold3 de-novo COMPLEX folding is the account/weight-gated product; the open MIT Boltz-2 GPU job is its license-clean substitute for the L6 complex step.",
+    "n_requested": 21,
+    "n_live": 21,
+    "structures": [
+      {
+        "uniprot": "P00533",
+        "gene_symbol": "EGFR",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P00533-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P00533-F1-model_v6.cif",
+        "mean_plddt": 75.95,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1210,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P12931",
+        "gene_symbol": "SRC",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P12931-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P12931-F1-model_v6.cif",
+        "mean_plddt": 83.46,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 536,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P62993",
+        "gene_symbol": "GRB2",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P62993-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P62993-F1-model_v6.cif",
+        "mean_plddt": 88.71,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 217,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P31749",
+        "gene_symbol": "AKT1",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P31749-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P31749-F1-model_v6.cif",
+        "mean_plddt": 83.05,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 480,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P01730",
+        "gene_symbol": "CD4",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P01730-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P01730-F1-model_v6.cif",
+        "mean_plddt": 85.24,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 458,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P60709",
+        "gene_symbol": "ACTB",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P60709-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P60709-F1-model_v6.cif",
+        "mean_plddt": 95.2,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 375,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P61769",
+        "gene_symbol": "B2M",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P61769-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P61769-F1-model_v6.cif",
+        "mean_plddt": 94.04,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 119,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P04637",
+        "gene_symbol": "TP53",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P04637-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P04637-F1-model_v6.cif",
+        "mean_plddt": 75.05,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 393,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P02751",
+        "gene_symbol": "FN1",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P02751-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P02751-F1-model_v6.cif",
+        "mean_plddt": 69.65,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 2477,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P05556",
+        "gene_symbol": "ITGB1",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05556-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05556-F1-model_v6.cif",
+        "mean_plddt": 85.87,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 798,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P06241",
+        "gene_symbol": "FYN",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P06241-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P06241-F1-model_v6.cif",
+        "mean_plddt": 80.84,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 537,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P01308",
+        "gene_symbol": "INS",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P01308-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P01308-F1-model_v6.cif",
+        "mean_plddt": 52.9,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 110,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P22303",
+        "gene_symbol": "ACHE",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P22303-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P22303-F1-model_v6.cif",
+        "mean_plddt": 92.94,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 614,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "P05067",
+        "gene_symbol": "APP",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif",
+        "mean_plddt": 67.39,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 770,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "ad_map"
+      },
+      {
+        "uniprot": "P06276",
+        "gene_symbol": "BCHE",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-P06276-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P06276-F1-model_v6.cif",
+        "mean_plddt": 93.36,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 602,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "Q05586",
+        "gene_symbol": "GRIN1",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-Q05586-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q05586-F1-model_v6.cif",
+        "mean_plddt": 82.86,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 938,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "Q12879",
+        "gene_symbol": "GRIN2A",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-Q12879-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q12879-F1-model_v6.cif",
+        "mean_plddt": 60.85,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1464,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "Q13224",
+        "gene_symbol": "GRIN2B",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-Q13224-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q13224-F1-model_v6.cif",
+        "mean_plddt": 60.7,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1484,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "Q14957",
+        "gene_symbol": "GRIN2C",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-Q14957-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q14957-F1-model_v6.cif",
+        "mean_plddt": 67.47,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1233,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "O15399",
+        "gene_symbol": "GRIN2D",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-O15399-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-O15399-F1-model_v6.cif",
+        "mean_plddt": 63.22,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1336,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      },
+      {
+        "uniprot": "Q8TCU5",
+        "gene_symbol": "GRIN3A",
+        "model_url": "https://alphafold.ebi.ac.uk/files/AF-Q8TCU5-F1-model_v6.pdb",
+        "cif_url": "https://alphafold.ebi.ac.uk/files/AF-Q8TCU5-F1-model_v6.cif",
+        "mean_plddt": 73.06,
+        "model_version": "v6",
+        "plddt_recomputed": true,
+        "n_residues_scored": 1115,
+        "source": "live",
+        "error": "",
+        "uniprot_resolved_via": "uniprot_live"
+      }
+    ]
+  },
+  "verdict": "CLEAN non-circular signal at the full live universe: opentargets_vs_gwas_heldout_nongenetic (AUC=0.728, p=0.003). This is genuine, honest evidence the ranking surfaces independently-known AD-risk genes from out-of-evidence signal. Residually-circular (strong but NOT clean): pi4ad_vs_gwas (AUC=0.869, p=0.001) \u2014 CAVEAT: PI4AD's Priority Index integrates genetic/GWAS evidence as an input, so ranking GWAS genes high is partly circular. At/below chance (honest negative): opentargets_vs_drugs_heldout_nonclinical (AUC=0.516, p=0.432). Overall: a rigorously-filtered, wet-lab-testable HYPOTHESIS ENGINE (organoid/iPSC) \u2014 not a validated efficacy predictor. The clean held-out signal is real but is prognostic-of-relevance, not proof a target is druggable."
+}

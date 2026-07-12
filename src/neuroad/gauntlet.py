@@ -333,6 +333,13 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
 
     ptau_r, ptau_n, ptau_lo = _anchor_corr(score, sub["p_tau217"].to_numpy(float))
     gfap_r, gfap_n, gfap_lo = _anchor_corr(score, sub["gfap"].to_numpy(float))
+    # C2N %p-tau217 (contract.EXTENDED_BIOMARKER_COLUMNS) — one of the best-validated
+    # plasma tau markers. Read only when a richer feeder (the ADNI plasma ensemble)
+    # triangulated it in; otherwise it stays None and the anchor is unchanged.
+    if "pct_ptau217" in sub.columns:
+        pct_r, pct_n, pct_lo = _anchor_corr(score, sub["pct_ptau217"].to_numpy(float))
+    else:
+        pct_r, pct_n, pct_lo = None, 0, None
 
     # Provenance: on a synthetic cohort the plasma markers are CALIBRATION TARGETS
     # drawn to sit inside a literature range (calibration.CAL), NOT measured plasma.
@@ -343,16 +350,22 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
              "ptau217_ci_lo": None if ptau_lo is None else round(ptau_lo, 3),
              "gfap_r": None if gfap_r is None else round(gfap_r, 3), "gfap_n": gfap_n,
              "gfap_ci_lo": None if gfap_lo is None else round(gfap_lo, 3),
+             "pct_ptau217_r": None if pct_r is None else round(pct_r, 3),
+             "pct_ptau217_n": pct_n,
+             "pct_ptau217_ci_lo": None if pct_lo is None else round(pct_lo, 3),
              "synthetic": synthetic_anchor,
              "provenance": ("SYNTHETIC HARNESS — p-tau217/GFAP are calibration "
                             "targets (calibration.CAL), not measured plasma"
                             if synthetic_anchor else "measured")}
 
-    # Pick the primary anchor (p-tau217 preferred, GFAP secondary).
+    # Pick the primary anchor (p-tau217 preferred, GFAP secondary, C2N %p-tau217
+    # tertiary — only reached when neither of the two native markers is usable).
     if ptau_r is not None:
         primary, ci_lo, n_used, marker = ptau_r, ptau_lo, ptau_n, "p-tau217"
     elif gfap_r is not None:
         primary, ci_lo, n_used, marker = gfap_r, gfap_lo, gfap_n, "GFAP"
+    elif pct_r is not None:
+        primary, ci_lo, n_used, marker = pct_r, pct_lo, pct_n, "%p-tau217"
     else:
         return TestEvidence("biomarker_anchor", TestResult.NA,
                             "no plasma p-tau217 / GFAP coverage at usable n — cannot "

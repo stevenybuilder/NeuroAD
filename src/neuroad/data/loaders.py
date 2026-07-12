@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from neuroad.data import synthetic, real, openbhb, openbhb_jepa, oasis_jepa, gated
+from neuroad.data import (synthetic, real, openbhb, openbhb_jepa, oasis_jepa,
+                          adni_jepa, gated)
 
 # Conventional drop location for a mapped gated export (see scripts/adni_to_contract.py).
 _GATED_DIR = Path(__file__).resolve().parents[3] / "data" / "real" / "_gated"
@@ -41,6 +42,12 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
         return openbhb.load_openbhb()
     if low in ("openbhb:neurojepa", "openbhb:jepa"):
         return openbhb_jepa.load_openbhb_neurojepa()
+
+    # ADNI with REAL frozen Neuro-JEPA embeddings: the 590-subject disease-signal
+    # cohort (87 AD / 503 CN, multi-site, real plasma) on the foundation model's
+    # own representation — the raw-MRI -> Neuro-JEPA stage output, made consumable.
+    if low in ("adni:neurojepa", "adni:jepa"):
+        return adni_jepa.load_adni_neurojepa()
 
     # ADNI ComBat-harmonized full cohort: 'adni:combat' removes the scanner
     # (field-strength) batch effect from the emb_* features while preserving the

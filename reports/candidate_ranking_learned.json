@@ -1,0 +1,3190 @@
+{
+  "generated_utc": "2026-07-12T03:24:29.888992+00:00",
+  "prefer_offline": false,
+  "params": {
+    "top_n": 600,
+    "n_perm": 1000,
+    "n_boot": 2000,
+    "seed": 0
+  },
+  "hand_set_weights": {
+    "pi4ad_priority": 0.3,
+    "ot_assoc_heldout": 0.35,
+    "net_centrality": 0.2,
+    "struct_confidence": 0.15
+  },
+  "fit": {
+    "n_genes": 598,
+    "n_gold_in_universe": 15,
+    "features": [
+      "pi4ad_priority",
+      "ot_assoc_heldout",
+      "net_centrality",
+      "struct_plddt",
+      "lincs_efficacy"
+    ],
+    "coverage": {
+      "pi4ad_priority": 0.9615384615384616,
+      "ot_assoc_heldout": 1.0,
+      "net_centrality": 0.9464882943143813,
+      "struct_plddt": 0.016722408026755852,
+      "lincs_efficacy": 0.16722408026755853
+    },
+    "learned_weights": {
+      "pi4ad_priority": 0.6231366030449673,
+      "ot_assoc_heldout": 0.8774084203651937,
+      "net_centrality": 0.7092233764368661,
+      "struct_plddt": -1.1769131299380196,
+      "lincs_efficacy": -0.8899840820097278
+    },
+    "oof_auc": 0.7398513436249285,
+    "oof_auc_ci": [
+      0.6259573214787263,
+      0.8477918788832691
+    ],
+    "permutation_p": 0.000999000999000999,
+    "brier": 0.024111626395007864,
+    "C": 1.0,
+    "gene_scores": [
+      {
+        "gene": "ESR1",
+        "learned_score": 0.1097,
+        "is_gold": false
+      },
+      {
+        "gene": "MAPT",
+        "learned_score": 0.1093,
+        "is_gold": false
+      },
+      {
+        "gene": "PIK3R1",
+        "learned_score": 0.0926,
+        "is_gold": false
+      },
+      {
+        "gene": "BIN1",
+        "learned_score": 0.0915,
+        "is_gold": true
+      },
+      {
+        "gene": "APP",
+        "learned_score": 0.0896,
+        "is_gold": false
+      },
+      {
+        "gene": "ATM",
+        "learned_score": 0.0879,
+        "is_gold": false
+      },
+      {
+        "gene": "PLCG2",
+        "learned_score": 0.0758,
+        "is_gold": true
+      },
+      {
+        "gene": "SCARB1",
+        "learned_score": 0.0753,
+        "is_gold": false
+      },
+      {
+        "gene": "JUN",
+        "learned_score": 0.0749,
+        "is_gold": false
+      },
+      {
+        "gene": "CDKN2A",
+        "learned_score": 0.0747,
+        "is_gold": false
+      },
+      {
+        "gene": "PICALM",
+        "learned_score": 0.0728,
+        "is_gold": true
+      },
+      {
+        "gene": "CDKN1A",
+        "learned_score": 0.0721,
+        "is_gold": false
+      },
+      {
+        "gene": "CREB1",
+        "learned_score": 0.0718,
+        "is_gold": false
+      },
+      {
+        "gene": "AXL",
+        "learned_score": 0.0706,
+        "is_gold": false
+      },
+      {
+        "gene": "CANX",
+        "learned_score": 0.0697,
+        "is_gold": false
+      },
+      {
+        "gene": "HIF1A",
+        "learned_score": 0.0693,
+        "is_gold": false
+      },
+      {
+        "gene": "APOB",
+        "learned_score": 0.0688,
+        "is_gold": false
+      },
+      {
+        "gene": "CD2AP",
+        "learned_score": 0.0687,
+        "is_gold": false
+      },
+      {
+        "gene": "FOXO3",
+        "learned_score": 0.0686,
+        "is_gold": false
+      },
+      {
+        "gene": "AURKA",
+        "learned_score": 0.0685,
+        "is_gold": false
+      },
+      {
+        "gene": "ABL1",
+        "learned_score": 0.0683,
+        "is_gold": false
+      },
+      {
+        "gene": "PTK2B",
+        "learned_score": 0.0682,
+        "is_gold": false
+      },
+      {
+        "gene": "PLK1",
+        "learned_score": 0.0676,
+        "is_gold": false
+      },
+      {
+        "gene": "INPP5D",
+        "learned_score": 0.067,
+        "is_gold": false
+      },
+      {
+        "gene": "CTSB",
+        "learned_score": 0.0668,
+        "is_gold": false
+      },
+      {
+        "gene": "PDGFRB",
+        "learned_score": 0.0666,
+        "is_gold": false
+      },
+      {
+        "gene": "ABCA7",
+        "learned_score": 0.0662,
+        "is_gold": true
+      },
+      {
+        "gene": "PIK3CB",
+        "learned_score": 0.0659,
+        "is_gold": false
+      },
+      {
+        "gene": "CD33",
+        "learned_score": 0.0657,
+        "is_gold": true
+      },
+      {
+        "gene": "CDK1",
+        "learned_score": 0.0657,
+        "is_gold": false
+      },
+      {
+        "gene": "SPI1",
+        "learned_score": 0.0638,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK4",
+        "learned_score": 0.063,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK2",
+        "learned_score": 0.0629,
+        "is_gold": false
+      },
+      {
+        "gene": "PTGS2",
+        "learned_score": 0.0628,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP3",
+        "learned_score": 0.0624,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK5",
+        "learned_score": 0.062,
+        "is_gold": false
+      },
+      {
+        "gene": "ESR2",
+        "learned_score": 0.0619,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN2B",
+        "learned_score": 0.0618,
+        "is_gold": false
+      },
+      {
+        "gene": "XPO1",
+        "learned_score": 0.0611,
+        "is_gold": false
+      },
+      {
+        "gene": "KAT5",
+        "learned_score": 0.0609,
+        "is_gold": false
+      },
+      {
+        "gene": "GRN",
+        "learned_score": 0.0607,
+        "is_gold": false
+      },
+      {
+        "gene": "GSK3B",
+        "learned_score": 0.0602,
+        "is_gold": false
+      },
+      {
+        "gene": "PSEN2",
+        "learned_score": 0.0599,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN1",
+        "learned_score": 0.0599,
+        "is_gold": false
+      },
+      {
+        "gene": "FLNA",
+        "learned_score": 0.0599,
+        "is_gold": false
+      },
+      {
+        "gene": "PPARG",
+        "learned_score": 0.0598,
+        "is_gold": false
+      },
+      {
+        "gene": "NR3C1",
+        "learned_score": 0.0594,
+        "is_gold": false
+      },
+      {
+        "gene": "STAT3",
+        "learned_score": 0.0594,
+        "is_gold": false
+      },
+      {
+        "gene": "CAPN1",
+        "learned_score": 0.0591,
+        "is_gold": false
+      },
+      {
+        "gene": "CTCF",
+        "learned_score": 0.0587,
+        "is_gold": false
+      },
+      {
+        "gene": "TGFBR2",
+        "learned_score": 0.0585,
+        "is_gold": false
+      },
+      {
+        "gene": "CSF1R",
+        "learned_score": 0.0583,
+        "is_gold": false
+      },
+      {
+        "gene": "TP53",
+        "learned_score": 0.058,
+        "is_gold": false
+      },
+      {
+        "gene": "CTSL",
+        "learned_score": 0.0575,
+        "is_gold": false
+      },
+      {
+        "gene": "MPO",
+        "learned_score": 0.0567,
+        "is_gold": false
+      },
+      {
+        "gene": "PSEN1",
+        "learned_score": 0.0554,
+        "is_gold": false
+      },
+      {
+        "gene": "IMP3",
+        "learned_score": 0.0553,
+        "is_gold": false
+      },
+      {
+        "gene": "RIPK1",
+        "learned_score": 0.0553,
+        "is_gold": false
+      },
+      {
+        "gene": "PECAM1",
+        "learned_score": 0.0548,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK5R1",
+        "learned_score": 0.0541,
+        "is_gold": false
+      },
+      {
+        "gene": "NR1H2",
+        "learned_score": 0.0536,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN2A",
+        "learned_score": 0.0536,
+        "is_gold": false
+      },
+      {
+        "gene": "CALR",
+        "learned_score": 0.0533,
+        "is_gold": false
+      },
+      {
+        "gene": "WIPF2",
+        "learned_score": 0.0531,
+        "is_gold": false
+      },
+      {
+        "gene": "BMS1",
+        "learned_score": 0.0529,
+        "is_gold": false
+      },
+      {
+        "gene": "PI4KB",
+        "learned_score": 0.0525,
+        "is_gold": false
+      },
+      {
+        "gene": "KIT",
+        "learned_score": 0.0524,
+        "is_gold": false
+      },
+      {
+        "gene": "KAT8",
+        "learned_score": 0.0518,
+        "is_gold": false
+      },
+      {
+        "gene": "ULK1",
+        "learned_score": 0.0518,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC6A3",
+        "learned_score": 0.0518,
+        "is_gold": false
+      },
+      {
+        "gene": "SORL1",
+        "learned_score": 0.0515,
+        "is_gold": true
+      },
+      {
+        "gene": "JAK2",
+        "learned_score": 0.0515,
+        "is_gold": false
+      },
+      {
+        "gene": "LRP1",
+        "learned_score": 0.0512,
+        "is_gold": false
+      },
+      {
+        "gene": "NOX4",
+        "learned_score": 0.0511,
+        "is_gold": false
+      },
+      {
+        "gene": "EGFR",
+        "learned_score": 0.0509,
+        "is_gold": false
+      },
+      {
+        "gene": "BACE1",
+        "learned_score": 0.0503,
+        "is_gold": false
+      },
+      {
+        "gene": "ADAM10",
+        "learned_score": 0.0498,
+        "is_gold": true
+      },
+      {
+        "gene": "IGFBP3",
+        "learned_score": 0.0497,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN8A",
+        "learned_score": 0.0495,
+        "is_gold": false
+      },
+      {
+        "gene": "SNRPE",
+        "learned_score": 0.0494,
+        "is_gold": false
+      },
+      {
+        "gene": "TOMM40",
+        "learned_score": 0.0492,
+        "is_gold": false
+      },
+      {
+        "gene": "SREBF1",
+        "learned_score": 0.0481,
+        "is_gold": false
+      },
+      {
+        "gene": "AP2M1",
+        "learned_score": 0.0479,
+        "is_gold": false
+      },
+      {
+        "gene": "LTV1",
+        "learned_score": 0.0475,
+        "is_gold": false
+      },
+      {
+        "gene": "TREM2",
+        "learned_score": 0.0474,
+        "is_gold": true
+      },
+      {
+        "gene": "PDGFRA",
+        "learned_score": 0.0474,
+        "is_gold": false
+      },
+      {
+        "gene": "RSL24D1",
+        "learned_score": 0.0471,
+        "is_gold": false
+      },
+      {
+        "gene": "LRRK2",
+        "learned_score": 0.0469,
+        "is_gold": false
+      },
+      {
+        "gene": "RIN3",
+        "learned_score": 0.0467,
+        "is_gold": false
+      },
+      {
+        "gene": "DRD2",
+        "learned_score": 0.0466,
+        "is_gold": false
+      },
+      {
+        "gene": "RIOK2",
+        "learned_score": 0.0465,
+        "is_gold": false
+      },
+      {
+        "gene": "RELA",
+        "learned_score": 0.0465,
+        "is_gold": false
+      },
+      {
+        "gene": "LMNA",
+        "learned_score": 0.0463,
+        "is_gold": false
+      },
+      {
+        "gene": "AURKB",
+        "learned_score": 0.0457,
+        "is_gold": false
+      },
+      {
+        "gene": "NUP205",
+        "learned_score": 0.0456,
+        "is_gold": false
+      },
+      {
+        "gene": "MED1",
+        "learned_score": 0.0452,
+        "is_gold": false
+      },
+      {
+        "gene": "EPHX2",
+        "learned_score": 0.0448,
+        "is_gold": false
+      },
+      {
+        "gene": "SUPT6H",
+        "learned_score": 0.0447,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP1",
+        "learned_score": 0.0445,
+        "is_gold": false
+      },
+      {
+        "gene": "PSAP",
+        "learned_score": 0.0441,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPN1",
+        "learned_score": 0.0439,
+        "is_gold": false
+      },
+      {
+        "gene": "GAB2",
+        "learned_score": 0.0439,
+        "is_gold": false
+      },
+      {
+        "gene": "TGFBR1",
+        "learned_score": 0.0438,
+        "is_gold": false
+      },
+      {
+        "gene": "SEC13",
+        "learned_score": 0.0438,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN2D",
+        "learned_score": 0.0437,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR6",
+        "learned_score": 0.0436,
+        "is_gold": false
+      },
+      {
+        "gene": "EPHA1",
+        "learned_score": 0.0436,
+        "is_gold": true
+      },
+      {
+        "gene": "GDI1",
+        "learned_score": 0.0436,
+        "is_gold": false
+      },
+      {
+        "gene": "MAPK14",
+        "learned_score": 0.0436,
+        "is_gold": false
+      },
+      {
+        "gene": "APOE",
+        "learned_score": 0.0434,
+        "is_gold": true
+      },
+      {
+        "gene": "HMGCR",
+        "learned_score": 0.0433,
+        "is_gold": false
+      },
+      {
+        "gene": "CDC25A",
+        "learned_score": 0.0429,
+        "is_gold": false
+      },
+      {
+        "gene": "RYR2",
+        "learned_score": 0.0428,
+        "is_gold": false
+      },
+      {
+        "gene": "CAV1",
+        "learned_score": 0.0428,
+        "is_gold": false
+      },
+      {
+        "gene": "ABI3",
+        "learned_score": 0.0427,
+        "is_gold": false
+      },
+      {
+        "gene": "ACHE",
+        "learned_score": 0.0427,
+        "is_gold": false
+      },
+      {
+        "gene": "PIP5K1A",
+        "learned_score": 0.0426,
+        "is_gold": false
+      },
+      {
+        "gene": "DIMT1",
+        "learned_score": 0.0425,
+        "is_gold": false
+      },
+      {
+        "gene": "RAB7A",
+        "learned_score": 0.0422,
+        "is_gold": false
+      },
+      {
+        "gene": "APOC1",
+        "learned_score": 0.0421,
+        "is_gold": false
+      },
+      {
+        "gene": "FBN1",
+        "learned_score": 0.0419,
+        "is_gold": false
+      },
+      {
+        "gene": "UQCRC1",
+        "learned_score": 0.0416,
+        "is_gold": false
+      },
+      {
+        "gene": "MTOR",
+        "learned_score": 0.0415,
+        "is_gold": false
+      },
+      {
+        "gene": "ABCA1",
+        "learned_score": 0.0415,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPN12",
+        "learned_score": 0.0415,
+        "is_gold": false
+      },
+      {
+        "gene": "NCSTN",
+        "learned_score": 0.0412,
+        "is_gold": false
+      },
+      {
+        "gene": "COPB1",
+        "learned_score": 0.0411,
+        "is_gold": false
+      },
+      {
+        "gene": "PIK3R2",
+        "learned_score": 0.0408,
+        "is_gold": false
+      },
+      {
+        "gene": "AP3D1",
+        "learned_score": 0.0407,
+        "is_gold": false
+      },
+      {
+        "gene": "PRKAB1",
+        "learned_score": 0.0406,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN3A",
+        "learned_score": 0.0404,
+        "is_gold": false
+      },
+      {
+        "gene": "OGG1",
+        "learned_score": 0.0403,
+        "is_gold": false
+      },
+      {
+        "gene": "TTN",
+        "learned_score": 0.04,
+        "is_gold": false
+      },
+      {
+        "gene": "CLTC",
+        "learned_score": 0.0399,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP1CB",
+        "learned_score": 0.0397,
+        "is_gold": false
+      },
+      {
+        "gene": "DYNC1I2",
+        "learned_score": 0.0395,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIA1",
+        "learned_score": 0.0391,
+        "is_gold": false
+      },
+      {
+        "gene": "GBF1",
+        "learned_score": 0.039,
+        "is_gold": false
+      },
+      {
+        "gene": "DHX15",
+        "learned_score": 0.0388,
+        "is_gold": false
+      },
+      {
+        "gene": "CASS4",
+        "learned_score": 0.0387,
+        "is_gold": false
+      },
+      {
+        "gene": "NECTIN2",
+        "learned_score": 0.0385,
+        "is_gold": false
+      },
+      {
+        "gene": "TRAPPC3",
+        "learned_score": 0.0384,
+        "is_gold": false
+      },
+      {
+        "gene": "IPO7",
+        "learned_score": 0.0381,
+        "is_gold": false
+      },
+      {
+        "gene": "NOC3L",
+        "learned_score": 0.0381,
+        "is_gold": false
+      },
+      {
+        "gene": "NOC4L",
+        "learned_score": 0.0381,
+        "is_gold": false
+      },
+      {
+        "gene": "PIKFYVE",
+        "learned_score": 0.0381,
+        "is_gold": false
+      },
+      {
+        "gene": "GAK",
+        "learned_score": 0.0379,
+        "is_gold": false
+      },
+      {
+        "gene": "IPO13",
+        "learned_score": 0.0378,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN5A",
+        "learned_score": 0.0378,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC6A4",
+        "learned_score": 0.0376,
+        "is_gold": false
+      },
+      {
+        "gene": "LMNB1",
+        "learned_score": 0.0376,
+        "is_gold": false
+      },
+      {
+        "gene": "SKP2",
+        "learned_score": 0.0375,
+        "is_gold": false
+      },
+      {
+        "gene": "PLRG1",
+        "learned_score": 0.0374,
+        "is_gold": false
+      },
+      {
+        "gene": "AP2S1",
+        "learned_score": 0.0373,
+        "is_gold": false
+      },
+      {
+        "gene": "PGR",
+        "learned_score": 0.0373,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP8",
+        "learned_score": 0.0369,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN2C",
+        "learned_score": 0.0368,
+        "is_gold": false
+      },
+      {
+        "gene": "ACACA",
+        "learned_score": 0.0368,
+        "is_gold": false
+      },
+      {
+        "gene": "CR1",
+        "learned_score": 0.0364,
+        "is_gold": true
+      },
+      {
+        "gene": "HTR2A",
+        "learned_score": 0.0363,
+        "is_gold": false
+      },
+      {
+        "gene": "RRP15",
+        "learned_score": 0.0362,
+        "is_gold": false
+      },
+      {
+        "gene": "TRRAP",
+        "learned_score": 0.0359,
+        "is_gold": false
+      },
+      {
+        "gene": "SHARPIN",
+        "learned_score": 0.0359,
+        "is_gold": false
+      },
+      {
+        "gene": "CDC25C",
+        "learned_score": 0.0359,
+        "is_gold": false
+      },
+      {
+        "gene": "VEGFC",
+        "learned_score": 0.0358,
+        "is_gold": false
+      },
+      {
+        "gene": "HTR1A",
+        "learned_score": 0.0357,
+        "is_gold": false
+      },
+      {
+        "gene": "CHRM1",
+        "learned_score": 0.0357,
+        "is_gold": false
+      },
+      {
+        "gene": "GLP1R",
+        "learned_score": 0.0356,
+        "is_gold": false
+      },
+      {
+        "gene": "IL6R",
+        "learned_score": 0.0355,
+        "is_gold": false
+      },
+      {
+        "gene": "PPAN",
+        "learned_score": 0.0354,
+        "is_gold": false
+      },
+      {
+        "gene": "ELMO2",
+        "learned_score": 0.0354,
+        "is_gold": false
+      },
+      {
+        "gene": "CTSH",
+        "learned_score": 0.0354,
+        "is_gold": false
+      },
+      {
+        "gene": "ATOH8",
+        "learned_score": 0.0353,
+        "is_gold": false
+      },
+      {
+        "gene": "TSPO",
+        "learned_score": 0.0353,
+        "is_gold": false
+      },
+      {
+        "gene": "CLU",
+        "learned_score": 0.0353,
+        "is_gold": true
+      },
+      {
+        "gene": "PIK3C2A",
+        "learned_score": 0.0353,
+        "is_gold": false
+      },
+      {
+        "gene": "PILRA",
+        "learned_score": 0.0352,
+        "is_gold": false
+      },
+      {
+        "gene": "PAF1",
+        "learned_score": 0.0352,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP4R1",
+        "learned_score": 0.0352,
+        "is_gold": false
+      },
+      {
+        "gene": "SCD",
+        "learned_score": 0.0351,
+        "is_gold": false
+      },
+      {
+        "gene": "DDX39B",
+        "learned_score": 0.0351,
+        "is_gold": false
+      },
+      {
+        "gene": "IRF4",
+        "learned_score": 0.0351,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP2R1A",
+        "learned_score": 0.0351,
+        "is_gold": false
+      },
+      {
+        "gene": "TTK",
+        "learned_score": 0.035,
+        "is_gold": false
+      },
+      {
+        "gene": "PICK1",
+        "learned_score": 0.0349,
+        "is_gold": false
+      },
+      {
+        "gene": "SNRPD3",
+        "learned_score": 0.0349,
+        "is_gold": false
+      },
+      {
+        "gene": "FCF1",
+        "learned_score": 0.0347,
+        "is_gold": false
+      },
+      {
+        "gene": "APH1A",
+        "learned_score": 0.0344,
+        "is_gold": false
+      },
+      {
+        "gene": "CDKN2B",
+        "learned_score": 0.0344,
+        "is_gold": false
+      },
+      {
+        "gene": "CHRM2",
+        "learned_score": 0.0344,
+        "is_gold": false
+      },
+      {
+        "gene": "RAP2B",
+        "learned_score": 0.0343,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP3R1",
+        "learned_score": 0.0343,
+        "is_gold": false
+      },
+      {
+        "gene": "COPA",
+        "learned_score": 0.0343,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP1CA",
+        "learned_score": 0.0343,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRA1",
+        "learned_score": 0.0341,
+        "is_gold": false
+      },
+      {
+        "gene": "AP3M1",
+        "learned_score": 0.034,
+        "is_gold": false
+      },
+      {
+        "gene": "COMP",
+        "learned_score": 0.034,
+        "is_gold": false
+      },
+      {
+        "gene": "TIMM44",
+        "learned_score": 0.0339,
+        "is_gold": false
+      },
+      {
+        "gene": "CTDSP1",
+        "learned_score": 0.0339,
+        "is_gold": false
+      },
+      {
+        "gene": "NKX2-3",
+        "learned_score": 0.0339,
+        "is_gold": false
+      },
+      {
+        "gene": "FTCD",
+        "learned_score": 0.0339,
+        "is_gold": false
+      },
+      {
+        "gene": "ACTR2",
+        "learned_score": 0.0339,
+        "is_gold": false
+      },
+      {
+        "gene": "BRD8",
+        "learned_score": 0.0338,
+        "is_gold": false
+      },
+      {
+        "gene": "TRAPPC5",
+        "learned_score": 0.0333,
+        "is_gold": false
+      },
+      {
+        "gene": "MAP2K7",
+        "learned_score": 0.0333,
+        "is_gold": false
+      },
+      {
+        "gene": "CDC5L",
+        "learned_score": 0.0332,
+        "is_gold": false
+      },
+      {
+        "gene": "PHKG2",
+        "learned_score": 0.0328,
+        "is_gold": false
+      },
+      {
+        "gene": "FERMT2",
+        "learned_score": 0.0328,
+        "is_gold": false
+      },
+      {
+        "gene": "MAP2K4",
+        "learned_score": 0.0328,
+        "is_gold": false
+      },
+      {
+        "gene": "ZBTB9",
+        "learned_score": 0.0326,
+        "is_gold": false
+      },
+      {
+        "gene": "ZC3H8",
+        "learned_score": 0.0325,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP6V1A",
+        "learned_score": 0.0325,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN1A",
+        "learned_score": 0.0325,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIN3B",
+        "learned_score": 0.0324,
+        "is_gold": false
+      },
+      {
+        "gene": "AP3B1",
+        "learned_score": 0.0324,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP7",
+        "learned_score": 0.0324,
+        "is_gold": false
+      },
+      {
+        "gene": "LILRB2",
+        "learned_score": 0.0323,
+        "is_gold": false
+      },
+      {
+        "gene": "HEATR1",
+        "learned_score": 0.0322,
+        "is_gold": false
+      },
+      {
+        "gene": "SMPD1",
+        "learned_score": 0.0319,
+        "is_gold": false
+      },
+      {
+        "gene": "IL34",
+        "learned_score": 0.0318,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC6A2",
+        "learned_score": 0.0318,
+        "is_gold": false
+      },
+      {
+        "gene": "ADRA2A",
+        "learned_score": 0.0318,
+        "is_gold": false
+      },
+      {
+        "gene": "GPX1",
+        "learned_score": 0.0317,
+        "is_gold": false
+      },
+      {
+        "gene": "CDC25B",
+        "learned_score": 0.0317,
+        "is_gold": false
+      },
+      {
+        "gene": "CAPN2",
+        "learned_score": 0.0317,
+        "is_gold": false
+      },
+      {
+        "gene": "PRDX1",
+        "learned_score": 0.0317,
+        "is_gold": false
+      },
+      {
+        "gene": "ACSL4",
+        "learned_score": 0.0316,
+        "is_gold": false
+      },
+      {
+        "gene": "CDKN1C",
+        "learned_score": 0.0311,
+        "is_gold": false
+      },
+      {
+        "gene": "FGFR3",
+        "learned_score": 0.0311,
+        "is_gold": false
+      },
+      {
+        "gene": "NVL",
+        "learned_score": 0.031,
+        "is_gold": false
+      },
+      {
+        "gene": "KAT7",
+        "learned_score": 0.0309,
+        "is_gold": false
+      },
+      {
+        "gene": "NCOR2",
+        "learned_score": 0.0309,
+        "is_gold": false
+      },
+      {
+        "gene": "MASTL",
+        "learned_score": 0.0308,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRS",
+        "learned_score": 0.0308,
+        "is_gold": false
+      },
+      {
+        "gene": "CLK2",
+        "learned_score": 0.0308,
+        "is_gold": false
+      },
+      {
+        "gene": "EEF2",
+        "learned_score": 0.0308,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC24A4",
+        "learned_score": 0.0308,
+        "is_gold": false
+      },
+      {
+        "gene": "APH1B",
+        "learned_score": 0.0306,
+        "is_gold": true
+      },
+      {
+        "gene": "MRPL33",
+        "learned_score": 0.0306,
+        "is_gold": false
+      },
+      {
+        "gene": "GNG4",
+        "learned_score": 0.0306,
+        "is_gold": false
+      },
+      {
+        "gene": "CAMLG",
+        "learned_score": 0.0305,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPS15",
+        "learned_score": 0.0305,
+        "is_gold": false
+      },
+      {
+        "gene": "COPB2",
+        "learned_score": 0.0304,
+        "is_gold": false
+      },
+      {
+        "gene": "CREB3L3",
+        "learned_score": 0.0304,
+        "is_gold": false
+      },
+      {
+        "gene": "COG8",
+        "learned_score": 0.0303,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFAB1",
+        "learned_score": 0.0302,
+        "is_gold": false
+      },
+      {
+        "gene": "MCM10",
+        "learned_score": 0.0301,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS2",
+        "learned_score": 0.0301,
+        "is_gold": false
+      },
+      {
+        "gene": "ACE",
+        "learned_score": 0.03,
+        "is_gold": true
+      },
+      {
+        "gene": "NUP160",
+        "learned_score": 0.0298,
+        "is_gold": false
+      },
+      {
+        "gene": "B4GALT1",
+        "learned_score": 0.0297,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP3CC",
+        "learned_score": 0.0297,
+        "is_gold": false
+      },
+      {
+        "gene": "SHMT1",
+        "learned_score": 0.0297,
+        "is_gold": false
+      },
+      {
+        "gene": "SNRPD2",
+        "learned_score": 0.0297,
+        "is_gold": false
+      },
+      {
+        "gene": "HFE",
+        "learned_score": 0.0295,
+        "is_gold": false
+      },
+      {
+        "gene": "DRD1",
+        "learned_score": 0.0294,
+        "is_gold": false
+      },
+      {
+        "gene": "DSTYK",
+        "learned_score": 0.0292,
+        "is_gold": false
+      },
+      {
+        "gene": "PAPOLA",
+        "learned_score": 0.029,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPL45",
+        "learned_score": 0.029,
+        "is_gold": false
+      },
+      {
+        "gene": "PSENEN",
+        "learned_score": 0.029,
+        "is_gold": false
+      },
+      {
+        "gene": "RANBP3",
+        "learned_score": 0.0289,
+        "is_gold": false
+      },
+      {
+        "gene": "STAT4",
+        "learned_score": 0.0289,
+        "is_gold": false
+      },
+      {
+        "gene": "TCF7L2",
+        "learned_score": 0.0289,
+        "is_gold": false
+      },
+      {
+        "gene": "NFKB2",
+        "learned_score": 0.0288,
+        "is_gold": false
+      },
+      {
+        "gene": "UQCRB",
+        "learned_score": 0.0288,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN2A",
+        "learned_score": 0.0288,
+        "is_gold": false
+      },
+      {
+        "gene": "CSNK2A2",
+        "learned_score": 0.0287,
+        "is_gold": false
+      },
+      {
+        "gene": "CNR1",
+        "learned_score": 0.0285,
+        "is_gold": false
+      },
+      {
+        "gene": "BCHE",
+        "learned_score": 0.0284,
+        "is_gold": false
+      },
+      {
+        "gene": "PTH",
+        "learned_score": 0.0284,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN4A",
+        "learned_score": 0.0283,
+        "is_gold": false
+      },
+      {
+        "gene": "PSKH1",
+        "learned_score": 0.0282,
+        "is_gold": false
+      },
+      {
+        "gene": "DRD4",
+        "learned_score": 0.0282,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRB3",
+        "learned_score": 0.0282,
+        "is_gold": false
+      },
+      {
+        "gene": "MS4A6A",
+        "learned_score": 0.0281,
+        "is_gold": true
+      },
+      {
+        "gene": "MAK",
+        "learned_score": 0.0281,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR14",
+        "learned_score": 0.0281,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR12",
+        "learned_score": 0.028,
+        "is_gold": false
+      },
+      {
+        "gene": "PDE4B",
+        "learned_score": 0.028,
+        "is_gold": false
+      },
+      {
+        "gene": "DLD",
+        "learned_score": 0.028,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS4",
+        "learned_score": 0.028,
+        "is_gold": false
+      },
+      {
+        "gene": "HES4",
+        "learned_score": 0.0279,
+        "is_gold": false
+      },
+      {
+        "gene": "ABCG1",
+        "learned_score": 0.0279,
+        "is_gold": false
+      },
+      {
+        "gene": "TARS2",
+        "learned_score": 0.0278,
+        "is_gold": false
+      },
+      {
+        "gene": "DRD3",
+        "learned_score": 0.0278,
+        "is_gold": false
+      },
+      {
+        "gene": "GOT1",
+        "learned_score": 0.0278,
+        "is_gold": false
+      },
+      {
+        "gene": "SF3B1",
+        "learned_score": 0.0278,
+        "is_gold": false
+      },
+      {
+        "gene": "B4GALT2",
+        "learned_score": 0.0276,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP25",
+        "learned_score": 0.0276,
+        "is_gold": false
+      },
+      {
+        "gene": "CAST",
+        "learned_score": 0.0276,
+        "is_gold": false
+      },
+      {
+        "gene": "DHX37",
+        "learned_score": 0.0276,
+        "is_gold": false
+      },
+      {
+        "gene": "NCK2",
+        "learned_score": 0.0276,
+        "is_gold": false
+      },
+      {
+        "gene": "ADRB3",
+        "learned_score": 0.0275,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN9A",
+        "learned_score": 0.0275,
+        "is_gold": false
+      },
+      {
+        "gene": "COX7C",
+        "learned_score": 0.0275,
+        "is_gold": false
+      },
+      {
+        "gene": "MELK",
+        "learned_score": 0.0275,
+        "is_gold": false
+      },
+      {
+        "gene": "RGMB",
+        "learned_score": 0.0274,
+        "is_gold": false
+      },
+      {
+        "gene": "HCN2",
+        "learned_score": 0.0269,
+        "is_gold": false
+      },
+      {
+        "gene": "AASS",
+        "learned_score": 0.0269,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR3",
+        "learned_score": 0.0269,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP5F1C",
+        "learned_score": 0.0268,
+        "is_gold": false
+      },
+      {
+        "gene": "SHROOM1",
+        "learned_score": 0.0267,
+        "is_gold": false
+      },
+      {
+        "gene": "LAMTOR1",
+        "learned_score": 0.0267,
+        "is_gold": false
+      },
+      {
+        "gene": "HSD17B12",
+        "learned_score": 0.0266,
+        "is_gold": false
+      },
+      {
+        "gene": "GOLGA2",
+        "learned_score": 0.0266,
+        "is_gold": false
+      },
+      {
+        "gene": "TFPI",
+        "learned_score": 0.0265,
+        "is_gold": false
+      },
+      {
+        "gene": "COPG1",
+        "learned_score": 0.0265,
+        "is_gold": false
+      },
+      {
+        "gene": "DNPEP",
+        "learned_score": 0.0264,
+        "is_gold": false
+      },
+      {
+        "gene": "ING3",
+        "learned_score": 0.0264,
+        "is_gold": false
+      },
+      {
+        "gene": "MMP13",
+        "learned_score": 0.0263,
+        "is_gold": false
+      },
+      {
+        "gene": "BLOC1S5",
+        "learned_score": 0.0262,
+        "is_gold": false
+      },
+      {
+        "gene": "TMEM106B",
+        "learned_score": 0.0262,
+        "is_gold": false
+      },
+      {
+        "gene": "L3MBTL3",
+        "learned_score": 0.0262,
+        "is_gold": false
+      },
+      {
+        "gene": "DOCK3",
+        "learned_score": 0.0261,
+        "is_gold": false
+      },
+      {
+        "gene": "ILF3",
+        "learned_score": 0.0261,
+        "is_gold": false
+      },
+      {
+        "gene": "NRIP1",
+        "learned_score": 0.0261,
+        "is_gold": false
+      },
+      {
+        "gene": "CSNK2B",
+        "learned_score": 0.026,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS8",
+        "learned_score": 0.026,
+        "is_gold": false
+      },
+      {
+        "gene": "KMT2C",
+        "learned_score": 0.026,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK12",
+        "learned_score": 0.0259,
+        "is_gold": false
+      },
+      {
+        "gene": "VPS28",
+        "learned_score": 0.0258,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN10A",
+        "learned_score": 0.0258,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP1R12A",
+        "learned_score": 0.0258,
+        "is_gold": false
+      },
+      {
+        "gene": "CHRM3",
+        "learned_score": 0.0257,
+        "is_gold": false
+      },
+      {
+        "gene": "BMP2K",
+        "learned_score": 0.0257,
+        "is_gold": false
+      },
+      {
+        "gene": "BRD2",
+        "learned_score": 0.0257,
+        "is_gold": false
+      },
+      {
+        "gene": "ARPC4",
+        "learned_score": 0.0257,
+        "is_gold": false
+      },
+      {
+        "gene": "PTGS1",
+        "learned_score": 0.0256,
+        "is_gold": false
+      },
+      {
+        "gene": "NEU1",
+        "learned_score": 0.0255,
+        "is_gold": false
+      },
+      {
+        "gene": "EXOC2",
+        "learned_score": 0.0255,
+        "is_gold": false
+      },
+      {
+        "gene": "MTFR1",
+        "learned_score": 0.0254,
+        "is_gold": false
+      },
+      {
+        "gene": "FGGY",
+        "learned_score": 0.0254,
+        "is_gold": false
+      },
+      {
+        "gene": "FOSL1",
+        "learned_score": 0.0254,
+        "is_gold": false
+      },
+      {
+        "gene": "VEZF1",
+        "learned_score": 0.0254,
+        "is_gold": false
+      },
+      {
+        "gene": "XPO7",
+        "learned_score": 0.0253,
+        "is_gold": false
+      },
+      {
+        "gene": "PPT1",
+        "learned_score": 0.0253,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC25A6",
+        "learned_score": 0.0253,
+        "is_gold": false
+      },
+      {
+        "gene": "TJP2",
+        "learned_score": 0.0252,
+        "is_gold": false
+      },
+      {
+        "gene": "ARFGEF1",
+        "learned_score": 0.0251,
+        "is_gold": false
+      },
+      {
+        "gene": "ARNT",
+        "learned_score": 0.025,
+        "is_gold": false
+      },
+      {
+        "gene": "TNPO3",
+        "learned_score": 0.0249,
+        "is_gold": false
+      },
+      {
+        "gene": "NUP93",
+        "learned_score": 0.0249,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRD",
+        "learned_score": 0.0248,
+        "is_gold": false
+      },
+      {
+        "gene": "CXXC1",
+        "learned_score": 0.0248,
+        "is_gold": false
+      },
+      {
+        "gene": "PNO1",
+        "learned_score": 0.0248,
+        "is_gold": false
+      },
+      {
+        "gene": "KIF18B",
+        "learned_score": 0.0247,
+        "is_gold": false
+      },
+      {
+        "gene": "WDHD1",
+        "learned_score": 0.0246,
+        "is_gold": false
+      },
+      {
+        "gene": "CGA",
+        "learned_score": 0.0245,
+        "is_gold": false
+      },
+      {
+        "gene": "PIM1",
+        "learned_score": 0.0245,
+        "is_gold": false
+      },
+      {
+        "gene": "GRIK5",
+        "learned_score": 0.0245,
+        "is_gold": false
+      },
+      {
+        "gene": "MTHFS",
+        "learned_score": 0.0244,
+        "is_gold": false
+      },
+      {
+        "gene": "ALDH8A1",
+        "learned_score": 0.0244,
+        "is_gold": false
+      },
+      {
+        "gene": "SBF1",
+        "learned_score": 0.0244,
+        "is_gold": false
+      },
+      {
+        "gene": "PTDSS1",
+        "learned_score": 0.0244,
+        "is_gold": false
+      },
+      {
+        "gene": "TET2",
+        "learned_score": 0.0244,
+        "is_gold": false
+      },
+      {
+        "gene": "EVX2",
+        "learned_score": 0.0243,
+        "is_gold": false
+      },
+      {
+        "gene": "NME9",
+        "learned_score": 0.0243,
+        "is_gold": false
+      },
+      {
+        "gene": "S100A4",
+        "learned_score": 0.0242,
+        "is_gold": false
+      },
+      {
+        "gene": "CDC42EP5",
+        "learned_score": 0.0241,
+        "is_gold": false
+      },
+      {
+        "gene": "KIF1A",
+        "learned_score": 0.0241,
+        "is_gold": false
+      },
+      {
+        "gene": "PVR",
+        "learned_score": 0.024,
+        "is_gold": false
+      },
+      {
+        "gene": "CCRL2",
+        "learned_score": 0.024,
+        "is_gold": false
+      },
+      {
+        "gene": "ITGB4",
+        "learned_score": 0.024,
+        "is_gold": false
+      },
+      {
+        "gene": "NOP16",
+        "learned_score": 0.0238,
+        "is_gold": false
+      },
+      {
+        "gene": "GM2A",
+        "learned_score": 0.0235,
+        "is_gold": false
+      },
+      {
+        "gene": "LSM6",
+        "learned_score": 0.0235,
+        "is_gold": false
+      },
+      {
+        "gene": "ADRA2C",
+        "learned_score": 0.0235,
+        "is_gold": false
+      },
+      {
+        "gene": "CSNK1A1",
+        "learned_score": 0.0235,
+        "is_gold": false
+      },
+      {
+        "gene": "COX7B",
+        "learned_score": 0.0235,
+        "is_gold": false
+      },
+      {
+        "gene": "COPZ1",
+        "learned_score": 0.0234,
+        "is_gold": false
+      },
+      {
+        "gene": "CLINT1",
+        "learned_score": 0.0234,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFV1",
+        "learned_score": 0.0232,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFA5",
+        "learned_score": 0.0231,
+        "is_gold": false
+      },
+      {
+        "gene": "SIGMAR1",
+        "learned_score": 0.023,
+        "is_gold": false
+      },
+      {
+        "gene": "ESRP2",
+        "learned_score": 0.023,
+        "is_gold": false
+      },
+      {
+        "gene": "PFKP",
+        "learned_score": 0.023,
+        "is_gold": false
+      },
+      {
+        "gene": "PAM16",
+        "learned_score": 0.0229,
+        "is_gold": false
+      },
+      {
+        "gene": "LCMT1",
+        "learned_score": 0.0228,
+        "is_gold": false
+      },
+      {
+        "gene": "CHRNA7",
+        "learned_score": 0.0227,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC36A1",
+        "learned_score": 0.0226,
+        "is_gold": false
+      },
+      {
+        "gene": "ADRA2B",
+        "learned_score": 0.0226,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPL34",
+        "learned_score": 0.0226,
+        "is_gold": false
+      },
+      {
+        "gene": "WRAP53",
+        "learned_score": 0.0225,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS5",
+        "learned_score": 0.0225,
+        "is_gold": false
+      },
+      {
+        "gene": "TAOK1",
+        "learned_score": 0.0224,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFA6",
+        "learned_score": 0.0224,
+        "is_gold": false
+      },
+      {
+        "gene": "DDR2",
+        "learned_score": 0.0223,
+        "is_gold": false
+      },
+      {
+        "gene": "COX7A1",
+        "learned_score": 0.0223,
+        "is_gold": false
+      },
+      {
+        "gene": "SMG8",
+        "learned_score": 0.0221,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPS27",
+        "learned_score": 0.0221,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC35C1",
+        "learned_score": 0.0221,
+        "is_gold": false
+      },
+      {
+        "gene": "COX6A2",
+        "learned_score": 0.022,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC18A2",
+        "learned_score": 0.0219,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP6V1B2",
+        "learned_score": 0.0219,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS1",
+        "learned_score": 0.0219,
+        "is_gold": false
+      },
+      {
+        "gene": "SNX3",
+        "learned_score": 0.0218,
+        "is_gold": false
+      },
+      {
+        "gene": "KLKB1",
+        "learned_score": 0.0217,
+        "is_gold": false
+      },
+      {
+        "gene": "RXRG",
+        "learned_score": 0.0217,
+        "is_gold": false
+      },
+      {
+        "gene": "SQLE",
+        "learned_score": 0.0217,
+        "is_gold": false
+      },
+      {
+        "gene": "TPST2",
+        "learned_score": 0.0216,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR9",
+        "learned_score": 0.0216,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF629",
+        "learned_score": 0.0215,
+        "is_gold": false
+      },
+      {
+        "gene": "HCN4",
+        "learned_score": 0.0215,
+        "is_gold": false
+      },
+      {
+        "gene": "AOPEP",
+        "learned_score": 0.0214,
+        "is_gold": false
+      },
+      {
+        "gene": "AKAP11",
+        "learned_score": 0.0214,
+        "is_gold": false
+      },
+      {
+        "gene": "LAMTOR3",
+        "learned_score": 0.0213,
+        "is_gold": false
+      },
+      {
+        "gene": "TFCP2L1",
+        "learned_score": 0.0212,
+        "is_gold": false
+      },
+      {
+        "gene": "PURA",
+        "learned_score": 0.0212,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP1R15B",
+        "learned_score": 0.0212,
+        "is_gold": false
+      },
+      {
+        "gene": "HEXB",
+        "learned_score": 0.0212,
+        "is_gold": false
+      },
+      {
+        "gene": "FASTK",
+        "learned_score": 0.0211,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRB1",
+        "learned_score": 0.0211,
+        "is_gold": false
+      },
+      {
+        "gene": "SPTLC2",
+        "learned_score": 0.021,
+        "is_gold": false
+      },
+      {
+        "gene": "ST3GAL4",
+        "learned_score": 0.021,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRA",
+        "learned_score": 0.021,
+        "is_gold": false
+      },
+      {
+        "gene": "ATF5",
+        "learned_score": 0.0207,
+        "is_gold": false
+      },
+      {
+        "gene": "NISCH",
+        "learned_score": 0.0207,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRG2",
+        "learned_score": 0.0207,
+        "is_gold": false
+      },
+      {
+        "gene": "ARPC5L",
+        "learned_score": 0.0207,
+        "is_gold": false
+      },
+      {
+        "gene": "PANK1",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "CDH13",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFC2",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC25A4",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "BARHL2",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFA8",
+        "learned_score": 0.0205,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFB7",
+        "learned_score": 0.0204,
+        "is_gold": false
+      },
+      {
+        "gene": "TBX5",
+        "learned_score": 0.0204,
+        "is_gold": false
+      },
+      {
+        "gene": "H2BC4",
+        "learned_score": 0.0204,
+        "is_gold": false
+      },
+      {
+        "gene": "HTR6",
+        "learned_score": 0.0203,
+        "is_gold": false
+      },
+      {
+        "gene": "CHRM4",
+        "learned_score": 0.0203,
+        "is_gold": false
+      },
+      {
+        "gene": "MT-ND1",
+        "learned_score": 0.0203,
+        "is_gold": false
+      },
+      {
+        "gene": "FADS2",
+        "learned_score": 0.0202,
+        "is_gold": false
+      },
+      {
+        "gene": "CACNA1A",
+        "learned_score": 0.0202,
+        "is_gold": false
+      },
+      {
+        "gene": "PFKL",
+        "learned_score": 0.0202,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFB9",
+        "learned_score": 0.0202,
+        "is_gold": false
+      },
+      {
+        "gene": "SON",
+        "learned_score": 0.0201,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFB10",
+        "learned_score": 0.0201,
+        "is_gold": false
+      },
+      {
+        "gene": "CYSLTR1",
+        "learned_score": 0.02,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFC1",
+        "learned_score": 0.02,
+        "is_gold": false
+      },
+      {
+        "gene": "S100A13",
+        "learned_score": 0.0198,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPL35",
+        "learned_score": 0.0198,
+        "is_gold": false
+      },
+      {
+        "gene": "MDN1",
+        "learned_score": 0.0197,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFA9",
+        "learned_score": 0.0197,
+        "is_gold": false
+      },
+      {
+        "gene": "KMT2B",
+        "learned_score": 0.0197,
+        "is_gold": false
+      },
+      {
+        "gene": "JAZF1",
+        "learned_score": 0.0197,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN7A",
+        "learned_score": 0.0196,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFB6",
+        "learned_score": 0.0196,
+        "is_gold": false
+      },
+      {
+        "gene": "PTGFR",
+        "learned_score": 0.0195,
+        "is_gold": false
+      },
+      {
+        "gene": "RPS6KC1",
+        "learned_score": 0.0195,
+        "is_gold": false
+      },
+      {
+        "gene": "SCLY",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "GNPAT",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "DLX2",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFB4",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "CNTNAP2",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "RHOH",
+        "learned_score": 0.0193,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFV2",
+        "learned_score": 0.0192,
+        "is_gold": false
+      },
+      {
+        "gene": "RAB9A",
+        "learned_score": 0.0192,
+        "is_gold": false
+      },
+      {
+        "gene": "MVP",
+        "learned_score": 0.0191,
+        "is_gold": false
+      },
+      {
+        "gene": "NUP88",
+        "learned_score": 0.0191,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFS6",
+        "learned_score": 0.0191,
+        "is_gold": false
+      },
+      {
+        "gene": "EPM2A",
+        "learned_score": 0.019,
+        "is_gold": false
+      },
+      {
+        "gene": "ITPKB",
+        "learned_score": 0.019,
+        "is_gold": false
+      },
+      {
+        "gene": "ARL1",
+        "learned_score": 0.019,
+        "is_gold": false
+      },
+      {
+        "gene": "NDUFA7",
+        "learned_score": 0.019,
+        "is_gold": false
+      },
+      {
+        "gene": "HTR2C",
+        "learned_score": 0.0189,
+        "is_gold": false
+      },
+      {
+        "gene": "NUAK2",
+        "learned_score": 0.0189,
+        "is_gold": false
+      },
+      {
+        "gene": "FOXK1",
+        "learned_score": 0.0188,
+        "is_gold": false
+      },
+      {
+        "gene": "SPEN",
+        "learned_score": 0.0188,
+        "is_gold": false
+      },
+      {
+        "gene": "GMPR",
+        "learned_score": 0.0187,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN11A",
+        "learned_score": 0.0186,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPL42",
+        "learned_score": 0.0186,
+        "is_gold": false
+      },
+      {
+        "gene": "SDK1",
+        "learned_score": 0.0186,
+        "is_gold": false
+      },
+      {
+        "gene": "WNT2",
+        "learned_score": 0.0184,
+        "is_gold": false
+      },
+      {
+        "gene": "NBPF4",
+        "learned_score": 0.0184,
+        "is_gold": false
+      },
+      {
+        "gene": "PAPSS1",
+        "learned_score": 0.0183,
+        "is_gold": false
+      },
+      {
+        "gene": "BCL11A",
+        "learned_score": 0.0183,
+        "is_gold": false
+      },
+      {
+        "gene": "DUSP2",
+        "learned_score": 0.0181,
+        "is_gold": false
+      },
+      {
+        "gene": "AKAP8L",
+        "learned_score": 0.0181,
+        "is_gold": false
+      },
+      {
+        "gene": "CAPNS2",
+        "learned_score": 0.018,
+        "is_gold": false
+      },
+      {
+        "gene": "DYRK1B",
+        "learned_score": 0.018,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF462",
+        "learned_score": 0.018,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF652",
+        "learned_score": 0.0179,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRP",
+        "learned_score": 0.0179,
+        "is_gold": false
+      },
+      {
+        "gene": "FAHD2A",
+        "learned_score": 0.0178,
+        "is_gold": false
+      },
+      {
+        "gene": "MYL6B",
+        "learned_score": 0.0178,
+        "is_gold": false
+      },
+      {
+        "gene": "GSTO1",
+        "learned_score": 0.0177,
+        "is_gold": false
+      },
+      {
+        "gene": "GGPS1",
+        "learned_score": 0.0177,
+        "is_gold": false
+      },
+      {
+        "gene": "GTF2I",
+        "learned_score": 0.0177,
+        "is_gold": false
+      },
+      {
+        "gene": "MS4A4E",
+        "learned_score": 0.0177,
+        "is_gold": false
+      },
+      {
+        "gene": "SPPL2A",
+        "learned_score": 0.0176,
+        "is_gold": false
+      },
+      {
+        "gene": "ACP5",
+        "learned_score": 0.0176,
+        "is_gold": false
+      },
+      {
+        "gene": "FECH",
+        "learned_score": 0.0175,
+        "is_gold": false
+      },
+      {
+        "gene": "BTF3",
+        "learned_score": 0.0175,
+        "is_gold": false
+      },
+      {
+        "gene": "ECE1",
+        "learned_score": 0.0174,
+        "is_gold": false
+      },
+      {
+        "gene": "NEK6",
+        "learned_score": 0.0173,
+        "is_gold": false
+      },
+      {
+        "gene": "CAPNS1",
+        "learned_score": 0.0173,
+        "is_gold": false
+      },
+      {
+        "gene": "PDE9A",
+        "learned_score": 0.0172,
+        "is_gold": false
+      },
+      {
+        "gene": "FADS1",
+        "learned_score": 0.0172,
+        "is_gold": false
+      },
+      {
+        "gene": "MRPS17",
+        "learned_score": 0.0172,
+        "is_gold": false
+      },
+      {
+        "gene": "CDK11B",
+        "learned_score": 0.0171,
+        "is_gold": false
+      },
+      {
+        "gene": "HIC1",
+        "learned_score": 0.0171,
+        "is_gold": false
+      },
+      {
+        "gene": "RABEP1",
+        "learned_score": 0.0171,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRJ",
+        "learned_score": 0.0171,
+        "is_gold": false
+      },
+      {
+        "gene": "MGAT1",
+        "learned_score": 0.017,
+        "is_gold": false
+      },
+      {
+        "gene": "TRAPPC11",
+        "learned_score": 0.017,
+        "is_gold": false
+      },
+      {
+        "gene": "QPCT",
+        "learned_score": 0.0169,
+        "is_gold": false
+      },
+      {
+        "gene": "CDYL",
+        "learned_score": 0.0169,
+        "is_gold": false
+      },
+      {
+        "gene": "TANK",
+        "learned_score": 0.0169,
+        "is_gold": false
+      },
+      {
+        "gene": "PRDX2",
+        "learned_score": 0.0168,
+        "is_gold": false
+      },
+      {
+        "gene": "RAB20",
+        "learned_score": 0.0168,
+        "is_gold": false
+      },
+      {
+        "gene": "CKMT1B",
+        "learned_score": 0.0167,
+        "is_gold": false
+      },
+      {
+        "gene": "CYB5R4",
+        "learned_score": 0.0165,
+        "is_gold": false
+      },
+      {
+        "gene": "FCRL2",
+        "learned_score": 0.0165,
+        "is_gold": false
+      },
+      {
+        "gene": "RAD51C",
+        "learned_score": 0.0165,
+        "is_gold": false
+      },
+      {
+        "gene": "LRRC25",
+        "learned_score": 0.0164,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP1A1",
+        "learned_score": 0.0164,
+        "is_gold": false
+      },
+      {
+        "gene": "ACY3",
+        "learned_score": 0.0164,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRA3",
+        "learned_score": 0.0164,
+        "is_gold": false
+      },
+      {
+        "gene": "CAMK1G",
+        "learned_score": 0.0164,
+        "is_gold": false
+      },
+      {
+        "gene": "NAGPA",
+        "learned_score": 0.0163,
+        "is_gold": false
+      },
+      {
+        "gene": "CLK3",
+        "learned_score": 0.0163,
+        "is_gold": false
+      },
+      {
+        "gene": "MAP4K2",
+        "learned_score": 0.0163,
+        "is_gold": false
+      },
+      {
+        "gene": "FUZ",
+        "learned_score": 0.0163,
+        "is_gold": false
+      },
+      {
+        "gene": "MLPH",
+        "learned_score": 0.0162,
+        "is_gold": false
+      },
+      {
+        "gene": "HINFP",
+        "learned_score": 0.0162,
+        "is_gold": false
+      },
+      {
+        "gene": "ABCC9",
+        "learned_score": 0.0161,
+        "is_gold": false
+      },
+      {
+        "gene": "PXK",
+        "learned_score": 0.016,
+        "is_gold": false
+      },
+      {
+        "gene": "MTHFD1L",
+        "learned_score": 0.016,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP6V1C1",
+        "learned_score": 0.0159,
+        "is_gold": false
+      },
+      {
+        "gene": "SLIT3",
+        "learned_score": 0.0159,
+        "is_gold": false
+      },
+      {
+        "gene": "MINK1",
+        "learned_score": 0.0158,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC7A14",
+        "learned_score": 0.0158,
+        "is_gold": false
+      },
+      {
+        "gene": "MINDY2",
+        "learned_score": 0.0158,
+        "is_gold": false
+      },
+      {
+        "gene": "ZKSCAN1",
+        "learned_score": 0.0157,
+        "is_gold": false
+      },
+      {
+        "gene": "PPP1R10",
+        "learned_score": 0.0157,
+        "is_gold": false
+      },
+      {
+        "gene": "IDUA",
+        "learned_score": 0.0157,
+        "is_gold": false
+      },
+      {
+        "gene": "SCIMP",
+        "learned_score": 0.0157,
+        "is_gold": false
+      },
+      {
+        "gene": "CCDC6",
+        "learned_score": 0.0157,
+        "is_gold": false
+      },
+      {
+        "gene": "NME4",
+        "learned_score": 0.0156,
+        "is_gold": false
+      },
+      {
+        "gene": "TSPAN14",
+        "learned_score": 0.0156,
+        "is_gold": false
+      },
+      {
+        "gene": "PITX2",
+        "learned_score": 0.0156,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF207",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "ABHD6",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "CCDC88A",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "DSTN",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "NEK1",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "EPB41L1",
+        "learned_score": 0.0155,
+        "is_gold": false
+      },
+      {
+        "gene": "ULK4",
+        "learned_score": 0.0154,
+        "is_gold": false
+      },
+      {
+        "gene": "HAGH",
+        "learned_score": 0.0153,
+        "is_gold": false
+      },
+      {
+        "gene": "DHX30",
+        "learned_score": 0.0153,
+        "is_gold": false
+      },
+      {
+        "gene": "MTMR10",
+        "learned_score": 0.0152,
+        "is_gold": false
+      },
+      {
+        "gene": "ECHDC3",
+        "learned_score": 0.0152,
+        "is_gold": false
+      },
+      {
+        "gene": "ZFHX3",
+        "learned_score": 0.0152,
+        "is_gold": false
+      },
+      {
+        "gene": "NGLY1",
+        "learned_score": 0.0151,
+        "is_gold": false
+      },
+      {
+        "gene": "PSME4",
+        "learned_score": 0.0149,
+        "is_gold": false
+      },
+      {
+        "gene": "ARHGEF17",
+        "learned_score": 0.0148,
+        "is_gold": false
+      },
+      {
+        "gene": "PDE7B",
+        "learned_score": 0.0148,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRO",
+        "learned_score": 0.0148,
+        "is_gold": false
+      },
+      {
+        "gene": "MPRIP",
+        "learned_score": 0.0148,
+        "is_gold": false
+      },
+      {
+        "gene": "PRDM9",
+        "learned_score": 0.0148,
+        "is_gold": false
+      },
+      {
+        "gene": "KHDRBS2",
+        "learned_score": 0.0146,
+        "is_gold": false
+      },
+      {
+        "gene": "PANK3",
+        "learned_score": 0.0145,
+        "is_gold": false
+      },
+      {
+        "gene": "OLFM4",
+        "learned_score": 0.0144,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC26A1",
+        "learned_score": 0.0144,
+        "is_gold": false
+      },
+      {
+        "gene": "ATP8B4",
+        "learned_score": 0.0143,
+        "is_gold": false
+      },
+      {
+        "gene": "FBXL22",
+        "learned_score": 0.0143,
+        "is_gold": false
+      },
+      {
+        "gene": "VARS2",
+        "learned_score": 0.0141,
+        "is_gold": false
+      },
+      {
+        "gene": "RASGEF1C",
+        "learned_score": 0.014,
+        "is_gold": false
+      },
+      {
+        "gene": "EMC4",
+        "learned_score": 0.0139,
+        "is_gold": false
+      },
+      {
+        "gene": "ZFTA",
+        "learned_score": 0.0138,
+        "is_gold": false
+      },
+      {
+        "gene": "HNF4G",
+        "learned_score": 0.0137,
+        "is_gold": false
+      },
+      {
+        "gene": "CEP170",
+        "learned_score": 0.0136,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF827",
+        "learned_score": 0.0135,
+        "is_gold": false
+      },
+      {
+        "gene": "MS4A6E",
+        "learned_score": 0.0135,
+        "is_gold": false
+      },
+      {
+        "gene": "ZNF568",
+        "learned_score": 0.0135,
+        "is_gold": false
+      },
+      {
+        "gene": "GABRA4",
+        "learned_score": 0.0132,
+        "is_gold": false
+      },
+      {
+        "gene": "LIPG",
+        "learned_score": 0.0131,
+        "is_gold": false
+      },
+      {
+        "gene": "MOB3B",
+        "learned_score": 0.0129,
+        "is_gold": false
+      },
+      {
+        "gene": "TSPOAP1",
+        "learned_score": 0.0128,
+        "is_gold": false
+      },
+      {
+        "gene": "SCN3A",
+        "learned_score": 0.0127,
+        "is_gold": false
+      },
+      {
+        "gene": "LILRA5",
+        "learned_score": 0.0127,
+        "is_gold": false
+      },
+      {
+        "gene": "SDCCAG8",
+        "learned_score": 0.0126,
+        "is_gold": false
+      },
+      {
+        "gene": "TRMT10C",
+        "learned_score": 0.0125,
+        "is_gold": false
+      },
+      {
+        "gene": "SH3BGRL",
+        "learned_score": 0.0123,
+        "is_gold": false
+      },
+      {
+        "gene": "BRSK2",
+        "learned_score": 0.0122,
+        "is_gold": false
+      },
+      {
+        "gene": "DIO2",
+        "learned_score": 0.0122,
+        "is_gold": false
+      },
+      {
+        "gene": "KRT86",
+        "learned_score": 0.0118,
+        "is_gold": false
+      },
+      {
+        "gene": "USP6NL",
+        "learned_score": 0.0118,
+        "is_gold": false
+      },
+      {
+        "gene": "PRSS8",
+        "learned_score": 0.0117,
+        "is_gold": false
+      },
+      {
+        "gene": "TCN2",
+        "learned_score": 0.0117,
+        "is_gold": false
+      },
+      {
+        "gene": "GLIS3",
+        "learned_score": 0.0116,
+        "is_gold": false
+      },
+      {
+        "gene": "ELOVL7",
+        "learned_score": 0.0116,
+        "is_gold": false
+      },
+      {
+        "gene": "NFIB",
+        "learned_score": 0.0115,
+        "is_gold": false
+      },
+      {
+        "gene": "WNK3",
+        "learned_score": 0.0113,
+        "is_gold": false
+      },
+      {
+        "gene": "PTPRN2",
+        "learned_score": 0.0108,
+        "is_gold": false
+      },
+      {
+        "gene": "CLNK",
+        "learned_score": 0.0108,
+        "is_gold": false
+      },
+      {
+        "gene": "SLC39A10",
+        "learned_score": 0.0107,
+        "is_gold": false
+      },
+      {
+        "gene": "SNRK",
+        "learned_score": 0.0089,
+        "is_gold": false
+      }
+    ]
+  },
+  "shortlist_in_learned_ranking": [
+    {
+      "gene": "APP",
+      "learned_score": 0.0896,
+      "learned_rank": 5
+    },
+    {
+      "gene": "TREM2",
+      "learned_score": 0.0474,
+      "learned_rank": 85
+    },
+    {
+      "gene": "BIN1",
+      "learned_score": 0.0915,
+      "learned_rank": 4
+    },
+    {
+      "gene": "BACE1",
+      "learned_score": 0.0503,
+      "learned_rank": 76
+    },
+    {
+      "gene": "MAPT",
+      "learned_score": 0.1093,
+      "learned_rank": 2
+    },
+    {
+      "gene": "APOE",
+      "learned_score": 0.0434,
+      "learned_rank": 110
+    },
+    {
+      "gene": "PSEN1",
+      "learned_score": 0.0554,
+      "learned_rank": 56
+    },
+    {
+      "gene": "CLU",
+      "learned_score": 0.0353,
+      "learned_rank": 175
+    },
+    {
+      "gene": "ESR1",
+      "learned_score": 0.1097,
+      "learned_rank": 1
+    }
+  ],
+  "top_learned": [
+    {
+      "gene": "ESR1",
+      "learned_score": 0.1097,
+      "is_gold": false
+    },
+    {
+      "gene": "MAPT",
+      "learned_score": 0.1093,
+      "is_gold": false
+    },
+    {
+      "gene": "PIK3R1",
+      "learned_score": 0.0926,
+      "is_gold": false
+    },
+    {
+      "gene": "BIN1",
+      "learned_score": 0.0915,
+      "is_gold": true
+    },
+    {
+      "gene": "APP",
+      "learned_score": 0.0896,
+      "is_gold": false
+    },
+    {
+      "gene": "ATM",
+      "learned_score": 0.0879,
+      "is_gold": false
+    },
+    {
+      "gene": "PLCG2",
+      "learned_score": 0.0758,
+      "is_gold": true
+    },
+    {
+      "gene": "SCARB1",
+      "learned_score": 0.0753,
+      "is_gold": false
+    },
+    {
+      "gene": "JUN",
+      "learned_score": 0.0749,
+      "is_gold": false
+    },
+    {
+      "gene": "CDKN2A",
+      "learned_score": 0.0747,
+      "is_gold": false
+    },
+    {
+      "gene": "PICALM",
+      "learned_score": 0.0728,
+      "is_gold": true
+    },
+    {
+      "gene": "CDKN1A",
+      "learned_score": 0.0721,
+      "is_gold": false
+    },
+    {
+      "gene": "CREB1",
+      "learned_score": 0.0718,
+      "is_gold": false
+    },
+    {
+      "gene": "AXL",
+      "learned_score": 0.0706,
+      "is_gold": false
+    },
+    {
+      "gene": "CANX",
+      "learned_score": 0.0697,
+      "is_gold": false
+    },
+    {
+      "gene": "HIF1A",
+      "learned_score": 0.0693,
+      "is_gold": false
+    },
+    {
+      "gene": "APOB",
+      "learned_score": 0.0688,
+      "is_gold": false
+    },
+    {
+      "gene": "CD2AP",
+      "learned_score": 0.0687,
+      "is_gold": false
+    },
+    {
+      "gene": "FOXO3",
+      "learned_score": 0.0686,
+      "is_gold": false
+    },
+    {
+      "gene": "AURKA",
+      "learned_score": 0.0685,
+      "is_gold": false
+    }
+  ]
+}

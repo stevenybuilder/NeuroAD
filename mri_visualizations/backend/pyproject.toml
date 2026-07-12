@@ -1,0 +1,29 @@
+[project]
+name = "silent-failure-guard"
+version = "0.1.0"
+description = "Verification harness + interactive 3D annotation viewer for brain-MRI silent failures"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "nibabel",
+    "numpy",
+    "scipy",
+    "scikit-image",
+    "pydantic>=2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+include = ["sfg*"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-select = ["I"]  # isort
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

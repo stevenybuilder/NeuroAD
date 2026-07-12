@@ -1,0 +1,333 @@
+{
+  "generated_utc": "2026-07-12T04:25:28.261016+00:00",
+  "prefer_offline": false,
+  "weights": {
+    "pi4ad_priority": 0.3,
+    "ot_assoc_heldout": 0.35,
+    "net_centrality": 0.2,
+    "struct_confidence": 0.15,
+    "boltz_confidence": 0.15
+  },
+  "overall": [
+    {
+      "gene": "APP",
+      "composite_score": 0.7827,
+      "n_signals": 5,
+      "pi4ad_priority": 8.597,
+      "pi4ad_rank": 18,
+      "ot_assoc_heldout": 0.7645,
+      "net_centrality": 0.059912,
+      "net_degree": 66,
+      "struct_plddt": 67.4,
+      "boltz_confidence": 0.5874
+    },
+    {
+      "gene": "MAPK1",
+      "composite_score": 0.7746,
+      "n_signals": 4,
+      "pi4ad_priority": 7.966,
+      "pi4ad_rank": 64,
+      "ot_assoc_heldout": 0.6807,
+      "net_centrality": 0.061721,
+      "net_degree": 9,
+      "struct_plddt": 90.4,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "ESR1",
+      "composite_score": 0.6888,
+      "n_signals": 4,
+      "pi4ad_priority": 7.992,
+      "pi4ad_rank": 61,
+      "ot_assoc_heldout": 0.7511,
+      "net_centrality": 0.060305,
+      "net_degree": 10,
+      "struct_plddt": 66.4,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "TREM2",
+      "composite_score": 0.5614,
+      "n_signals": 4,
+      "pi4ad_priority": 8.135,
+      "pi4ad_rank": 49,
+      "ot_assoc_heldout": 0.6411,
+      "net_centrality": 0.056087,
+      "net_degree": 32,
+      "struct_plddt": 76.8,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "BIN1",
+      "composite_score": 0.5213,
+      "n_signals": 4,
+      "pi4ad_priority": 6.754,
+      "pi4ad_rank": 287,
+      "ot_assoc_heldout": 0.9805,
+      "net_centrality": 0.054781,
+      "net_degree": 43,
+      "struct_plddt": 66.7,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "HRAS",
+      "composite_score": 0.5126,
+      "n_signals": 4,
+      "pi4ad_priority": 8.19,
+      "pi4ad_rank": 45,
+      "ot_assoc_heldout": 0.3028,
+      "net_centrality": 0.05841,
+      "net_degree": 5,
+      "struct_plddt": 91.9,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "BACE1",
+      "composite_score": 0.4629,
+      "n_signals": 5,
+      "pi4ad_priority": 5.688,
+      "pi4ad_rank": 781,
+      "ot_assoc_heldout": 0.6975,
+      "net_centrality": 0.056309,
+      "net_degree": 35,
+      "struct_plddt": 87.5,
+      "boltz_confidence": 0.5874
+    },
+    {
+      "gene": "APOE",
+      "composite_score": 0.4369,
+      "n_signals": 5,
+      "pi4ad_priority": 7.151,
+      "pi4ad_rank": 185,
+      "ot_assoc_heldout": 0.4233,
+      "net_centrality": 0.05834,
+      "net_degree": 66,
+      "struct_plddt": 75.5,
+      "boltz_confidence": 0.508
+    },
+    {
+      "gene": "MAPT",
+      "composite_score": 0.4077,
+      "n_signals": 5,
+      "pi4ad_priority": 7.304,
+      "pi4ad_rank": 151,
+      "ot_assoc_heldout": 0.5956,
+      "net_centrality": 0.060021,
+      "net_degree": 41,
+      "struct_plddt": 49.2,
+      "boltz_confidence": 0.3729
+    },
+    {
+      "gene": "CLU",
+      "composite_score": 0.3677,
+      "n_signals": 4,
+      "pi4ad_priority": 6.738,
+      "pi4ad_rank": 292,
+      "ot_assoc_heldout": 0.506,
+      "net_centrality": 0.056719,
+      "net_degree": 51,
+      "struct_plddt": 77.3,
+      "boltz_confidence": null
+    },
+    {
+      "gene": "PSEN1",
+      "composite_score": 0.3526,
+      "n_signals": 4,
+      "pi4ad_priority": 6.211,
+      "pi4ad_rank": 492,
+      "ot_assoc_heldout": 0.588,
+      "net_centrality": 0.057243,
+      "net_degree": 44,
+      "struct_plddt": 72.1,
+      "boltz_confidence": null
+    }
+  ],
+  "by_mechanism": {
+    "amyloid_cascade": [
+      {
+        "gene": "APP",
+        "composite_score": 0.7827,
+        "n_signals": 5,
+        "pi4ad_priority": 8.597,
+        "pi4ad_rank": 18,
+        "ot_assoc_heldout": 0.7645,
+        "net_centrality": 0.059912,
+        "net_degree": 66,
+        "struct_plddt": 67.4,
+        "boltz_confidence": 0.5874
+      },
+      {
+        "gene": "ESR1",
+        "composite_score": 0.6888,
+        "n_signals": 4,
+        "pi4ad_priority": 7.992,
+        "pi4ad_rank": 61,
+        "ot_assoc_heldout": 0.7511,
+        "net_centrality": 0.060305,
+        "net_degree": 10,
+        "struct_plddt": 66.4,
+        "boltz_confidence": null
+      },
+      {
+        "gene": "BACE1",
+        "composite_score": 0.4629,
+        "n_signals": 5,
+        "pi4ad_priority": 5.688,
+        "pi4ad_rank": 781,
+        "ot_assoc_heldout": 0.6975,
+        "net_centrality": 0.056309,
+        "net_degree": 35,
+        "struct_plddt": 87.5,
+        "boltz_confidence": 0.5874
+      },
+      {
+        "gene": "APOE",
+        "composite_score": 0.4369,
+        "n_signals": 5,
+        "pi4ad_priority": 7.151,
+        "pi4ad_rank": 185,
+        "ot_assoc_heldout": 0.4233,
+        "net_centrality": 0.05834,
+        "net_degree": 66,
+        "struct_plddt": 75.5,
+        "boltz_confidence": 0.508
+      },
+      {
+        "gene": "MAPT",
+        "composite_score": 0.4077,
+        "n_signals": 5,
+        "pi4ad_priority": 7.304,
+        "pi4ad_rank": 151,
+        "ot_assoc_heldout": 0.5956,
+        "net_centrality": 0.060021,
+        "net_degree": 41,
+        "struct_plddt": 49.2,
+        "boltz_confidence": 0.3729
+      },
+      {
+        "gene": "PSEN1",
+        "composite_score": 0.3526,
+        "n_signals": 4,
+        "pi4ad_priority": 6.211,
+        "pi4ad_rank": 492,
+        "ot_assoc_heldout": 0.588,
+        "net_centrality": 0.057243,
+        "net_degree": 44,
+        "struct_plddt": 72.1,
+        "boltz_confidence": null
+      }
+    ],
+    "glial": [
+      {
+        "gene": "MAPK1",
+        "composite_score": 0.7746,
+        "n_signals": 4,
+        "pi4ad_priority": 7.966,
+        "pi4ad_rank": 64,
+        "ot_assoc_heldout": 0.6807,
+        "net_centrality": 0.061721,
+        "net_degree": 9,
+        "struct_plddt": 90.4,
+        "boltz_confidence": null
+      },
+      {
+        "gene": "TREM2",
+        "composite_score": 0.5614,
+        "n_signals": 4,
+        "pi4ad_priority": 8.135,
+        "pi4ad_rank": 49,
+        "ot_assoc_heldout": 0.6411,
+        "net_centrality": 0.056087,
+        "net_degree": 32,
+        "struct_plddt": 76.8,
+        "boltz_confidence": null
+      },
+      {
+        "gene": "HRAS",
+        "composite_score": 0.5126,
+        "n_signals": 4,
+        "pi4ad_priority": 8.19,
+        "pi4ad_rank": 45,
+        "ot_assoc_heldout": 0.3028,
+        "net_centrality": 0.05841,
+        "net_degree": 5,
+        "struct_plddt": 91.9,
+        "boltz_confidence": null
+      },
+      {
+        "gene": "APOE",
+        "composite_score": 0.4369,
+        "n_signals": 5,
+        "pi4ad_priority": 7.151,
+        "pi4ad_rank": 185,
+        "ot_assoc_heldout": 0.4233,
+        "net_centrality": 0.05834,
+        "net_degree": 66,
+        "struct_plddt": 75.5,
+        "boltz_confidence": 0.508
+      },
+      {
+        "gene": "CLU",
+        "composite_score": 0.3677,
+        "n_signals": 4,
+        "pi4ad_priority": 6.738,
+        "pi4ad_rank": 292,
+        "ot_assoc_heldout": 0.506,
+        "net_centrality": 0.056719,
+        "net_degree": 51,
+        "struct_plddt": 77.3,
+        "boltz_confidence": null
+      }
+    ],
+    "vascular": [
+      {
+        "gene": "APP",
+        "composite_score": 0.7827,
+        "n_signals": 5,
+        "pi4ad_priority": 8.597,
+        "pi4ad_rank": 18,
+        "ot_assoc_heldout": 0.7645,
+        "net_centrality": 0.059912,
+        "net_degree": 66,
+        "struct_plddt": 67.4,
+        "boltz_confidence": 0.5874
+      },
+      {
+        "gene": "BIN1",
+        "composite_score": 0.5213,
+        "n_signals": 4,
+        "pi4ad_priority": 6.754,
+        "pi4ad_rank": 287,
+        "ot_assoc_heldout": 0.9805,
+        "net_centrality": 0.054781,
+        "net_degree": 43,
+        "struct_plddt": 66.7,
+        "boltz_confidence": null
+      },
+      {
+        "gene": "APOE",
+        "composite_score": 0.4369,
+        "n_signals": 5,
+        "pi4ad_priority": 7.151,
+        "pi4ad_rank": 185,
+        "ot_assoc_heldout": 0.4233,
+        "net_centrality": 0.05834,
+        "net_degree": 66,
+        "struct_plddt": 75.5,
+        "boltz_confidence": 0.508
+      },
+      {
+        "gene": "CLU",
+        "composite_score": 0.3677,
+        "n_signals": 4,
+        "pi4ad_priority": 6.738,
+        "pi4ad_rank": 292,
+        "ot_assoc_heldout": 0.506,
+        "net_centrality": 0.056719,
+        "net_degree": 51,
+        "struct_plddt": 77.3,
+        "boltz_confidence": null
+      }
+    ]
+  }
+}

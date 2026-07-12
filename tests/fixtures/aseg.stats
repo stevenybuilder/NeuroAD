@@ -1,0 +1,32 @@
+# Title Segmentation Statistics
+#
+# generating_program mri_segstats
+# cmdline mri_segstats --seg mri/aseg.mgz --sum stats/aseg.stats ...
+# sysname  Linux
+# subjectname OAS1_0001_MR1
+#
+# Measure BrainSeg, BrainSegVol, Brain Segmentation Volume, 1148806.000000, mm^3
+# Measure BrainSegNotVent, BrainSegVolNotVent, Brain Segmentation Volume Without Ventricles, 1130000.000000, mm^3
+# Measure BrainSegNotVentSurf, BrainSegVolNotVentSurf, Brain Segmentation Volume Without Ventricles from Surf, 1129500.000000, mm^3
+# Measure VentricleChoroidVol, VentricleChoroidVol, Volume of ventricles and choroid plexus, 16500.000000, mm^3
+# Measure lhCortex, lhCortexVol, Left hemisphere cortical gray matter volume, 240000.000000, mm^3
+# Measure rhCortex, rhCortexVol, Right hemisphere cortical gray matter volume, 240000.000000, mm^3
+# Measure Cortex, CortexVol, Total cortical gray matter volume, 480000.000000, mm^3
+# Measure SupraTentorialVol, SupraTentorialVol, Supratentorial volume, 1000000.000000, mm^3
+# Measure EstimatedTotalIntraCranialVol, eTIV, Estimated Total Intracranial Volume, 1500000.000000, mm^3
+#
+# SegVolFile mri/aseg.mgz
+# ColHeaders  Index SegId NVoxels Volume_mm3 StructName normMean normStdDev normMin normMax normRange
+  1   4      7500     7600.5  Left-Lateral-Ventricle            25.0000    12.0000     0.0000    88.0000    88.0000
+  2   5        200      210.0  Left-Inf-Lat-Vent                 42.0000    13.0000     6.0000    92.0000    86.0000
+  3  14       1000     1050.0  3rd-Ventricle                     34.0000    13.0000     4.0000    85.0000    81.0000
+  4  15        900      950.0  4th-Ventricle                     28.0000    11.0000     8.0000    77.0000    69.0000
+  5  10       8000     7900.0  Left-Thalamus                     88.0000     9.0000    30.0000   120.0000    90.0000
+  6  11       3500     3550.0  Left-Caudate                      78.0000     8.0000    36.0000   108.0000    72.0000
+  7  17       3400     3450.0  Left-Hippocampus                  67.0000     9.0000    24.0000   102.0000    78.0000
+  8  18       1600     1620.0  Left-Amygdala                     70.0000     6.0000    40.0000    95.0000    55.0000
+  9  43       7000     7100.0  Right-Lateral-Ventricle           26.0000    12.0000     0.0000    90.0000    90.0000
+ 10  44        180      190.0  Right-Inf-Lat-Vent                44.0000    13.0000     8.0000    93.0000    85.0000
+ 11  49       7900     7850.0  Right-Thalamus                    88.0000     9.0000    31.0000   121.0000    90.0000
+ 12  53       3300     3350.0  Right-Hippocampus                 66.0000     9.0000    23.0000   101.0000    78.0000
+ 13  54       1550     1560.0  Right-Amygdala                    71.0000     6.0000    41.0000    96.0000    55.0000
