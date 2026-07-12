@@ -48,9 +48,6 @@ app/build_demo_data.py
 app/README.md
 .pytest_cache/
 .DS_Store
-*.md
-pyproject.toml
-requirements.txt
 Makefile
 *.egg-info/
 
