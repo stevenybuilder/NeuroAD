@@ -9,6 +9,8 @@ population:
 naive_effect:
   metric: AUC
   value: 0.739
+  value_adjusted: 0.769
+  adjusted_note: age/sex-residualized (fold-honest)
   target: conversion
   n: 130
   head: linear probe
@@ -21,11 +23,11 @@ robustness:
   replication: weakened
 robustness_detail:
   age_sex:
-    detail: effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)
+    detail: effect retained 113% after age/sex adjustment (AUC 0.74 -> 0.77)
     stats:
       auc_before: 0.7387
-      auc_after: 0.7631
-      retained: 1.102
+      auc_after: 0.769
+      retained: 1.127
       n: 130
   site_scanner:
     detail: outcome only narrowly exceeds scanner; margin CI includes zero (margin
@@ -43,36 +45,42 @@ robustness_detail:
       - 0.7305
       outcome_p_perm: 0.001
       scanner_p_perm: 0.001
+      outcome_q: 0.001
+      scanner_q: 0.001
+      margin_q: 0.001
       scanner_ci_excludes_chance: true
       margin_ci_lo: -0.0353
       margin_ci_hi: 0.1606
       margin_p: 0.001
       margin_ci_excludes_zero: false
   brain_age:
-    detail: brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP
-      control (Franke/Gaser standard), 102% under the stricter predicted-brain-age
+    detail: brain-age R2=0.78, MAE=2.9yr; effect retained 106% after brain-age-GAP
+      control (Franke/Gaser standard), 104% under the stricter predicted-brain-age
       control
     stats:
       r2: 0.776
       mae_yr: 2.94
       auc_before: 0.7387
-      auc_after: 0.747
-      retained: 1.035
-      auc_after_gap: 0.747
-      retained_gap: 1.035
-      auc_after_pred: 0.7434
-      retained_pred: 1.02
+      auc_after: 0.7536
+      retained: 1.062
+      auc_after_gap: 0.7536
+      retained_gap: 1.062
+      auc_after_pred: 0.7475
+      retained_pred: 1.037
       n_healthy: 137
   biomarker_anchor:
-    detail: 'p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS:
+    detail: 'p-tau217 correlation r=+0.46 (95% CI lower +0.26, n=77) [SYNTHETIC HARNESS:
       calibration target, not measured plasma]'
     stats:
-      ptau217_r: 0.404
+      ptau217_r: 0.459
       ptau217_n: 77
-      ptau217_ci_lo: 0.197
-      gfap_r: 0.342
+      ptau217_ci_lo: 0.262
+      gfap_r: 0.414
       gfap_n: 130
-      gfap_ci_lo: 0.18
+      gfap_ci_lo: 0.26
+      pct_ptau217_r: null
+      pct_ptau217_n: 0
+      pct_ptau217_ci_lo: null
       synthetic: true
       provenance: "SYNTHETIC HARNESS \u2014 p-tau217/GFAP are calibration targets\
         \ (calibration.CAL), not measured plasma"
@@ -144,11 +152,11 @@ caveats:
 evidence_ledger:
 - test: age_sex
   metric: effect retained (age/sex)
-  value: 1.102
+  value: 1.127
   result: passed
   n_used: 130
   n_missing: null
-  detail: effect retained 110% after age/sex adjustment (AUC 0.74 -> 0.76)
+  detail: effect retained 113% after age/sex adjustment (AUC 0.74 -> 0.77)
 - test: site_scanner
   metric: leakage margin (outcome-scanner AUC)
   value: 0.063
@@ -159,21 +167,21 @@ evidence_ledger:
     [95% CI -0.04, +0.16])
 - test: brain_age
   metric: effect retained (brain-age)
-  value: 1.035
+  value: 1.062
   result: passed
   n_used: 137
   n_missing: null
-  detail: brain-age R2=0.78, MAE=2.9yr; effect retained 103% after brain-age-GAP control
-    (Franke/Gaser standard), 102% under the stricter predicted-brain-age control
+  detail: brain-age R2=0.78, MAE=2.9yr; effect retained 106% after brain-age-GAP control
+    (Franke/Gaser standard), 104% under the stricter predicted-brain-age control
 - test: biomarker_anchor
   metric: p-tau217 correlation r
-  value: 0.404
+  value: 0.459
   result: passed
   n_used: 77
   n_missing: null
-  detail: 'p-tau217 correlation r=+0.40 (95% CI lower +0.20, n=77) [SYNTHETIC HARNESS:
+  detail: 'p-tau217 correlation r=+0.46 (95% CI lower +0.26, n=77) [SYNTHETIC HARNESS:
     calibration target, not measured plasma]'
-  ci_lo: 0.197
+  ci_lo: 0.262
   synthetic: true
   source: synthetic (calibration target)
 - test: replication
@@ -186,17 +194,17 @@ evidence_ledger:
     1 aggregated held-out site(s)
 double_dissociation:
   auc_before: 0.7387
-  auc_after: 0.7472
-  retained: 1.036
+  auc_after: 0.7387
+  retained: 1.0
   confound: scanner
   n: 130
 confound_leaderboard:
 - confound: age
-  variance_explained: 0.0625
+  variance_explained: 0.0769
 - confound: scanner
-  variance_explained: 0.0028
+  variance_explained: 0.0667
 - confound: sex
-  variance_explained: 0.0008
+  variance_explained: 0.0026
 novelty_class: ''
 atn_profile: {}
 honesty_rung: ''
@@ -235,6 +243,47 @@ translation:
     rank: null
     evidence_note: not in PI4AD prioritisation table
     source: candidate_only
+  network_hubs:
+  - gene: GSK3B
+    propagated_score: 0.009006
+    rank: 20
+    degree: 59
+    is_seed: false
+    is_hub: true
+    method: rwr
+    source: string_v12_snapshot
+  - gene: CTNNB1
+    propagated_score: 0.007627
+    rank: 22
+    degree: 72
+    is_seed: false
+    is_hub: true
+    method: rwr
+    source: string_v12_snapshot
+  - gene: GAPDH
+    propagated_score: 0.007594
+    rank: 23
+    degree: 77
+    is_seed: false
+    is_hub: true
+    method: rwr
+    source: string_v12_snapshot
+  - gene: INS
+    propagated_score: 0.007455
+    rank: 24
+    degree: 64
+    is_seed: false
+    is_hub: true
+    method: rwr
+    source: string_v12_snapshot
+  - gene: ACTB
+    propagated_score: 0.007307
+    rank: 25
+    degree: 79
+    is_seed: false
+    is_hub: true
+    method: rwr
+    source: string_v12_snapshot
   top_target: APP
   structure:
     uniprot: P05067
@@ -247,6 +296,124 @@ translation:
     n_residues_scored: null
     source: offline_snapshot
     error: ''
+    interaction_evidence:
+      note: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex
+        folding
+      top_target: APP
+      partners:
+      - gene_a: APP
+        gene_b: SORL1
+        combined_score: 0.999
+        channels:
+          experimental: 0.835
+          database: 0.9
+          textmining: 0.994
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: APBB1
+        combined_score: 0.999
+        channels:
+          experimental: 0.991
+          database: 0.9
+          textmining: 0.998
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: APOE
+        combined_score: 0.999
+        channels:
+          experimental: 0.837
+          database: 0.72
+          textmining: 0.999
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: BACE1
+        combined_score: 0.999
+        channels:
+          experimental: 0.86
+          database: 0.75
+          textmining: 0.999
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: PSEN1
+        combined_score: 0.999
+        channels:
+          experimental: 0.981
+          database: 0.0
+          textmining: 0.991
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: TNFRSF21
+        combined_score: 0.998
+        channels:
+          experimental: 0.814
+          database: 0.0
+          textmining: 0.993
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: CLU
+        combined_score: 0.998
+        channels:
+          experimental: 0.839
+          database: 0.72
+          textmining: 0.964
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      - gene_a: APP
+        gene_b: PRNP
+        combined_score: 0.998
+        channels:
+          experimental: 0.79
+          database: 0.5
+          textmining: 0.984
+        source: offline_snapshot
+        evidence_type: STRING protein-protein interaction evidence, NOT de-novo AlphaFold3
+          complex folding
+        error: ''
+      source: offline_snapshot
+    boltz_targeting:
+      gene_a: APP
+      gene_b: APOE
+      kind: complex
+      ligand_id: ''
+      ligand_smiles: ''
+      iptm: 0.42438629269599915
+      ptm: 0.3712671399116516
+      pae: null
+      confidence_score: 0.508038341999054
+      binding_affinity: null
+      binding_probability: null
+      source: precomputed_snapshot
+      status: predicted
+      note: "Boltz-2 open (MIT) AlphaFold3-class complex + binding-affinity prediction\
+        \ \u2014 a REAL predictor, not a stand-in; requires a GPU run"
+      provenance:
+        model: Boltz-2
+        license: MIT
+        predictor_class: AlphaFold3-class open structure + affinity predictor
+        producer: scripts/boltz_fold_colab.py (Colab GPU)
+        captured: '2026-07-12T03:02:11.741621Z'
+        affinity_run: '2026-07-12T03:54:33.021242Z'
+      error: ''
   repurposing:
   - compound: Nilotinib
     target_gene: ABL1
@@ -269,6 +436,30 @@ translation:
     rationale: ''
     rationale_source: ''
     source: offline_snapshot
+    boltz_affinity:
+      gene_a: ABL1
+      gene_b: ''
+      kind: target_ligand
+      ligand_id: Nilotinib
+      ligand_smiles: CC1=C(C=C(C=C1)C(=O)NC2=CC(=CC(=C2)C(F)(F)F)N3C=C(N=C3)C)NC4=NC=CC(=N4)C5=CN=CC=C5
+      iptm: 0.9847976565361023
+      ptm: 0.5628545880317688
+      pae: null
+      confidence_score: 0.6218746304512024
+      binding_affinity: -1.5244178771972656
+      binding_probability: 0.6724706888198853
+      source: precomputed_snapshot
+      status: predicted
+      note: "Boltz-2 open (MIT) AlphaFold3-class complex + binding-affinity prediction\
+        \ \u2014 a REAL predictor, not a stand-in; requires a GPU run"
+      provenance:
+        model: Boltz-2
+        license: MIT
+        predictor_class: AlphaFold3-class open structure + affinity predictor
+        producer: scripts/boltz_fold_colab.py (Colab GPU)
+        captured: '2026-07-12T03:02:11.741621Z'
+        affinity_run: '2026-07-12T03:54:33.021242Z'
+      error: ''
   - compound: Bexarotene
     target_gene: RXRA
     related_genes:
@@ -289,13 +480,61 @@ translation:
     rationale: ''
     rationale_source: ''
     source: offline_snapshot
+    boltz_affinity:
+      gene_a: RXRA
+      gene_b: ''
+      kind: target_ligand
+      ligand_id: Bexarotene
+      ligand_smiles: CC1=CC2=C(C=C1C(=C)C3=CC=C(C=C3)C(=O)O)C(CCC2(C)C)(C)C
+      iptm: 0.9879327416419983
+      ptm: 0.5784037113189697
+      pae: null
+      confidence_score: 0.6905953288078308
+      binding_affinity: -0.6130036115646362
+      binding_probability: 0.9324398636817932
+      source: precomputed_snapshot
+      status: predicted
+      note: "Boltz-2 open (MIT) AlphaFold3-class complex + binding-affinity prediction\
+        \ \u2014 a REAL predictor, not a stand-in; requires a GPU run"
+      provenance:
+        model: Boltz-2
+        license: MIT
+        predictor_class: AlphaFold3-class open structure + affinity predictor
+        producer: scripts/boltz_fold_colab.py (Colab GPU)
+        captured: '2026-07-12T03:02:11.741621Z'
+        affinity_run: '2026-07-12T03:54:33.021242Z'
+      error: ''
+  biomarker_fusion:
+    n_subjects: 360
+    mean_abeta_prob: 0.2869
+    mean_tau_prob: 0.3192
+    abeta_positive_rate: 0.1417
+    tau_positive_rate: 0.05
+    model: surrogate_logistic
+    source: offline_surrogate
+    features_used:
+    - age
+    - apoe4
+    - gfap
+    - p_tau217
+    note: "multimodal fusion transformer (vkola-lab/ncomms2025) predicted amyloid/tau\
+      \ PET positivity over the cohort \u2014 the L3 fusion box; surfaced as pathology\
+      \ corroboration, NOT a referee gate"
+  signal_grounding: {}
+  cross_attention_fusion: {}
+  target_druggability: []
+  pathway_enrichment: []
   wet_lab_experiment: "In Tanzi-style 3D human neural organoids, knock down the lead\
     \ target (CRISPRi) and read out A\u03B242/40 ratio + p-tau217 by MSD at 6 weeks;\
     \ kill if neither moves beyond vehicle \xB12SD."
   provenance:
     pi4ad: offline_snapshot
     alphafold: offline_snapshot
+    string: offline_snapshot
+    boltz: precomputed_snapshot
+    boltz_affinity: precomputed_snapshot
     repurposing: offline_snapshot
+    biomarker_fusion: offline_surrogate
   caveat: "Decision-support only: prioritized molecular follow-ups for a promoted\
     \ imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated\
     \ target, and never derived from the imaging embedding itself."
@@ -324,7 +563,7 @@ adjudication:
   defense: "The signal separating MCI converters from MCI non-converters is consistent\
     \ with real disease biology. It withstood: Age / sex adjustment, Brain-age control,\
     \ Biomarker anchor. Critically, it is anchored to a plasma p-tau217 / GFAP correlation\
-    \ on the complete subset (r=0.40) \u2014 molecular pathology, not pixels."
+    \ on the complete subset (r=0.46) \u2014 molecular pathology, not pixels."
   judge_reasoning: "Robustness score 80/100 places this finding at 'robust enough\
     \ for follow-up'. The +0.06 AUC leakage margin is the deciding fact: the prosecution's\
     \ artifact reading is the more defensible one. The finding meets the promotion\

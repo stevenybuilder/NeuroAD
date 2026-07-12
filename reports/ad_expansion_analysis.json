@@ -1,0 +1,52 @@
+{
+  "task": "AD-vs-CN on frozen NeuroJEPA embedding (site-disjoint OOF)",
+  "before": {
+    "slice": "ADNI n=590",
+    "auc": 0.8571,
+    "ci_lo": 0.815,
+    "ci_hi": 0.8962,
+    "p_perm": 0.001,
+    "n": 590,
+    "n_boot_ok": 1000,
+    "ci_excludes_chance": true,
+    "n_ad": 87,
+    "n_cn": 503,
+    "n_sites": 61,
+    "ci_width": 0.0812,
+    "scanner_leakage": {
+      "auc": null,
+      "note": "too few / single field strength"
+    }
+  },
+  "after": {
+    "slice": "ADNI + 5.7x AD expansion",
+    "auc": 0.8912,
+    "ci_lo": 0.8711,
+    "ci_hi": 0.9102,
+    "p_perm": 0.001,
+    "n": 997,
+    "n_boot_ok": 1000,
+    "ci_excludes_chance": true,
+    "n_ad": 494,
+    "n_cn": 503,
+    "n_sites": 70,
+    "ci_width": 0.0391,
+    "scanner_leakage": {
+      "auc": 0.9901,
+      "ci_lo": 0.9849,
+      "ci_hi": 0.9942,
+      "p_perm": 0.001,
+      "n": 972,
+      "n_boot_ok": 1000,
+      "ci_excludes_chance": true,
+      "n_3T": 772,
+      "n_1p5T": 200
+    }
+  },
+  "delta": {
+    "auc": 0.0341,
+    "ci_width": -0.0421,
+    "n_ad": 407
+  },
+  "verdict": "AD n 87->494 (5.7x). AD-vs-CN AUC 0.8571 [0.815,0.8962] -> 0.8912 [0.8711,0.9102]; CI width 0.0812->0.0391 (TIGHTER). Scanner-leakage AUC still 0.9901 => the raw-embedding AD signal remains partly acquisition batch; MORE AD tightens the estimate but does NOT de-confound (needs ComBat) and does NOT prove out-of-distribution transfer (needs an external cohort). Honest read: the expansion buys precision, not generalization."
+}

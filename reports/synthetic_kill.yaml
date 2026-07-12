@@ -9,6 +9,8 @@ population:
 naive_effect:
   metric: AUC
   value: 0.872
+  value_adjusted: 0.416
+  adjusted_note: age/sex-residualized (fold-honest)
   target: conversion
   n: 137
   head: linear probe
@@ -21,10 +23,10 @@ robustness:
   replication: passed
 robustness_detail:
   age_sex:
-    detail: effect retained 0% after age/sex adjustment (AUC 0.87 -> 0.41)
+    detail: effect retained 0% after age/sex adjustment (AUC 0.87 -> 0.42)
     stats:
       auc_before: 0.8725
-      auc_after: 0.4077
+      auc_after: 0.4159
       retained: 0.0
       n: 137
   site_scanner:
@@ -43,35 +45,42 @@ robustness_detail:
       - 0.9689
       outcome_p_perm: 0.001
       scanner_p_perm: 0.001
+      outcome_q: 0.001
+      scanner_q: 0.001
+      margin_q: 0.001
       scanner_ci_excludes_chance: true
       margin_ci_lo: -0.1444
       margin_ci_hi: -0.0194
       margin_p: 0.001
       margin_ci_excludes_zero: false
   brain_age:
-    detail: brain-age R2=0.87, MAE=1.6yr; effect retained 104% after brain-age-GAP
-      control (Franke/Gaser standard), 0% under the stricter predicted-brain-age control
+    detail: brain-age R2=0.87, MAE=1.6yr; effect retained 102% after brain-age-GAP
+      control (Franke/Gaser standard), 12% under the stricter predicted-brain-age
+      control
     stats:
       r2: 0.869
       mae_yr: 1.63
       auc_before: 0.8725
-      auc_after: 0.8867
-      retained: 1.038
-      auc_after_gap: 0.8867
-      retained_gap: 1.038
-      auc_after_pred: 0.4785
-      retained_pred: 0.0
+      auc_after: 0.8802
+      retained: 1.021
+      auc_after_gap: 0.8802
+      retained_gap: 1.021
+      auc_after_pred: 0.543
+      retained_pred: 0.115
       n_healthy: 144
   biomarker_anchor:
-    detail: 'p-tau217 correlation r=-0.09 (95% CI lower -0.30, n=79) [SYNTHETIC HARNESS:
+    detail: 'p-tau217 correlation r=+0.05 (95% CI lower -0.17, n=79) [SYNTHETIC HARNESS:
       calibration target, not measured plasma]'
     stats:
-      ptau217_r: -0.085
+      ptau217_r: 0.053
       ptau217_n: 79
-      ptau217_ci_lo: -0.301
-      gfap_r: 0.021
+      ptau217_ci_lo: -0.17
+      gfap_r: 0.04
       gfap_n: 137
-      gfap_ci_lo: -0.147
+      gfap_ci_lo: -0.128
+      pct_ptau217_r: null
+      pct_ptau217_n: 0
+      pct_ptau217_ci_lo: null
       synthetic: true
       provenance: "SYNTHETIC HARNESS \u2014 p-tau217/GFAP are calibration targets\
         \ (calibration.CAL), not measured plasma"
@@ -128,7 +137,7 @@ evidence_ledger:
   result: failed
   n_used: 137
   n_missing: null
-  detail: effect retained 0% after age/sex adjustment (AUC 0.87 -> 0.41)
+  detail: effect retained 0% after age/sex adjustment (AUC 0.87 -> 0.42)
 - test: site_scanner
   metric: leakage margin (outcome-scanner AUC)
   value: -0.0767
@@ -139,21 +148,21 @@ evidence_ledger:
     likely acquisition artifact
 - test: brain_age
   metric: effect retained (brain-age)
-  value: 1.038
+  value: 1.021
   result: passed
   n_used: 144
   n_missing: null
-  detail: brain-age R2=0.87, MAE=1.6yr; effect retained 104% after brain-age-GAP control
-    (Franke/Gaser standard), 0% under the stricter predicted-brain-age control
+  detail: brain-age R2=0.87, MAE=1.6yr; effect retained 102% after brain-age-GAP control
+    (Franke/Gaser standard), 12% under the stricter predicted-brain-age control
 - test: biomarker_anchor
   metric: p-tau217 correlation r
-  value: -0.085
+  value: 0.053
   result: failed
   n_used: 79
   n_missing: null
-  detail: 'p-tau217 correlation r=-0.09 (95% CI lower -0.30, n=79) [SYNTHETIC HARNESS:
+  detail: 'p-tau217 correlation r=+0.05 (95% CI lower -0.17, n=79) [SYNTHETIC HARNESS:
     calibration target, not measured plasma]'
-  ci_lo: -0.301
+  ci_lo: -0.17
   synthetic: true
   source: synthetic (calibration target)
 - test: replication
@@ -166,17 +175,17 @@ evidence_ledger:
     1 aggregated held-out site(s)
 double_dissociation:
   auc_before: 0.8725
-  auc_after: 0.8744
-  retained: 1.005
+  auc_after: 0.8725
+  retained: 1.0
   confound: scanner
   n: 137
 confound_leaderboard:
 - confound: age
-  variance_explained: 0.6381
+  variance_explained: 0.4639
 - confound: sex
-  variance_explained: 0.0127
+  variance_explained: 0.0142
 - confound: scanner
-  variance_explained: 0.0
+  variance_explained: 0.0025
 novelty_class: ''
 atn_profile: {}
 honesty_rung: ''

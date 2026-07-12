@@ -45,9 +45,28 @@ import time
 # --- GCS layout (shared by both roles) -------------------------------------
 BUCKET_NAME = "neuroad-adni-project-flash-490419"
 PROJECT = "project-flash-490419"
-# Cohort GCS prefix — override with CONV_PREFIX to reuse this whole driver+loop for
-# another cohort (e.g. CONV_PREFIX=adni_ad_expansion) with the same checkpoint logic.
-PREFIX = os.environ.get("CONV_PREFIX", "adni_conversion")
+
+
+def _resolve_prefix():
+    """Cohort GCS prefix, resolved for BOTH roles.
+
+    `colab exec` runs the driver with a FRESH env on the runtime, so the loop's
+    CONV_PREFIX does NOT cross over — the loop therefore also uploads it as
+    `conv_prefix.txt`, which the driver reads here. Precedence: env (loop/local) ->
+    uploaded file (driver on Colab) -> default.
+    """
+    p = os.environ.get("CONV_PREFIX")
+    if p:
+        return p.strip()
+    for f in ("/content/conv_prefix.txt", "conv_prefix.txt"):
+        if os.path.exists(f):
+            return open(f).read().strip()
+    return "adni_conversion"
+
+
+# Cohort GCS prefix — set CONV_PREFIX (loop) to reuse this whole driver+loop for
+# another cohort (e.g. adni_ad_expansion); the loop ships it to the runtime too.
+PREFIX = _resolve_prefix()
 
 # Per-unit checkpoint blobs. NIfTIs and the partial embeddings CSV live under
 # checkpoints/ so a fresh runtime can pull them and skip finished work; the final
@@ -179,6 +198,7 @@ class _Keepalive:
         self._b = b
         self._stop = threading.Event()
         self._t = threading.Thread(target=self._run, daemon=True)
+        self._max_rows = 0   # monotonic high-water mark; never regress the checkpoint
 
     def start(self):
         self._t.start()
@@ -194,7 +214,15 @@ class _Keepalive:
         try:
             tmp = OUT_CSV + ".ckpt"
             shutil.copy2(OUT_CSV, tmp)
+            # NEVER regress the checkpoint: pandas rewrites OUT_CSV truncate-then-write
+            # after every subject, so a copy can catch it mid-write (0 rows). Only push
+            # if the snapshot has >= the most rows we've ever checkpointed.
+            rows = _csv_rows(tmp)
+            if rows <= 0 or rows < self._max_rows:
+                os.remove(tmp)
+                return
             self._b.blob(PARTIAL_CSV_BLOB).upload_from_filename(tmp)
+            self._max_rows = rows
             os.remove(tmp)
         except Exception as exc:  # noqa: BLE001 -- checkpointing must never crash the run
             print(f"[ckpt] partial-CSV upload skipped: {exc!r}", flush=True)
@@ -375,6 +403,13 @@ def _upload_secrets(session: str):
     if os.path.exists(tok):
         subprocess.run(["colab", "upload", "--session", session, tok, "hf_token.txt"],
                        check=False, env=env)
+    # Ship the cohort prefix to the runtime — `colab exec` won't forward CONV_PREFIX,
+    # so the driver reads it from this uploaded file (see _resolve_prefix).
+    pf = os.path.join(_REPO, ".conv_prefix.txt")
+    with open(pf, "w") as fh:
+        fh.write(PREFIX)
+    subprocess.run(["colab", "upload", "--session", session, pf, "conv_prefix.txt"],
+                   check=False, env=env)
 
 
 def run_loop():

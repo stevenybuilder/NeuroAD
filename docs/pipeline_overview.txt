@@ -1,0 +1,340 @@
+========================================================================
+  NeuroAD Discovery Engine — High-Level Pipeline Overview
+  "Imaging finds it. Proteins confirm it. The system says what to test next."
+========================================================================
+
+The whole system is one idea: build ONE probe on a frozen brain-MRI
+foundation model, ask it THREE different questions, and treat the
+DISAGREEMENT between the answers as the actual discovery. Everything
+downstream is a filter that only lets real biology through.
+
+
+========================================================================
+  SEND-TO-A-TEAMMATE SUMMARY (prose version)
+========================================================================
+
+HOW THE PIPELINE WORKS, FROM A DATA-SCIENCE ANGLE
+The core trick is that we build exactly ONE probe on top of a frozen
+brain-MRI foundation model (Neuro-JEPA, pretrained on 1.5M+ scans) and
+never retrain that encoder. Every scan just gets turned into a latent
+structural embedding — no labels, no fine-tuning, which is why it's
+cheap and generalizes. Then we take a single lightweight attentive-MLP
+probe and point it at three different label columns: disease
+(AD-vs-CN / conversion), scanner/site ID, and a molecular biomarker
+(p-tau217 / GFAP). On top of that we run unsupervised clustering
+(k-means / HDBSCAN) directly on the raw embedding vectors to surface
+patient subgroups nobody labeled. The actual product isn't any single
+prediction — it's the DISAGREEMENT between those answers. A signal that
+predicts disease but also predicts the scanner is suspect; a signal that
+predicts disease AND p-tau217 is real biology. Interpreting that
+disagreement is where the human science happens.
+
+THE "KILL WEAK, SURFACE STRONG" REFEREE
+Every candidate signal has to survive a falsification gauntlet before
+it's allowed to mean anything biological: age/sex adjustment, site/
+scanner leakage checks, brain-age and atrophy controls, a held-out
+replication split, and a biomarker anchor. We grade each survivor on a
+verdict band — fragile -> partially robust -> robust enough for
+follow-up -> strong candidate — and only "partially robust" and up get
+promoted. This is the part that keeps us from burning months of real lab
+time chasing an artifact, which is the classic failure mode in this
+field.
+
+WHAT WE DO WITH THE BIOMARKERS
+An MRI signal can't validate itself, so the biomarker bridge asks
+whether a SURVIVING imaging signal lines up with an independent
+molecular axis — and, crucially, WHICH biomarker it tracks routes the
+mechanism. If it tracks plasma p-tau217, we route it to amyloid/tau
+biology (that's our primary anchor, and we kill the claim if the
+correlation r < 0.2). If it tracks GFAP more, we route to glial/
+inflammatory biology. If it tracks NfL or white-matter-hyperintensity
+burden instead, we call it generic vascular/axonal injury, not
+Alzheimer's-specific. If it tracks nothing molecular, we honestly label
+it "unanchored, imaging-only"; if it fails the scanner/age checks, we
+refuse it as an artifact. Amyloid status is used to ENRICH the tau
+route, never as the standalone proof. So the biomarkers convert a raw
+embedding direction into a controlled, falsifiable hypothesis with a
+named mechanism.
+
+HOW RANKED CANDIDATE PROTEIN DRUG DISCOVERY WORKS
+Only signals that survive the referee AND get a molecular route reach
+the discovery layer. There we bake in PI4AD (open-source) logic:
+multi-omic scoring over GWAS + QTL/PCHi-C + STRING protein networks,
+random-walk-with-restart network propagation, self-organizing-map
+clustering to separate AD-specific biology from other disease, and PCST
+pathway-crosstalk analysis to find nodal hub genes (e.g. Ras-signaling
+hubs like HRAS/MAPK1), plus drug-repurposing enrichment. That produces
+candidate proteins/genes RANKED 0-10 by priority, and we sanity-check
+the ranking by confirming it recovers already-validated targets like APP
+and ESR1 — so it's calibrated, not arbitrary. The top-ranked candidates
+then go through AlphaFold 3 / Boltz structural modeling to ground
+compound and repurposing decisions in real 3D interactions. The final
+output for each survivor is deliberately NOT a dashboard: it's one
+biomarker-routed mechanism hypothesis -> one ranked protein target ->
+one falsifiable wet-lab experiment in a fast human model (iPSC or 3D
+"Alzheimer's-in-a-dish" organoids, ~6 weeks instead of decades), with
+every mechanistic sentence paired to the artifact and protein evidence
+behind it.
+
+
+========================================================================
+  STAGE-BY-STAGE DIAGRAM
+========================================================================
+
+------------------------------------------------------------------------
+  STAGE 0 — INPUT
+------------------------------------------------------------------------
+  Raw multi-sequence MRI (T1w, T2w, FLAIR) + tabular clinical data
+  (cognitive tests, plasma p-tau217, demographics).
+  Cohorts: ADNI / OASIS / EPAD (EPAD is multi-site -> lets us run the
+  scanner-leakage test).
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 1 — FROZEN FOUNDATION EMBEDDINGS   (the "eyes")
+------------------------------------------------------------------------
+  Neuro-JEPA, pre-trained on 1.5M+ brain scans, is FROZEN. We never
+  retrain it. Each scan becomes a latent structural embedding vector.
+  No labels needed to produce these. This is why the method is cheap
+  and generalizes: no new training data, no fine-tuning.
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 2 — ONE PROBE, THREE QUESTIONS   (the science)
+------------------------------------------------------------------------
+  A single lightweight attentive-MLP probe sits on the frozen embedding
+  (+ FastSurfer hippocampal/cortical volumes for interpretable grounding).
+  We point the SAME head at different label columns:
+
+    Q1  Disease   -> conversion / AD-vs-CN   "on a trajectory to AD?"
+    Q2  Scanner   -> site / scanner ID        "is this just the machine?"
+    Q3  Protein   -> p-tau217 / GFAP          "tied to molecular pathology?"
+    (+) Clusters  -> unsupervised k-means/HDBSCAN on the raw vectors
+                     "what subgroups exist that NOBODY labeled?"
+
+  The clustering step is the Detective: it SURFACES candidate signals no
+  one pre-labeled. Q1-Q3 then run PER CLUSTER. The product is the gap
+  between the three answers — a signal that predicts disease but also
+  predicts the scanner is suspect; one that predicts disease AND p-tau217
+  is real biology.
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 3 — THE REFEREE / "KILL WEAK, SURFACE STRONG"   (the gauntlet)
+------------------------------------------------------------------------
+  Every candidate signal must survive falsification before it earns
+  biology. Checks: age/sex adjustment, site/scanner leakage, brain-age
+  and atrophy control, held-out replication split, biomarker anchor.
+
+     Verdict bands:  fragile
+                     partially robust
+                     robust enough for follow-up
+                     strong candidate
+
+  Only "partially robust" and above are allowed past this gate. This is
+  what keeps us from chasing artifacts (the failure mode that wastes
+  months of real lab time).
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 4 — BIOMARKER BRIDGE   (turn a signal into a hypothesis)
+------------------------------------------------------------------------
+  An MRI signal cannot validate itself. The bridge asks: does the
+  surviving imaging signal align with an INDEPENDENT molecular axis?
+  Whichever biomarker it tracks ROUTES the mechanism:
+
+     tracks p-tau217   -> amyloid / tau route      (primary anchor)
+     tracks GFAP       -> glial inflammation        (secondary anchor)
+     tracks NfL / WMH  -> vascular / axonal injury  (routing/caveat)
+     tracks none       -> "unanchored" imaging-only (honest label)
+     fails scanner/age -> refused as artifact
+
+  Kill example: if p-tau217 correlation r < 0.2, the amyloid/tau claim
+  dies. Amyloid status is used to ENRICH, not to prove.
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 5 — MULTI-OMICS TARGET PRIORITIZATION (PI4AD)   (the ranking)
+------------------------------------------------------------------------
+  Only survivors reach here. We bake in PI4AD logic (open-source):
+    - multi-omic scoring over GWAS + QTL/PCHi-C + STRING networks
+    - Random-Walk-with-Restart network propagation
+    - self-organizing-map clustering (AD-specific vs other disease)
+    - PCST pathway-crosstalk analysis -> nodal hub genes
+      (e.g. Ras-signaling hubs HRAS / MAPK1)
+    - drug-repurposing enrichment
+  Output: candidate proteins/genes RANKED 0-10 by priority. Sanity check:
+  it recovers known validated targets (APP, ESR1), so the ranking is
+  calibrated, not arbitrary.
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 6 — MOLECULAR STRUCTURE LAYER (AlphaFold 3 / Boltz)
+------------------------------------------------------------------------
+  Top ranked candidates get 3D structural / interaction modeling
+  (Abeta oligomers, tau filaments, APP complexes) to ground compound
+  design and repurposing fits in real structure.
+
+                              │
+                              ▼
+------------------------------------------------------------------------
+  STAGE 7 — OUTPUT: ONE EARNED EXPERIMENT
+------------------------------------------------------------------------
+  Not a dashboard. For each survivor: ONE biomarker-routed mechanism
+  hypothesis -> ONE ranked protein target -> ONE falsifiable wet-lab
+  experiment in a fast human model (iPSC / 3D "Alzheimer's-in-a-dish"
+  organoids, ~6 weeks vs decades).
+  Every mechanistic sentence is paired with the artifact evidence and
+  protein evidence that back it.
+
+========================================================================
+  THE ONE-LINER
+  We don't just predict Alzheimer's. We discover candidate disease
+  signals, try to falsify them, and promote only the survivors into a
+  ranked protein target plus the single experiment that would confirm it.
+========================================================================
+
+
+========================================================================
+  ADDITIONAL TECHNICAL DEPTH
+  (the models under each stage — what's frozen, what we train,
+   what's roadmap. The diagram above is the flow; this is the how.)
+========================================================================
+
+------------------------------------------------------------------------
+  A. THE FOUNDATION ENCODER (Stage 1) — Neuro-JEPA, FROZEN
+------------------------------------------------------------------------
+  - Architecture: a V-JEPA-2-style 3D vision transformer with a
+    Mixture-of-Experts (MoE) backbone. It is a transformer, but a
+    self-supervised one that predicts masked latent structure rather
+    than reconstructing pixels (JEPA = Joint-Embedding Predictive
+    Architecture: predict in EMBEDDING space, not voxel space).
+  - Pretraining: ~1.55M curated structural scans (T1w/T2w/FLAIR),
+    self-supervised, no disease labels. "Multimodal" here = multiple
+    structural MRI sequences fused, NOT structural + functional.
+  - We DO NOT fine-tune it. Run once, cache one fixed-dimension
+    embedding vector per subject, then probe the table. Two reasons:
+      (1) Technical — frozen self-supervised features generalize and
+          need no training data; the repo ships "attentive probing"
+          (frozen backbone + trainable head) natively.
+      (2) Licensing — weights are CC BY-NC-ND (NoDerivatives); a
+          fine-tuned checkpoint is a derivative and off the table.
+          Frozen-encoder + our-own-head stays clean.
+  - Built against an EMBEDDING INTERFACE, not Neuro-JEPA specifically:
+    downstream only expects one fixed-dim vector per subject, so the
+    feeder is swappable (real Neuro-JEPA embeddings / a substitute open
+    encoder / weight-free structural features like hippocampal volume,
+    cortical thickness, WMH burden).
+
+------------------------------------------------------------------------
+  B. THE PROBE / "MLP" (Stage 2) — the ONLY thing we train
+------------------------------------------------------------------------
+  - Deliberately tiny. Start with a LINEAR probe (logistic regression
+    on the frozen embedding); reach for a small 2-layer MLP only if the
+    linear probe leaves obvious signal on the table.
+  - Why start linear: a linear probe that predicts the outcome is a
+    STRONGER scientific claim than an MLP that does — it proves the
+    signal is cleanly, linearly present in the embedding, not something
+    the head had to manufacture. It also keeps "is the signal the
+    encoder's or ours?" unambiguous.
+  - The "attentive MLP probe" adds a lightweight attention pool over the
+    encoder's patch/token features (frozen backbone -> trainable head),
+    plus leave-one-group-out attribution so we can say WHAT drives the
+    signal (embedding vs. plasma). Exact hippocampal/cortical volumes
+    come from FastSurfer, not learned — that's the interpretable
+    grounding.
+  - Key architectural insight: ONE head, swap the label column ->
+    three of the four tools. Same code predicts disease, scanner, and
+    p-tau217. The disagreement between those three fits IS the product.
+    (Optional Cox/survival head answers "how fast does it convert?" —
+    a native Neuro-JEPA time-to-event task, nice-to-have not core.)
+  - Explicitly NOT used: adapters / LoRA / unfreezing. They re-enter the
+    NoDerivatives license and buy us nothing here.
+
+------------------------------------------------------------------------
+  C. THE "MULTIMODAL TRANSFORMER FUSION LAYER" (Stage 3 in pipeline.txt)
+------------------------------------------------------------------------
+  Honest scoping note for the team:
+  - In pipeline.txt this box reads "Cross-Attention & Graph Networks."
+    That is the ROADMAP / full-vision form of the fusion step.
+  - The shipped MVP does the fusion the cheap, defensible way: the
+    frozen embedding is concatenated with tabular clinical features
+    (cognitive tests, plasma p-tau217, demographics, FastSurfer volumes)
+    and fed to the same small probe. That IS the cross-modal fusion for
+    the demo — no separate transformer required.
+  - A learned cross-attention / graph-network fusion (and a functional
+    backbone, Brain-JEPA, for fMRI) is a Phase-1+ upgrade, not a demo
+    dependency. When the functional track lands, Neuro-JEPA flips role
+    to being the STRUCTURAL CONTROL in the referee gauntlet.
+
+------------------------------------------------------------------------
+  D. CLUSTERING (Stage 2, the Detective) — unsupervised, no head
+------------------------------------------------------------------------
+  - k-means / HDBSCAN run directly on the raw embedding vectors (or on a
+    UMAP projection for inspection). No label, no training target.
+  - This is the genuine discovery step: it surfaces subgroups nobody
+    labeled. Every supervised probe (disease / scanner / biomarker) then
+    re-runs PER CLUSTER, which is how "this subgroup converts faster and
+    carries a tau signature but is NOT a scanner artifact" falls out.
+
+------------------------------------------------------------------------
+  E. THE REFEREE — the statistics, not a model (Stage 3)
+------------------------------------------------------------------------
+  Each test is a cheap re-fit, not a new network:
+    Age/sex adjustment  -> re-fit the probe with covariates
+    Site/scanner leakage-> same head, label = scanner (the star test)
+    Brain-age control   -> control for embedding-derived brain age
+                           (native Neuro-JEPA strength, R^2 ~= 0.89)
+    Biomarker anchor    -> correlate the phenotype with p-tau217 / GFAP
+    Replication split   -> refit on a held-out site / cohort
+  Verdict bands: fragile -> partially robust -> robust enough for
+  follow-up -> strong candidate. Only "partially robust" and up pass.
+
+------------------------------------------------------------------------
+  F. THE OMICS / STRUCTURE STACK (Stages 5-6) — mostly configured, not trained
+------------------------------------------------------------------------
+  - PI4AD is an existing open-source R framework we bake in as logic, not
+    a model we train: multi-omic meta-analysis scoring, Random-Walk-with-
+    Restart (RWR) propagation over STRING networks, ANN self-organizing
+    maps for AD-specific clustering, and Prize-Collecting Steiner Tree
+    (PCST) for pathway crosstalk -> nodal hub genes. Output: genes ranked
+    0-10. Calibration check: it recovers known targets (APP, ESR1).
+  - Optional repurposing layer: graph models (TxGNN / CompGCN-style GNNs
+    on biomedical knowledge graphs like PrimeKG) + LLM evidence synthesis
+    for ranking known compounds.
+  - Structure layer: AlphaFold 3 / Boltz inference (frozen, API or local)
+    on the top-ranked candidates only — 3D interaction modeling to ground
+    compound/repurposing decisions. Not trained by us.
+
+------------------------------------------------------------------------
+  G. THE ORCHESTRATION LAYER — Claude as the harness
+------------------------------------------------------------------------
+  - Claude ties the stages together via tool-calling: it invokes the
+    Neuro-JEPA encoder, the probe/referee code, the biomarker bridge,
+    PI4AD logic, AlphaFold, and literature/RAG search, then synthesizes
+    the auditable output.
+  - Design contract that makes the whole thing swappable: a single
+    cached-embedding table is the interface every downstream piece reads
+      subject_id, embedding[d], dx, conversion, age, sex, site,
+      scanner, amyloid, p_tau217, gfap, nfl, apoe
+    The moment that schema exists, downstream is data-source-independent
+    — swapping real embeddings in later changes exactly one file.
+
+------------------------------------------------------------------------
+  TL;DR for an engineer
+------------------------------------------------------------------------
+  One frozen 3D transformer (Neuro-JEPA, MoE, we never touch its
+  weights) -> one tiny linear/MLP probe we DO train, pointed at three
+  labels -> unsupervised clustering to find subgroups -> a battery of
+  cheap statistical re-fits (the referee) -> correlate survivors to
+  biomarkers -> hand survivors to off-the-shelf omics (PI4AD) and
+  structure (AlphaFold) tools -> Claude orchestrates and writes the
+  auditable experiment card. The heavy models are all frozen/external;
+  the only thing we train is the small probe, and that's on purpose.
+========================================================================
