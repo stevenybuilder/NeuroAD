@@ -32,7 +32,6 @@ data/**/*.nii.gz
 __pycache__/
 **/__pycache__/
 *.pyc
-src/
 tests/
 scripts/
 notebooks/
