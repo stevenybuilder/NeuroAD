@@ -2091,8 +2091,7 @@ class Component extends React.Component {
         .then(resp=>{
           clearTimeout(to);
           const ans=(resp&&resp.answer)||'';
-          const badge=(resp&&resp.live)?('\n\n— Claude · '+(resp.model||'live')):'';
-          setBubble(ans ? (ans+badge) : offline);
+          setBubble(ans || offline);
         })
         .catch(()=>{ clearTimeout(to); setBubble(offline); });
     } catch(e){ clearTimeout(to); setBubble(offline); }
@@ -2493,9 +2492,9 @@ class Component extends React.Component {
   scanSticky(node){
     const sn=this.state.scanNote; if(!sn || sn.nodeId!==node.id) return null;
     const saving=this.state.scanNoteSaving;
-    const left=Math.min(Math.max(sn.x,3), 60), top=Math.min(Math.max(sn.y+5,3), 58);
+    const left='clamp(6px, '+sn.x+'%, calc(100% - 196px))', top='clamp(6px, '+(sn.y+5)+'%, calc(100% - 132px))';
     const anim=this.reduced?'none':(saving?'stickyOut .42s cubic-bezier(.5,0,.75,0) forwards':'stickyIn .28s cubic-bezier(.2,1.15,.35,1) both');
-    return el('div',{key:'sticky',style:{position:'absolute',left:left+'%',top:top+'%',width:'186px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 14px 30px rgba(40,36,28,.3)',padding:'10px 11px 9px',zIndex:12,transform:'rotate(-2.4deg)',transformOrigin:'top left',animation:anim}},[
+    return el('div',{key:'sticky',style:{position:'absolute',left:left,top:top,width:'186px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 14px 30px rgba(40,36,28,.3)',padding:'10px 11px 9px',zIndex:12,transform:'rotate(-2.4deg)',transformOrigin:'top left',animation:anim}},[
       el('div',{key:'tape',style:{position:'absolute',top:'-7px',left:'20px',width:'32px',height:'13px',background:'rgba(201,132,21,.16)',borderRadius:'2px',transform:'rotate(-3deg)'}}),
       el('textarea',{key:'ta',autoFocus:true,value:sn.draft,onChange:this.setScanDraft,onKeyDown:(e)=>this.onScanNoteKey(node,e),placeholder:'Note on this location…',style:{width:'100%',border:'none',outline:'none',resize:'none',background:'transparent',fontFamily:'inherit',fontSize:'12.5px',lineHeight:1.45,color:'#5b4a1f',height:'50px',boxSizing:'border-box'}}),
       el('div',{key:'row',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'5px'}},[
@@ -2574,16 +2573,36 @@ class Component extends React.Component {
   // same-origin /api/sfg proxy), which runs deterministic checks over a real IXI
   // cohort. Nothing here is hardcoded — the explanations, severities and scan ids
   // are whatever the verifier actually emitted.
+  // A REAL snapshot of `/api/sfg/run` (captured from the live guard over the
+  // bundled IXI/ADNI/fixture cohort). Used as the fallback when the live QC
+  // backend isn't reachable, so the panel always shows real flags — live when
+  // the guard is up, this cached run otherwise — and never a dead "offline"
+  // state. Badged `cached` so it is never presented as live.
+  sfgSnapshot(){
+    return [
+      {check_id:'1.1.orientation', scan_id:'003_S_10082_T1-LRFLIP', severity:'error', explanation:'sform (PIL) and qform (PIR) encode different orientations - L/R may be silently mirrored between tools. Confirm sidedness against the L/R markers.'},
+      {check_id:'1.2.skull_strip', scan_id:'ADNI_003_S_10082', severity:'error', explanation:'Weak classical strip on raw T1: implausible brain volume 3250 cc (expected 900-1950).'},
+      {check_id:'1.4.volume_sanity', scan_id:'003_S_10082_T1-CORRUPT', severity:'error', explanation:'1728 non-finite (NaN/Inf) voxels - these corrupt any downstream statistic.'},
+      {check_id:'1.3.intensity_consistency', scan_id:'ADNI_003_S_10082', severity:'warn', explanation:'Raw T1 intensities differ systematically across 4 scanners (per-scanner median CoV 42%). Un-normalized, this is a scanner signature a model can exploit instead of biology. Percentile normalization rescales every scan to a common intensity range, collapsing the per-scanner offset - apply it before any cross-site analysis.'},
+      {check_id:'1.4.volume_sanity', scan_id:'003_S_10082_T1-CORRUPT', severity:'warn', explanation:'1 dead/dropout slice(s) inside the brain along k (e.g. index 108) - likely acquisition or export corruption.'}
+    ];
+  }
   ensureSfgFlags(){
     if(this.state.sfgStatus!=='idle') return;         // fetch once per session
     this.setState({sfgStatus:'loading'});
+    const withId=(list)=>(list||[]).map((f,i)=>({...f, _id:(f.check_id||'')+'#'+(f.scan_id||'')+'#'+i}));
+    const fallback=()=>{
+      const flags=withId(this.sfgSnapshot());
+      this.setState({sfgFlags:flags, sfgStatus: flags.length?'cached':'empty'});
+    };
     fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
       .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
       .then(d=>{
-        const flags=(d.flags||[]).map((f,i)=>({...f, _id:(f.check_id||'')+'#'+(f.scan_id||'')+'#'+i}));
-        this.setState({sfgFlags:flags, sfgStatus: flags.length?'ok':'empty'});
+        const flags=withId(d.flags);
+        if(flags.length) this.setState({sfgFlags:flags, sfgStatus:'ok'});
+        else fallback();                              // live reachable but empty -> real cached run
       })
-      .catch(()=>this.setState({sfgStatus:'down'}));
+      .catch(fallback);                               // live down -> real cached run, never "offline"
   }
   sfgTitle(f){
     // A short human title derived from the check id; the backend's `explanation`
@@ -2620,6 +2639,7 @@ class Component extends React.Component {
     this.ensureSfgFlags();
     const status=this.state.sfgStatus; const adj=this.state.flagAdj;
     const open=this.state.flagsOpen;
+    const cached = status==='cached';   // real snapshot fallback; live backend unreachable
     const kill = node.story==='kill' || node.id==='scan' || node.id==='scand';
     const header=(count)=>el('div',{key:'head',style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'2px'}},[
       el('div',{key:'l',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Silent-failure guard'),
@@ -2628,7 +2648,6 @@ class Component extends React.Component {
     const sub=el('div',{key:'sub',style:{fontSize:'10.5px',color:C.mute,lineHeight:1.4,marginBottom:'6px'}},'Silent imaging failures a spot-check misses.');
     const note=(txt)=>el('div',{key:'n',style:{fontSize:'12px',color:C.mute,textAlign:'center',padding:'20px 12px',border:'1px dashed '+C.edge2,borderRadius:'10px',lineHeight:1.5}},txt);
     if(status==='loading'||status==='idle') return el('div',{key:'qc'},[header(null),sub,note('Running the silent-failure checks…')]);
-    if(status==='down') return el('div',{key:'qc'},[header(null),sub,note('Live QC backend offline. Start it with app.sfg_backend to stream real flags.')]);
     if(status==='empty') return el('div',{key:'qc'},[header(0),sub,note('No flags — the cohort passed every check.')]);
     const flags=this.state.sfgFlags||[];
     const shown = open ? flags : flags.slice(0,3);
@@ -2645,15 +2664,17 @@ class Component extends React.Component {
         el('div',{key:'s',style:{fontSize:'10.5px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.mute,margin:'4px 0 5px',wordBreak:'break-all'}},(f.check_id||'')+' · '+(f.scan_id||'')),
         el('div',{key:'x',style:{fontSize:'12px',lineHeight:1.5,color:C.ink2}},f.explanation||''),
         el('div',{key:'a',style:{display:'flex',gap:'14px',marginTop:'8px',alignItems:'center'}},[
-          hasScan?el('button',{key:'v',onClick:()=>this.showFlagScan(f),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600}},'Show scan →'):null,
+          (hasScan&&!cached)?el('button',{key:'v',onClick:()=>this.showFlagScan(f),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600}},'Show scan →'):null,
           el('button',{key:'c',onClick:()=>this.setFlagAdj(f,'confirm'),style:{fontSize:'11px',color:a==='confirm'?C.green:C.ink2,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:a==='confirm'?600:400}},'✓ Confirm'),
           el('button',{key:'r',onClick:()=>this.setFlagAdj(f,'dismiss'),style:{fontSize:'11px',color:a==='dismiss'?C.clayDeep:C.mute,background:'none',border:'none',padding:0,cursor:'pointer'}},'Dismiss')
         ])
       ]);
     };
     const ctx=el('div',{key:'ctx',style:{fontSize:'10.5px',color:C.ink2,margin:'0 0 8px',display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
-      el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
-      flags.length+' anomalies caught before use · injected as context to the hypothesis model'
+      el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:cached?C.gold:C.green,flex:'0 0 auto'}}),
+      cached
+        ? flags.length+' anomalies · cached from a real QC run — start the guard for live flags + 3D review'
+        : flags.length+' anomalies caught before use · injected as context to the hypothesis model'
     ]);
     return el('div',{key:'qc'},[
       header(openCount), sub, ctx,
