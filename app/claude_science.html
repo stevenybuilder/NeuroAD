@@ -105,16 +105,11 @@ body{background:var(--cream);font-family:var(--sans);color:var(--ink);
 @keyframes chipIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 /* ---- dataset-connect: banner rows ---- */
 .dsbanner .thd .st{color:var(--green)}
-.dshead{font-size:12.5px;font-weight:700;color:var(--ink)}
-.dsrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--edge)}
-.dsic{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:var(--paper);
-  border:1px solid var(--edge2);color:var(--ink2);font-size:10px;font-weight:800;
-  display:flex;align-items:center;justify-content:center}
+.dsrow{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-top:1px solid var(--edge)}
+.dsrow:first-child{border-top:none;padding-top:2px}
 .dsname{font-size:13px;font-weight:600;color:var(--ink)}
-.dsn{font-size:11.5px;color:var(--mute);font-family:var(--mono)}
-.dsdesc{margin-left:auto;font-size:10.5px;font-family:var(--mono);color:var(--clay-deep);
-  background:#FBEDE6;border-radius:5px;padding:2px 7px;white-space:nowrap}
-.dsnote{font-size:10.5px;color:var(--mute);margin-top:2px}
+.dsmeta{margin-left:auto;font-size:11.5px;color:var(--mute);font-family:var(--mono);white-space:nowrap}
+.dsnote{font-size:10.5px;color:var(--mute);margin-top:8px}
 @media (prefers-reduced-motion: reduce){
   .shim{animation:none;background:none;-webkit-text-fill-color:var(--ink2);color:var(--ink2)}
   .dschip{animation:none}
@@ -232,17 +227,14 @@ function resultFlowHTML(){
   const rows = state.matched.map(k=>{
     const d = DATASETS[k];
     return '<div class="dsrow">'+
-      '<div class="dsic">'+esc(d.mono)+'</div>'+
       '<div class="dsname">'+esc(d.name)+'</div>'+
-      '<div class="dsn">'+esc(d.n)+'</div>'+
-      '<span class="dsdesc">'+esc(d.desc)+'</span>'+
+      '<div class="dsmeta">'+esc(d.n)+' · '+esc(d.desc)+'</div>'+
     '</div>';
   }).join('');
   const banner = '<div class="toolcard dsbanner">'+
     '<div class="thd"><div class="ic">N</div><div class="nm">NeuroAD · workspace</div>'+
       '<div class="st">✓ connected</div></div>'+
     '<div class="res">'+
-      '<div class="dshead">Connected '+state.matched.length+' of your datasets</div>'+
       rows+
       '<div class="dsnote">demo workspace · real ADNI/OASIS/OpenBHB cohorts</div>'+
     '</div>'+
@@ -259,12 +251,12 @@ function resultFlowHTML(){
 }
 
 function composerHTML(){
-  const val = state.phase==='empty' ? state.rawInput||'' : '';
+  const val = (state.phase==='empty'||state.phase==='connected') ? state.rawInput||'' : '';
   const slash = state.showSlash ? slashMenu() : '';
   const sendOn = (val.trim().length>0 && !state.showSlash) || false;
   return '<div class="composer-wrap">'+slash+
     '<div class="composer">'+
-      '<textarea class="field" id="field" rows="1" placeholder="'+esc(placeholder())+'"></textarea>'+
+      '<textarea class="field" id="field" rows="1" placeholder="'+esc(placeholder())+'">'+esc(val)+'</textarea>'+
       '<div class="row">'+
         '<div class="iconbtn">+</div>'+
         '<div class="tools-hint">Type <span class="kbd">/</span> for tools &amp; connectors</div>'+
@@ -285,11 +277,12 @@ function render(){
 }
 
 // ---- interaction ----
+const PREFILL = 'p-tau217 predicts hippocampal atrophy';
 function connectNeuroAD(){
   state.connected = true;
   state.phase = 'connected';
   state.showSlash = false;
-  state.rawInput = '';
+  state.rawInput = PREFILL;
   render();
   focusField();
 }
@@ -359,7 +352,7 @@ function wire(){
   const sendBtn = document.getElementById('sendBtn');
 
   if(field){
-    if(state.phase==='empty') field.value = state.rawInput||'';
+    if(state.phase==='empty'||state.phase==='connected') field.value = state.rawInput||'';
     field.addEventListener('input', ()=>{
       state.rawInput = field.value;
       const wantSlash = state.phase==='empty' && field.value.trim().startsWith('/');
