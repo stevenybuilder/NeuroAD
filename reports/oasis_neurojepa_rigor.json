@@ -1,0 +1,38 @@
+{
+  "n_ad_vs_cn": 245,
+  "n_ad": 41,
+  "n_cn": 204,
+  "age_adjustment": {
+    "embedding_auc": 0.868,
+    "age_alone_auc": 0.602,
+    "embedding_age_adjusted_auc": 0.844,
+    "interpretation": "AD-vs-CN survives age-adjustment: 0.868 -> 0.844 after removing the age-linear component (age alone only 0.602). The signal is disease, not merely brain-age."
+  },
+  "classical_baseline": {
+    "neurojepa_embedding_auc": 0.868,
+    "nwbv_atrophy_auc": 0.829,
+    "age_auc": 0.602,
+    "interpretation": "NeuroJEPA (0.868) beats classical whole-brain atrophy nWBV (0.829) \u2014 the foundation model adds signal over a single volumetric number."
+  },
+  "multiplicity_fdr": {
+    "method": "Benjamini-Hochberg across the contrast panel, q=0.05",
+    "contrasts": {
+      "AD_vs_CN_embedding": {
+        "auc": 0.8699,
+        "p_perm": 0.0005,
+        "survives_fdr": true
+      },
+      "AD_vs_CN_embedding_age_adjusted": {
+        "auc": 0.8368,
+        "p_perm": 0.0005,
+        "survives_fdr": true
+      },
+      "impaired_vs_CN_embedding": {
+        "auc": 0.7601,
+        "p_perm": 0.0005,
+        "survives_fdr": true
+      }
+    }
+  },
+  "harmonization": "ComBat on cohort (OASIS-1 vs OASIS-2), label-blind, preserve age+sex."
+}

@@ -1,0 +1,91 @@
+{
+  "n_total": 950,
+  "cohorts": {
+    "ADNI": 590,
+    "OASIS-1": 210,
+    "OASIS-2": 150
+  },
+  "emb_dim": 768,
+  "a_within_adni_ad_vs_cn": {
+    "auc": 0.848,
+    "ci": [
+      0.805,
+      0.8879
+    ],
+    "p_perm": 0.001,
+    "n": 590,
+    "n_pos": 87
+  },
+  "b_cohort_leakage_oasis_vs_adni_raw": {
+    "auc": 0.9996,
+    "ci": [
+      0.999,
+      1.0
+    ],
+    "p_perm": 0.001,
+    "n": 950,
+    "n_pos": 590,
+    "interpretation": "HIGH -> OASIS and ADNI are separable from the raw embedding (scanner/site batch); pool only after harmonization."
+  },
+  "c_harmonized": {
+    "cohort_leakage_after_combat": {
+      "auc": 0.5634,
+      "ci": [
+        0.5272,
+        0.6017
+      ],
+      "p_perm": 0.002,
+      "n": 950,
+      "n_pos": 590
+    },
+    "pooled_ad_vs_cn_after_combat": {
+      "auc": 0.8608,
+      "ci": [
+        0.829,
+        0.892
+      ],
+      "p_perm": 0.001,
+      "n": 835,
+      "n_pos": 128,
+      "cross_cohort_site_disjoint": {
+        "auc": 0.8313,
+        "ci": [
+          0.7961,
+          0.8658
+        ],
+        "p_perm": 0.001,
+        "n": 835,
+        "n_pos": 128
+      }
+    },
+    "method": "ComBat (neuroad.data.harmonize) batch=cohort, covariates=(age,sex), dx-blind; AUCs via probe.auc_ci_perm leakage-free CV with auto PCA-10."
+  },
+  "d_biomarker_anchoring": {
+    "ptau217_high_vs_low": {
+      "auc": 0.6533,
+      "ci": [
+        0.6092,
+        0.6966
+      ],
+      "p_perm": 0.001,
+      "n": 590,
+      "n_pos": 291,
+      "threshold_median": 0.121,
+      "interpretation": "embedding predicts plasma p-tau217 high-vs-low -> the frozen MRI representation carries tau-pathology signal."
+    },
+    "amyloid_status": {
+      "auc": 0.6607,
+      "ci": [
+        0.6078,
+        0.7104
+      ],
+      "p_perm": 0.001,
+      "n": 546,
+      "n_pos": 162,
+      "interpretation": "embedding predicts amyloid status -> structural MRI anchors to the amyloid molecular gate."
+    }
+  },
+  "pass_criteria": "(a) within-ADNI AD-vs-CN CI excludes 0.5; (b/c) cohort-leakage drops toward ~0.5 after ComBat while pooled AD-vs-CN survives -> honest pooling; (d) p-tau217/amyloid AUC CI excludes 0.5 -> the MRI embedding anchors to plasma/amyloid pathology.",
+  "compliance": "Frozen inference only; weights never stored; embedding tables git-ignored.",
+  "verdict": "within-ADNI AD-vs-CN separates; PASS pooling; p-tau217 anchored; amyloid anchored"
+}

@@ -1,0 +1,19 @@
+#!/bin/sh
+# Hard stop: block gated NeuroJEPA weights, raw MRI volumes, and secrets from ever
+# being committed — even under `git add -f`. Compliance: CC-BY-NC-ND weights and
+# DUA-covered volumes must never reach git. (gated-weights-compliance skill)
+staged=$(git diff --cached --name-only)
+
+bad=$(echo "$staged" | grep -Ei '\.(safetensors|pt|pth|ckpt|bin|nii|nii\.gz|mgz|img|hdr|npy)$|(^|/)weights/|(^|/)OASIS1_RAW/')
+if [ -n "$bad" ]; then
+  echo "BLOCKED: weight/volume files staged (gated CC-BY-NC-ND / DUA):"
+  echo "$bad"
+  exit 1
+fi
+
+# Token / secret literals in the staged diff.
+if git diff --cached | grep -qInE 'hf_[A-Za-z0-9]{30,}|sk-ant-[A-Za-z0-9]{20,}'; then
+  echo "BLOCKED: an HF/Anthropic token literal is in the staged diff. Remove it; read from os.environ['HF_TOKEN']."
+  exit 1
+fi
+exit 0

@@ -1,0 +1,308 @@
+{
+  "generated_utc": "2026-07-12T03:10:34.754096+00:00",
+  "prefer_offline": false,
+  "params": {
+    "n_perm": 1000,
+    "n_boot": 2000,
+    "n_draws": 1000,
+    "add_nodes": 1000,
+    "top_k": 5,
+    "seed": 0
+  },
+  "battery": [
+    {
+      "name": "opentargets_vs_gwas_heldout_nongenetic",
+      "kind": "clean",
+      "ranking_source": "opentargets",
+      "evidence_mode": "non_genetic",
+      "gold_set_name": "gwas_ad_bellenguez_2022",
+      "gold_citations": {
+        "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+        "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+        "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+        "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+        "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+        "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+        "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+        "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+        "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+        "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+        "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+        "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+        "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+        "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+        "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+      },
+      "n_gold": 15,
+      "background_size": 2000,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.2,
+        "20": 0.1
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.13333333333333333,
+        "20": 0.13333333333333333
+      },
+      "roc_auc": 0.844769101595298,
+      "roc_auc_ci": [
+        0.7832694396920175,
+        0.9081572769883591
+      ],
+      "permutation_p": 0.000999000999000999,
+      "q_value": 0.0014985014985014985,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2000). Clean: GWAS gold from non-genetic evidence."
+    },
+    {
+      "name": "opentargets_vs_drugs_heldout_nonclinical",
+      "kind": "clean",
+      "ranking_source": "opentargets",
+      "evidence_mode": "non_clinical",
+      "gold_set_name": "fda_approved_ad_drug_targets",
+      "gold_citations": {
+        "ACHE": "FDA labels: donepezil (Aricept), rivastigmine (Exelon), galantamine (Razadyne) \u2014 acetylcholinesterase inhibitors",
+        "BCHE": "FDA label: rivastigmine (Exelon) \u2014 also inhibits butyrylcholinesterase",
+        "APP": "FDA labels: lecanemab (Leqembi), aducanumab (Aduhelm), donanemab (Kisunla) \u2014 anti-amyloid-beta (APP/Abeta)",
+        "GRIN1": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2B": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2C": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN2D": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist",
+        "GRIN3A": "FDA label: memantine (Namenda) \u2014 NMDA-receptor (GRIN subunit) antagonist"
+      },
+      "n_gold": 9,
+      "background_size": 2000,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.7197946313968412,
+      "roc_auc_ci": [
+        0.5758652362247253,
+        0.8567519473500662
+      ],
+      "permutation_p": 0.008991008991008992,
+      "q_value": 0.008991008991008992,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2000). Clean: drug gold from non-clinical evidence."
+    },
+    {
+      "name": "pi4ad_vs_gwas",
+      "kind": "residually_circular",
+      "ranking_source": "pi4ad",
+      "evidence_mode": "priority",
+      "gold_set_name": "gwas_ad_bellenguez_2022",
+      "gold_citations": {
+        "SORL1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus SORL1",
+        "TREM2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus TREM2",
+        "ABCA7": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ABCA7",
+        "CLU": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CLU",
+        "BIN1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus BIN1",
+        "PICALM": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PICALM",
+        "CD33": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CD33",
+        "MS4A6A": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus MS4A6A",
+        "CR1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus CR1",
+        "EPHA1": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus EPHA1",
+        "PLCG2": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus PLCG2",
+        "ADAM10": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ADAM10",
+        "ACE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus ACE",
+        "APOE": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APOE",
+        "APH1B": "Bellenguez C, et al. New insights into the genetic etiology of Alzheimer's disease and related dementias. Nat Genet. 2022;54(4):412-436. PMID:35379992 \u2014 genome-wide-significant locus APH1B"
+      },
+      "n_gold": 15,
+      "background_size": 14676,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.8693677102516882,
+      "roc_auc_ci": [
+        0.7193585102834638,
+        0.9687772117510624
+      ],
+      "permutation_p": 0.000999000999000999,
+      "q_value": 0.0014985014985014985,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": true,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=14676). OPTIMISTIC/CIRCULAR: the overall association_score is built from the gold-defining datatypes; the held-out-evidence AUC is the honest number. PI4AD integrates genetic evidence \u2014 residually circular vs a GWAS gold set."
+    },
+    {
+      "name": "opentargets_nongenetic_vs_DECOY",
+      "kind": "negative_control",
+      "ranking_source": "opentargets",
+      "evidence_mode": "non_genetic",
+      "gold_set_name": "housekeeping_decoy_negative_control",
+      "gold_citations": {
+        "ACTB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [ACTB]",
+        "GAPDH": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GAPDH]",
+        "B2M": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [B2M]",
+        "RPL13A": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPL13A]",
+        "TUBB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TUBB]",
+        "PGK1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PGK1]",
+        "HPRT1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [HPRT1]",
+        "TBP": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TBP]",
+        "PPIA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PPIA]",
+        "YWHAZ": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [YWHAZ]",
+        "SDHA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [SDHA]",
+        "UBC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [UBC]",
+        "RPLP0": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPLP0]",
+        "GUSB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GUSB]",
+        "TFRC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TFRC]"
+      },
+      "n_gold": 6,
+      "background_size": 2000,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.0,
+        "20": 0.0
+      },
+      "roc_auc": 0.5412905382815112,
+      "roc_auc_ci": [
+        0.34544920417275654,
+        0.6924427167588189
+      ],
+      "permutation_p": 0.36063936063936064,
+      "q_value": null,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=2000). NEGATIVE CONTROL: housekeeping decoys must score at chance (AUC~0.5)."
+    },
+    {
+      "name": "pi4ad_vs_DECOY",
+      "kind": "negative_control",
+      "ranking_source": "pi4ad",
+      "evidence_mode": "priority",
+      "gold_set_name": "housekeeping_decoy_negative_control",
+      "gold_citations": {
+        "ACTB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [ACTB]",
+        "GAPDH": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GAPDH]",
+        "B2M": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [B2M]",
+        "RPL13A": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPL13A]",
+        "TUBB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TUBB]",
+        "PGK1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PGK1]",
+        "HPRT1": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [HPRT1]",
+        "TBP": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TBP]",
+        "PPIA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [PPIA]",
+        "YWHAZ": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [YWHAZ]",
+        "SDHA": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [SDHA]",
+        "UBC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [UBC]",
+        "RPLP0": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [RPLP0]",
+        "GUSB": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [GUSB]",
+        "TFRC": "Housekeeping/negative-control gene (Eisenberg & Levanon 2013, Trends Genet 29:569-574) \u2014 no established AD-risk role [TFRC]"
+      },
+      "n_gold": 15,
+      "background_size": 14676,
+      "precision_at_k": {
+        "5": 0.0,
+        "10": 0.2,
+        "20": 0.1
+      },
+      "recall_at_k": {
+        "5": 0.0,
+        "10": 0.13333333333333333,
+        "20": 0.13333333333333333
+      },
+      "roc_auc": 0.8724780028647432,
+      "roc_auc_ci": [
+        0.7731969548725225,
+        0.9430241775792195
+      ],
+      "permutation_p": 0.000999000999000999,
+      "q_value": null,
+      "null_auc_mean": null,
+      "source": "live",
+      "optimistic": false,
+      "naive_roc_auc": null,
+      "caveat": "source=live: full-universe evaluation (N=14676). NEGATIVE CONTROL: housekeeping decoys must score at chance (AUC~0.5)."
+    }
+  ],
+  "degree_matched_null": {
+    "observed_auc": 0.5868599485620762,
+    "null_mean": 0.4893011846309719,
+    "null_ci": [
+      0.3577341984256879,
+      0.6267409009430286
+    ],
+    "n_draws_effective": 1000,
+    "empirical_p": 0.07292707292707293,
+    "universe": 1000,
+    "source": "live"
+  },
+  "shortlist_stability": {
+    "top_k": 5,
+    "baseline_top": [
+      "MAPK1",
+      "APP",
+      "ESR1",
+      "TREM2",
+      "BIN1"
+    ],
+    "bootstrap_topk_frequency": {
+      "MAPK1": 0.6625,
+      "APP": 0.6505,
+      "ESR1": 0.649,
+      "TREM2": 0.645,
+      "BIN1": 0.6165
+    },
+    "leave_one_signal_out_topk": {
+      "drop_pi4ad_priority": [
+        "MAPK1",
+        "ESR1",
+        "APP",
+        "BIN1",
+        "BACE1"
+      ],
+      "drop_ot_assoc_heldout": [
+        "MAPK1",
+        "HRAS",
+        "APP",
+        "ESR1",
+        "TREM2"
+      ],
+      "drop_net_centrality": [
+        "APP",
+        "MAPK1",
+        "ESR1",
+        "TREM2",
+        "BIN1"
+      ],
+      "drop_struct_confidence": [
+        "APP",
+        "MAPK1",
+        "ESR1",
+        "MAPT",
+        "TREM2"
+      ]
+    },
+    "n_universe": 11
+  }
+}

@@ -131,11 +131,21 @@ def _fallback_narration(card: ClaimCard) -> str:
 # ---------------------------------------------------------------------------
 
 def _naive_effect(df: pd.DataFrame, claim: Claim) -> dict:
-    """Cross-validated, subject-disjoint probe AUC for the claim's target."""
+    """Cross-validated, subject-disjoint probe AUC for the claim's target.
+
+    The headline card AUC uses the REPEATED-CV ensemble (``N_REPEATS_ENSEMBLE``
+    split seeds, out-of-fold scores averaged) so the number the researcher reads
+    is the de-noised, reproducible estimate rather than one that rides on the
+    luck of a single fold shuffle at small n. The gauntlet's internal
+    before/after residualization comparisons deliberately stay single-split:
+    they are paired ratios where the split-seed cancels, and they anchor the
+    calibrated retained-fraction thresholds.
+    """
     from neuroad import probe
     target = claim.target if claim.target in contract.LABEL_TARGETS else "conversion"
     X, y, groups = probe.point_head(df, target)
-    auc = probe.cross_val_auc(X, y, groups=groups)
+    auc = probe.cross_val_auc(X, y, groups=groups,
+                              n_repeats=probe.N_REPEATS_ENSEMBLE)
     return {
         "metric": "AUC",
         "value": round(float(auc), 3),

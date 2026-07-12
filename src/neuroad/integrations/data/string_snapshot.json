@@ -1,0 +1,1063 @@
+{
+  "_comment": "Captured live from STRING-db REST API (string-db.org/api/tsv/network + /interaction_partners, species=9606 Homo sapiens, keyless) on 2026-07-11. Values are STRING confidence scores 0-1: combined_score plus experimental(escore)/database(dscore)/textmining(tscore) channels. This is INTERACTION EVIDENCE, NOT de-novo AlphaFold3 complex folding. source=offline_snapshot",
+  "pairwise": {
+    "APOE|APP": {
+      "a": "APOE",
+      "b": "APP",
+      "combined_score": 0.999,
+      "experimental": 0.837,
+      "database": 0.72,
+      "textmining": 0.999
+    },
+    "APOE|BACE1": {
+      "a": "APOE",
+      "b": "BACE1",
+      "combined_score": 0.785,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.777
+    },
+    "APOE|BIN1": {
+      "a": "APOE",
+      "b": "BIN1",
+      "combined_score": 0.908,
+      "experimental": 0.0,
+      "database": 0.54,
+      "textmining": 0.808
+    },
+    "APOE|CLU": {
+      "a": "APOE",
+      "b": "CLU",
+      "combined_score": 0.999,
+      "experimental": 0.0,
+      "database": 0.72,
+      "textmining": 0.997
+    },
+    "APOE|ESR1": {
+      "a": "APOE",
+      "b": "ESR1",
+      "combined_score": 0.479,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.479
+    },
+    "APOE|MAPT": {
+      "a": "APOE",
+      "b": "MAPT",
+      "combined_score": 0.991,
+      "experimental": 0.701,
+      "database": 0.0,
+      "textmining": 0.973
+    },
+    "APOE|PSEN1": {
+      "a": "APOE",
+      "b": "PSEN1",
+      "combined_score": 0.956,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.956
+    },
+    "APOE|PSEN2": {
+      "a": "APOE",
+      "b": "PSEN2",
+      "combined_score": 0.961,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.961
+    },
+    "APOE|TREM2": {
+      "a": "APOE",
+      "b": "TREM2",
+      "combined_score": 0.997,
+      "experimental": 0.584,
+      "database": 0.0,
+      "textmining": 0.994
+    },
+    "APP|BACE1": {
+      "a": "APP",
+      "b": "BACE1",
+      "combined_score": 0.999,
+      "experimental": 0.86,
+      "database": 0.75,
+      "textmining": 0.999
+    },
+    "APP|BIN1": {
+      "a": "APP",
+      "b": "BIN1",
+      "combined_score": 0.834,
+      "experimental": 0.0,
+      "database": 0.54,
+      "textmining": 0.645
+    },
+    "APP|CLU": {
+      "a": "APP",
+      "b": "CLU",
+      "combined_score": 0.998,
+      "experimental": 0.839,
+      "database": 0.72,
+      "textmining": 0.964
+    },
+    "APP|ESR1": {
+      "a": "APP",
+      "b": "ESR1",
+      "combined_score": 0.435,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.435
+    },
+    "APP|MAPK1": {
+      "a": "APP",
+      "b": "MAPK1",
+      "combined_score": 0.827,
+      "experimental": 0.073,
+      "database": 0.5,
+      "textmining": 0.643
+    },
+    "APP|MAPT": {
+      "a": "APP",
+      "b": "MAPT",
+      "combined_score": 0.995,
+      "experimental": 0.697,
+      "database": 0.0,
+      "textmining": 0.985
+    },
+    "APP|PSEN1": {
+      "a": "APP",
+      "b": "PSEN1",
+      "combined_score": 0.999,
+      "experimental": 0.981,
+      "database": 0.0,
+      "textmining": 0.991
+    },
+    "APP|PSEN2": {
+      "a": "APP",
+      "b": "PSEN2",
+      "combined_score": 0.969,
+      "experimental": 0.339,
+      "database": 0.0,
+      "textmining": 0.954
+    },
+    "APP|TREM2": {
+      "a": "APP",
+      "b": "TREM2",
+      "combined_score": 0.901,
+      "experimental": 0.359,
+      "database": 0.0,
+      "textmining": 0.853
+    },
+    "BACE1|BIN1": {
+      "a": "BACE1",
+      "b": "BIN1",
+      "combined_score": 0.514,
+      "experimental": 0.095,
+      "database": 0.0,
+      "textmining": 0.479
+    },
+    "BACE1|CLU": {
+      "a": "BACE1",
+      "b": "CLU",
+      "combined_score": 0.538,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.525
+    },
+    "BACE1|MAPT": {
+      "a": "BACE1",
+      "b": "MAPT",
+      "combined_score": 0.77,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.764
+    },
+    "BACE1|PSEN1": {
+      "a": "BACE1",
+      "b": "PSEN1",
+      "combined_score": 0.972,
+      "experimental": 0.292,
+      "database": 0.0,
+      "textmining": 0.962
+    },
+    "BACE1|PSEN2": {
+      "a": "BACE1",
+      "b": "PSEN2",
+      "combined_score": 0.853,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.85
+    },
+    "BACE1|TREM2": {
+      "a": "BACE1",
+      "b": "TREM2",
+      "combined_score": 0.573,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.57
+    },
+    "BIN1|CLU": {
+      "a": "BIN1",
+      "b": "CLU",
+      "combined_score": 0.955,
+      "experimental": 0.292,
+      "database": 0.54,
+      "textmining": 0.875
+    },
+    "BIN1|MAPT": {
+      "a": "BIN1",
+      "b": "MAPT",
+      "combined_score": 0.941,
+      "experimental": 0.792,
+      "database": 0.0,
+      "textmining": 0.719
+    },
+    "BIN1|PSEN1": {
+      "a": "BIN1",
+      "b": "PSEN1",
+      "combined_score": 0.611,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.611
+    },
+    "BIN1|PSEN2": {
+      "a": "BIN1",
+      "b": "PSEN2",
+      "combined_score": 0.608,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.608
+    },
+    "BIN1|TREM2": {
+      "a": "BIN1",
+      "b": "TREM2",
+      "combined_score": 0.647,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.647
+    },
+    "CLU|ESR1": {
+      "a": "CLU",
+      "b": "ESR1",
+      "combined_score": 0.504,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.504
+    },
+    "CLU|MAPT": {
+      "a": "CLU",
+      "b": "MAPT",
+      "combined_score": 0.696,
+      "experimental": 0.292,
+      "database": 0.0,
+      "textmining": 0.571
+    },
+    "CLU|PSEN1": {
+      "a": "CLU",
+      "b": "PSEN1",
+      "combined_score": 0.664,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.663
+    },
+    "CLU|PSEN2": {
+      "a": "CLU",
+      "b": "PSEN2",
+      "combined_score": 0.626,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.626
+    },
+    "CLU|TREM2": {
+      "a": "CLU",
+      "b": "TREM2",
+      "combined_score": 0.985,
+      "experimental": 0.292,
+      "database": 0.0,
+      "textmining": 0.98
+    },
+    "ESR1|HRAS": {
+      "a": "ESR1",
+      "b": "HRAS",
+      "combined_score": 0.715,
+      "experimental": 0.073,
+      "database": 0.0,
+      "textmining": 0.705
+    },
+    "ESR1|MAPK1": {
+      "a": "ESR1",
+      "b": "MAPK1",
+      "combined_score": 0.987,
+      "experimental": 0.625,
+      "database": 0.9,
+      "textmining": 0.681
+    },
+    "ESR1|MAPT": {
+      "a": "ESR1",
+      "b": "MAPT",
+      "combined_score": 0.418,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.391
+    },
+    "HRAS|MAPK1": {
+      "a": "HRAS",
+      "b": "MAPK1",
+      "combined_score": 0.979,
+      "experimental": 0.098,
+      "database": 0.9,
+      "textmining": 0.783
+    },
+    "MAPK1|MAPT": {
+      "a": "MAPK1",
+      "b": "MAPT",
+      "combined_score": 0.952,
+      "experimental": 0.314,
+      "database": 0.9,
+      "textmining": 0.348
+    },
+    "MAPT|PSEN1": {
+      "a": "MAPT",
+      "b": "PSEN1",
+      "combined_score": 0.95,
+      "experimental": 0.287,
+      "database": 0.0,
+      "textmining": 0.933
+    },
+    "MAPT|PSEN2": {
+      "a": "MAPT",
+      "b": "PSEN2",
+      "combined_score": 0.883,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.883
+    },
+    "MAPT|TREM2": {
+      "a": "MAPT",
+      "b": "TREM2",
+      "combined_score": 0.733,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.668
+    },
+    "PSEN1|PSEN2": {
+      "a": "PSEN1",
+      "b": "PSEN2",
+      "combined_score": 0.999,
+      "experimental": 0.994,
+      "database": 0.9,
+      "textmining": 0.983
+    },
+    "PSEN1|TREM2": {
+      "a": "PSEN1",
+      "b": "TREM2",
+      "combined_score": 0.853,
+      "experimental": 0.292,
+      "database": 0.0,
+      "textmining": 0.8
+    },
+    "PSEN2|TREM2": {
+      "a": "PSEN2",
+      "b": "TREM2",
+      "combined_score": 0.752,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.752
+    }
+  },
+  "partners": {
+    "APP": [
+      {
+        "partner": "SORL1",
+        "combined_score": 0.999,
+        "experimental": 0.835,
+        "database": 0.9,
+        "textmining": 0.994
+      },
+      {
+        "partner": "APBB1",
+        "combined_score": 0.999,
+        "experimental": 0.991,
+        "database": 0.9,
+        "textmining": 0.998
+      },
+      {
+        "partner": "APOE",
+        "combined_score": 0.999,
+        "experimental": 0.837,
+        "database": 0.72,
+        "textmining": 0.999
+      },
+      {
+        "partner": "BACE1",
+        "combined_score": 0.999,
+        "experimental": 0.86,
+        "database": 0.75,
+        "textmining": 0.999
+      },
+      {
+        "partner": "PSEN1",
+        "combined_score": 0.999,
+        "experimental": 0.981,
+        "database": 0.0,
+        "textmining": 0.991
+      },
+      {
+        "partner": "TNFRSF21",
+        "combined_score": 0.998,
+        "experimental": 0.814,
+        "database": 0.0,
+        "textmining": 0.993
+      },
+      {
+        "partner": "CLU",
+        "combined_score": 0.998,
+        "experimental": 0.839,
+        "database": 0.72,
+        "textmining": 0.964
+      },
+      {
+        "partner": "PRNP",
+        "combined_score": 0.998,
+        "experimental": 0.79,
+        "database": 0.5,
+        "textmining": 0.984
+      }
+    ],
+    "MAPT": [
+      {
+        "partner": "CDK5",
+        "combined_score": 0.999,
+        "experimental": 0.878,
+        "database": 0.9,
+        "textmining": 0.948
+      },
+      {
+        "partner": "GSK3B",
+        "combined_score": 0.999,
+        "experimental": 0.942,
+        "database": 0.9,
+        "textmining": 0.943
+      },
+      {
+        "partner": "TUBA1B",
+        "combined_score": 0.995,
+        "experimental": 0.949,
+        "database": 0.9,
+        "textmining": 0.22
+      },
+      {
+        "partner": "APP",
+        "combined_score": 0.995,
+        "experimental": 0.697,
+        "database": 0.0,
+        "textmining": 0.985
+      },
+      {
+        "partner": "TUBB2B",
+        "combined_score": 0.994,
+        "experimental": 0.929,
+        "database": 0.9,
+        "textmining": 0.254
+      },
+      {
+        "partner": "FYN",
+        "combined_score": 0.994,
+        "experimental": 0.874,
+        "database": 0.0,
+        "textmining": 0.957
+      },
+      {
+        "partner": "SNCA",
+        "combined_score": 0.994,
+        "experimental": 0.817,
+        "database": 0.0,
+        "textmining": 0.97
+      },
+      {
+        "partner": "APOE",
+        "combined_score": 0.991,
+        "experimental": 0.701,
+        "database": 0.0,
+        "textmining": 0.973
+      }
+    ],
+    "APOE": [
+      {
+        "partner": "APOC2",
+        "combined_score": 0.999,
+        "experimental": 0.564,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "APOB",
+        "combined_score": 0.999,
+        "experimental": 0.422,
+        "database": 0.8,
+        "textmining": 0.999
+      },
+      {
+        "partner": "APOC3",
+        "combined_score": 0.999,
+        "experimental": 0.0,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "LRP2",
+        "combined_score": 0.999,
+        "experimental": 0.292,
+        "database": 0.9,
+        "textmining": 0.988
+      },
+      {
+        "partner": "APOA2",
+        "combined_score": 0.999,
+        "experimental": 0.431,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "CLU",
+        "combined_score": 0.999,
+        "experimental": 0.0,
+        "database": 0.72,
+        "textmining": 0.997
+      },
+      {
+        "partner": "LRP1",
+        "combined_score": 0.999,
+        "experimental": 0.722,
+        "database": 0.9,
+        "textmining": 0.997
+      },
+      {
+        "partner": "APOC1",
+        "combined_score": 0.999,
+        "experimental": 0.0,
+        "database": 0.72,
+        "textmining": 0.996
+      }
+    ],
+    "PSEN1": [
+      {
+        "partner": "PSENEN",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.9,
+        "textmining": 0.999
+      },
+      {
+        "partner": "CTNNB1",
+        "combined_score": 0.999,
+        "experimental": 0.83,
+        "database": 0.9,
+        "textmining": 0.957
+      },
+      {
+        "partner": "PSEN2",
+        "combined_score": 0.999,
+        "experimental": 0.994,
+        "database": 0.9,
+        "textmining": 0.983
+      },
+      {
+        "partner": "NCSTN",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.9,
+        "textmining": 0.999
+      },
+      {
+        "partner": "APP",
+        "combined_score": 0.999,
+        "experimental": 0.981,
+        "database": 0.0,
+        "textmining": 0.991
+      },
+      {
+        "partner": "APH1B",
+        "combined_score": 0.999,
+        "experimental": 0.995,
+        "database": 0.8,
+        "textmining": 0.997
+      },
+      {
+        "partner": "APH1A",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.9,
+        "textmining": 0.999
+      },
+      {
+        "partner": "NOTCH1",
+        "combined_score": 0.998,
+        "experimental": 0.954,
+        "database": 0.65,
+        "textmining": 0.883
+      }
+    ],
+    "PSEN2": [
+      {
+        "partner": "APH1A",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "PSEN1",
+        "combined_score": 0.999,
+        "experimental": 0.994,
+        "database": 0.9,
+        "textmining": 0.983
+      },
+      {
+        "partner": "NCSTN",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "APH1B",
+        "combined_score": 0.999,
+        "experimental": 0.995,
+        "database": 0.8,
+        "textmining": 0.996
+      },
+      {
+        "partner": "PSENEN",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.8,
+        "textmining": 0.998
+      },
+      {
+        "partner": "KCNIP3",
+        "combined_score": 0.975,
+        "experimental": 0.51,
+        "database": 0.0,
+        "textmining": 0.952
+      },
+      {
+        "partner": "APP",
+        "combined_score": 0.969,
+        "experimental": 0.339,
+        "database": 0.0,
+        "textmining": 0.954
+      },
+      {
+        "partner": "APOE",
+        "combined_score": 0.961,
+        "experimental": 0.0,
+        "database": 0.0,
+        "textmining": 0.961
+      }
+    ],
+    "BACE1": [
+      {
+        "partner": "APP",
+        "combined_score": 0.999,
+        "experimental": 0.86,
+        "database": 0.75,
+        "textmining": 0.999
+      },
+      {
+        "partner": "RTN4",
+        "combined_score": 0.994,
+        "experimental": 0.39,
+        "database": 0.9,
+        "textmining": 0.916
+      },
+      {
+        "partner": "RTN3",
+        "combined_score": 0.991,
+        "experimental": 0.39,
+        "database": 0.9,
+        "textmining": 0.86
+      },
+      {
+        "partner": "GGA1",
+        "combined_score": 0.979,
+        "experimental": 0.876,
+        "database": 0.5,
+        "textmining": 0.7
+      },
+      {
+        "partner": "PSEN1",
+        "combined_score": 0.972,
+        "experimental": 0.292,
+        "database": 0.0,
+        "textmining": 0.962
+      },
+      {
+        "partner": "GGA3",
+        "combined_score": 0.933,
+        "experimental": 0.51,
+        "database": 0.5,
+        "textmining": 0.751
+      },
+      {
+        "partner": "ADAM10",
+        "combined_score": 0.922,
+        "experimental": 0.322,
+        "database": 0.0,
+        "textmining": 0.889
+      },
+      {
+        "partner": "BACE2",
+        "combined_score": 0.909,
+        "experimental": 0.0,
+        "database": 0.9,
+        "textmining": 0.107
+      }
+    ],
+    "TREM2": [
+      {
+        "partner": "TYROBP",
+        "combined_score": 0.999,
+        "experimental": 0.591,
+        "database": 0.8,
+        "textmining": 0.999
+      },
+      {
+        "partner": "APOE",
+        "combined_score": 0.997,
+        "experimental": 0.584,
+        "database": 0.0,
+        "textmining": 0.994
+      },
+      {
+        "partner": "FCER1G",
+        "combined_score": 0.991,
+        "experimental": 0.0,
+        "database": 0.0,
+        "textmining": 0.99
+      },
+      {
+        "partner": "TREM1",
+        "combined_score": 0.987,
+        "experimental": 0.0,
+        "database": 0.4,
+        "textmining": 0.979
+      },
+      {
+        "partner": "CLU",
+        "combined_score": 0.985,
+        "experimental": 0.292,
+        "database": 0.0,
+        "textmining": 0.98
+      },
+      {
+        "partner": "SYK",
+        "combined_score": 0.982,
+        "experimental": 0.0,
+        "database": 0.9,
+        "textmining": 0.813
+      },
+      {
+        "partner": "TREML1",
+        "combined_score": 0.975,
+        "experimental": 0.0,
+        "database": 0.4,
+        "textmining": 0.88
+      },
+      {
+        "partner": "SIRPA",
+        "combined_score": 0.965,
+        "experimental": 0.0,
+        "database": 0.9,
+        "textmining": 0.635
+      }
+    ],
+    "HRAS": [
+      {
+        "partner": "RALGDS",
+        "combined_score": 0.999,
+        "experimental": 0.989,
+        "database": 0.9,
+        "textmining": 0.919
+      },
+      {
+        "partner": "SOS1",
+        "combined_score": 0.999,
+        "experimental": 0.991,
+        "database": 0.9,
+        "textmining": 0.976
+      },
+      {
+        "partner": "RAF1",
+        "combined_score": 0.999,
+        "experimental": 0.999,
+        "database": 0.9,
+        "textmining": 0.985
+      },
+      {
+        "partner": "RASSF5",
+        "combined_score": 0.999,
+        "experimental": 0.971,
+        "database": 0.9,
+        "textmining": 0.829
+      },
+      {
+        "partner": "BRAF",
+        "combined_score": 0.999,
+        "experimental": 0.921,
+        "database": 0.9,
+        "textmining": 0.952
+      },
+      {
+        "partner": "RASA1",
+        "combined_score": 0.999,
+        "experimental": 0.982,
+        "database": 0.9,
+        "textmining": 0.977
+      },
+      {
+        "partner": "AFDN",
+        "combined_score": 0.998,
+        "experimental": 0.966,
+        "database": 0.9,
+        "textmining": 0.678
+      },
+      {
+        "partner": "PIK3CG",
+        "combined_score": 0.998,
+        "experimental": 0.95,
+        "database": 0.9,
+        "textmining": 0.626
+      }
+    ],
+    "MAPK1": [
+      {
+        "partner": "MAP2K1",
+        "combined_score": 0.999,
+        "experimental": 0.929,
+        "database": 0.9,
+        "textmining": 0.95
+      },
+      {
+        "partner": "RPS6KA1",
+        "combined_score": 0.999,
+        "experimental": 0.988,
+        "database": 0.9,
+        "textmining": 0.821
+      },
+      {
+        "partner": "MAP2K2",
+        "combined_score": 0.999,
+        "experimental": 0.983,
+        "database": 0.9,
+        "textmining": 0.855
+      },
+      {
+        "partner": "MKNK1",
+        "combined_score": 0.999,
+        "experimental": 0.981,
+        "database": 0.9,
+        "textmining": 0.558
+      },
+      {
+        "partner": "PTPN7",
+        "combined_score": 0.998,
+        "experimental": 0.871,
+        "database": 0.9,
+        "textmining": 0.918
+      },
+      {
+        "partner": "PEA15",
+        "combined_score": 0.998,
+        "experimental": 0.971,
+        "database": 0.7,
+        "textmining": 0.781
+      },
+      {
+        "partner": "TP53",
+        "combined_score": 0.998,
+        "experimental": 0.806,
+        "database": 0.9,
+        "textmining": 0.912
+      },
+      {
+        "partner": "JUN",
+        "combined_score": 0.998,
+        "experimental": 0.771,
+        "database": 0.9,
+        "textmining": 0.958
+      }
+    ],
+    "ESR1": [
+      {
+        "partner": "SRC",
+        "combined_score": 0.999,
+        "experimental": 0.925,
+        "database": 0.9,
+        "textmining": 0.996
+      },
+      {
+        "partner": "JUN",
+        "combined_score": 0.999,
+        "experimental": 0.631,
+        "database": 0.9,
+        "textmining": 0.995
+      },
+      {
+        "partner": "HSP90AA1",
+        "combined_score": 0.999,
+        "experimental": 0.889,
+        "database": 0.5,
+        "textmining": 0.988
+      },
+      {
+        "partner": "NCOA1",
+        "combined_score": 0.999,
+        "experimental": 0.997,
+        "database": 0.8,
+        "textmining": 0.986
+      },
+      {
+        "partner": "IGF1R",
+        "combined_score": 0.999,
+        "experimental": 0.743,
+        "database": 0.5,
+        "textmining": 0.994
+      },
+      {
+        "partner": "BRCA1",
+        "combined_score": 0.999,
+        "experimental": 0.904,
+        "database": 0.0,
+        "textmining": 0.995
+      },
+      {
+        "partner": "NRIP1",
+        "combined_score": 0.999,
+        "experimental": 0.844,
+        "database": 0.5,
+        "textmining": 0.988
+      },
+      {
+        "partner": "NCOA3",
+        "combined_score": 0.999,
+        "experimental": 0.976,
+        "database": 0.9,
+        "textmining": 0.997
+      }
+    ],
+    "CLU": [
+      {
+        "partner": "APOE",
+        "combined_score": 0.999,
+        "experimental": 0.0,
+        "database": 0.72,
+        "textmining": 0.997
+      },
+      {
+        "partner": "APOA1",
+        "combined_score": 0.998,
+        "experimental": 0.077,
+        "database": 0.72,
+        "textmining": 0.994
+      },
+      {
+        "partner": "APP",
+        "combined_score": 0.998,
+        "experimental": 0.839,
+        "database": 0.72,
+        "textmining": 0.964
+      },
+      {
+        "partner": "PON1",
+        "combined_score": 0.996,
+        "experimental": 0.292,
+        "database": 0.72,
+        "textmining": 0.983
+      },
+      {
+        "partner": "LRP2",
+        "combined_score": 0.994,
+        "experimental": 0.626,
+        "database": 0.0,
+        "textmining": 0.987
+      },
+      {
+        "partner": "LTF",
+        "combined_score": 0.993,
+        "experimental": 0.292,
+        "database": 0.5,
+        "textmining": 0.98
+      },
+      {
+        "partner": "TREM2",
+        "combined_score": 0.985,
+        "experimental": 0.292,
+        "database": 0.0,
+        "textmining": 0.98
+      },
+      {
+        "partner": "APOA4",
+        "combined_score": 0.976,
+        "experimental": 0.0,
+        "database": 0.72,
+        "textmining": 0.918
+      }
+    ],
+    "BIN1": [
+      {
+        "partner": "RIN3",
+        "combined_score": 0.999,
+        "experimental": 0.778,
+        "database": 0.0,
+        "textmining": 0.996
+      },
+      {
+        "partner": "MYC",
+        "combined_score": 0.999,
+        "experimental": 0.975,
+        "database": 0.54,
+        "textmining": 0.989
+      },
+      {
+        "partner": "SYNJ1",
+        "combined_score": 0.994,
+        "experimental": 0.099,
+        "database": 0.0,
+        "textmining": 0.993
+      },
+      {
+        "partner": "DNM2",
+        "combined_score": 0.992,
+        "experimental": 0.176,
+        "database": 0.8,
+        "textmining": 0.959
+      },
+      {
+        "partner": "DNM1",
+        "combined_score": 0.99,
+        "experimental": 0.397,
+        "database": 0.0,
+        "textmining": 0.985
+      },
+      {
+        "partner": "AMPH",
+        "combined_score": 0.984,
+        "experimental": 0.844,
+        "database": 0.9,
+        "textmining": 0.066
+      },
+      {
+        "partner": "CLU",
+        "combined_score": 0.955,
+        "experimental": 0.292,
+        "database": 0.54,
+        "textmining": 0.875
+      },
+      {
+        "partner": "MAPT",
+        "combined_score": 0.941,
+        "experimental": 0.792,
+        "database": 0.0,
+        "textmining": 0.719
+      }
+    ]
+  }
+}

@@ -65,14 +65,17 @@
       }
     },
     "biomarker_anchor": {
-      "detail": "p-tau217 correlation r=+0.45 (95% CI lower +0.39, n=873)",
+      "detail": "p-tau217 correlation r=+0.43 (95% CI lower +0.38, n=876)",
       "stats": {
-        "ptau217_r": 0.449,
-        "ptau217_n": 873,
-        "ptau217_ci_lo": 0.394,
+        "ptau217_r": 0.434,
+        "ptau217_n": 876,
+        "ptau217_ci_lo": 0.378,
         "gfap_r": 0.227,
         "gfap_n": 873,
         "gfap_ci_lo": 0.163,
+        "pct_ptau217_r": 0.239,
+        "pct_ptau217_n": 464,
+        "pct_ptau217_ci_lo": 0.151,
         "synthetic": false,
         "provenance": "measured"
       }
@@ -149,12 +152,12 @@
     {
       "test": "biomarker_anchor",
       "metric": "p-tau217 correlation r",
-      "value": 0.449,
+      "value": 0.434,
       "result": "passed",
-      "n_used": 873,
+      "n_used": 876,
       "n_missing": null,
-      "detail": "p-tau217 correlation r=+0.45 (95% CI lower +0.39, n=873)",
-      "ci_lo": 0.394,
+      "detail": "p-tau217 correlation r=+0.43 (95% CI lower +0.38, n=876)",
+      "ci_lo": 0.378,
       "synthetic": false,
       "source": "measured"
     },

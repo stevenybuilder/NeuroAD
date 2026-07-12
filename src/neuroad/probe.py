@@ -13,7 +13,7 @@ to the probe.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -215,8 +215,62 @@ def _n_splits(y_codes: np.ndarray, groups: Optional[np.ndarray], cap: int = 5) -
     return max(n, 2)
 
 
+#: Default number of repeated CV splits to average over. 1 preserves the
+#: historical single-split behaviour byte-for-byte; the referee-facing entry
+#: points can opt into a small ensemble (see ``N_REPEATS_ENSEMBLE``) to damp the
+#: split-seed variance that a single fold assignment carries at small n.
+N_REPEATS = 1
+#: The ensemble size the fusion/referee path uses when it wants the stabilized
+#: number — the small-n analog of NeuroVFM's "ensemble the trained probes".
+N_REPEATS_ENSEMBLE = 8
+
+
+def _oof_proba_once(X: np.ndarray, y_codes: np.ndarray, classes: np.ndarray,
+                    groups: Optional[np.ndarray], seed: int,
+                    probe_factory: Optional[Callable] = None) -> Optional[np.ndarray]:
+    """One stratified (site-disjoint when grouped) CV pass.
+
+    Returns a full-length ``(n_rows, n_classes)`` OOF probability matrix (NaN on
+    rows that never received a prediction), or ``None`` if the split is infeasible.
+    The PCA front-end is fit inside each training fold only, so no test-fold
+    variance leaks. Factored out of :func:`cross_val_oof` so repeated splits with
+    different ``seed`` values can be averaged.
+
+    ``probe_factory`` is a zero-arg callable returning a fresh probe with the
+    ``.fit`` / ``.predict_proba`` / ``.classes_`` contract (default
+    :class:`LinearProbe`); pass :class:`~neuroad.attentive_probe.MLPProbe` to run
+    the nonlinear attentive head through the identical leakage-honest machinery.
+    """
+    make_probe = probe_factory or LinearProbe
+    n_splits = _n_splits(y_codes, groups)
+    if n_splits < 2:
+        return None
+    use_groups = groups is not None and len(np.unique(groups)) >= n_splits
+    if use_groups:
+        splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True,
+                                        random_state=seed)
+        split_iter = splitter.split(X, y_codes, groups)
+    else:
+        splitter = StratifiedKFold(n_splits=n_splits, shuffle=True,
+                                   random_state=seed)
+        split_iter = splitter.split(X, y_codes)
+
+    oof = np.full((len(y_codes), len(classes)), np.nan)
+    for tr, te in split_iter:
+        if len(np.unique(y_codes[tr])) < 2:
+            continue
+        probe = make_probe().fit(X[tr], y_codes[tr])
+        proba = probe.predict_proba(X[te])
+        # Align model's (possibly partial) class set into the global columns.
+        for j, cls in enumerate(probe.classes_):
+            oof[te, cls] = proba[:, j]
+    return oof
+
+
 def cross_val_oof(X: np.ndarray, y: np.ndarray,
-                  groups: Optional[np.ndarray] = None):
+                  groups: Optional[np.ndarray] = None,
+                  n_repeats: int = N_REPEATS,
+                  probe_factory: Optional[Callable] = None):
     """Out-of-fold probabilities for a probe over ``X``.
 
     Returns ``(y_codes_eval, proba_eval, classes, groups_eval)`` where the
@@ -224,6 +278,15 @@ def cross_val_oof(X: np.ndarray, y: np.ndarray,
     prediction, or ``None`` when the data is too thin to evaluate honestly.
     The probe uses the SAME automatic PCA front-end as :class:`LinearProbe`,
     fit inside each training fold only.
+
+    ``n_repeats`` runs the whole site-disjoint CV that many times with distinct
+    split seeds (``RANDOM_STATE + r``) and averages each subject's OOF
+    probability across the repeats it was evaluated in. ``n_repeats=1`` (the
+    default) reproduces the historical single-split result exactly; a small
+    ensemble (e.g. :data:`N_REPEATS_ENSEMBLE`) damps the split-seed variance a
+    single fold assignment carries at small n — the small-cohort analog of
+    NeuroVFM's probe ensembling, without any calibration machinery that would
+    overfit at n≈60.
     """
     X = np.asarray(X, dtype=float)
     y = np.asarray(y)
@@ -232,30 +295,22 @@ def cross_val_oof(X: np.ndarray, y: np.ndarray,
         return None
     y_codes = np.searchsorted(classes, y)
 
-    n_splits = _n_splits(y_codes, groups)
-    if n_splits < 2:
-        return None
-
-    # If group-aware CV is infeasible (too few groups), fall back gracefully.
-    use_groups = groups is not None and len(np.unique(groups)) >= n_splits
-    if use_groups:
-        splitter = StratifiedGroupKFold(n_splits=n_splits, shuffle=True,
-                                        random_state=RANDOM_STATE)
-        split_iter = splitter.split(X, y_codes, groups)
-    else:
-        splitter = StratifiedKFold(n_splits=n_splits, shuffle=True,
-                                   random_state=RANDOM_STATE)
-        split_iter = splitter.split(X, y_codes)
-
-    oof = np.full((len(y), len(classes)), np.nan)
-    for tr, te in split_iter:
-        if len(np.unique(y_codes[tr])) < 2:
+    n_reps = max(1, int(n_repeats))
+    proba_sum = np.zeros((len(y), len(classes)), dtype=float)
+    proba_cnt = np.zeros((len(y), len(classes)), dtype=float)
+    for r in range(n_reps):
+        oof_r = _oof_proba_once(X, y_codes, classes, groups, seed=RANDOM_STATE + r,
+                                probe_factory=probe_factory)
+        if oof_r is None:
+            if r == 0:
+                return None
             continue
-        probe = LinearProbe().fit(X[tr], y_codes[tr])
-        proba = probe.predict_proba(X[te])
-        # Align model's (possibly partial) class set into the global columns.
-        for j, cls in enumerate(probe.classes_):
-            oof[te, cls] = proba[:, j]
+        seen = ~np.isnan(oof_r)
+        proba_sum[seen] += oof_r[seen]
+        proba_cnt[seen] += 1.0
+
+    with np.errstate(invalid="ignore"):
+        oof = np.where(proba_cnt > 0, proba_sum / proba_cnt, np.nan)
 
     evaluated = ~np.isnan(oof).any(axis=1)
     if evaluated.sum() < 2 or len(np.unique(y_codes[evaluated])) < 2:
@@ -301,15 +356,21 @@ def _auc_from_oof(y_codes: np.ndarray, proba: np.ndarray,
 
 
 def cross_val_auc(X: np.ndarray, y: np.ndarray,
-                  groups: Optional[np.ndarray] = None) -> float:
+                  groups: Optional[np.ndarray] = None,
+                  n_repeats: int = N_REPEATS,
+                  probe_factory: Optional[Callable] = None) -> float:
     """Cross-validated ROC-AUC using out-of-fold probabilities.
 
     * groups given  -> StratifiedGroupKFold (subject/site-disjoint folds).
     * groups None   -> StratifiedKFold.
     Binary -> standard AUC; multiclass -> macro one-vs-rest AUC.
+    ``n_repeats`` averages OOF scores over that many split seeds (see
+    :func:`cross_val_oof`); the default 1 is the historical single split.
+    ``probe_factory`` selects the head (default :class:`LinearProbe`).
     Returns 0.5 (chance) when the data is too thin to evaluate honestly.
     """
-    out = cross_val_oof(X, y, groups)
+    out = cross_val_oof(X, y, groups, n_repeats=n_repeats,
+                        probe_factory=probe_factory)
     if out is None:
         return 0.5
     y_codes, proba, classes, _ = out
@@ -350,7 +411,9 @@ def auc_ci_perm(X: np.ndarray, y: np.ndarray,
                 groups: Optional[np.ndarray] = None,
                 n_boot: int = N_BOOT, n_perm: int = N_PERM,
                 random_state: int = RANDOM_STATE,
-                return_arrays: bool = False) -> dict:
+                return_arrays: bool = False,
+                n_repeats: int = N_REPEATS,
+                probe_factory: Optional[Callable] = None) -> dict:
     """Cross-validated AUC with a bootstrap 95% CI and a permutation-null p.
 
     Computes OOF scores ONCE, then (a) bootstraps subjects to get a percentile
@@ -366,6 +429,11 @@ def auc_ci_perm(X: np.ndarray, y: np.ndarray,
     the true p-value (anticonservative). A defensible speed tradeoff, disclosed
     here and in reports/methods.md.
 
+    ``n_repeats`` averages the OOF scores over that many split seeds before the
+    bootstrap/permutation run (see :func:`cross_val_oof`); the default 1 keeps
+    the historical single-split number. The CI/permutation null still fix the
+    (averaged) OOF scores, so the same lower-bound disclosure applies.
+
     Returns a JSON-safe dict:
         {auc, ci_lo, ci_hi, p_perm, n, n_boot_ok, ci_excludes_chance}
     with ci/p_perm None when the data is too thin. When ``return_arrays`` is
@@ -373,7 +441,8 @@ def auc_ci_perm(X: np.ndarray, y: np.ndarray,
     caller that needs to combine distributions, e.g. the leakage margin) — those
     keys are NOT JSON-safe and must be stripped before serialization.
     """
-    out = cross_val_oof(X, y, groups)
+    out = cross_val_oof(X, y, groups, n_repeats=n_repeats,
+                        probe_factory=probe_factory)
     base = {"auc": 0.5, "ci_lo": None, "ci_hi": None, "p_perm": None,
             "n": int(len(y)), "n_boot_ok": 0, "ci_excludes_chance": False}
     if out is None:

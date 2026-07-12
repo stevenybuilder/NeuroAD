@@ -17,4 +17,5 @@ without the optional L3 `policy/` documents.
 """
 from __future__ import annotations
 
-__all__ = ["policy", "discovery_router", "experiment_card", "orchestrator"]
+__all__ = ["policy", "discovery_router", "experiment_card", "orchestrator",
+           "translation", "validation"]

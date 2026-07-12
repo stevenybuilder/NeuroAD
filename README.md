@@ -90,18 +90,36 @@ statistic behind each test.
 # 1. environment (a ready venv already exists at .venv)
 python -m venv .venv && ./.venv/bin/pip install -e .
 
-# 2. run the CLI demo (fully offline: synthetic harness + Claude template fallback)
-PYTHONPATH=src ./.venv/bin/python -m neuroad.cli demo
-#   ...or, once installed as a script:
-neuroad demo
+# 2. serve the light ZUI — THE demo surface (+ live Claude-orchestrator API)
+cd neuroad-discovery-engine
+PYTHONPATH=src ./.venv/bin/python -m app.server     # PORT env, default 8080
+#   then open  http://localhost:8080/               (serves app/zui.html)
+#   type a hypothesis, hit Investigate →, then ▶ to play the guided tour.
+#   (the old workbench still lives at http://localhost:8080/index.html)
 
-# 3. open the visual workbench (boots on real OASIS; synthetic is a toggle)
-open app/index.html
+# 3. optional — the fully-offline CLI demo (synthetic harness + Claude template)
+PYTHONPATH=src ./.venv/bin/python -m neuroad.cli demo     # or: neuroad demo
 
-# 4. run your own claim on a chosen dataset
+# 4. optional — run your own claim on a chosen dataset
 neuroad run synthetic:KILL "MCI converters have a distinct structural signature"
-neuroad run oasis        "AD differs structurally from cognitively normal"
+neuroad run oasis         "AD differs structurally from cognitively normal"
 ```
+
+### The light ZUI (`app/zui.html`)
+
+A single self-contained page — a zooming decision-tree canvas. Type an
+Alzheimer's hypothesis and hit **Investigate →**; the frontend POSTs it to
+`/api/orchestrate` (Claude-as-orchestrator), then builds the tree from the real
+case in `app/demo_data.json` that the referee routed to (SURVIVOR → a promoted
+gauntlet ending in ranked candidate targets; KILL → an honest dead-end with **no**
+candidate). A quiet trace strip shows the exact tool-call sequence Claude drove
+(`describe_cohort → referee_hypothesis → …`) and states the honest `path`
+(`live` vs `scripted · offline`). The header badge reads **live** only when
+`/api/health` reports `claude_live: true` (i.e. `ANTHROPIC_API_KEY` is set),
+otherwise **offline template**. The left "Ask Claude" rail re-runs the
+orchestrator on a follow-up and spawns a new gold offshoot on the tree. If the
+API is unreachable (e.g. opened as a `file://`), the page falls back to a
+demo_data-driven build so it never hard-breaks.
 
 Set `ANTHROPIC_API_KEY` to use live Claude for the adjudicator / reviewer /
 narrator; without it, every Claude call falls back to a deterministic template so
@@ -164,6 +182,28 @@ mechanic). By volume the substrate is ≈ **87% real / 13% synthetic**; every
 synthetic artifact is badged as a harness. Full breakdown, honest assessment,
 and the roadmap to replace remaining synthetic beats with real data:
 **`docs/DATA_PROVENANCE.md`**.
+
+---
+
+## Data & statistical power
+
+**Cohorts.** Real, frozen Neuro-JEPA embeddings across ADNI (n=590; 87 AD / 503 CN),
+OASIS-1 (n=210), OASIS-2 (n=150), and OpenBHB (n=96 embedded / 3,984 structural).
+
+**The powered claim.** AD vs CN decodes from the frozen 768-d embedding at
+**AUC 0.85 [0.81–0.89]** within ADNI, holds at **0.83** cross-cohort (site-disjoint,
+post-harmonization), and replicates on OASIS clinical AD (**0.81**). Permutation
+p ≤ 0.001 throughout — the diagnostic signal is real and reproducible, not a
+single-cohort artifact.
+
+**Why the number is trustworthy.** Every AUC is measured under leakage-honest
+machinery: site-disjoint cross-validation, PCA fit *inside* each fold, bootstrap
+95% CIs, and a within-site permutation null. ComBat harmonization drops the
+cross-cohort batch effect from **AUC 0.9996 → 0.563** (raw features leak cohort
+almost perfectly; after harmonization they don't), so the pooled analysis is
+valid. A kill/survivor referee then discards any claim that collapses under
+age/sex/scanner adjustment — the harness is built to falsify its own results
+before it reports them.
 
 ---
 

@@ -96,6 +96,9 @@ _DX_MAP = {
     "ad": "AD", "dementia": "AD", "dat": "AD", "demented": "AD",
     "alzheimer": "AD", "alzheimers disease": "AD",
 }
+# AIBL codes current diagnosis numerically (DXCURREN 1=HC, 2=MCI, 3=AD); keep the
+# shared text mappings and add the numeric codes (`_map_str` round-trips "1.0"->"1").
+_AIBL_DX_MAP = {**_DX_MAP, "1": "CN", "2": "MCI", "3": "AD"}
 
 
 GATED_CONFIGS: dict[str, GatedConfig] = {
@@ -212,6 +215,36 @@ GATED_CONFIGS: dict[str, GatedConfig] = {
         has_plasma=True,
         unlocks="biomarker anchor for early-stage (preclinical/prodromal) survivors",
     ),
+    # AIBL — Australian Imaging, Biomarkers & Lifestyle. On the SAME LONI/IDA portal
+    # as ADNI (low-effort acquisition), carries plasma p-tau + longitudinal
+    # conversion, and mirrors ADNI's LONI column naming. Highest converter-with-plasma
+    # yield per the power analysis (docs/DATA_EXPANSION_SPEC.md) -> the #1 expansion.
+    "aibl": GatedConfig(
+        name="AIBL",
+        stub_name="aibl",
+        field_map={
+            "subject_id": ["subject_id", "RID", "PTID", "IMAGEUID"],
+            "dx": ["dx", "DXCURREN", "Simple_Group", "DX", "diagnosis"],
+            "conversion": ["conversion", "CONVERT", "DXCONV"],
+            "age": ["age", "AGE", "Age"],
+            "sex": ["sex", "PTGENDER", "Gender", "GENDER", "M/F"],
+            "site": ["site", "SITEID", "SITE"],
+            "scanner": ["scanner", "FLDSTRENG", "MAGSTRENGTH", "FieldStrength"],
+            "amyloid": ["amyloid", "AMYLOID", "PIB_STATUS", "av45_pos"],
+            "p_tau217": ["p_tau217", "PLASMA_PTAU217", "PTAU217", "plasma_ptau217"],
+            "gfap": ["gfap", "GFAP", "PLASMA_GFAP"],
+            "nfl": ["nfl", "NfL", "NEFL", "PLASMA_NFL"],
+            "apoe4": ["apoe4", "APOE4", "APGEN1", "APGEN2"],
+        },
+        structural_features=[
+            "Hippocampus", "WholeBrain", "Ventricles",
+            "Entorhinal", "MidTemp", "Fusiform", "ICV",
+        ],
+        cdr_columns=["CDGLOBAL", "CDR", "cdr"],
+        dx_value_map=_AIBL_DX_MAP,
+        has_plasma=True,
+        unlocks="converters-with-plasma to power fusion-vs-plasma (LONI, same DUA as ADNI)",
+    ),
 }
 
 
@@ -301,6 +334,12 @@ def _coerce_contract_dtypes(frame: pd.DataFrame) -> pd.DataFrame:
     for m in ("p_tau217", "gfap", "nfl"):
         out[m] = pd.to_numeric(out[m], errors="coerce").astype("float64")
     out["apoe4"] = _to_int8(out["apoe4"])
+    # OPTIONAL triangulated plasma signals (from data.plasma_ensemble): coerce to
+    # float when a richer feeder carried them in, so the biomarker anchor + Bridge
+    # routing can read them. Absent -> untouched (a plain export still validates).
+    for m in contract.EXTENDED_BIOMARKER_COLUMNS:
+        if m in out.columns:
+            out[m] = pd.to_numeric(out[m], errors="coerce").astype("float64")
     return out
 
 

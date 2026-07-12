@@ -1,0 +1,352 @@
+{
+  "with_neurojepa": {
+    "source": "fitted_fusion",
+    "model": "adni_attention_late_fusion",
+    "target": "conversion",
+    "n": 323,
+    "n_ad": 58,
+    "n_cn": 265,
+    "n_sites": 58,
+    "modality_names": [
+      "imaging",
+      "plasma",
+      "neurojepa"
+    ],
+    "gates": {
+      "imaging": 0.2783,
+      "plasma": 0.502,
+      "neurojepa": 0.2198
+    },
+    "gate_learner": "numpy",
+    "gate_temperature": 0.1,
+    "modalities": {
+      "imaging": {
+        "auc": 0.7399,
+        "ci_lo": 0.6714,
+        "ci_hi": 0.799,
+        "p_perm": 0.001,
+        "n": 323,
+        "n_boot_ok": 1000,
+        "ci_excludes_chance": true
+      },
+      "plasma": {
+        "auc": 0.7989,
+        "ci_lo": 0.7315,
+        "ci_hi": 0.8633,
+        "p_perm": 0.001,
+        "n": 323,
+        "n_boot_ok": 1000,
+        "ci_excludes_chance": true
+      },
+      "neurojepa": {
+        "auc": 0.7163,
+        "ci_lo": 0.6419,
+        "ci_hi": 0.7874,
+        "p_perm": 0.001,
+        "n": 323,
+        "n_boot_ok": 1000,
+        "ci_excludes_chance": true
+      }
+    },
+    "fused": {
+      "auc": 0.8209,
+      "ci_lo": 0.7597,
+      "ci_hi": 0.8776,
+      "p_perm": 0.001,
+      "n": 323,
+      "n_boot_ok": 1000,
+      "ci_excludes_chance": true
+    },
+    "attribution": [
+      {
+        "modality": "imaging",
+        "gate": 0.2783,
+        "standalone_auc": 0.7399,
+        "standalone_ci_lo": 0.6714,
+        "standalone_ci_hi": 0.799,
+        "loo_fused_auc": 0.8137,
+        "loo_fused_ci_lo": 0.7494,
+        "loo_fused_ci_hi": 0.8743,
+        "attribution_delta": 0.0072
+      },
+      {
+        "modality": "plasma",
+        "gate": 0.502,
+        "standalone_auc": 0.7989,
+        "standalone_ci_lo": 0.7315,
+        "standalone_ci_hi": 0.8633,
+        "loo_fused_auc": 0.7515,
+        "loo_fused_ci_lo": 0.6806,
+        "loo_fused_ci_hi": 0.8143,
+        "attribution_delta": 0.0694
+      },
+      {
+        "modality": "neurojepa",
+        "gate": 0.2198,
+        "standalone_auc": 0.7163,
+        "standalone_ci_lo": 0.6419,
+        "standalone_ci_hi": 0.7874,
+        "loo_fused_auc": 0.8201,
+        "loo_fused_ci_lo": 0.7604,
+        "loo_fused_ci_hi": 0.8763,
+        "attribution_delta": 0.0008
+      }
+    ],
+    "calibration": {
+      "brier": 0.1973,
+      "ece": 0.2344,
+      "mce": 0.4625,
+      "n": 323,
+      "n_bins": 10,
+      "reliability": [
+        {
+          "bin_lo": 0.0,
+          "bin_hi": 0.1,
+          "count": 19,
+          "confidence": 0.0698,
+          "accuracy": 0.0526
+        },
+        {
+          "bin_lo": 0.1,
+          "bin_hi": 0.2,
+          "count": 59,
+          "confidence": 0.1532,
+          "accuracy": 0.0339
+        },
+        {
+          "bin_lo": 0.2,
+          "bin_hi": 0.3,
+          "count": 49,
+          "confidence": 0.2484,
+          "accuracy": 0.0816
+        },
+        {
+          "bin_lo": 0.3,
+          "bin_hi": 0.4,
+          "count": 46,
+          "confidence": 0.3587,
+          "accuracy": 0.1087
+        },
+        {
+          "bin_lo": 0.4,
+          "bin_hi": 0.5,
+          "count": 39,
+          "confidence": 0.444,
+          "accuracy": 0.2564
+        },
+        {
+          "bin_lo": 0.5,
+          "bin_hi": 0.6,
+          "count": 33,
+          "confidence": 0.5514,
+          "accuracy": 0.303
+        },
+        {
+          "bin_lo": 0.6,
+          "bin_hi": 0.7,
+          "count": 24,
+          "confidence": 0.6543,
+          "accuracy": 0.2083
+        },
+        {
+          "bin_lo": 0.7,
+          "bin_hi": 0.8,
+          "count": 30,
+          "confidence": 0.7508,
+          "accuracy": 0.3333
+        },
+        {
+          "bin_lo": 0.8,
+          "bin_hi": 0.9,
+          "count": 21,
+          "confidence": 0.8435,
+          "accuracy": 0.381
+        },
+        {
+          "bin_lo": 0.9,
+          "bin_hi": 1.0,
+          "count": 3,
+          "confidence": 0.9253,
+          "accuracy": 1.0
+        }
+      ]
+    },
+    "top_modality": "plasma",
+    "neurojepa_wired": true,
+    "seam_open": false,
+    "verdict": "attention gate [imaging=0.28, plasma=0.50, neurojepa=0.22]; 'plasma' drives the largest leave-one-out AUC drop. No CI-supported gain over best single modality plasma (AUC 0.7989): delta=+0.0220",
+    "disclaimer": "ATTENTION-WEIGHTED LATE fusion (NOT a transformer): a principled numpy/sklearn softmax gate over per-modality out-of-fold P(AD) scores. Each modality's score is leakage-free and site-disjoint (identical CV machinery to the gauntlet); the gate weight is a softmax over each modality's above-chance contribution. Gate weights and the leave-one-out attribution are computed from labelled out-of-fold scores over the full slice, so they carry a small in-sample optimism (disclosed); the per-view AUC/CI/p_perm and the fused AUC use the same frozen-score bootstrap + within-site permutation null as probe.auc_ci_perm. ADNI-only decision support; depends on the gated ADNI export and is NOT outcome-validated against known AD drugs.",
+    "error": "",
+    "label_encoding": "MCI->AD conversion: converter=1 (dx=AD), stable=0 (dx=CN)",
+    "modality_legend": {
+      "imaging": "contract FreeSurfer structural embedding",
+      "plasma": "p_tau217, gfap, nfl, apoe4, age, sex",
+      "neurojepa": "frozen NeuroJEPA 768-d MRI embedding (this run's Colab output)"
+    },
+    "cohort_note": "3-modality run: FreeSurfer + plasma + NeuroJEPA (seam wired)."
+  },
+  "baseline_without_neurojepa": {
+    "source": "fitted_fusion",
+    "model": "adni_attention_late_fusion",
+    "target": "conversion",
+    "n": 323,
+    "n_ad": 58,
+    "n_cn": 265,
+    "n_sites": 58,
+    "modality_names": [
+      "imaging",
+      "plasma"
+    ],
+    "gates": {
+      "imaging": 0.3566,
+      "plasma": 0.6434
+    },
+    "gate_learner": "numpy",
+    "gate_temperature": 0.1,
+    "modalities": {
+      "imaging": {
+        "auc": 0.7399,
+        "ci_lo": 0.6714,
+        "ci_hi": 0.799,
+        "p_perm": 0.001,
+        "n": 323,
+        "n_boot_ok": 1000,
+        "ci_excludes_chance": true
+      },
+      "plasma": {
+        "auc": 0.7989,
+        "ci_lo": 0.7315,
+        "ci_hi": 0.8633,
+        "p_perm": 0.001,
+        "n": 323,
+        "n_boot_ok": 1000,
+        "ci_excludes_chance": true
+      }
+    },
+    "fused": {
+      "auc": 0.8201,
+      "ci_lo": 0.7604,
+      "ci_hi": 0.8763,
+      "p_perm": 0.001,
+      "n": 323,
+      "n_boot_ok": 1000,
+      "ci_excludes_chance": true
+    },
+    "attribution": [
+      {
+        "modality": "imaging",
+        "gate": 0.3566,
+        "standalone_auc": 0.7399,
+        "standalone_ci_lo": 0.6714,
+        "standalone_ci_hi": 0.799,
+        "loo_fused_auc": 0.7989,
+        "loo_fused_ci_lo": 0.7315,
+        "loo_fused_ci_hi": 0.8633,
+        "attribution_delta": 0.0212
+      },
+      {
+        "modality": "plasma",
+        "gate": 0.6434,
+        "standalone_auc": 0.7989,
+        "standalone_ci_lo": 0.7315,
+        "standalone_ci_hi": 0.8633,
+        "loo_fused_auc": 0.7399,
+        "loo_fused_ci_lo": 0.6714,
+        "loo_fused_ci_hi": 0.799,
+        "attribution_delta": 0.0802
+      }
+    ],
+    "calibration": {
+      "brier": 0.1957,
+      "ece": 0.2188,
+      "mce": 0.6175,
+      "n": 323,
+      "n_bins": 10,
+      "reliability": [
+        {
+          "bin_lo": 0.0,
+          "bin_hi": 0.1,
+          "count": 37,
+          "confidence": 0.0641,
+          "accuracy": 0.0
+        },
+        {
+          "bin_lo": 0.1,
+          "bin_hi": 0.2,
+          "count": 58,
+          "confidence": 0.1468,
+          "accuracy": 0.069
+        },
+        {
+          "bin_lo": 0.2,
+          "bin_hi": 0.3,
+          "count": 46,
+          "confidence": 0.2497,
+          "accuracy": 0.0652
+        },
+        {
+          "bin_lo": 0.3,
+          "bin_hi": 0.4,
+          "count": 41,
+          "confidence": 0.3453,
+          "accuracy": 0.1463
+        },
+        {
+          "bin_lo": 0.4,
+          "bin_hi": 0.5,
+          "count": 33,
+          "confidence": 0.4533,
+          "accuracy": 0.2727
+        },
+        {
+          "bin_lo": 0.5,
+          "bin_hi": 0.6,
+          "count": 22,
+          "confidence": 0.5482,
+          "accuracy": 0.2273
+        },
+        {
+          "bin_lo": 0.6,
+          "bin_hi": 0.7,
+          "count": 30,
+          "confidence": 0.6449,
+          "accuracy": 0.4
+        },
+        {
+          "bin_lo": 0.7,
+          "bin_hi": 0.8,
+          "count": 26,
+          "confidence": 0.7578,
+          "accuracy": 0.3462
+        },
+        {
+          "bin_lo": 0.8,
+          "bin_hi": 0.9,
+          "count": 25,
+          "confidence": 0.8575,
+          "accuracy": 0.24
+        },
+        {
+          "bin_lo": 0.9,
+          "bin_hi": 1.0,
+          "count": 5,
+          "confidence": 0.9298,
+          "accuracy": 0.8
+        }
+      ]
+    },
+    "top_modality": "plasma",
+    "neurojepa_wired": false,
+    "seam_open": true,
+    "verdict": "attention gate [imaging=0.36, plasma=0.64]; 'plasma' drives the largest leave-one-out AUC drop. No CI-supported gain over best single modality plasma (AUC 0.7989): delta=+0.0212",
+    "disclaimer": "ATTENTION-WEIGHTED LATE fusion (NOT a transformer): a principled numpy/sklearn softmax gate over per-modality out-of-fold P(AD) scores. Each modality's score is leakage-free and site-disjoint (identical CV machinery to the gauntlet); the gate weight is a softmax over each modality's above-chance contribution. Gate weights and the leave-one-out attribution are computed from labelled out-of-fold scores over the full slice, so they carry a small in-sample optimism (disclosed); the per-view AUC/CI/p_perm and the fused AUC use the same frozen-score bootstrap + within-site permutation null as probe.auc_ci_perm. ADNI-only decision support; depends on the gated ADNI export and is NOT outcome-validated against known AD drugs.",
+    "error": "",
+    "label_encoding": "MCI->AD conversion: converter=1 (dx=AD), stable=0 (dx=CN)",
+    "modality_legend": {
+      "imaging": "contract FreeSurfer structural embedding",
+      "plasma": "p_tau217, gfap, nfl, apoe4, age, sex",
+      "neurojepa": "frozen NeuroJEPA 768-d MRI embedding (this run's Colab output)"
+    },
+    "cohort_note": "2-modality baseline: FreeSurfer + plasma (NeuroJEPA seam open)."
+  }
+}

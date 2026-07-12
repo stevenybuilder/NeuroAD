@@ -11,6 +11,9 @@ record stamps its own provenance (``source`` = "live" / "offline_snapshot" /
 Access at a glance (verified 2026-07-10):
   * AlphaFold  — EBI AlphaFold DB REST API, keyless & live; AlphaFold-3 folding
                  needs gated non-commercial weights (documented, not wired).
+  * STRING     — STRING-db REST API, keyless & live; protein-protein INTERACTION
+                 evidence (combined_score + channels) as the honest stand-in for
+                 AF3 complex folding — NOT de-novo folding.
   * PI4AD      — genetictargets.com portal (live HTTP) + bundled priority
                  snapshot; the R package is not run (no R, by design).
   * fusion     — vkola-lab/ncomms2025 checkpoint (torch + adrd, gated) with a
@@ -39,6 +42,14 @@ from .multimodal_transformer import (
     FusionPrediction,
     predict_biomarker_status,
 )
+from .fusion import (
+    FusionResult,
+    FusionViews,
+    build_fusion_views,
+    compare_fusion_vs_single,
+    MODEL_LATE_FUSION,
+    SOURCE_FITTED,
+)
 from .gnn_llm import (
     RepurposingCandidate,
     RepurposingEngine,
@@ -47,6 +58,12 @@ from .opentargets import (
     OpenTargetsClient,
     TargetAssociation,
     ad_target_evidence,
+)
+from .string_ppi import (
+    StringPPIClient,
+    InteractionEvidence,
+    complex_evidence,
+    interaction_evidence,
 )
 
 __all__ = [
@@ -63,6 +80,13 @@ __all__ = [
     "BiomarkerFusionPredictor",
     "FusionPrediction",
     "predict_biomarker_status",
+    # Fitted late/feature-level fusion — validated AD-vs-CN fusion vs single modality
+    "FusionResult",
+    "FusionViews",
+    "build_fusion_views",
+    "compare_fusion_vs_single",
+    "MODEL_LATE_FUSION",
+    "SOURCE_FITTED",
     # GNN/LLM — drug repurposing
     "RepurposingEngine",
     "RepurposingCandidate",
@@ -70,4 +94,9 @@ __all__ = [
     "OpenTargetsClient",
     "TargetAssociation",
     "ad_target_evidence",
+    # STRING — protein-protein interaction evidence (AF3-complex stand-in)
+    "StringPPIClient",
+    "InteractionEvidence",
+    "complex_evidence",
+    "interaction_evidence",
 ]

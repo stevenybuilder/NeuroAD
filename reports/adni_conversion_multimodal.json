@@ -1,0 +1,51 @@
+{
+  "cohort_n": 498,
+  "converters": 142,
+  "sites": 64,
+  "target": "conversion",
+  "cv": "OOF site-disjoint, permutation null",
+  "blocks": {
+    "struct": {
+      "auc": 0.7263,
+      "ci_lo": 0.677,
+      "ci_hi": 0.7723,
+      "p_perm": 0.001,
+      "n": 498
+    },
+    "plasma": {
+      "auc": 0.8144,
+      "ci_lo": 0.7737,
+      "ci_hi": 0.8527,
+      "p_perm": 0.001,
+      "n": 498
+    },
+    "apoe_demo": {
+      "auc": 0.6708,
+      "ci_lo": 0.6208,
+      "ci_hi": 0.7177,
+      "p_perm": 0.001,
+      "n": 498
+    },
+    "FUSED_concat": {
+      "auc": 0.7414,
+      "ci_lo": 0.6941,
+      "ci_hi": 0.7843,
+      "p_perm": 0.001,
+      "n": 498
+    },
+    "FUSED_stacked": {
+      "auc": 0.8268,
+      "ci_lo": 0.789,
+      "ci_hi": 0.8619,
+      "p_perm": 0.001,
+      "n": 498
+    }
+  },
+  "best_single_modality": "plasma",
+  "best_fusion": "FUSED_stacked",
+  "fused_minus_struct": 0.1005,
+  "fused_minus_best_single": 0.0124,
+  "fusion_beats_best_single_ci": false,
+  "verdict": "FUSED_stacked is the best predictor (AUC 0.827) \u2014 above best single modality (plasma 0.814) on point estimate, not CI-separable at n=498; naive concat (0.741) is worse than plasma, so modality-balanced (stacked) fusion is required",
+  "caveat": "residual per-feature NaN median-imputed per block; stacked fusion combines per-modality OOF scores (mild in-sample optimism, shared across blocks)."
+}

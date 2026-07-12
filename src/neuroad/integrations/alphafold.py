@@ -18,9 +18,14 @@ provenance: every AlphaFoldStructure.source is "live" (real fetch) or
 AlphaFold 3 (folding NOVEL PI4AD complexes) is a documented NON-DEFAULT path:
 its weights are gated behind a request form + non-commercial license
 (github.com/google-deepmind/alphafold3) and are intentionally NOT wired here —
-the keyless DB API is the shipping path. No credentials are required for the
-default path; ``AF_DB_BASE_URL`` (optional env var) may override the API/file host
-for testing/mirrors.
+the keyless DB API is the shipping path. For the COMPLEX / interaction question
+that AF3 would otherwise answer, the honest shipping stand-in is
+``neuroad.integrations.string_ppi``: it fetches STRING protein-protein
+INTERACTION EVIDENCE (combined_score + experimental/database/textmining channels
+and each target's ranked hub partners), which is interaction evidence, NOT a
+de-novo folded complex. AF3 de-novo folding remains intentionally unwired. No
+credentials are required for the default path; ``AF_DB_BASE_URL`` (optional env
+var) may override the API/file host for testing/mirrors.
 """
 from __future__ import annotations
 
@@ -365,3 +370,18 @@ def structural_confidence(query: str, *,
     Thin wrapper over ``AlphaFoldClient().fetch_structure`` for harness callers
     that just want the structural-confidence signal for a promoted target."""
     return AlphaFoldClient(prefer_offline=prefer_offline).fetch_structure(query)
+
+
+# ---------------------------------------------------------------------------
+# NOTE — AlphaFold3 stays gated/unwired; Boltz-2 is the OPEN AF3-class substitute.
+# ---------------------------------------------------------------------------
+# AF3 de-novo complex folding remains intentionally UNWIRED here (non-commercial,
+# access-gated weights). Two honest substitutes ship instead:
+#   * integrations.string_ppi — protein-protein INTERACTION EVIDENCE (a lightweight
+#     literature/DB signal, NOT folding); and
+#   * integrations.boltz — Boltz-2, an OPEN (MIT), AlphaFold3-CLASS predictor that
+#     folds complexes de-novo AND predicts binding affinity. Unlike STRING it is a
+#     REAL predictor (not a stand-in); unlike AF3 its weights are open. It needs a
+#     GPU (run scripts/boltz_fold_colab.py), so its client degrades HONESTLY to a
+#     'deferred' result (never fabricated coords/affinity) until a real GPU run is
+#     committed to data/boltz_snapshot.json.

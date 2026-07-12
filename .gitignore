@@ -20,9 +20,14 @@ dist/
 *.pt
 *.pth
 *.ckpt
+*.bin
 *.nii
 *.nii.gz
 *.mgz
+# OASIS-1 ships Analyze-format volumes (.img/.hdr pairs) — raw imaging, never commit.
+*.img
+*.hdr
+OASIS1_RAW/
 # Derived NeuroJEPA embedding tables: keep LOCAL only. Redistributing a large
 # table of embeddings could be argued a derivative of the CC-BY-NC-ND weights.
 # Result numbers (AUCs) in reports/ are fine to commit; the raw vectors are not.
@@ -34,6 +39,9 @@ dist/
 .env
 .env.*
 !.env.example
+# HF token side-channel for the ephemeral Colab runtime — never commit.
+hf_token.txt
+*token*.txt
 
 # ultracode pipeline working notes (local only)
 scratch/
@@ -48,3 +56,8 @@ data/real/_gated/
 # The name-based *embeddings*.csv rule missed the pca10 fixture; this catches all.
 *neurojepa*.csv
 data/real/fixtures/
+
+# ADNI image manifest carries subject-level gated biomarkers (p-tau217/GFAP/NfL/
+# amyloid per RID) under the LONI DUA — same class as data/real/_gated/. Never commit.
+data/real/_manifests/adni_image_manifest.csv
+data/real/_manifests/adni*.csv

@@ -1,0 +1,124 @@
+{
+  "cohorts": {
+    "OASIS-1": {
+      "n": 210,
+      "dx": {
+        "CN": 119,
+        "MCI": 63,
+        "AD": 28
+      },
+      "ad_vs_cn": {
+        "auc": 0.8785,
+        "ci": [
+          0.8189,
+          0.9292
+        ],
+        "p_perm": 0.001,
+        "n": 147,
+        "n_positive": 28
+      },
+      "impaired_vs_cn": {
+        "auc": 0.8081,
+        "ci": [
+          0.7487,
+          0.8654
+        ],
+        "p_perm": 0.001,
+        "n": 210,
+        "n_positive": 91
+      }
+    },
+    "OASIS-2": {
+      "n": 150,
+      "dx": {
+        "CN": 85,
+        "MCI": 52,
+        "AD": 13
+      },
+      "ad_vs_cn": {
+        "auc": 0.7475,
+        "ci": [
+          0.5697,
+          0.8715
+        ],
+        "p_perm": 0.001,
+        "n": 98,
+        "n_positive": 13
+      },
+      "impaired_vs_cn": {
+        "auc": 0.665,
+        "ci": [
+          0.5791,
+          0.7559
+        ],
+        "p_perm": 0.001,
+        "n": 150,
+        "n_positive": 65
+      }
+    }
+  },
+  "cohort_leakage": {
+    "auc": 0.9987,
+    "ci": [
+      0.9969,
+      0.9999
+    ],
+    "p_perm": 0.001,
+    "interpretation": "HIGH -> the two cohorts are distinguishable from the embedding (preprocessing/site batch effect); a pooled disease AUC is partly reading cohort. LOW (~0.5) -> safe to pool."
+  },
+  "pooled_naive": {
+    "n": 360,
+    "dx": {
+      "CN": 204,
+      "MCI": 115,
+      "AD": 41
+    },
+    "ad_vs_cn": {
+      "auc": 0.865,
+      "ci": [
+        0.7948,
+        0.9225
+      ],
+      "p_perm": 0.001,
+      "n": 245,
+      "n_positive": 41
+    },
+    "impaired_vs_cn": {
+      "auc": 0.765,
+      "ci": [
+        0.7162,
+        0.8112
+      ],
+      "p_perm": 0.001,
+      "n": 360,
+      "n_positive": 156
+    }
+  },
+  "pooled_cross_cohort": {
+    "ad_vs_cn": {
+      "auc": 0.8885,
+      "ci": [
+        0.8366,
+        0.9317
+      ],
+      "p_perm": 0.001,
+      "n": 245,
+      "n_positive": 41
+    },
+    "impaired_vs_cn": {
+      "auc": 0.7677,
+      "ci": [
+        0.7208,
+        0.8158
+      ],
+      "p_perm": 0.001,
+      "n": 360,
+      "n_positive": 156
+    },
+    "note": "site-disjoint CV: probe trained on one cohort, scored on the other \u2014 the strict generalization estimate. Meaningful only if cohort_leakage is low."
+  },
+  "n_total": 360,
+  "method": "neuroad.probe.auc_ci_perm on raw 768-d frozen Neuro-JEPA embeddings; auto PCA-10 inside CV; bootstrap 1000 / permutation 1000.",
+  "caveat": "OASIS-1 = brain-masked T88; OASIS-2 = raw mpr-1 (+/- skull-strip). Read per-cohort replication as the primary result; pool only if cohort_leakage AUC ~0.5.",
+  "compliance": "Frozen inference only; weights never stored; embedding tables git-ignored."
+}

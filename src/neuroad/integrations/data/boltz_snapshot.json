@@ -1,0 +1,59 @@
+{
+  "_comment": "PRECOMPUTED Boltz-2 results from a REAL Colab GPU run (scripts/boltz_fold_colab.py). Confidence + affinity scalars only; coordinates never committed.",
+  "_provenance": {
+    "model": "Boltz-2",
+    "license": "MIT",
+    "predictor_class": "AlphaFold3-class open structure + affinity predictor",
+    "producer": "scripts/boltz_fold_colab.py (Colab GPU)",
+    "captured": "2026-07-12T03:02:11.741621Z",
+    "affinity_run": "2026-07-12T03:54:33.021242Z"
+  },
+  "complexes": {
+    "APOE|APP": {
+      "gene_a": "APP",
+      "gene_b": "APOE",
+      "iptm": 0.42438629269599915,
+      "ptm": 0.3712671399116516,
+      "pae": null,
+      "confidence_score": 0.508038341999054
+    },
+    "APP|BACE1": {
+      "gene_a": "APP",
+      "gene_b": "BACE1",
+      "iptm": 0.4772958755493164,
+      "ptm": 0.47599518299102783,
+      "pae": null,
+      "confidence_score": 0.587441086769104
+    },
+    "APP|MAPT": {
+      "gene_a": "APP",
+      "gene_b": "MAPT",
+      "iptm": 0.18629826605319977,
+      "ptm": 0.2999001741409302,
+      "pae": null,
+      "confidence_score": 0.3729075789451599
+    }
+  },
+  "affinities": {
+    "ABL1::Nilotinib": {
+      "gene_a": "ABL1",
+      "ligand_id": "Nilotinib",
+      "ligand_smiles": "CC1=C(C=C(C=C1)C(=O)NC2=CC(=CC(=C2)C(F)(F)F)N3C=C(N=C3)C)NC4=NC=CC(=N4)C5=CN=CC=C5",
+      "iptm": 0.9847976565361023,
+      "ptm": 0.5628545880317688,
+      "confidence_score": 0.6218746304512024,
+      "binding_affinity": -1.5244178771972656,
+      "binding_probability": 0.6724706888198853
+    },
+    "RXRA::Bexarotene": {
+      "gene_a": "RXRA",
+      "ligand_id": "Bexarotene",
+      "ligand_smiles": "CC1=CC2=C(C=C1C(=C)C3=CC=C(C=C3)C(=O)O)C(CCC2(C)C)(C)C",
+      "iptm": 0.9879327416419983,
+      "ptm": 0.5784037113189697,
+      "confidence_score": 0.6905953288078308,
+      "binding_affinity": -0.6130036115646362,
+      "binding_probability": 0.9324398636817932
+    }
+  }
+}

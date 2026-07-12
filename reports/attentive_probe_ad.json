@@ -1,0 +1,199 @@
+{
+  "layer": "2 \u2014 attentive MLP probe (NeuroVFM-style, frozen embedding)",
+  "target": "dx_binary (AD vs CN)",
+  "method": "attentive_probe.evaluate: small regularized MLPClassifier head (hidden=(32,), alpha=1.0) vs linear probe, both through probe.auc_ci_perm (StandardScaler + in-fold auto-PCA, site-disjoint CV, bootstrap CI, permutation null, repeated-CV ensembling). Grounding = leave-one-group-out AUC attribution over embedding + named markers.",
+  "paper_reference": "NeuroVFM, Nat Med 2026 (s41591-026-04497-1): frozen Vol-JEPA encoder (5.24M volumes) + attentive MLP probe for downstream diagnosis. We adapt honestly to a pooled 768-d embedding at n in the hundreds: report (not assume) nonlinear lift; LOGO attribution substitutes for spatial attention maps our pooled embedding cannot provide.",
+  "n_repeats": 5,
+  "n_boot": 1000,
+  "n_perm": 1000,
+  "cohorts": [
+    {
+      "cohort": "adni",
+      "n_subjects": 590,
+      "embedding_dim": 768,
+      "dx": {
+        "CN": 503,
+        "MCI": 0,
+        "AD": 87
+      },
+      "evaluate": {
+        "target": "dx_binary",
+        "n": 590,
+        "linear": {
+          "auc": 0.8588,
+          "ci_lo": 0.817,
+          "ci_hi": 0.8983,
+          "p_perm": 0.001,
+          "ci_excludes_chance": true
+        },
+        "mlp": {
+          "auc": 0.8573,
+          "ci_lo": 0.8138,
+          "ci_hi": 0.899,
+          "p_perm": 0.001,
+          "ci_excludes_chance": true
+        },
+        "delta_auc_mlp_minus_linear": -0.0015,
+        "verdict": "MLP head matches the linear probe (delta=-0.0015) \u2014 the frozen embedding is already near-linearly separable at this n",
+        "head": {
+          "hidden_layer_sizes": [
+            32
+          ],
+          "alpha": 1.0
+        }
+      },
+      "feature_grounding": {
+        "target": "dx_binary",
+        "n": 590,
+        "full_auc": 0.8622,
+        "groups": [
+          "embedding",
+          "p_tau217",
+          "gfap",
+          "nfl",
+          "age"
+        ],
+        "attribution": [
+          {
+            "group": "p_tau217",
+            "loo_auc_drop": 0.0027
+          },
+          {
+            "group": "gfap",
+            "loo_auc_drop": 0.0004
+          },
+          {
+            "group": "nfl",
+            "loo_auc_drop": 0.0002
+          },
+          {
+            "group": "age",
+            "loo_auc_drop": 0.0
+          },
+          {
+            "group": "embedding",
+            "loo_auc_drop": -0.0508
+          }
+        ],
+        "top_driver": "p_tau217",
+        "note": "leave-one-group-out AUC attribution over the frozen embedding + named clinical features (interpretable grounding). Attribution, NOT a learned spatial attention map \u2014 the pooled NeuroJEPA embedding has no per-region tokens."
+      }
+    },
+    {
+      "cohort": "oasis1",
+      "n_subjects": 210,
+      "embedding_dim": 768,
+      "dx": {
+        "CN": 119,
+        "MCI": 46,
+        "AD": 45
+      },
+      "evaluate": {
+        "target": "dx_binary",
+        "n": 164,
+        "linear": {
+          "auc": 0.7296,
+          "ci_lo": 0.6338,
+          "ci_hi": 0.8131,
+          "p_perm": 0.001,
+          "ci_excludes_chance": true
+        },
+        "mlp": {
+          "auc": 0.6613,
+          "ci_lo": 0.5648,
+          "ci_hi": 0.7427,
+          "p_perm": 0.001,
+          "ci_excludes_chance": true
+        },
+        "delta_auc_mlp_minus_linear": -0.0683,
+        "verdict": "MLP head does not beat linear (delta=-0.0683) \u2014 nonlinearity does not pay off at this n; prefer the simpler linear head",
+        "head": {
+          "hidden_layer_sizes": [
+            32
+          ],
+          "alpha": 1.0
+        }
+      },
+      "feature_grounding": {
+        "target": "dx_binary",
+        "n": 164,
+        "full_auc": 0.7289,
+        "groups": [
+          "embedding",
+          "age"
+        ],
+        "attribution": [
+          {
+            "group": "embedding",
+            "loo_auc_drop": 0.1418
+          },
+          {
+            "group": "age",
+            "loo_auc_drop": -0.0007
+          }
+        ],
+        "top_driver": "embedding",
+        "note": "leave-one-group-out AUC attribution over the frozen embedding + named clinical features (interpretable grounding). Attribution, NOT a learned spatial attention map \u2014 the pooled NeuroJEPA embedding has no per-region tokens."
+      }
+    },
+    {
+      "cohort": "oasis2",
+      "n_subjects": 150,
+      "embedding_dim": 768,
+      "dx": {
+        "CN": 85,
+        "MCI": 52,
+        "AD": 13
+      },
+      "evaluate": {
+        "target": "dx_binary",
+        "n": 98,
+        "linear": {
+          "auc": 0.7566,
+          "ci_lo": 0.5767,
+          "ci_hi": 0.8876,
+          "p_perm": 0.003,
+          "ci_excludes_chance": true
+        },
+        "mlp": {
+          "auc": 0.7348,
+          "ci_lo": 0.5543,
+          "ci_hi": 0.8751,
+          "p_perm": 0.006,
+          "ci_excludes_chance": true
+        },
+        "delta_auc_mlp_minus_linear": -0.0218,
+        "verdict": "MLP head does not beat linear (delta=-0.0218) \u2014 nonlinearity does not pay off at this n; prefer the simpler linear head",
+        "head": {
+          "hidden_layer_sizes": [
+            32
+          ],
+          "alpha": 1.0
+        }
+      },
+      "feature_grounding": {
+        "target": "dx_binary",
+        "n": 98,
+        "full_auc": 0.7529,
+        "groups": [
+          "embedding",
+          "age"
+        ],
+        "attribution": [
+          {
+            "group": "embedding",
+            "loo_auc_drop": 0.4253
+          },
+          {
+            "group": "age",
+            "loo_auc_drop": -0.0036
+          }
+        ],
+        "top_driver": "embedding",
+        "note": "leave-one-group-out AUC attribution over the frozen embedding + named clinical features (interpretable grounding). Attribution, NOT a learned spatial attention map \u2014 the pooled NeuroJEPA embedding has no per-region tokens."
+      }
+    }
+  ],
+  "missing_cohorts": [],
+  "compliance": "Frozen inference only; weights never stored; embedding tables git-ignored. Only AUC-grade numbers written here."
+}

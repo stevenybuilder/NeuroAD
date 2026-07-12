@@ -223,51 +223,82 @@ class OpenTargetsClient:
                 return live
         return self._disease_targets_offline(top_n)
 
+    #: OT GraphQL caps a single ``associatedTargets`` page at 200 rows. For a
+    #: universe-scale request (``top_n>200``, used by the offline validation
+    #: harness) we page through ``index`` until we have ``top_n`` rows or the
+    #: server's ``count`` is exhausted. A ``top_n<=200`` request stays a single
+    #: page — byte-identical to the pre-pagination behavior every live caller sees.
+    _PAGE_SIZE = 200
+    _MAX_PAGES = 75  # safety backstop: 75*200 = 15k targets (> AD's full universe)
+
     def _disease_targets_live(self, top_n: int) -> list[TargetAssociation]:
-        size = max(1, min(int(top_n), 200))
-        data = self._post(
-            f'{{ disease(efoId:"{AD_DISEASE_ID}"){{ id name '
-            f'associatedTargets(page:{{index:0,size:{size}}}){{ count rows{{ '
-            f'target{{ id approvedSymbol }} score datatypeScores{{ id score }} }} }} }} }}')
-        dis = (data or {}).get("disease")
-        if not dis:
-            return []
-        rows = (dis.get("associatedTargets") or {}).get("rows") or []
+        want = max(1, int(top_n))
+        page_size = min(want, self._PAGE_SIZE)
         out: list[TargetAssociation] = []
-        for r in rows:
-            tgt = r.get("target") or {}
-            out.append(TargetAssociation(
-                gene=tgt.get("approvedSymbol", "") or "",
-                ensembl_id=tgt.get("id", "") or "",
-                association_score=_clamp01(r.get("score")),
-                datatype_scores={ds["id"]: _clamp01(ds.get("score"))
-                                 for ds in (r.get("datatypeScores") or [])
-                                 if ds.get("id")},
-                n_known_drugs=0,
-                source="live",
-            ))
+        total: Optional[int] = None
+        for index in range(self._MAX_PAGES):
+            data = self._post(
+                f'{{ disease(efoId:"{AD_DISEASE_ID}"){{ id name '
+                f'associatedTargets(page:{{index:{index},size:{page_size}}}){{ count rows{{ '
+                f'target{{ id approvedSymbol }} score datatypeScores{{ id score }} }} }} }} }}')
+            dis = (data or {}).get("disease")
+            if not dis:
+                break  # page 0 failure -> [] (caller degrades to snapshot)
+            at = dis.get("associatedTargets") or {}
+            if total is None and isinstance(at.get("count"), int):
+                total = at["count"]
+            rows = at.get("rows") or []
+            if not rows:
+                break
+            for r in rows:
+                tgt = r.get("target") or {}
+                out.append(TargetAssociation(
+                    gene=tgt.get("approvedSymbol", "") or "",
+                    ensembl_id=tgt.get("id", "") or "",
+                    association_score=_clamp01(r.get("score")),
+                    datatype_scores={ds["id"]: _clamp01(ds.get("score"))
+                                     for ds in (r.get("datatypeScores") or [])
+                                     if ds.get("id")},
+                    n_known_drugs=0,
+                    source="live",
+                ))
+            if len(out) >= want or len(rows) < page_size:
+                break
+            if isinstance(total, int) and len(out) >= total:
+                break
+        if not out:
+            return []
         self._enrich_drug_counts_live(out)
         out.sort(key=lambda t: t.association_score, reverse=True)
-        return out[:top_n]
+        return out[:want]
 
     def _enrich_drug_counts_live(self, targets: list[TargetAssociation]) -> None:
-        """Best-effort: fill n_known_drugs via one aliased query. Never fatal."""
+        """Best-effort: fill n_known_drugs via aliased queries. Never fatal.
+
+        Batched in chunks of ``_PAGE_SIZE`` so a universe-scale target list does
+        not build one oversized query; a list of <=200 is a single chunk, i.e. the
+        exact query the pre-batching code sent."""
         ids = [t.ensembl_id for t in targets if t.ensembl_id]
         if not ids:
             return
-        aliases = " ".join(
-            f'a{i}: target(ensemblId:"{e}"){{ drugAndClinicalCandidates{{ count }} }}'
-            for i, e in enumerate(ids))
-        data = self._post("{ " + aliases + " }")
-        if not data:
-            return  # counts stay 0; ranking is unaffected
-        by_ens = {e: i for i, e in enumerate(ids)}
+        counts: dict[str, int] = {}
+        for start in range(0, len(ids), self._PAGE_SIZE):
+            chunk = ids[start:start + self._PAGE_SIZE]
+            aliases = " ".join(
+                f'a{i}: target(ensemblId:"{e}"){{ drugAndClinicalCandidates{{ count }} }}'
+                for i, e in enumerate(chunk))
+            data = self._post("{ " + aliases + " }")
+            if not data:
+                continue  # counts for this chunk stay 0; ranking is unaffected
+            for i, e in enumerate(chunk):
+                node = data.get(f"a{i}")
+                if isinstance(node, dict):
+                    cnt = (node.get("drugAndClinicalCandidates") or {}).get("count")
+                    if isinstance(cnt, int):
+                        counts[e] = cnt
         for t in targets:
-            node = data.get(f"a{by_ens.get(t.ensembl_id, -1)}")
-            if isinstance(node, dict):
-                cnt = (node.get("drugAndClinicalCandidates") or {}).get("count")
-                if isinstance(cnt, int):
-                    t.n_known_drugs = cnt
+            if t.ensembl_id in counts:
+                t.n_known_drugs = counts[t.ensembl_id]
 
     def _disease_targets_offline(self, top_n: int) -> list[TargetAssociation]:
         rows = self._snapshot.get("associated_targets", [])

@@ -1,0 +1,74 @@
+{
+  "n_total": 360,
+  "cohorts": {
+    "OASIS-1": 210,
+    "OASIS-2": 150
+  },
+  "before_harmonization": {
+    "cohort_leakage": {
+      "auc": 0.9987,
+      "ci": [
+        0.9969,
+        0.9999
+      ],
+      "p_perm": 0.001,
+      "n": 360,
+      "n_pos": 150
+    },
+    "pooled_ad_vs_cn": {
+      "auc": 0.865,
+      "ci": [
+        0.7948,
+        0.9225
+      ],
+      "p_perm": 0.001,
+      "n": 245,
+      "n_pos": 41
+    },
+    "pooled_impaired_vs_cn": {
+      "auc": 0.765,
+      "ci": [
+        0.7162,
+        0.8112
+      ],
+      "p_perm": 0.001,
+      "n": 360,
+      "n_pos": 156
+    }
+  },
+  "after_combat": {
+    "cohort_leakage": {
+      "auc": 0.4699,
+      "ci": [
+        0.4075,
+        0.5271
+      ],
+      "p_perm": 0.8472,
+      "n": 360,
+      "n_pos": 150
+    },
+    "pooled_ad_vs_cn": {
+      "auc": 0.8699,
+      "ci": [
+        0.8073,
+        0.922
+      ],
+      "p_perm": 0.001,
+      "n": 245,
+      "n_pos": 41
+    },
+    "pooled_impaired_vs_cn": {
+      "auc": 0.7601,
+      "ci": [
+        0.7106,
+        0.8076
+      ],
+      "p_perm": 0.001,
+      "n": 360,
+      "n_pos": 156
+    }
+  },
+  "method": "ComBat (neuroad.data.harmonize) batch=cohort, covariates=(age,sex), dx-blind; AUCs via probe.auc_ci_perm leakage-free CV with auto PCA-10.",
+  "pass_criteria": "cohort_leakage AUC -> ~0.5 (batch removed) AND pooled AD-vs-CN survives -> honest pooling to n_total.",
+  "verdict": "PASS \u2014 batch removed and disease survives; pooled AD-vs-CN is honest."
+}

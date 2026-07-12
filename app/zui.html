@@ -1,0 +1,1295 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroAD — Alzheimer's imaging discovery engine</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF; --edge:#E6E3D8; --edge2:#D9D5C7;
+  --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+  --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+  --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+  --gold:#C08415; --gold-edge:#D69A1F; --gray:#B0ABA1; --gray-edge:#CBC7BC;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);overflow:hidden;
+  background-image:radial-gradient(1100px 620px at 64% 24%, #FBFAF6 0%, var(--paper) 62%);}
+
+/* ---- top HUD ---- */
+.hud{position:fixed;left:0;right:0;z-index:40;display:flex;align-items:center;gap:14px;padding:14px 20px;pointer-events:none}
+.hud>*{pointer-events:auto}
+.hud.top{top:0}
+.wordmark{display:flex;align-items:center;gap:12px;font-weight:700;font-size:15px}
+.wordmark .d{color:var(--clay)}
+.wordmark .div{width:1px;height:18px;background:var(--edge2)}
+.wordmark .sub{font-weight:500;font-size:13px;color:var(--mute)}
+.spacer{flex:1}
+.btn{font-size:12px;color:var(--ink2);background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;box-shadow:0 1px 2px rgba(40,36,28,.04)}
+.btn:hover{border-color:var(--edge2)}
+.claude-badge{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);
+  background:var(--card);border:1px solid var(--edge);border-radius:999px;padding:6px 12px;box-shadow:0 1px 2px rgba(40,36,28,.04)}
+.claude-badge .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(18,147,106,.16)}
+.claude-badge b{color:var(--ink);font-weight:600}
+
+/* ---- bottom provenance rail ---- */
+.hud.bot{bottom:0;background:linear-gradient(0deg,rgba(245,244,238,.94) 46%,transparent);z-index:36}
+.rail-prov{display:flex;align-items:center;gap:14px;font-size:13px;opacity:0;transition:opacity .4s;padding-left:150px}
+.rail-prov.on{opacity:1}
+.stamp{font-weight:700;letter-spacing:.3px;color:var(--clay);border:1px solid var(--clay-soft);background:#FBEDE6;border-radius:6px;padding:4px 10px;font-size:12px;white-space:nowrap}
+.stamp.none{color:var(--mute);border-color:var(--edge);background:var(--card)}
+.caveat{color:var(--ink2);font-size:12px;max-width:620px;line-height:1.4}
+.caveat .num{font-family:var(--mono);color:var(--ink);font-weight:600}
+.replay{margin-left:auto}
+
+/* ---- entry ---- */
+.entry{position:fixed;inset:0;z-index:30;display:flex;align-items:center;background:var(--paper);
+  background-image:radial-gradient(1100px 620px at 64% 24%, #FBFAF6 0%, var(--paper) 62%);
+  transition:opacity .5s ease, transform .5s ease}
+.entry.gone{opacity:0;transform:scale(1.04);pointer-events:none}
+.entry-card{width:min(880px,92vw);padding:0 6vw}
+.entry-h{font-size:34px;font-weight:700;line-height:1.12;margin:0 0 14px;letter-spacing:-.02em;color:var(--ink)}
+.entry-sub{color:var(--ink2);font-size:15px;margin:0 0 30px;max-width:560px;line-height:1.5}
+.prompt{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--edge2);border-radius:14px;
+  padding:8px 8px 8px 18px;box-shadow:0 14px 44px rgba(40,36,28,.10);max-width:680px}
+.prompt input{flex:1;background:transparent;border:0;color:var(--ink);font-family:inherit;font-size:15px;outline:none;padding:12px 0}
+.prompt input::placeholder{color:var(--mute)}
+.ask{background:var(--clay);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:600;font-family:inherit;font-size:15px;cursor:pointer;white-space:nowrap}
+.ask:hover{background:var(--clay-deep)}
+
+/* ---- stage / svg ---- */
+.stage{position:fixed;inset:0;z-index:10;opacity:0;transition:opacity .55s ease .1s}
+.stage.live{opacity:1}
+svg.tree{width:100%;height:100%;display:block;cursor:grab}
+svg.tree.drag{cursor:grabbing}
+/* NO css transition on #cam — camera is driven by rAF only */
+.edge{fill:none;stroke-width:2.6}
+.edge.dead{stroke-dasharray:7 7}
+.edge-label{font-family:var(--sans);font-size:12px;opacity:0}
+svg.tree[data-lod="0"] .edge-label{opacity:0}
+svg.tree[data-lod="1"] .edge-label.has,svg.tree[data-lod="2"] .edge-label.has{opacity:1}
+.node{cursor:pointer}
+.node circle.core{fill:var(--card);stroke-width:2.8}
+.node.output circle.core{fill:var(--clay-soft);stroke:var(--clay);stroke-width:3.4}
+.node .rootdot{fill:var(--clay)}
+.node-label{font-family:var(--sans);fill:var(--ink);font-size:15px;font-weight:600;text-anchor:middle}
+.node.output .node-label{fill:var(--clay-deep);font-weight:700}
+.node.dead .node-label{fill:var(--mute)}
+.node-sub{font-family:var(--sans);fill:var(--mute);font-size:12px;text-anchor:middle}
+.node-ic{font-family:var(--sans);font-size:15px;font-weight:700;fill:var(--clay-deep);text-anchor:middle}
+/* LOD: hide text at overview; hide label/sub at detail (card replaces) */
+svg.tree[data-lod="0"] .node-label,svg.tree[data-lod="0"] .node-sub{opacity:0}
+svg.tree[data-lod="2"] .node-label,svg.tree[data-lod="2"] .node-sub{opacity:0}
+
+/* ---- story cards (mounted inside #cam as foreignObject) ---- */
+.cardwrap{opacity:0;transition:opacity .15s ease;font-family:var(--sans);display:flex;flex-direction:column;justify-content:center;height:100%}
+.cardwrap.show{opacity:1}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:14px 16px;
+  box-shadow:0 8px 30px rgba(40,36,28,.10)}
+.card h4{margin:0;font-size:15px;font-weight:700;color:var(--ink)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 2px}
+.tag{font-size:12px;background:var(--paper2);color:var(--ink2);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.tag.snap{background:#FBEDE6;color:var(--clay-deep);font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:2px 6px}
+.body{font-size:13px;color:var(--ink2);line-height:1.5;margin:8px 0 0}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px;margin-top:11px}
+.mgrid .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.mgrid .v{font-family:var(--mono);font-size:15px;color:var(--ink);margin-top:1px}
+.barrow{margin-top:9px}
+.barrow .bl{font-size:12px;color:var(--ink2);margin-bottom:4px;display:flex;justify-content:space-between}
+.barrow .bl .n{font-family:var(--mono);color:var(--ink)}
+.bar{height:7px;border-radius:4px;background:var(--paper2);overflow:hidden}
+.bar>i{display:block;height:100%}
+.caveat-foot{font-size:12px;color:var(--mute);margin-top:11px;border-top:1px solid var(--edge);padding-top:9px;line-height:1.45}
+.caveat-foot.hard{color:var(--clay-deep);border-top-color:var(--clay-soft)}
+.dlabel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+.check{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px solid var(--edge);font-size:13px;color:var(--ink)}
+.check:last-child{border-bottom:0}
+.check .mark{width:16px;text-align:center;font-weight:700;flex:none}
+.check.pass .mark{color:var(--green)} .check.wait .mark{color:var(--mute)}
+.rank{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px}
+.rank .nm{flex:1}.rank .nm small{color:var(--mute);font-size:11px;font-family:var(--mono)}
+.rank .sc{width:90px}
+.exp{font-size:13px;color:var(--ink2);padding:6px 0 6px 15px;position:relative;line-height:1.45}
+.exp:before{content:'▸';position:absolute;left:0;color:var(--clay)}
+.exp .snap{font-family:var(--mono);font-size:11px;color:var(--clay-deep);letter-spacing:.05em;margin-left:6px;background:#FBEDE6;padding:1px 5px;border-radius:4px}
+/* per-leg provenance pills — one flag per record, never collapsed */
+.pill{font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-left:6px;padding:1px 5px;border-radius:4px;white-space:nowrap;vertical-align:middle}
+.pill.snap{color:var(--clay-deep);background:#FBEDE6}
+.pill.live{color:var(--green-edge);background:var(--green-soft)}
+.pill.surr{color:var(--gold);background:#FBF2DD}
+.rank .src{margin-left:0}
+.illus{font-size:11px;color:var(--mute);font-style:italic;margin-top:6px}
+/* AlphaFold model link — quiet clay underline, opens the real structure */
+.exp a.mlink{color:var(--clay-deep);text-decoration:none;border-bottom:1px solid var(--clay-soft)}
+.exp a.mlink:hover{border-bottom-color:var(--clay-deep)}
+/* gate ✓/✗/— pass-mark — a glyph, not a box (semantic color only) */
+.tag .mk{font-family:var(--mono);margin-right:5px}
+
+/* ---- progressive disclosure (Dana Cho §5) — plain-HTML <details>, no JS.
+   The card LEADS with the showcase (top target + structure + caveat, all
+   outside any <details>); only the long tail is tucked here. ---- */
+details.disc{margin-top:7px}
+details.disc>summary{cursor:pointer;list-style:none;font-size:12px;color:var(--clay-deep);
+  padding:3px 0;user-select:none;display:flex;align-items:center;gap:7px;font-weight:600}
+details.disc>summary::-webkit-details-marker{display:none}
+details.disc>summary::before{content:'▸';color:var(--clay);font-weight:700}
+details.disc[open]>summary::before{content:'▾'}
+details.disc>.discbody{padding-top:2px}
+
+/* ---- SYNTHETIC / offline-fallback header — unmistakable, never mistaken for
+   a live result (honesty, DANA_CHO §4) ---- */
+.synthead{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--gold);
+  background:#FBF2DD;border:1px solid #EBD9A8;border-radius:6px;padding:6px 9px;margin:0 0 11px;text-align:center}
+
+/* ---- status pill ---- */
+.status{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:38;font-size:13px;color:var(--ink2);
+  background:var(--card);border:1px solid var(--edge);border-radius:999px;padding:7px 16px;box-shadow:0 6px 20px rgba(40,36,28,.08);
+  display:flex;align-items:center;gap:9px;opacity:0;transition:opacity .3s;pointer-events:none}
+.status.on{opacity:1}
+.status .sp{width:9px;height:9px;border-radius:50%;background:var(--mute);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ---- chat rail ---- */
+.railL{position:fixed;top:0;bottom:0;left:0;z-index:35;width:340px;background:var(--card);border-right:1px solid var(--edge);
+  transform:translateX(-340px);transition:transform .38s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;
+  padding:60px 0 16px;box-shadow:6px 0 24px rgba(40,36,28,.06)}
+.railL.open{transform:translateX(0)}
+.railL-h{padding:8px 18px 12px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--edge)}
+.railL-body{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.msg{font-size:13px;line-height:1.55}
+.msg .who{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+.msg.user .bub{background:var(--paper2);border:1px solid var(--edge);border-radius:10px;padding:10px 12px}
+.msg.claude .bub{color:var(--ink2)}
+.msg.claude .who{color:var(--clay)}
+.railL-input{margin:0 14px;background:var(--paper);border:1px solid var(--edge2);border-radius:10px;padding:10px 12px;display:flex;gap:8px}
+.railL-input input{flex:1;background:transparent;border:0;color:var(--ink);font-family:inherit;font-size:13px;outline:none}
+.railL-input input::placeholder{color:var(--mute)}
+.askpill{position:fixed;left:20px;bottom:22px;z-index:37;background:var(--clay);color:#fff;border:0;border-radius:999px;
+  padding:11px 18px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 6px 20px rgba(201,100,66,.32);
+  transition:left .38s cubic-bezier(.4,0,.2,1)}
+.railL.open ~ .askpill{left:360px}
+.askpill:hover{background:var(--clay-deep)}
+
+/* ---- mini-map ---- */
+.minimap{position:fixed;right:18px;bottom:18px;z-index:37;background:var(--card);border:1px solid var(--edge);border-radius:10px;
+  padding:8px;box-shadow:0 6px 20px rgba(40,36,28,.08);opacity:0;transition:opacity .4s}
+.minimap.on{opacity:1}
+.minimap svg{display:block;cursor:pointer}
+#mmView{fill:rgba(201,100,66,.12);stroke:var(--clay);stroke-width:1.4}
+
+/* ---- tour controls ---- */
+.tour{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:37;display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1px solid var(--edge);border-radius:999px;padding:5px 6px;box-shadow:0 6px 20px rgba(40,36,28,.08);
+  opacity:0;transition:opacity .4s;pointer-events:none}
+.tour.on{opacity:1;pointer-events:auto}
+.tour button{border:0;background:transparent;color:var(--ink2);font-family:inherit;font-size:15px;cursor:pointer;
+  width:30px;height:28px;border-radius:999px}
+.tour button:hover{background:var(--paper2)}
+.tour .count{font-family:var(--mono);font-size:12px;color:var(--mute);padding:0 8px;min-width:44px;text-align:center}
+.tour .lbl{font-size:12px;color:var(--ink2);padding:0 10px 0 4px;border-left:1px solid var(--edge);margin-left:2px}
+.resume{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);z-index:37;background:var(--clay);color:#fff;border:0;
+  border-radius:999px;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  box-shadow:0 6px 20px rgba(201,100,66,.3);display:none}
+.resume.on{display:block}
+.hint{position:fixed;left:50%;bottom:112px;transform:translateX(-50%);z-index:20;color:var(--mute);font-size:12px;
+  opacity:0;transition:opacity .4s;pointer-events:none}
+.hint.on{opacity:1}
+
+/* ---- honest Claude badge (offline uses --mute, never green) ---- */
+.claude-badge.offline{color:var(--mute)}
+.claude-badge.offline .dot{background:var(--mute);box-shadow:0 0 0 3px rgba(138,135,125,.14)}
+.claude-badge.offline b{color:var(--ink2)}
+
+/* ---- state chips for gate/verdict story cards (semantic only) ---- */
+.tag.st-pass{background:var(--green-soft);color:var(--green)}
+.tag.st-weak{background:#FBF2DD;color:var(--gold)}
+.tag.st-kill{background:#EFEDE6;color:var(--mute)}
+
+/* ---- Claude orchestrator tool-call trace (quiet hairline strip) ---- */
+/* top-LEFT, narrow, quiet: never over the center/right story cards. Auto-fades
+   a few seconds after it appears; click it (or the Claude badge) to re-open. */
+.trace{position:fixed;top:58px;left:20px;transform:none;z-index:34;
+  background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:8px 14px;
+  box-shadow:0 6px 20px rgba(40,36,28,.06);max-width:min(440px,46vw);
+  display:none;flex-direction:column;gap:4px;pointer-events:auto;
+  transition:opacity .45s ease}
+.trace.on{display:flex}
+.trace.faded{opacity:0;pointer-events:none}
+.trace .tline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--ink2)}
+.trace .tpath{font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:2px 7px;border-radius:999px;white-space:nowrap}
+.trace .tpath.live{color:var(--green-edge);background:var(--green-soft)}
+.trace .tpath.off{color:var(--mute);background:var(--paper2)}
+.trace .tool{font-family:var(--mono);font-size:11px;color:var(--ink)}
+.trace .sep{color:var(--mute)}
+.trace .tfoot{font-size:11px;color:var(--mute);line-height:1.4}
+.trace .tfoot .tmodel{font-family:var(--mono)}
+
+@media (prefers-reduced-motion:reduce){
+  .entry,.stage,.railL,.askpill,.status,.minimap,.tour,.rail-prov,.cardwrap,.trace{transition:none!important}
+  .status .sp{animation:none!important}
+}
+</style>
+
+<!-- TOP HUD -->
+<div class="hud top">
+  <div class="wordmark"><span>Neuro<span class="d">AD</span></span><span class="div"></span><span class="sub">Alzheimer's imaging discovery engine</span></div>
+  <div class="spacer"></div>
+  <button class="btn" id="overviewBtn">Overview</button>
+  <div class="claude-badge offline"><span class="dot"></span>Claude · <b>offline template</b></div>
+</div>
+
+<!-- STATUS PILL -->
+<div class="status" id="status"><span class="sp"></span>Sequencing the engine tools…</div>
+
+<!-- CLAUDE ORCHESTRATOR TOOL-CALL TRACE -->
+<div class="trace" id="trace"></div>
+
+<!-- BOTTOM PROVENANCE RAIL -->
+<div class="hud bot">
+  <div class="rail-prov" id="railProv">
+    <span class="stamp none" id="pstamp">No candidates yet</span>
+    <span class="caveat" id="pcaveat">State an Alzheimer's hypothesis to begin.</span>
+    <button class="btn replay" id="replay">↻ Replay</button>
+  </div>
+</div>
+
+<!-- ENTRY -->
+<div class="entry" id="entry">
+  <div class="entry-card">
+    <h1 class="entry-h">State an Alzheimer's Disease hypothesis.</h1>
+    <p class="entry-sub">NeuroAD clears confounds and returns ranked biomarkers and testable experiments.</p>
+    <div class="prompt">
+      <input id="hyp" value="p-tau217 plasma level predicts hippocampal atrophy in preclinical AD">
+      <button class="ask" id="askBtn">Investigate&nbsp;→</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE -->
+<div class="stage" id="stage">
+  <svg class="tree" id="svg" viewBox="0 0 1440 820" preserveAspectRatio="xMidYMid meet" data-lod="1">
+    <g id="cam"><g id="edges"></g><g id="cards"></g><g id="nodes"></g></g>
+  </svg>
+  <div class="hint" id="hint">Scroll to zoom · drag to pan · Esc for overview</div>
+</div>
+
+<!-- CHAT RAIL -->
+<div class="railL" id="railL">
+  <div class="railL-h">◆ Conversation</div>
+  <div class="railL-body" id="railBody">
+    <div class="msg claude"><div class="who">Claude</div><div class="bub">Ask a follow-up and I'll spawn a new gold offshoot from the tree.</div></div>
+  </div>
+  <div class="railL-input"><input placeholder="Refine, or ask for more candidates…"><button class="ask" style="padding:8px 12px;font-size:13px">→</button></div>
+</div>
+<button class="askpill" id="askpill">Ask Claude</button>
+
+<!-- MINI-MAP -->
+<div class="minimap" id="minimap">
+  <svg id="mm" width="190" height="120" viewBox="0 0 190 120">
+    <g id="mmEdges"></g><g id="mmNodes"></g>
+    <rect id="mmView" x="0" y="0" width="60" height="34" rx="2"></rect>
+  </svg>
+</div>
+
+<!-- TOUR -->
+<div class="tour" id="tour">
+  <button id="tPrev" title="Previous (←)">‹</button>
+  <button id="tPlay" title="Play / pause (space)">▶</button>
+  <button id="tNext" title="Next (→)">›</button>
+  <span class="count" id="tCount">1 / 7</span>
+  <span class="lbl" id="tLbl">Overview</span>
+</div>
+<button class="resume" id="resume">Resume tour</button>
+
+<script>
+"use strict";
+const SVGNS='http://www.w3.org/2000/svg', VBW=1440, VBH=820;
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const COL ={root:'#C96442',gold:'#C08415',green:'#12936A',gray:'#B0ABA1',output:'#C96442'};
+const ECOL={root:'#C96442',gold:'#D69A1F',green:'#1BA97A',gray:'#CBC7BC',output:'#C96442'};
+
+const edgesG=document.getElementById('edges'), nodesG=document.getElementById('nodes'),
+      cardsG=document.getElementById('cards');
+const cam=document.getElementById('cam'), svg=document.getElementById('svg'), stage=document.getElementById('stage');
+const D={};
+
+/* ---- REAL data & derived tree (rebuilt on load + every Investigate) ---------
+   NODES/NMAP/ALL/NT/EW/DIE/TOUR are all derived from the selected case's
+   tree in demo_data.json, so nothing about the picture is hand-authored. ---- */
+let DATA=null;               // full demo_data.json (null until fetched)
+let CASE=null;               // the selected case object {tree, translation, ...}
+let TRANSLATION=null;        // candidate/clay node's translation (null => fallback card)
+let HYP='';                  // the current hypothesis / goal text
+let NODES=[], NMAP={}, ALL=[];
+let goldCount=0;             // Ask-Claude offshoot counter
+
+/* role (from demo_data tree) -> the existing node styling kind */
+function kindOf(role){ return role==='clay'?'output' : role; }  // root/green/gold/gray pass through
+
+/* ---- derive a linear, monotonic (x increases with depth) node model -------
+   from case.tree = {root, nodes[], edges[]}. KILL trees simply dead-end at a
+   gray verdict with NO clay/candidate node — we render exactly what's there. */
+const LAY={X0:210, XSTEP:320, CY:410};
+function deriveNodes(tree){
+  const rawById={}; (tree.nodes||[]).forEach(n=>rawById[n.id]=n);
+  const parentOf={}, edgeOf={}, childOf={};
+  (tree.edges||[]).forEach(e=>{ parentOf[e.to]=e.from; edgeOf[e.to]=e; (childOf[e.from]=childOf[e.from]||[]).push(e.to); });
+  // walk from root so depth (=x order) follows the real gauntlet sequence
+  const order=[], seen={}, stack=[tree.root];
+  while(stack.length){ const id=stack.shift(); if(seen[id]||!rawById[id])continue; seen[id]=1; order.push(id); (childOf[id]||[]).forEach(c=>stack.push(c)); }
+  (tree.nodes||[]).forEach(n=>{ if(!seen[n.id]){seen[n.id]=1; order.push(n.id);} });  // safety: append strays
+  return order.map((id,i)=>{
+    const raw=rawById[id], role=raw.role, kind=kindOf(role), e=edgeOf[id];
+    return {
+      id, x:LAY.X0+i*LAY.XSTEP, y:LAY.CY,
+      r: kind==='root'?30 : kind==='output'?34 : (raw.type==='verdict'?24:20),
+      kind, label:raw.label||id, sub:raw.sub||'',
+      from: parentOf[id]||null,
+      edge: (e&&e.kind==='translate') ? (e.label||'translate') : '',   // label only the translate leg (keep the chain calm)
+      dead: kind==='gray',
+      ic: kind==='output'?'⌾':'',
+      type: raw.type||role,
+      state: raw.state, effect: raw.effect, effect_label: raw.effect_label,
+      story: raw.story||{}, translation: raw.translation||null,
+    };
+  });
+}
+
+/* ---- one node's edge DOM (curve + optional label), keyed into D ---- */
+function makeEdgeDOM(n){
+  const p=NMAP[n.from]; if(!p) return;
+  const mx=(p.x+n.x)/2;
+  const path=document.createElementNS(SVGNS,'path');
+  path.setAttribute('d',`M ${p.x+p.r} ${p.y} C ${mx} ${p.y}, ${mx} ${n.y}, ${n.x-n.r} ${n.y}`);
+  path.setAttribute('class','edge'+(n.dead?' dead':'')); path.setAttribute('stroke',ECOL[n.kind]);
+  edgesG.appendChild(path);
+  const L=path.getTotalLength();
+  if(!n.dead){path.style.strokeDasharray=L;path.style.strokeDashoffset=L;}
+  else{path.style.opacity=0;}
+  let lbl=null;
+  if(n.edge){lbl=document.createElementNS(SVGNS,'text');
+    lbl.setAttribute('x',mx);lbl.setAttribute('y',(p.y+n.y)/2-8);lbl.setAttribute('text-anchor','middle');
+    lbl.setAttribute('class','edge-label');lbl.setAttribute('fill',ECOL[n.kind]);
+    lbl.textContent=n.edge;edgesG.appendChild(lbl);}
+  D[n.id+'_edge']={path,L,lbl};
+}
+
+/* ---- one node's circle+label DOM, keyed into D ---- */
+function makeNodeDOM(n){
+  const g=document.createElementNS(SVGNS,'g');
+  g.setAttribute('class','node'+(n.kind==='output'?' output':'')+(n.dead?' dead':''));
+  g.addEventListener('click',ev=>{ev.stopPropagation();tourDeviate();flyTo(frameCardNode(n.id));});
+  const c=document.createElementNS(SVGNS,'circle');
+  c.setAttribute('class','core');c.setAttribute('cx',n.x);c.setAttribute('cy',n.y);c.setAttribute('r',n.r);
+  c.setAttribute('stroke',COL[n.kind]);
+  if(n.kind==='gold')c.setAttribute('fill','#FBF2DD');
+  if(n.kind==='green')c.setAttribute('fill','var(--green-soft)');
+  if(n.kind==='gray')c.setAttribute('fill','#EFEDE6');
+  g.appendChild(c);
+  if(n.kind==='root'){const rd=document.createElementNS(SVGNS,'circle');
+    rd.setAttribute('class','rootdot');rd.setAttribute('cx',n.x);rd.setAttribute('cy',n.y);rd.setAttribute('r',9);g.appendChild(rd);}
+  if(n.ic){const ic=document.createElementNS(SVGNS,'text');
+    ic.setAttribute('x',n.x);ic.setAttribute('y',n.y+6);ic.setAttribute('class','node-ic');ic.textContent=n.ic;g.appendChild(ic);}
+  const l=document.createElementNS(SVGNS,'text');
+  l.setAttribute('x',n.x);l.setAttribute('y',n.y+n.r+20);l.setAttribute('class','node-label');l.textContent=n.label;g.appendChild(l);
+  const s=document.createElementNS(SVGNS,'text');
+  s.setAttribute('x',n.x);s.setAttribute('y',n.y+n.r+37);s.setAttribute('class','node-sub');s.textContent=n.sub;g.appendChild(s);
+  nodesG.appendChild(g);
+  D[n.id]={g};
+}
+
+/* ---- rebuild the entire tree (DOM + timeline + minimap + tour) from a case ---- */
+function buildTree(caseObj, hypText){
+  CASE=caseObj; if(hypText) HYP=hypText;
+  // wipe prior tree
+  edgesG.innerHTML=''; nodesG.innerHTML=''; cardsG.innerHTML='';
+  for(const k in D) delete D[k];
+  for(const k in cardPool) delete cardPool[k];
+  NODES=deriveNodes(caseObj.tree||{nodes:[],edges:[]});
+  NMAP={}; NODES.forEach(n=>NMAP[n.id]=n);
+  ALL=NODES.map(n=>n.id);
+  const cand=NODES.find(n=>n.kind==='output');
+  TRANSLATION = cand ? (cand.translation || caseObj.translation || null) : null;
+  NODES.forEach(n=>{ if(n.from) makeEdgeDOM(n); makeNodeDOM(n); });
+  goldCount=0;
+  buildTimeline(); buildMini(); buildTour();
+  view=homeView(); applyCam();
+}
+
+/* ---- Ask-Claude: spawn a NEW gold offshoot from the root (contract §5.9) ---- */
+function addGoldOffshoot(label, sub){
+  if(!NODES.length) return;
+  const root=NODES[0]; goldCount++;
+  const id='gold_ask_'+goldCount;
+  const n={ id, x:root.x+300, y:root.y+160+(goldCount-1)*120, r:22, kind:'gold',
+    label:label||'Follow-up', sub:sub||'', from:root.id, edge:'iterate',
+    dead:false, ic:'', type:'ask', story:{kind:'ask', text:sub||label} };
+  NODES.push(n); NMAP[id]=n; ALL.push(id);
+  NT[id]=1; EW[id]=[0.9,1];                    // treated as already-built
+  makeEdgeDOM(n); makeNodeDOM(n);
+  const nd=D[id], e=D[id+'_edge'];
+  nd.g.style.transformBox='fill-box'; nd.g.style.transformOrigin='center';
+  nd.g.style.opacity='0'; nd.g.style.transform='scale(.4)';
+  if(e) e.path.style.strokeDashoffset=e.L;
+  const dur=REDUCED?1:700; let s0=null;
+  (function grow(ts){ if(s0===null)s0=ts; const t=Math.min(1,(ts-s0)/dur), k=1-Math.pow(1-t,2);
+    nd.g.style.opacity=k; nd.g.style.transform=`scale(${0.4+0.6*k})`;
+    if(e){ e.path.style.strokeDashoffset=e.L*(1-k); if(e.lbl)e.lbl.classList.toggle('has',k>0.55); }
+    if(t<1)requestAnimationFrame(grow);
+  })();
+  buildP=1; buildMini();
+  tourDeviate(); flyTo(frameCardNode(id));
+}
+
+/* =======================================================================
+   CAMERA — Van Wijk & Nuij smooth zoom (d3 interpolateZoom), single rAF.
+   view = {cx,cy,w}  (world coords; w = world-width shown). k = VBW/w.
+   ======================================================================= */
+const rho=1.41421356, rho2=2, rho4=4, eps=1e-12;
+function cosh(x){return (Math.exp(x)+Math.exp(-x))/2}
+function sinh(x){return (Math.exp(x)-Math.exp(-x))/2}
+function tanh(x){var e=Math.exp(2*x);return (e-1)/(e+1)}
+function interpZoom(a,b){ // a,b = [cx,cy,w]
+  var ux0=a[0],uy0=a[1],w0=a[2], ux1=b[0],uy1=b[1],w1=b[2];
+  var dx=ux1-ux0, dy=uy1-uy0, d2=dx*dx+dy*dy, i, S;
+  if(d2<eps){ S=Math.abs(Math.log(w1/w0))/rho;
+    i=function(t){return [ux0+t*dx, uy0+t*dy, w0*Math.exp(rho*(w1<w0?-1:1)*t*S)]}; }
+  else { var d1=Math.sqrt(d2),
+    b0=(w1*w1-w0*w0+rho4*d2)/(2*w0*rho2*d1),
+    b1=(w1*w1-w0*w0-rho4*d2)/(2*w1*rho2*d1),
+    r0=Math.log(Math.sqrt(b0*b0+1)-b0), r1=Math.log(Math.sqrt(b1*b1+1)-b1);
+    S=(r1-r0)/rho;
+    i=function(t){ var s=t*S, ch0=cosh(r0),
+      u=w0/(rho2*d1)*(ch0*tanh(rho*s+r0)-sinh(r0));
+      return [ux0+u*dx, uy0+u*dy, w0*ch0/cosh(rho*s+r0)]; }; }
+  i.S=S; return i;
+}
+
+let view={cx:660,cy:420,w:1440};
+function kOf(){return VBW/view.w}
+function clampW(w){return Math.max(150,Math.min(4200,w))}
+function applyCam(){
+  // Guard the numeric model so a NaN/0/∞ view can never emit a broken transform
+  // nor throw and break the rAF fly chain (flyTick re-arms only if this returns).
+  if(!view || !isFinite(view.cx) || !isFinite(view.cy) || !isFinite(view.w) || view.w<=0){ return; }
+  const k=VBW/view.w;
+  cam.setAttribute('transform',`translate(${VBW/2-view.cx*k} ${VBH/2-view.cy*k}) scale(${k})`);
+  // Each sub-step is isolated: a fault in one (or in a card's HTML/reflow) must not
+  // stop the others and must never propagate out to kill the animation loop.
+  try{ updateLOD(); }catch(e){ console.warn('updateLOD',e); }
+  try{ mountCards(); }catch(e){ console.warn('mountCards',e); }
+  try{ updateMiniViewport(); }catch(e){ console.warn('updateMiniViewport',e); }
+}
+
+/* single rAF fly loop, interruptible */
+let interp=null, flyStart=null, flyDur=0, flyRAF=null, flyDone=null;
+function cancelFly(){ if(flyRAF){cancelAnimationFrame(flyRAF);flyRAF=null;} interp=null; flyDone=null; }
+function flyTo(target,onDone){
+  target={cx:target.cx,cy:target.cy,w:clampW(target.w)};
+  cancelFly();
+  if(REDUCED){ view=target; applyCam(); if(onDone)onDone(); return; }
+  interp=interpZoom([view.cx,view.cy,view.w],[target.cx,target.cy,target.w]);
+  flyStart=null; flyDur=Math.max(300,Math.min(1500,interp.S*430)); flyDone=onDone;
+  flyRAF=requestAnimationFrame(flyTick);
+}
+function flyTick(ts){
+  if(flyStart===null)flyStart=ts;
+  const t=Math.max(0,Math.min(1,(ts-flyStart)/flyDur));
+  const r=interp(t); view={cx:r[0],cy:r[1],w:r[2]}; applyCam();
+  if(t<1){flyRAF=requestAnimationFrame(flyTick);}
+  else{flyRAF=null;interp=null; const cb=flyDone; flyDone=null; if(cb)cb();}
+}
+
+/* frame a set of node ids into a padded subtree bbox -> {cx,cy,w} */
+function frameNodes(ids,pad){
+  pad=pad==null?120:pad;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,seen=0;
+  ids.forEach(id=>{const n=NMAP[id]; if(!n)return;         // skip unknown ids, don't NaN the bbox
+    seen++;
+    x0=Math.min(x0,n.x-n.r);y0=Math.min(y0,n.y-n.r);
+    x1=Math.max(x1,n.x+n.r);y1=Math.max(y1,n.y+n.r);});
+  if(!seen){ return {cx:view.cx, cy:view.cy, w:view.w}; }  // nothing to frame -> hold current view
+  x0-=pad;y0-=pad;x1+=pad;y1+=pad;
+  const bw=x1-x0, bh=y1-y0;
+  const w=Math.max(1, Math.max(bw, bh*VBW/VBH));           // never zero-width
+  return {cx:(x0+x1)/2, cy:(y0+y1)/2, w};
+}
+/* frame a CARD-BEARING node so the WHOLE mounted story card fits with margin.
+   frameNodes() frames only the node POINT, which over-zooms and pushes a tall
+   card off the right/bottom edges (the observed candidate-card overflow). Here
+   we frame the union of the node circle and its collapsed card rect (anchored
+   right of the node), padded a hair so the card lands at ~89% of the viewport
+   height. That keeps k just above the DETAIL threshold (>1.6, so the card
+   mounts) while the entire card stays in frame. cy == n.y for every node (all
+   share CY), so tour beats remain monotonic in x with no vertical ping-pong. */
+function frameCardNode(id){
+  const n=NMAP[id]; if(!n) return frameNodes([id],150);
+  const ch=cardH(n), cw=CARDW[n.kind];
+  const left=n.x-n.r, right=n.x+n.r+18+cw;      // node + card, world coords
+  const padY=ch*0.06, padX=Math.max(40,cw*0.10);
+  const x0=left-padX, x1=right+padX, y0=n.y-ch/2-padY, y1=n.y+ch/2+padY;
+  const bw=x1-x0, bh=y1-y0;
+  const w=Math.max(1, Math.max(bw, bh*VBW/VBH));
+  return {cx:(x0+x1)/2, cy:(y0+y1)/2, w};
+}
+function homeView(){const f=frameNodes(ALL,90); f.w*=1.12; return f;}
+function goHome(){tourStep=0;syncTour();flyTo(homeView());}
+
+/* =======================================================================
+   Semantic zoom — LOD with hysteresis
+   OVERVIEW k<0.68 · MID 0.68–1.15 · DETAIL k>1.15
+   DETAIL begins at 1.15 (was 1.6) so frameCardNode can frame a whole story card
+   with margin AND still land in DETAIL (the card only mounts at lod 2). A tall
+   card framed to fit sits near k~1.28 (< 1.6), so 1.6 would have kept it in MID
+   and never mounted it — the cause of the "card frames but doesn't show / spills
+   over" behaviour. Hysteresis gaps preserved (0.68<0.82, 1.0<1.15). */
+let lod=1;
+function updateLOD(){
+  const k=kOf();
+  let prev, guard=0;                            // settle across multi-band jumps (e.g. reduced-motion flyTo)
+  do{ prev=lod;                                 // thresholds have hysteresis gaps (0.68<0.82, 1.0<1.15)
+    if(lod===0){ if(k>0.82)lod=1; }             // so this can only ever step monotonically toward k's
+    else if(lod===1){ if(k<0.68)lod=0; else if(k>1.15)lod=2; }  // band and cannot oscillate; the
+    else if(lod===2){ if(k<1.0)lod=1; }         // guard is a hard stop in case that ever changes.
+  }while(lod!==prev && ++guard<8);
+  svg.setAttribute('data-lod',lod);
+}
+
+/* frustum-culled card mounting (pool per node id) */
+const cardPool={};
+const CARDW={root:300,gold:300,gray:300,green:300,output:360};
+/* CARDH = the COLLAPSED (frame) height — what the camera frames and the card is
+   centered into. The candidate card now LEADS with essentials (top target +
+   AlphaFold structure + verdict tags + caveat) and tucks the long tail behind
+   <details>, so its collapsed content dropped 700 -> ~558; the budget (570)
+   just covers that measured height. frameCardNode() zooms so this height fills
+   the frame, so a shorter card only gains margin — it never overflows. */
+const CARDH={root:330,gold:250,gray:262,green:262,output:570};
+/* the site/scanner gate carries an extra leakage-margin block (kept visible) +
+   a tucked confound-leaderboard, so it is budgeted a little taller (~414 real). */
+function isScannerGate(n){ return n.type==='gate' && ((n.story&&n.story.key==='site_scanner')||String(n.id||'').indexOf('site_scanner')>=0); }
+/* collapsed height (what the camera frames + the card is centered into) */
+function cardH(n){ return CARDH[n.kind] + (isScannerGate(n)?180:0); }
+/* foreignObject height — generous so an EXPANDED <details> never clips (the
+   pinned caveat sits at the bottom and must never be truncated); the card is
+   vertically centered within it, so the COLLAPSED card stays centered on the
+   node and frameCardNode still frames it tightly via cardH(). */
+function foH(n){ return (n.kind==='output'?900:CARDH[n.kind]) + (isScannerGate(n)?360:0); }
+function inView(n){
+  const h=view.w*VBH/VBW, m=0.15;
+  const vx0=view.cx-view.w*(0.5+m), vx1=view.cx+view.w*(0.5+m);
+  const vy0=view.cy-h*(0.5+m), vy1=view.cy+h*(0.5+m);
+  // test the card's world rect (anchored right of the node), unioned with the node point,
+  // so a card still partly on-screen is not unmounted while its node exits the frame
+  const ch=foH(n);
+  const cx0=n.x+n.r+18, cy0=n.y-ch/2;
+  const rx0=Math.min(n.x,cx0), ry0=Math.min(n.y,cy0);
+  const rx1=Math.max(n.x,cx0+CARDW[n.kind]), ry1=Math.max(n.y,cy0+ch);
+  return rx1>vx0 && rx0<vx1 && ry1>vy0 && ry0<vy1;
+}
+function ensureCard(n){
+  if(cardPool[n.id])return cardPool[n.id];
+  const fo=document.createElementNS(SVGNS,'foreignObject');
+  const w=CARDW[n.kind], h=foH(n);
+  fo.setAttribute('width',w);fo.setAttribute('height',h);
+  fo.setAttribute('x',n.x+n.r+18);fo.setAttribute('y',n.y-h/2);
+  const div=document.createElement('div');
+  div.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+  div.className='cardwrap'; div.innerHTML='<div class="card">'+storyHTML(n)+'</div>';
+  fo.appendChild(div); fo.style.display='none'; cardsG.appendChild(fo);
+  cardPool[n.id]={fo,div,shown:false};
+  return cardPool[n.id];
+}
+function hideCard(c){ if(!c||!c.shown)return; c.div.classList.remove('show'); c.fo.style.display='none'; c.shown=false; }
+function showCard(cc){
+  if(cc.shown)return;                        // already shown: do NOT re-schedule work every frame
+  cc.shown=true; cc.fo.style.display='block';
+  // fade in on the next frame (lets display:block commit first). Guarded so a stale
+  // callback after a quick hide can't force the card back on.
+  requestAnimationFrame(()=>{ if(cc.shown) cc.div.classList.add('show'); });
+}
+function mountCards(){
+  // Detail-only. Away from DETAIL nothing is shown, so just retract any live cards
+  // and return — never touch the per-node loop (no reflow / rAF churn at overview).
+  if(lod!==2){ for(const id in cardPool) hideCard(cardPool[id]); return; }
+  // ONE focal block at a time (Apple-minimal): of the in-view revealed nodes,
+  // keep only the single nearest the viewport centre live — never two competing
+  // detail cards. Semantic zoom frames one node per beat; this preserves it.
+  const want=NODES.filter(n=>inView(n)&&revealed(n.id))
+    .sort((a,b)=>(Math.abs(a.x-view.cx)+Math.abs(a.y-view.cy))-(Math.abs(b.x-view.cx)+Math.abs(b.y-view.cy)))
+    .slice(0,1);
+  const keep={}; want.forEach(n=>{ keep[n.id]=1; showCard(ensureCard(n)); });  // idempotent: rAF ONLY hidden->shown
+  for(const id in cardPool){ if(!keep[id]) hideCard(cardPool[id]); }             // idempotent: DOM ONLY shown->hidden
+}
+
+/* =======================================================================
+   Story-block content
+   ======================================================================= */
+function barrow(label,val,pct,color){
+  return `<div class="barrow"><div class="bl"><span>${label}</span><span class="n">${val}</span></div>
+    <div class="bar"><i style="width:${pct}%;background:${color}"></i></div></div>`;
+}
+/* every story card is built from the node's REAL data (demo_data.json tree) --
+   nothing here is hand-typed per case, so it can never disagree with the tree. */
+function storyHTML(n){
+  const st=n.story||{};
+  if(n.kind==='output') return TRANSLATION ? outputRealHTML(TRANSLATION) : outputFallbackHTML();
+  if(n.kind==='root' || st.kind==='hypothesis') return hypothesisHTML(n,st);
+  if(n.type==='ask' || st.kind==='ask'){
+    return `<h4>${esc(n.label)}</h4>
+      <div class="tags"><span class="tag st-weak">gold offshoot</span></div>
+      <p class="body">${esc(n.sub||st.text||'Follow-up question routed back through the same engine tools.')}</p>
+      <div class="caveat-foot">A follow-up spawns a new gold offshoot — the engine re-runs, it does not just agree.</div>`;
+  }
+  if(st.kind==='verdict' || n.type==='verdict') return verdictHTML(n,st);
+  return gateHTML(n,st);   // green / gold / gray gauntlet gate
+}
+
+/* root — the typed hypothesis + its routing provenance */
+function hypothesisHTML(n,st){
+  const hyp=esc(st.hypothesis||n.sub||HYP||'your hypothesis');
+  const ds=esc(st.dataset||''), mech=esc(st.routed_mechanism||''), rung=esc(st.honesty_rung||'');
+  const kill=esc(st.kill_criterion||'');
+  return `<h4>Hypothesis</h4>
+    <div class="tags">${ds?`<span class="tag">${ds}</span>`:''}${mech?`<span class="tag">routed · ${mech}</span>`:''}</div>
+    <p class="body">${hyp}</p>
+    ${rung?`<div class="mgrid"><div><div class="k">Honesty rung</div><div class="v" style="font-family:var(--sans);font-size:13px">${rung}</div></div>${st.novelty_class?`<div><div class="k">Novelty</div><div class="v" style="font-family:var(--sans);font-size:13px">${esc(st.novelty_class)}</div></div>`:''}</div>`:''}
+    <div class="caveat-foot">${kill?`Kill criterion: ${kill}`:'Root of the investigation — every downstream node inherits this provenance.'}</div>`;
+}
+
+/* gate — one confound-gauntlet test, colored by its real result */
+function gateHTML(n,st){
+  const stCls = n.kind==='green'?'st-pass' : n.kind==='gold'?'st-weak' : 'st-kill';
+  const stTxt = n.state || (n.kind==='green'?'passed':n.kind==='gold'?'weakened':'failed');
+  const mk    = n.kind==='green'?'✓' : n.kind==='gold'?'—' : '✗';   // pass / weakened / failed
+  const barCol = n.kind==='green'?'var(--green)' : n.kind==='gold'?'var(--gold)' : 'var(--gray)';
+  const eff = (typeof n.effect==='number') ? n.effect : null;
+  const pct = eff==null?0 : Math.max(4,Math.min(100, eff<=1?eff*100:eff));
+  const val = eff==null?'—':eff.toFixed(3);
+  return `<h4>${esc(n.label)}</h4>
+    <div class="tags"><span class="tag ${stCls}"><span class="mk">${mk}</span>${esc(stTxt)}</span></div>
+    <p class="body">${esc(st.question||n.sub||'')}</p>
+    ${eff!=null?barrow(esc(n.effect_label||'effect'),val,pct,barCol):''}
+    ${scannerLeakageHTML(n,st)}
+    <div class="caveat-foot${n.kind==='gray'?' hard':''}">${esc(st.detail||'')}</div>`;
+}
+
+/* the site/scanner gate is the decisive one — surface the leakage margin
+   (disease AUC vs the scanner-ID classifier) and the confound leaderboard so
+   the "signal, or just the machine?" question is answered with real numbers. */
+function scannerLeakageHTML(n,st){
+  if(!isScannerGate(n)) return '';
+  const lm = st.leakage_margin || st.stats || {};
+  const oa = lm.outcome_auc!=null?Number(lm.outcome_auc):null;
+  const sa = lm.scanner_auc!=null?Number(lm.scanner_auc):null;
+  const mg = lm.margin!=null?Number(lm.margin):null;
+  const lb = st.confound_leaderboard || CASE&&CASE.confound_leaderboard || [];
+  let h='<div class="dlabel">Leakage margin — disease vs scanner</div>';
+  if(oa!=null) h+=barrow('Outcome AUC',oa.toFixed(3),oa*100,'var(--green)');
+  if(sa!=null) h+=barrow('Scanner-ID AUC (confound)',sa.toFixed(3),sa*100,'var(--gray)');
+  if(mg!=null) h+=`<div class="mgrid"><div><div class="k">Margin</div><div class="v">${mg>=0?'+':''}${mg.toFixed(3)}</div></div>`+
+    `<div><div class="k">Verdict</div><div class="v" style="font-family:var(--sans);font-size:13px">${mg>0?'exceeds scanner':'below scanner'}</div></div></div>`;
+  if(lb.length){
+    // leakage margin above stays visible (the decisive trust numbers); the full
+    // leaderboard is the long tail -> tuck it behind a disclosure (Dana Cho §5).
+    h+='<details class="disc"><summary>Confound leaderboard · variance explained</summary><div class="discbody">'+
+      lb.map(c=>`<div class="exp">${esc(c.confound)}<span class="snap" style="background:none;color:var(--ink)">${(Number(c.variance_explained)*100).toFixed(1)}%</span></div>`).join('')+
+      '</div></details>';
+  }
+  return h;
+}
+
+/* verdict — the adjudicated outcome + the leakage margin that decides promotion */
+function verdictHTML(n,st){
+  const lm=st.leakage_margin||{};
+  const score=(st.score!=null)?st.score:null;
+  const margin=(lm.margin!=null)?Number(lm.margin).toFixed(3):null;
+  const oa=(lm.outcome_auc!=null)?Number(lm.outcome_auc):null;
+  const sa=(lm.scanner_auc!=null)?Number(lm.scanner_auc):null;
+  const killed=(CASE&&CASE.tree&&CASE.tree.dead_end);
+  return `<h4>Verdict</h4>
+    <div class="tags"><span class="tag ${killed?'st-kill':'st-pass'}">${esc(st.verdict||n.sub||'')}</span></div>
+    <div class="mgrid">
+      ${score!=null?`<div><div class="k">Robustness</div><div class="v">${esc(String(score))}</div></div>`:''}
+      ${margin!=null?`<div><div class="k">Leakage margin</div><div class="v">${margin}</div></div>`:''}
+    </div>
+    ${oa!=null?barrow('Outcome AUC',oa.toFixed(3),oa*100,'var(--green)'):''}
+    ${sa!=null?barrow('Confound AUC',sa.toFixed(3),sa*100,'var(--gray)'):''}
+    <div class="caveat-foot${killed?' hard':''}">${killed
+      ? 'Fragile — the disease signal does not clear the confound. No candidate is produced; this branch dead-ends honestly.'
+      : 'Cleared the gauntlet → routed to molecular translation. '+(esc(st.honesty_rung||''))}</div>`;
+}
+
+/* escape user/data text before inserting into innerHTML */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* per-leg provenance pill: map each record's own source field to a flag (never collapsed) */
+function srcPill(source){
+  const s=String(source||'').toLowerCase();
+  let cls='snap', txt='SNAPSHOT';
+  if(s.indexOf('live')>=0 || s.indexOf('online')>=0){ cls='live'; txt='LIVE'; }
+  else if(s.indexOf('candidate')>=0 || s.indexOf('surrogate')>=0 || s.indexOf('proxy')>=0){ cls='surr'; txt='SURROGATE'; }
+  else if(s.indexOf('offline')>=0 || s.indexOf('snapshot')>=0){ cls='snap'; txt='SNAPSHOT'; }
+  else if(s){ txt=source.toUpperCase(); }
+  return `<span class="pill ${cls} src">${esc(txt)}</span>`;
+}
+
+/* the original hard-coded candidate card — kept verbatim as graceful fallback */
+function outputFallbackHTML(){
+  return `<div class="synthead">SYNTHETIC — offline snapshot · not a live result</div>
+    <h4>Candidate targets</h4>
+    <div class="tags"><span class="tag">routed · p-tau217 → amyloid_cascade</span><span class="tag snap">offline snapshot</span></div>
+    <div class="dlabel">Ranked protein targets</div>
+    <div class="rank"><span class="nm">APP <small>· priority index 6.8</small></span><span class="sc"><span class="bar"><i style="width:85%;background:var(--clay)"></i></span></span></div>
+    <div class="rank"><span class="nm">ESR1 <small>· priority index 4.9</small></span><span class="sc"><span class="bar"><i style="width:61%;background:var(--clay)"></i></span></span></div>
+    <div class="rank"><span class="nm">PSEN1 <small style="font-family:var(--sans)">· unranked</small></span><span class="sc"><span class="bar"><i style="width:8%;background:var(--gray)"></i></span></span></div>
+    <div class="dlabel">AlphaFold structure</div>
+    <div class="exp">APP · UniProt P05067 · mean pLDDT 67.4 · v6<span class="snap">SNAPSHOT</span></div>
+    <div class="dlabel">Known compounds</div>
+    <div class="exp">Semaglutide — GLP1R, EVOKE+ NCT04777396<span class="snap">SNAPSHOT</span></div>
+    <div class="exp">Sodium selenate — tau phosphatase<span class="snap">SNAPSHOT</span></div>
+    <div class="dlabel">Wet-lab experiment</div>
+    <div class="exp">Tanzi-style 3D neural organoids: CRISPRi knock-down of APP, read out Aβ42/40 + p-tau217 by MSD at 6 weeks<span class="snap">SNAPSHOT</span></div>
+    <div class="caveat-foot hard">Decision-support only — candidates to test, not validated targets. Routed from plasma p-tau217, NOT the imaging embedding.</div>`;
+}
+
+/* real candidate card built VERBATIM from a TranslationLead.to_dict() */
+function outputRealHTML(t){
+  const bio=esc(t.dominant_biomarker), mech=esc(t.mechanism), status=esc(t.status||'');
+  // per-target row builder: gene · priority_score (or "unranked" when null) · per-leg source pill
+  const rankRow=r=>{
+    const ranked = r.priority_score!=null;
+    const pct = ranked ? Math.max(6,Math.min(100,r.priority_score*10)) : 8;
+    const col = ranked ? 'var(--clay)' : 'var(--gray)';
+    const meta = ranked
+      ? `<small>· ${r.priority_score.toFixed(2)}${r.rank!=null?` · #${r.rank}`:''}</small>`
+      : `<small style="font-family:var(--sans)">· unranked</small>`;
+    return `<div class="rank"><span class="nm">${esc(r.gene)} ${meta} ${srcPill(r.source)}</span>`+
+      `<span class="sc"><span class="bar"><i style="width:${pct}%;background:${col}"></i></span></span></div>`;
+  };
+  // SHOWCASE (always visible): the top ~2 ranked targets. Tuck the rest.
+  const rt=(t.ranked_targets||[]);
+  const topRanks=rt.slice(0,2).map(rankRow).join('');
+  const tailR=rt.slice(2);
+  const moreRanks=tailR.length
+    ? `<details class="disc"><summary>Show ${tailR.length} more target${tailR.length>1?'s':''}</summary><div class="discbody">${tailR.map(rankRow).join('')}</div></details>`
+    : '';
+  // SHOWCASE (always visible): the top AlphaFold structure — gene · UniProt · pLDDT gauge · model link
+  const st=t.structure||{};
+  const hasPl = st.mean_plddt!=null;
+  const plddt = hasPl ? Number(st.mean_plddt).toFixed(1) : 'n/a';
+  const link = st.model_url
+    ? ` · <a class="mlink" href="${esc(st.model_url)}" target="_blank" rel="noopener">model ${esc(st.model_version||'')}</a>`
+    : (st.model_version?` · ${esc(st.model_version)}`:'');
+  const structHTML = st.uniprot
+    ? `<div class="exp">${esc(st.gene_symbol||t.top_target)} · UniProt ${esc(st.uniprot)}${link}${srcPill(st.source)}</div>`+
+      (hasPl?barrow('mean pLDDT',plddt,Math.max(4,Math.min(100,Number(st.mean_plddt))),'var(--clay)'):'')
+    : `<div class="exp">no structure resolved${srcPill(st.source)}</div>`;
+  // repurposing compounds: lead with the top 1, tuck the rest
+  const compRow=c=>`<div class="exp">${esc(c.compound)} — ${esc(c.target_gene)}${c.trial_ref?` · ${esc(c.trial_ref)}`:''}${srcPill(c.source)}</div>`;
+  const cps=(t.repurposing||[]);
+  const topComp = cps.length ? compRow(cps[0]) : `<div class="exp">no repurposing candidates</div>`;
+  const tailC=cps.slice(1);
+  const moreComps=tailC.length
+    ? `<details class="disc"><summary>Show ${tailC.length} more compound${tailC.length>1?'s':''}</summary><div class="discbody">${tailC.map(compRow).join('')}</div></details>`
+    : '';
+  // wet-lab experiment text — tucked (long); its per-leg pill travels with it
+  const wet=esc(t.wet_lab_experiment||'');
+  const wetSrc=(t.provenance&&t.provenance.repurposing)||st.source||'offline_snapshot';
+  const wetDetails = wet
+    ? `<details class="disc"><summary>Wet-lab experiment</summary><div class="discbody"><div class="exp">${wet}${srcPill(wetSrc)}</div></div></details>`
+    : '';
+  // Order: showcase (top target + structure) first, tail tucked, trust signals
+  // (status tag + pinned caveat + "NOT the imaging embedding") always visible.
+  return `<h4>Candidate targets</h4>
+    <div class="tags"><span class="tag">routed · ${bio} → ${mech}</span><span class="tag snap">${status||'offline snapshot'}</span></div>
+    <div class="dlabel">Ranked protein targets · top ${esc(t.top_target)}</div>
+    ${topRanks}
+    ${moreRanks}
+    <div class="dlabel">AlphaFold structure</div>
+    ${structHTML}
+    <div class="dlabel">Known compounds</div>
+    ${topComp}
+    ${moreComps}
+    ${wetDetails}
+    <div class="caveat-foot hard">${esc(t.caveat)}<br>Routed from plasma p-tau217, NOT the imaging embedding.</div>`;
+}
+
+/* =======================================================================
+   Deterministic build timeline (shared by live build + ?p frame mode)
+   ======================================================================= */
+let NT={}, EW={}, DIE={}, buildP=0;
+function buildTimeline(){
+  NT={}; EW={}; DIE={};
+  const n=NODES.length||1;
+  NODES.forEach((nd,i)=>{
+    const t=0.02 + (i/n)*0.80;               // spread reveals across the grow-in
+    NT[nd.id]=t;
+    if(nd.from) EW[nd.id]=[Math.max(0,t-0.09), t];
+    if(nd.dead) DIE[nd.id]=t;                // gray (killed) nodes reveal already-dimmed
+  });
+}
+function revealed(id){return buildP>=NT[id];}
+function _seg(p,a,b){return Math.max(0,Math.min(1,(p-a)/(b-a)))}
+function _ease(t){return t<0?0:t>1?1:1-Math.pow(1-t,2)}
+function renderBuild(p){
+  buildP=p;
+  NODES.forEach(n=>{
+    const nd=D[n.id], on=p>=NT[n.id];
+    let op = on?_ease(_seg(p,NT[n.id],NT[n.id]+.05)):0;
+    let sc = on?_ease(_seg(p,NT[n.id],NT[n.id]+.06)):.4;
+    const dead = DIE[n.id]!==undefined && p>=DIE[n.id];
+    if(dead)op*=.55;
+    nd.g.style.opacity=op;
+    nd.g.style.transform=`scale(${sc})`;
+    nd.g.style.transformBox='fill-box'; nd.g.style.transformOrigin='center';
+    nd.g.classList.toggle('dead', !!n.dead);
+    const e=D[n.id+'_edge'];
+    if(e){const w=EW[n.id], f=_ease(_seg(p,w[0],w[1]));
+      if(n.dead)e.path.style.opacity=f*0.9; else e.path.style.strokeDashoffset=e.L*(1-f);
+      if(e.lbl)e.lbl.classList.toggle('has',f>0.55);}
+  });
+}
+
+/* =======================================================================
+   Live build (camera STATIONARY at home during grow-in)
+   ======================================================================= */
+let buildRAF=null, verdictFilled=false;
+function runBuild(){
+  if(buildRAF)cancelAnimationFrame(buildRAF);
+  resetVerdict();                            // rail (default stamp+caveat) visible for entire build
+  view=homeView(); applyCam();               // stationary overview
+  document.getElementById('status').classList.add('on');
+  let start=null; const dur=REDUCED?1:4600;
+  // A fault in renderBuild/applyCam must never strand the "building…" status
+  // pill or skip onBuilt (which clears it + reveals the tour). Guard each frame
+  // and always run onBuilt once p reaches 1.
+  function step(ts){ if(start===null)start=ts; const p=Math.min(1,(ts-start)/dur);
+    try{ renderBuild(p); applyCam(); }catch(e){ console.warn('build step',e); }
+    if(p<1){buildRAF=requestAnimationFrame(step);}
+    else{ buildRAF=null; onBuilt(); }
+  }
+  if(REDUCED){ try{renderBuild(1);applyCam();}catch(e){console.warn('build',e);} onBuilt(); return; }
+  buildRAF=requestAnimationFrame(step);
+}
+function onBuilt(){
+  document.getElementById('status').classList.remove('on');
+  fillVerdict();
+  if(lastResp) showTrace(lastResp);
+  document.getElementById('minimap').classList.add('on');
+  document.getElementById('tour').classList.add('on');
+  document.getElementById('hint').classList.add('on');
+  syncTour();
+}
+function resetVerdict(){
+  verdictFilled=false;
+  const rp=document.getElementById('railProv'), ps=document.getElementById('pstamp'), pc=document.getElementById('pcaveat');
+  rp.classList.add('on');                       // rail visible from the start, not only at build end
+  ps.className='stamp none'; ps.textContent='No candidates yet';
+  pc.innerHTML='Routed from plasma p-tau217, <b>NOT</b> the imaging embedding · candidates are hypotheses, not validated targets.';
+}
+function fillVerdict(){
+  if(verdictFilled)return; verdictFilled=true;
+  const rp=document.getElementById('railProv'), ps=document.getElementById('pstamp'), pc=document.getElementById('pcaveat');
+  rp.classList.add('on');
+  const tree=(CASE&&CASE.tree)||{};
+  const gates=(tree.nodes||[]).filter(n=>n.type==='gate'||(n.story&&n.story.kind==='gate'));
+  const passed=gates.filter(g=>g.state==='passed').length;
+  const weak  =gates.filter(g=>g.state==='weakened').length;
+  const failed=gates.filter(g=>g.state==='failed').length;
+  if(tree.dead_end){
+    ps.className='stamp none'; ps.textContent='Hypothesis killed';
+    pc.innerHTML=`<span class="num">${failed}</span> gate(s) failed · no candidate produced · this branch dead-ends honestly — the engine reports a null, not a lead.`;
+  } else {
+    ps.className='stamp'; ps.textContent='Candidate ranked';
+    const top=TRANSLATION?esc(TRANSLATION.top_target):'—';
+    pc.innerHTML=`<span class="num">${passed}</span> passed · <span class="num">${weak}</span> weakened · top target <b>${top}</b> · routed from plasma p-tau217, <b>NOT</b> the imaging embedding · decision-support only.`;
+  }
+}
+
+/* =======================================================================
+   Entry / launch
+   ======================================================================= */
+let launched=false, lastResp=null;
+
+/* POST the goal to Claude-as-orchestrator; throws on any transport failure (or
+   timeout) so the caller can degrade gracefully — never hard-break, never hang.
+   Only the Ask-Claude rail calls this now; Investigate stays fully local. */
+async function orchestrate(goal, timeoutMs=15000){
+  const ctl=new AbortController(); const to=setTimeout(()=>ctl.abort(), timeoutMs);
+  try{
+    const r=await fetch('/api/orchestrate',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({goal}),signal:ctl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json();
+  } finally { clearTimeout(to); }
+}
+
+/* map an orchestrate response -> the real case in demo_data.json:
+   dataset prefix picks the substrate; the referee's promoted flag picks
+   SURVIVOR vs KILL. Falls back to the default SURVIVOR if anything is missing. */
+function pickCaseFromResp(resp){
+  if(!DATA||!DATA.substrates) return defaultCase();
+  const rc=(resp.tool_calls||[]).find(c=>c.tool==='referee_hypothesis');
+  let ds=resp.dataset;
+  if(!ds && rc && Array.isArray(rc.input)) ds=rc.input[1];
+  ds=String(ds||'').toLowerCase();
+  const sub = ds.indexOf('oasis')>=0?'oasis' : ds.indexOf('adni')>=0?'adni' : 'synthetic';
+  let promoted=null;
+  if(rc && rc.result && typeof rc.result.promoted==='boolean') promoted=rc.result.promoted;
+  if(promoted===null){ if(ds.indexOf('kill')>=0)promoted=false; else if(ds.indexOf('survivor')>=0)promoted=true; }
+  if(promoted===null) promoted=/promoted/i.test(resp.final||'');
+  const key=promoted?'SURVIVOR':'KILL';
+  const c=DATA.substrates[sub]&&DATA.substrates[sub].cases&&DATA.substrates[sub].cases[key];
+  return c || defaultCase();
+}
+function defaultCase(){
+  const s=DATA&&DATA.substrates&&DATA.substrates.synthetic&&DATA.substrates.synthetic.cases;
+  return (s&&s.SURVIVOR) || fallbackCase();
+}
+
+/* Investigate is instant: pick the real case straight from demo_data by a light
+   keyword match — no network, no orchestrator on the critical path. Claude enters
+   the loop only via the Ask-Claude rail (askClaude). */
+function pickCaseLocal(text){
+  if(!DATA||!DATA.substrates) return defaultCase();
+  const t=String(text||'').toLowerCase();
+  const sub = t.indexOf('oasis')>=0?'oasis' : t.indexOf('adni')>=0?'adni' : 'synthetic';
+  const kill = /(kill|converter|conversion|does not|doesn't|shuffle|\bnull\b|no signal)/.test(t);
+  const cs=DATA.substrates[sub]&&DATA.substrates[sub].cases;
+  return (cs&&cs[kill?'KILL':'SURVIVOR']) || defaultCase();
+}
+
+/* quiet tool-call trace strip — the visible proof Claude drove the tools, plus
+   the honest triple (path / model / final). Hairline row, mono tool names. */
+let traceFadeTimer=null;
+function armTraceFade(){ clearTimeout(traceFadeTimer); traceFadeTimer=setTimeout(()=>{
+  const el=document.getElementById('trace'); if(el) el.classList.add('faded'); }, 6000); }
+function showTrace(resp){
+  if(!resp) return;
+  const el=document.getElementById('trace');
+  const live = resp.path==='live_tool_runner';
+  const tools=(resp.tool_calls||[]).map(c=>`<span class="tool">${esc(c.tool)}</span>`).join('<span class="sep">→</span>');
+  const model=esc(resp.model||'');
+  const final=esc((resp.final||'').replace(/\s+/g,' ').slice(0,150));
+  el.innerHTML=
+    `<div class="tline"><span class="tpath ${live?'live':'off'}">${live?'live':'scripted · offline'}</span>${tools||'<span class="tool">no tools</span>'}</div>`+
+    `<div class="tfoot"><span class="tmodel">${model}</span>${final?' · '+final:''}</div>`;
+  el.classList.remove('faded'); el.classList.add('on');
+  armTraceFade();                              // quiet down after a few seconds; stays re-openable
+}
+// click the strip to pin it open; click the Claude badge to bring it back
+document.getElementById('trace').addEventListener('click',()=>{ clearTimeout(traceFadeTimer);
+  document.getElementById('trace').classList.remove('faded'); });
+document.querySelector('.claude-badge').addEventListener('click',()=>{ const el=document.getElementById('trace');
+  if(!el.classList.contains('on')) return; el.classList.remove('faded'); armTraceFade(); });
+
+function setStatus(txt){ document.getElementById('status').innerHTML='<span class="sp"></span>'+esc(txt); }
+
+/* Investigate — instant, fully local. Builds the real case's tree straight from
+   the demo_data snapshot with no network call, so there is no stall. Claude is
+   not on this path; it enters only via the Ask-Claude rail. */
+function launch(text){
+  text=(text||'').trim() || document.getElementById('hyp').value.trim();
+  launched=true; HYP=text;
+  lastResp=null;                                  // no Claude trace on the main path
+  document.getElementById('trace').classList.remove('on');
+  document.getElementById('entry').classList.add('gone');
+  setTimeout(()=>{ stage.classList.add('live'); }, REDUCED?0:130);
+  setStatus('Building the decision tree…');
+  document.getElementById('status').classList.add('on');
+  const caseObj = pickCaseLocal(text);            // instant — no orchestrator, no network
+  buildTree(caseObj, text);
+  runBuild();     // grows the tree; onBuilt() reveals the verdict rail
+}
+document.getElementById('askBtn').addEventListener('click',()=>launch(document.getElementById('hyp').value.trim()));
+document.getElementById('hyp').addEventListener('keydown',e=>{if(e.key==='Enter')launch(document.getElementById('hyp').value.trim())});
+document.getElementById('replay').addEventListener('click',()=>{tourStep=0;runBuild();});
+
+/* =======================================================================
+   Direct-view input: wheel-zoom + drag-pan (cancelFly first, no interp)
+   ======================================================================= */
+svg.addEventListener('wheel',e=>{e.preventDefault(); cancelFly(); tourDeviate();
+  const r=svg.getBoundingClientRect();
+  const px=(e.clientX-r.left)/r.width*VBW, py=(e.clientY-r.top)/r.height*VBH;
+  const k=VBW/view.w;
+  const wx=view.cx+(px-VBW/2)/k, wy=view.cy+(py-VBH/2)/k;
+  view.w=clampW(view.w*(e.deltaY<0?1/1.12:1.12));
+  const k2=VBW/view.w;
+  view.cx=wx-(px-VBW/2)/k2; view.cy=wy-(py-VBH/2)/k2;
+  applyCam();
+},{passive:false});
+let drag=null;
+svg.addEventListener('pointerdown',e=>{cancelFly();drag={x:e.clientX,y:e.clientY,cx:view.cx,cy:view.cy,moved:false};
+  svg.classList.add('drag');svg.setPointerCapture&&svg.setPointerCapture(e.pointerId);});
+window.addEventListener('pointermove',e=>{if(!drag)return;
+  const r=svg.getBoundingClientRect(), k=VBW/view.w;
+  const ddx=(e.clientX-drag.x)/r.width*VBW/k, ddy=(e.clientY-drag.y)/r.height*VBH/k;
+  if(Math.abs(e.clientX-drag.x)+Math.abs(e.clientY-drag.y)>3){drag.moved=true;tourDeviate();}
+  view.cx=drag.cx-ddx; view.cy=drag.cy-ddy; applyCam();});
+window.addEventListener('pointerup',e=>{
+  const wasMoved=drag&&drag.moved; drag=null; svg.classList.remove('drag');
+  if(e.target===svg && !wasMoved){ goHome(); }   // click empty bg -> overview
+});
+document.getElementById('overviewBtn').addEventListener('click',goHome);
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape')goHome();
+  else if(e.key==='ArrowRight'){tourManual(1);}
+  else if(e.key==='ArrowLeft'){tourManual(-1);}
+  else if(e.key===' '){e.preventDefault();tourTogglePlay();}
+});
+
+/* =======================================================================
+   Chat rail — pushes/reframes canvas, handle always visible
+   ======================================================================= */
+const railL=document.getElementById('railL');
+document.getElementById('askpill').addEventListener('click',()=>{
+  const open=railL.classList.toggle('open');
+  // reframe canvas so tree isn't hidden behind the rail
+  if(open){ const h=homeView(); flyTo({cx:h.cx+150,cy:h.cy,w:h.w*1.08}); }
+  else { flyTo(homeView()); }
+});
+
+/* Ask Claude — POST the follow-up to the orchestrator and spawn a NEW gold
+   offshoot from the tree (contract §5.9). Offline => a clearly-labeled local
+   echo offshoot, never faked as a live run. */
+const railInput=document.querySelector('.railL-input input');
+const railSend=document.querySelector('.railL-input button');
+function appendMsg(who,text){
+  const body=document.getElementById('railBody');
+  const m=document.createElement('div'); m.className='msg '+(who==='user'?'user':'claude');
+  const w=document.createElement('div'); w.className='who'; w.textContent=who==='user'?'You':'Claude';
+  const b=document.createElement('div'); b.className='bub'; b.textContent=text;
+  m.appendChild(w); m.appendChild(b); body.appendChild(m); body.scrollTop=body.scrollHeight;
+  return b;
+}
+async function askClaude(){
+  const text=(railInput.value||'').trim(); if(!text) return;
+  railInput.value='';
+  appendMsg('user',text);
+  const bub=appendMsg('claude','Sequencing tools…');
+  let resp=null;
+  try{ resp=await orchestrate(text); }catch(e){ resp=null; }
+  if(resp){
+    bub.textContent = resp.final || 'Re-ran the engine tools on your follow-up.';
+    const live = resp.path==='live_tool_runner';
+    addGoldOffshoot('Follow-up · '+(live?'live':'offline'), text.slice(0,70));
+    lastResp=resp; showTrace(resp);
+  } else {
+    bub.textContent='Offline — no server reachable. Spawned a local gold offshoot from your follow-up (no engine run).';
+    addGoldOffshoot('Follow-up · offline echo', text.slice(0,70));
+  }
+}
+railSend.addEventListener('click',askClaude);
+railInput.addEventListener('keydown',e=>{ if(e.key==='Enter') askClaude(); });
+
+/* =======================================================================
+   Mini-map
+   ======================================================================= */
+const MMW=190,MMH=120;
+let MMB={x0:110,y0:110,x1:1300,y1:770};   // world bbox shown in the mini-map (recomputed per tree)
+function w2m(x,y){return [ (x-MMB.x0)/((MMB.x1-MMB.x0)||1)*MMW, (y-MMB.y0)/((MMB.y1-MMB.y0)||1)*MMH ];}
+function buildMini(){
+  const me=document.getElementById('mmEdges'), mn=document.getElementById('mmNodes');
+  me.innerHTML=''; mn.innerHTML='';
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  NODES.forEach(n=>{ x0=Math.min(x0,n.x);y0=Math.min(y0,n.y);x1=Math.max(x1,n.x);y1=Math.max(y1,n.y); });
+  if(!isFinite(x0)){ x0=110;y0=110;x1=1300;y1=770; }
+  const padx=Math.max(60,(x1-x0)*0.08), pady=Math.max(80,(y1-y0)*0.35);
+  MMB={x0:x0-padx,y0:y0-pady,x1:x1+padx,y1:y1+pady};
+  NODES.forEach(n=>{ if(!n.from)return; const p=NMAP[n.from]; if(!p)return;
+    const [ax,ay]=w2m(p.x,p.y),[bx,by]=w2m(n.x,n.y);
+    const ln=document.createElementNS(SVGNS,'line');
+    ln.setAttribute('x1',ax);ln.setAttribute('y1',ay);ln.setAttribute('x2',bx);ln.setAttribute('y2',by);
+    ln.setAttribute('stroke',n.dead?'#CBC7BC':ECOL[n.kind]);ln.setAttribute('stroke-width',n.dead?1:1.4);
+    if(n.dead)ln.setAttribute('stroke-dasharray','2 2');
+    me.appendChild(ln);
+  });
+  NODES.forEach(n=>{ const [x,y]=w2m(n.x,n.y);
+    const c=document.createElementNS(SVGNS,'circle');
+    c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',n.kind==='output'?4.2:3);
+    c.setAttribute('fill',COL[n.kind]); if(n.dead)c.setAttribute('opacity','.55');
+    mn.appendChild(c);
+  });
+  updateMiniViewport();
+}
+function updateMiniViewport(){
+  const rect=document.getElementById('mmView'); if(!rect)return;
+  const h=view.w*VBH/VBW;
+  const [x,y]=w2m(view.cx-view.w/2, view.cy-h/2);
+  const [x2,y2]=w2m(view.cx+view.w/2, view.cy+h/2);
+  rect.setAttribute('x',Math.max(0,x));rect.setAttribute('y',Math.max(0,y));
+  rect.setAttribute('width',Math.max(4,x2-x));rect.setAttribute('height',Math.max(4,y2-y));
+}
+document.getElementById('mm').addEventListener('click',e=>{
+  const r=e.currentTarget.getBoundingClientRect();
+  const mx=(e.clientX-r.left)/r.width*MMW, my=(e.clientY-r.top)/r.height*MMH;
+  const wx=MMB.x0+mx/MMW*(MMB.x1-MMB.x0), wy=MMB.y0+my/MMH*(MMB.y1-MMB.y0);
+  tourDeviate(); flyTo({cx:wx,cy:wy,w:view.w});
+});
+
+/* =======================================================================
+   Guided TOUR — a narrative array, independent of the DOM, that the camera
+   flies through. STRICTLY MONOTONIC in x: every content beat sits further
+   right than the last (root -> decisive gate -> verdict -> candidate), so the
+   swoop only ever moves left->right — no up/down/up ping-pong (the reported
+   nausea cause). One focal node per beat (never two competing cards). Dwells
+   ~1400ms per beat, bracketed by Overview "breaths", and loops cleanly.
+   ======================================================================= */
+let TOUR=[{lbl:'Overview',view:()=>homeView()}];
+/* Beats are ordered by tree depth (== x), so the sequence is monotonic by
+   construction: overview -> hypothesis -> the decisive confound gate ->
+   verdict -> (candidate | dead-end) -> overview. The wide "whole gauntlet"
+   beat is intentionally dropped: the Overview breath already shows the
+   gauntlet's shape, and framing all gates then diving to one gate to its left
+   was the backward hop. */
+function buildTour(){
+  const root=NODES[0];
+  const gates=NODES.filter(n=>n.type==='gate');
+  const verdict=NODES.find(n=>n.type==='verdict');
+  const cand=NODES.find(n=>n.kind==='output');
+  const killed=!!(CASE&&CASE.tree&&CASE.tree.dead_end);
+  // The decisive confound: prefer the site/scanner gate when it weakened or
+  // failed (the signature "signal, or just the machine?" test), else the first
+  // killed gate, else the first weakened one, else the middle of the gauntlet.
+  // It is always a gate, hence always left of the verdict -> path stays monotonic.
+  const scanner=gates.find(g=>String(g.id).indexOf('site_scanner')>=0);
+  const decisive=(scanner&&(scanner.kind==='gold'||scanner.kind==='gray')) ? scanner
+    : gates.find(g=>g.kind==='gray') || gates.find(g=>g.kind==='gold')
+      || gates[Math.floor(gates.length/2)] || gates[0];
+  const steps=[{lbl:'Overview',view:()=>homeView()}];
+  if(root)     steps.push({lbl:'Hypothesis',view:()=>frameCardNode(root.id)});
+  if(decisive) steps.push({lbl:decisive.label,view:()=>frameCardNode(decisive.id)});
+  if(verdict)  steps.push({lbl:killed?'Dead end — killed':'Verdict',view:()=>frameCardNode(verdict.id)});
+  if(cand)     steps.push({lbl:'Candidates',view:()=>frameCardNode(cand.id)});
+  else if(!verdict&&decisive) steps.push({lbl:'Dead end — killed',view:()=>frameCardNode(decisive.id)});
+  steps.push({lbl:'Overview',view:()=>homeView()});
+  TOUR=steps; tourStep=0; syncTour();
+}
+let tourStep=0, tourPlaying=false, tourDwell=null;
+function syncTour(){
+  document.getElementById('tCount').textContent=`${tourStep+1} / ${TOUR.length}`;
+  document.getElementById('tLbl').textContent=TOUR[tourStep].lbl;
+  document.getElementById('tPlay').textContent=tourPlaying?'❚❚':'▶';
+}
+function goTourStep(i,thenAdvance){
+  tourStep=(i+TOUR.length)%TOUR.length; syncTour();
+  document.getElementById('resume').classList.remove('on');
+  flyTo(TOUR[tourStep].view(), ()=>{
+    if(tourPlaying && thenAdvance){
+      clearTimeout(tourDwell);
+      tourDwell=setTimeout(()=>{ if(tourPlaying) goTourStep(tourStep+1,true); }, 1400);
+    }
+  });
+}
+function tourTogglePlay(){
+  if(document.getElementById('entry').classList.contains('gone')===false)return;
+  tourPlaying=!tourPlaying; syncTour();
+  document.getElementById('resume').classList.remove('on');
+  if(tourPlaying) goTourStep(tourStep,true); else clearTimeout(tourDwell);
+}
+function tourManual(dir){
+  if(!document.getElementById('entry').classList.contains('gone'))return;
+  tourPlaying=false; clearTimeout(tourDwell); goTourStep(tourStep+dir,false); syncTour();
+}
+function tourDeviate(){ // user grabbed the camera away from the tour
+  if(tourPlaying){ tourPlaying=false; clearTimeout(tourDwell); syncTour();
+    document.getElementById('resume').classList.add('on'); }
+}
+document.getElementById('tPrev').addEventListener('click',()=>tourManual(-1));
+document.getElementById('tNext').addEventListener('click',()=>tourManual(1));
+document.getElementById('tPlay').addEventListener('click',tourTogglePlay);
+document.getElementById('resume').addEventListener('click',()=>{ // resume flies from live view
+  document.getElementById('resume').classList.remove('on');
+  tourPlaying=true; syncTour(); goTourStep(tourStep,true);
+});
+
+/* =======================================================================
+   Offline fallback case — a synthetic SURVIVOR-shaped tree so the canvas never
+   blank-screens on file:// or a dead server. Real cases come from
+   demo_data.json (fetched below) and from the orchestrator on Investigate.
+   ======================================================================= */
+function fallbackCase(){
+  const gate=(id,role,label,q,eff,el,detail)=>({id,type:'gate',role,label,sub:q,
+    state:role==='green'?'passed':role==='gold'?'weakened':'failed',
+    effect:eff,effect_label:el,story:{kind:'gate',question:q,detail,result:role}});
+  return {tree:{root:'hypothesis',dead_end:false,promoted:true,
+    nodes:[
+      {id:'hypothesis',type:'hypothesis',role:'root',label:'Hypothesis',sub:HYP||'your hypothesis',state:'investigate',
+        story:{kind:'hypothesis',hypothesis:HYP||'your hypothesis',dataset:'offline template',routed_mechanism:'amyloid_cascade'}},
+      gate('gate_age_sex','green','Age / sex adjustment','Does the signal survive demographic covariates?',0.76,'outcome AUC after covariates','effect retained after age/sex adjustment'),
+      gate('gate_site_scanner','gold','Site / scanner leakage','Disease signal, or just which machine acquired the scan?',0.74,'outcome AUC, scanner-scrubbed','narrowly exceeds the scanner classifier; margin CI includes zero'),
+      gate('gate_brain_age','green','Brain-age control','More than generic aging / atrophy?',0.75,'outcome AUC, brain-age regressed','survives brain-age control'),
+      gate('gate_biomarker_anchor','green','Biomarker anchor','Backed by molecular pathology?',0.90,'anchor bar','anchored to plasma p-tau217'),
+      gate('gate_replication','gold','Replication split','Reproduces on a held-out cohort?',0.72,'held-out cohort AUC','held-out AUC weakened but positive'),
+      {id:'verdict',type:'verdict',role:'green',label:'Verdict',sub:'robust enough for follow-up',state:'robust enough for follow-up',
+        story:{kind:'verdict',score:80,verdict:'robust enough for follow-up',leakage_margin:{margin:0.06,outcome_auc:0.74,scanner_auc:0.68}}},
+      {id:'candidate',type:'candidate',role:'clay',label:'APP',sub:'amyloid_cascade → APP',state:'promoted',translation:null}
+    ],
+    edges:[
+      {from:'hypothesis',to:'gate_age_sex',kind:'gauntlet',state:'passed'},
+      {from:'gate_age_sex',to:'gate_site_scanner',kind:'gauntlet',state:'weakened'},
+      {from:'gate_site_scanner',to:'gate_brain_age',kind:'gauntlet',state:'passed'},
+      {from:'gate_brain_age',to:'gate_biomarker_anchor',kind:'gauntlet',state:'passed'},
+      {from:'gate_biomarker_anchor',to:'gate_replication',kind:'gauntlet',state:'weakened'},
+      {from:'gate_replication',to:'verdict',kind:'gauntlet',state:'promoted'},
+      {from:'verdict',to:'candidate',kind:'translate',label:'routed from plasma p-tau217 → amyloid_cascade',state:'promoted'}
+    ]}};
+}
+
+/* =======================================================================
+   HONEST Claude badge — green "live" ONLY if /api/health reports claude_live;
+   otherwise muted "offline template". Fetch failure (file://) => offline too.
+   ======================================================================= */
+(function healthBadge(){
+  const b=document.querySelector('.claude-badge');
+  function offline(){ b.classList.add('offline'); b.innerHTML='<span class="dot"></span>Claude · <b>offline template</b>'; }
+  try{
+    fetch('/api/health',{cache:'no-cache'})
+      .then(r=>r.ok?r.json():Promise.reject())
+      .then(h=>{ if(h&&h.claude_live===true){ b.classList.remove('offline'); b.innerHTML='<span class="dot"></span>Claude · <b>live</b>'; }
+                 else offline(); })
+      .catch(offline);
+  }catch(e){ offline(); }
+})();
+
+/* =======================================================================
+   Init — build a tree immediately (fallback so nothing blank-screens), then
+   fetch demo_data.json and rebind the real default SURVIVOR under the entry
+   screen. ?p=0..1 capture mode is honored on both the fallback and real tree.
+   ======================================================================= */
+let PMODE=null;
+function applyPMode(p){
+  const st=document.createElement('style');
+  st.textContent='*{transition:none!important;animation:none!important}';
+  document.head.appendChild(st);
+  document.getElementById('entry').classList.add('gone');
+  stage.classList.add('live');
+  view=homeView();
+  renderBuild(p); applyCam();
+  if(p>=0.9){ fillVerdict();
+    document.getElementById('minimap').classList.add('on');
+    document.getElementById('tour').classList.add('on'); }
+  else { resetVerdict(); }                    // honesty caveat visible at every build stage
+  syncTour();
+}
+(function init(){
+  buildTree(fallbackCase());                  // instant tree — never blank-screen
+  const _P=new URLSearchParams(location.search).get('p');
+  PMODE = _P===null ? null : Math.max(0,Math.min(1,parseFloat(_P)||0));
+  if(PMODE!==null) applyPMode(PMODE); else { view=homeView(); applyCam(); syncTour(); }
+  try{
+    fetch('./demo_data.json',{cache:'no-cache'})
+      .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
+      .then(j=>{ DATA=j;
+        if(!launched){                        // rebind the REAL default SURVIVOR beneath the entry screen
+          buildTree(defaultCase());
+          if(PMODE!==null) applyPMode(PMODE); else { view=homeView(); applyCam(); syncTour(); }
+        }
+      })
+      .catch(()=>{ /* keep the fallback tree; badge already reflects offline */ });
+  }catch(e){ /* fetch unavailable */ }
+})();
+</script>

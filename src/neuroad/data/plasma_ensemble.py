@@ -41,12 +41,35 @@ _FILES = {
     "lilly": "LILLY_PTAU217_MSD600_09Jul2026.csv",
 }
 
-#: Per-assay p-tau217 column name(s), tried in order.
+#: Per-assay p-tau217 column name(s), tried in order. Lilly MSD600 ships LONG-format
+#: (one analyte per row: ``TESTCD``, value in ``ORRES``), not a wide column named
+#: PTAU217 — it is normalized to a wide ``ptau217`` column in ``_normalize_assay``
+#: before this lookup, so the config points at that normalized name.
 _PTAU_COLS = {
     "upenn": ["pT217_F"],
     "c2n": ["pT217_C2N"],
-    "lilly": ["PTAU217", "pTau217", "PLASMAPTAU217", "RESULT"],
+    "lilly": ["ptau217", "PTAU217", "pTau217", "PLASMAPTAU217", "RESULT"],
 }
+
+
+def _normalize_assay(key: str, df: pd.DataFrame) -> pd.DataFrame:
+    """Reshape a raw assay table into the wide, per-analyte-column form the
+    ensemble builder expects.
+
+    Lilly MSD600 is long-format — every row is one analyte keyed by ``TESTCD``
+    with the measurement in ``ORRES`` — so a naive wide-column lookup finds no
+    p-tau217 column and silently drops the whole (third) assay. Pivot its
+    ``TESTCD=='PTAU217'`` rows into a ``ptau217`` column keyed by RID+visit so it
+    joins like the already-wide UPenn / C2N tables. Other assays pass through
+    unchanged.
+    """
+    if key != "lilly":
+        return df
+    if "TESTCD" not in df.columns or "ORRES" not in df.columns:
+        return df
+    lilly = df[df["TESTCD"].astype(str).str.upper() == "PTAU217"].copy()
+    lilly["ptau217"] = pd.to_numeric(lilly["ORRES"], errors="coerce")
+    return lilly
 
 
 @dataclass
@@ -108,7 +131,7 @@ def build_plasma_ensemble(download_dir: Optional[Path] = None
         p = ddir / fname
         if p.exists():
             try:
-                tables[key] = pd.read_csv(p, low_memory=False)
+                tables[key] = _normalize_assay(key, pd.read_csv(p, low_memory=False))
             except Exception as exc:  # noqa: BLE001
                 _log.warning("could not read %s: %r", fname, exc)
 
@@ -169,3 +192,83 @@ def build_plasma_ensemble(download_dir: Optional[Path] = None
     if "pct_ptau217" in ens:
         stats.pct_ptau217_coverage = int(ens["pct_ptau217"].notna().sum())
     return ens, stats
+
+
+#: Ensemble-derived columns merged into an ADNI contract frame. The referee's
+#: biomarker anchor prefers ``p_tau217`` (now the higher-coverage triangulated
+#: value); ``ab42_40`` / ``pct_ptau217`` are surfaced as extra contract biomarker
+#: signals the anchor + mechanism routing can read (contract.EXTENDED_BIOMARKER_COLUMNS).
+MERGED_COLUMNS = ("p_tau217_n_assays", "ab42_40", "pct_ptau217")
+
+
+def merge_into_contract(frame: pd.DataFrame,
+                        ensemble: Optional[pd.DataFrame] = None,
+                        *,
+                        download_dir: Optional[Path] = None,
+                        stats: Optional[EnsembleStats] = None
+                        ) -> tuple[pd.DataFrame, EnsembleStats]:
+    """Triangulate the plasma ensemble into an ADNI contract-shaped ``frame``.
+
+    Wiring the standalone ensemble INTO the anchor so plasma markers actually gate
+    promotion / route mechanism instead of sitting apart:
+
+      * ``p_tau217`` is upgraded IN PLACE to the ensemble's z-harmonized,
+        triangulated value (union of the three assays -> strictly higher coverage
+        than the single-assay UPenn draw; where >=2 assays overlap it is a
+        noise-reduced mean). NOTE it is a subject-level mean ACROSS visits, so it
+        is a *different statistic* from ``p_tau217_native`` — the pre-merge
+        single-assay draw the contract picked NEAREST the imaging date (preserved,
+        no column removed). The anchor correlation is scale-free, so the
+        z-harmonized column anchors exactly as pg/mL would but on more subjects.
+        (For a monotone progressive marker, prefer the nearest-date native when
+        anchoring a *conversion* target to avoid averaging post-baseline draws in.)
+      * ``p_tau217_n_assays`` (triangulation depth), ``ab42_40`` (plasma
+        Aβ42/40) and ``pct_ptau217`` (C2N %p-tau217) are ADDED as columns. The
+        latter two are ``contract.EXTENDED_BIOMARKER_COLUMNS`` — the biomarker
+        anchor reads %p-tau217 as a fallback molecular anchor and the Bridge's
+        mechanism-dominance router folds both into the amyloid/tau pole.
+
+    Backward-compatible + graceful: if the ensemble is empty (no gated download),
+    ``frame`` is returned unchanged. Join key is ``subject_id`` (RID as string).
+    Returns ``(merged_frame, stats)``.
+    """
+    if ensemble is None:
+        ensemble, stats = build_plasma_ensemble(download_dir=download_dir)
+    if stats is None:
+        stats = EnsembleStats()
+    out = frame.copy()
+    if ensemble is None or ensemble.empty or "p_tau217" not in ensemble.columns:
+        return out, stats
+
+    ens = ensemble.copy()
+    ens = ens.dropna(subset=["RID"])
+    ens["RID"] = pd.to_numeric(ens["RID"], errors="coerce").astype("Int64")
+    ens = ens.dropna(subset=["RID"]).drop_duplicates("RID", keep="first")
+    ens = ens.set_index(ens["RID"].astype("int64"))
+
+    # Contract subject_id for ADNI is the RID as a string.
+    rid = pd.to_numeric(out["subject_id"], errors="coerce")
+
+    def _aligned(col: str) -> pd.Series:
+        if col not in ens.columns:
+            return pd.Series(np.nan, index=out.index)
+        return pd.Series(rid.map(ens[col]).to_numpy(), index=out.index)
+
+    # p-tau217: preserve the single-assay draw, then prefer the triangulated one.
+    if "p_tau217" in out.columns:
+        out["p_tau217_native"] = pd.to_numeric(out["p_tau217"], errors="coerce")
+    ens_ptau = _aligned("p_tau217")
+    native = pd.to_numeric(out.get("p_tau217", pd.Series(np.nan, index=out.index)),
+                           errors="coerce")
+    # Ensemble coverage is a superset of the single-assay UPenn draw for the
+    # imaging cohort, so this is effectively all-ensemble; combine_first only
+    # guards the impossible native-but-not-ensemble edge.
+    out["p_tau217"] = ens_ptau.combine_first(native).astype("float64")
+
+    for col in MERGED_COLUMNS:
+        vals = _aligned(col)
+        if col == "p_tau217_n_assays":
+            out[col] = vals.astype("Int16")
+        else:
+            out[col] = vals.astype("float64")
+    return out, stats

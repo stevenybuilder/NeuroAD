@@ -1,0 +1,479 @@
+{
+  "claim_id": "adni_mci_conversion",
+  "claim_text": "MCI->AD conversion is decodable from ADNI structural features (prognosis: will an impaired-but-not-demented subject convert?).",
+  "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)",
+  "head": "linear probe",
+  "population": {
+    "group_a": "",
+    "group_b": ""
+  },
+  "naive_effect": {
+    "metric": "AUC",
+    "value": 0.644,
+    "target": "conversion",
+    "n": 1199,
+    "head": "linear probe",
+    "substrate": "ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free feeder)"
+  },
+  "robustness": {
+    "age_sex": "passed",
+    "site_scanner": "passed",
+    "brain_age": "not_available",
+    "biomarker_anchor": "weakened",
+    "replication": "weakened"
+  },
+  "robustness_detail": {
+    "age_sex": {
+      "detail": "effect retained 89% after age/sex adjustment (AUC 0.64 -> 0.63)",
+      "stats": {
+        "auc_before": 0.6438,
+        "auc_after": 0.6276,
+        "retained": 0.887,
+        "n": 1199
+      }
+    },
+    "site_scanner": {
+      "detail": "outcome exceeds scanner and the margin CI excludes zero (margin +0.27 [95% CI +0.23, +0.31])",
+      "stats": {
+        "outcome_auc": 0.6438,
+        "scanner_auc": 0.3736,
+        "margin": 0.2703,
+        "confound": "scanner",
+        "outcome_ci": [
+          0.6109,
+          0.6774
+        ],
+        "scanner_ci": [
+          0.3531,
+          0.3948
+        ],
+        "outcome_p_perm": 0.001,
+        "scanner_p_perm": 1.0,
+        "scanner_ci_excludes_chance": false,
+        "margin_ci_lo": 0.23,
+        "margin_ci_hi": 0.3121,
+        "margin_p": 0.001,
+        "margin_ci_excludes_zero": true
+      }
+    },
+    "brain_age": {
+      "detail": "brain-age model not predictive (out-of-fold R2=-3.78 < 0.10, MAE=9.1yr) \u2014 controlling for it removes nothing; uninformative control",
+      "stats": {
+        "r2": -3.779,
+        "mae_yr": 9.05,
+        "n_healthy": 1153
+      }
+    },
+    "biomarker_anchor": {
+      "detail": "p-tau217 correlation r=+0.13 (95% CI lower +0.05, n=498)",
+      "stats": {
+        "ptau217_r": 0.133,
+        "ptau217_n": 498,
+        "ptau217_ci_lo": 0.046,
+        "gfap_r": 0.068,
+        "gfap_n": 490,
+        "gfap_ci_lo": -0.021,
+        "pct_ptau217_r": 0.172,
+        "pct_ptau217_n": 244,
+        "pct_ptau217_ci_lo": 0.048,
+        "synthetic": false,
+        "provenance": "measured"
+      }
+    },
+    "replication": {
+      "detail": "held-out cohort AUC=0.82 [95% CI 0.59, 0.98] (train 0.63); n_test=42 over 11 aggregated held-out site(s)",
+      "stats": {
+        "train_auc": 0.627,
+        "test_auc": 0.8204,
+        "test_auc_ci_lo": 0.5926,
+        "test_auc_ci_hi": 0.9784,
+        "n_train": 1157,
+        "n_test": 42,
+        "n_test_sites": 11
+      }
+    }
+  },
+  "robustness_score": 77,
+  "verdict": "robust enough for follow-up",
+  "promoted": true,
+  "biology_hypothesis": "Survivor \u201cMCI->AD conversion is decodable from ADNI structural features (prognosis: will an impaired-but-not-demented subject convert?).\u201d routes to a amyloid-cascade (tau-driven) mechanism, keyed on p-tau217 and amyloid positivity. Plasma p-tau217: among the strongest blood AD biomarkers. AD-vs-CU AUC ~0.93-0.98; MCI-vs-CU ~0.94. Correlation with a structural probe score is MODEST (r~0.3-0.55), not redundant. SUPPORTED. The structural probe is read as a downstream imaging correlate of that molecular process, not an independent discovery.",
+  "next_experiment": [
+    "Cohort: ADNI-3 / EPAD.",
+    "Target N: ~120 complete-case subjects with the routing biomarker.",
+    "Direction: the structural probe score should track plasma p-tau217 (expected r~0.3-0.55, modest not redundant) and be enriched in amyloid-positive subjects.",
+    "Kill criterion: if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong."
+  ],
+  "falsification": [
+    "if the probe score shows no p-tau217 correlation (r<0.2) on the complete-case subset, the amyloid-cascade routing is wrong.",
+    "If the probe score's biomarker correlation disappears after residualizing against a scanner-predicting direction, the survivor was leakage after all.",
+    "If a held-out cohort fails to reproduce the effect (drop below the promotion floor), the mechanism claim is withdrawn."
+  ],
+  "caveats": [
+    "Completeness: 1/5 gauntlet tests could not run; score is renormalized over the tests that did.",
+    "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014 anchor is suggestive, not confirmatory.",
+    "Verdict is provisional and conditional on the scanner/site distribution of any replication cohort.",
+    "Brain-age adjustment uses a proxy control; residual aging signal cannot be excluded.",
+    "Any biomarker anchor is complete-case only and may not generalize.",
+    "Leakage is bounded, not eliminated \u2014 see the published batch-effect audits (\u2018Batch Effects in Brain Foundation Model Embeddings,\u2019 arXiv:2604.14441 (2026)).",
+    "Promotion authorizes one confirmatory experiment, not adoption of the finding.",
+    "A \u2018robust enough for follow-up\u2019 verdict is a licence to follow up, not to conclude \u2014 the referee promotes hypotheses, it does not confirm them.",
+    "The biomarker anchor likely rests on a partial complete-case subset; with realistic p-tau217 missingness the correlation is estimated on far fewer subjects than the headline cohort.",
+    "Confirm the effective sample size per split \u2014 subject-disjoint cross-validation on a modest cohort leaves each fold thin.",
+    "The leakage test audits the embeddings with the same linear-probe family it uses for the outcome, so it bounds \u2014 but cannot fully rule out \u2014 shared confounding; this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189 (2026)), which we cite rather than claim."
+  ],
+  "evidence_ledger": [
+    {
+      "test": "age_sex",
+      "metric": "effect retained (age/sex)",
+      "value": 0.887,
+      "result": "passed",
+      "n_used": 1199,
+      "n_missing": null,
+      "detail": "effect retained 89% after age/sex adjustment (AUC 0.64 -> 0.63)"
+    },
+    {
+      "test": "site_scanner",
+      "metric": "leakage margin (outcome-scanner AUC)",
+      "value": 0.2703,
+      "result": "passed",
+      "n_used": null,
+      "n_missing": null,
+      "detail": "outcome exceeds scanner and the margin CI excludes zero (margin +0.27 [95% CI +0.23, +0.31])"
+    },
+    {
+      "test": "brain_age",
+      "metric": "effect retained (brain-age)",
+      "value": null,
+      "result": "not_available",
+      "n_used": 1153,
+      "n_missing": null,
+      "detail": "brain-age model not predictive (out-of-fold R2=-3.78 < 0.10, MAE=9.1yr) \u2014 controlling for it removes nothing; uninformative control"
+    },
+    {
+      "test": "biomarker_anchor",
+      "metric": "p-tau217 correlation r",
+      "value": 0.133,
+      "result": "weakened",
+      "n_used": 498,
+      "n_missing": null,
+      "detail": "p-tau217 correlation r=+0.13 (95% CI lower +0.05, n=498)",
+      "ci_lo": 0.046,
+      "synthetic": false,
+      "source": "measured"
+    },
+    {
+      "test": "replication",
+      "metric": "held-out cohort AUC",
+      "value": 0.8204,
+      "result": "weakened",
+      "n_used": 42,
+      "n_missing": null,
+      "detail": "held-out cohort AUC=0.82 [95% CI 0.59, 0.98] (train 0.63); n_test=42 over 11 aggregated held-out site(s)"
+    }
+  ],
+  "double_dissociation": {
+    "auc_before": 0.6438,
+    "auc_after": 0.6438,
+    "retained": 1.0,
+    "confound": "scanner",
+    "n": 1199
+  },
+  "confound_leaderboard": [
+    {
+      "confound": "age",
+      "variance_explained": 0.0548
+    },
+    {
+      "confound": "scanner",
+      "variance_explained": 0.0216
+    },
+    {
+      "confound": "sex",
+      "variance_explained": 0.0022
+    }
+  ],
+  "novelty_class": "",
+  "atn_profile": {},
+  "honesty_rung": "",
+  "translation": {
+    "mechanism": "amyloid_cascade",
+    "dominant_biomarker": "p_tau217",
+    "status": "translated",
+    "ranked_targets": [
+      {
+        "gene": "APP",
+        "priority_score": 8.597,
+        "rank": 18,
+        "evidence_note": "Core PI4AD target (amyloid beta precursor protein)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "ESR1",
+        "priority_score": 7.992,
+        "rank": 61,
+        "evidence_note": "Peripheral PI4AD target (estrogen receptor 1)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "MAPT",
+        "priority_score": 7.304,
+        "rank": 151,
+        "evidence_note": "Core PI4AD target (microtubule associated protein tau)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "APOE",
+        "priority_score": 7.151,
+        "rank": 185,
+        "evidence_note": "Core PI4AD target (apolipoprotein E)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "PSEN1",
+        "priority_score": 6.211,
+        "rank": 492,
+        "evidence_note": "Peripheral PI4AD target (presenilin 1)",
+        "source": "offline_snapshot"
+      },
+      {
+        "gene": "BACE1",
+        "priority_score": null,
+        "rank": null,
+        "evidence_note": "not in PI4AD prioritisation table",
+        "source": "candidate_only"
+      }
+    ],
+    "network_hubs": [
+      {
+        "gene": "GSK3B",
+        "propagated_score": 0.009006,
+        "rank": 20,
+        "degree": 59,
+        "is_seed": false,
+        "is_hub": true,
+        "method": "rwr",
+        "source": "string_v12_snapshot"
+      },
+      {
+        "gene": "CTNNB1",
+        "propagated_score": 0.007627,
+        "rank": 22,
+        "degree": 72,
+        "is_seed": false,
+        "is_hub": true,
+        "method": "rwr",
+        "source": "string_v12_snapshot"
+      },
+      {
+        "gene": "GAPDH",
+        "propagated_score": 0.007594,
+        "rank": 23,
+        "degree": 77,
+        "is_seed": false,
+        "is_hub": true,
+        "method": "rwr",
+        "source": "string_v12_snapshot"
+      },
+      {
+        "gene": "INS",
+        "propagated_score": 0.007455,
+        "rank": 24,
+        "degree": 64,
+        "is_seed": false,
+        "is_hub": true,
+        "method": "rwr",
+        "source": "string_v12_snapshot"
+      },
+      {
+        "gene": "ACTB",
+        "propagated_score": 0.007307,
+        "rank": 25,
+        "degree": 79,
+        "is_seed": false,
+        "is_hub": true,
+        "method": "rwr",
+        "source": "string_v12_snapshot"
+      }
+    ],
+    "top_target": "APP",
+    "structure": {
+      "uniprot": "P05067",
+      "gene_symbol": "APP",
+      "model_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.pdb",
+      "cif_url": "https://alphafold.ebi.ac.uk/files/AF-P05067-F1-model_v6.cif",
+      "mean_plddt": 67.38,
+      "model_version": "v6",
+      "plddt_recomputed": false,
+      "n_residues_scored": null,
+      "source": "offline_snapshot",
+      "error": "",
+      "interaction_evidence": {
+        "note": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+        "top_target": "APP",
+        "partners": [
+          {
+            "gene_a": "APP",
+            "gene_b": "SORL1",
+            "combined_score": 0.999,
+            "channels": {
+              "experimental": 0.835,
+              "database": 0.9,
+              "textmining": 0.994
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "APBB1",
+            "combined_score": 0.999,
+            "channels": {
+              "experimental": 0.991,
+              "database": 0.9,
+              "textmining": 0.998
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "APOE",
+            "combined_score": 0.999,
+            "channels": {
+              "experimental": 0.837,
+              "database": 0.72,
+              "textmining": 0.999
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "BACE1",
+            "combined_score": 0.999,
+            "channels": {
+              "experimental": 0.86,
+              "database": 0.75,
+              "textmining": 0.999
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "PSEN1",
+            "combined_score": 0.999,
+            "channels": {
+              "experimental": 0.981,
+              "database": 0.0,
+              "textmining": 0.991
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "TNFRSF21",
+            "combined_score": 0.998,
+            "channels": {
+              "experimental": 0.814,
+              "database": 0.0,
+              "textmining": 0.993
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "CLU",
+            "combined_score": 0.998,
+            "channels": {
+              "experimental": 0.839,
+              "database": 0.72,
+              "textmining": 0.964
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          },
+          {
+            "gene_a": "APP",
+            "gene_b": "PRNP",
+            "combined_score": 0.998,
+            "channels": {
+              "experimental": 0.79,
+              "database": 0.5,
+              "textmining": 0.984
+            },
+            "source": "offline_snapshot",
+            "evidence_type": "STRING protein-protein interaction evidence, NOT de-novo AlphaFold3 complex folding",
+            "error": ""
+          }
+        ],
+        "source": "offline_snapshot"
+      }
+    },
+    "repurposing": [
+      {
+        "compound": "Nilotinib",
+        "target_gene": "ABL1",
+        "related_genes": [
+          "ABL1",
+          "MAPT",
+          "APP"
+        ],
+        "mechanism_note": "c-Abl tyrosine-kinase inhibitor hypothesized to promote autophagic clearance of misfolded amyloid/tau; explored in small early-phase Alzheimer disease studies.",
+        "evidence_strength": 0.42,
+        "disease": "Alzheimer disease",
+        "disease_node_ids": [
+          "4975",
+          "11913",
+          "7088",
+          "11743",
+          "12153"
+        ],
+        "trial_ref": "Georgetown nilotinib phase-2 (NCT02947893)",
+        "rationale": "",
+        "rationale_source": "",
+        "source": "offline_snapshot"
+      },
+      {
+        "compound": "Bexarotene",
+        "target_gene": "RXRA",
+        "related_genes": [
+          "RXRA",
+          "APOE",
+          "APP"
+        ],
+        "mechanism_note": "RXR agonist hypothesized to enhance APOE-mediated amyloid clearance; small exploratory repurposing study in Alzheimer disease (results equivocal).",
+        "evidence_strength": 0.25,
+        "disease": "Alzheimer disease",
+        "disease_node_ids": [
+          "4975",
+          "11913",
+          "7088",
+          "11743",
+          "12153"
+        ],
+        "trial_ref": "Bexarotene pilot (NCT01782742)",
+        "rationale": "",
+        "rationale_source": "",
+        "source": "offline_snapshot"
+      }
+    ],
+    "wet_lab_experiment": "In Tanzi-style 3D human neural organoids, knock down the lead target (CRISPRi) and read out A\u03b242/40 ratio + p-tau217 by MSD at 6 weeks; kill if neither moves beyond vehicle \u00b12SD.",
+    "provenance": {
+      "pi4ad": "offline_snapshot",
+      "alphafold": "offline_snapshot",
+      "string": "offline_snapshot",
+      "repurposing": "offline_snapshot"
+    },
+    "caveat": "Decision-support only: prioritized molecular follow-ups for a promoted imaging survivor, routed via the dominant fluid biomarker \u2014 NOT a validated target, and never derived from the imaging embedding itself."
+  }
+}

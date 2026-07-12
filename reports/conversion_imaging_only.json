@@ -1,0 +1,51 @@
+{
+  "analysis": "imaging-only MCI->AD conversion, split by plasma availability",
+  "target": "conversion",
+  "substrate": "structural morphometry (ComBat-harmonized contract embedding)",
+  "method": "probe.auc_ci_perm: site-disjoint CV, in-fold auto-PCA, bootstrap CI, permutation null, repeated-CV ensembling",
+  "slices": [
+    {
+      "slice": "plasma_present",
+      "n": 498,
+      "converters": 142,
+      "auc": 0.7281,
+      "ci": [
+        0.6788,
+        0.7728
+      ],
+      "p_perm": 0.001,
+      "ci_excludes_chance": true
+    },
+    {
+      "slice": "plasma_absent",
+      "n": 701,
+      "converters": 270,
+      "auc": 0.6825,
+      "ci": [
+        0.6446,
+        0.7215
+      ],
+      "p_perm": 0.001,
+      "ci_excludes_chance": true
+    },
+    {
+      "slice": "full_cohort",
+      "n": 1199,
+      "converters": 412,
+      "auc": 0.6504,
+      "ci": [
+        0.6164,
+        0.6839
+      ],
+      "p_perm": 0.001,
+      "ci_excludes_chance": true
+    }
+  ],
+  "context": {
+    "fusion_arm_plasma_present_n": 498,
+    "fusion_arm_converters": 142,
+    "plasma_alone_conversion_auc": 0.814,
+    "note": "The fusion arm is limited to plasma-present subjects. Imaging alone extends conversion prediction to the plasma-absent population (701 subjects / 270 converters) and to the full 412-converter cohort \u2014 the complementary value plasma cannot provide, not a claim that imaging beats plasma."
+  },
+  "compliance": "Frozen/derived features only; AUC-grade numbers only."
+}

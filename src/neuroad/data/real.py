@@ -33,9 +33,46 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 _REAL_DIR = _REPO_ROOT / "data" / "real"
 OASIS1_CSV = _REAL_DIR / "oasis_cross-sectional.csv"
 OASIS2_CSV = _REAL_DIR / "oasis_longitudinal.csv"
+#: OPTIONAL FastSurfer-derived volume table (subject_id + hippocampal/ventricle/
+#: cortex/whole-brain/intracranial volumes), produced by
+#: ``scripts/fastsurfer_volumes_colab.py`` on a GPU runtime. Git-ignored / kept
+#: local by design; the feeder works fully WITHOUT it (see ``_join_volumes``).
+OASIS_VOLUMES_CSV = _REAL_DIR / "oasis_volumes.csv"
 
 #: structural-derived features used as the weight-free embedding.
 _STRUCTURAL_FEATURES = ["nWBV", "eTIV", "ASF"]
+
+#: FastSurfer volume columns additively joined onto the contract table when the
+#: derived volume CSV is present (fusion-schema keys; see
+#: ``integrations.structural_segmenter.VOLUME_KEYS``).
+_VOLUME_COLS = [
+    "hippocampal_volume", "ventricle_volume", "whole_brain_volume",
+    "cortex_volume", "intracranial_volume",
+]
+
+
+def _join_volumes(frame: pd.DataFrame) -> pd.DataFrame:
+    """Additively left-join FastSurfer volumes on ``subject_id`` when available.
+
+    Honest degrade (mirrors the 'cache not found' behavior of the Neuro-JEPA
+    feeders): if ``OASIS_VOLUMES_CSV`` is absent — or lacks a ``subject_id`` column
+    — the frame is returned UNCHANGED, so the feeder is fully functional without any
+    GPU-derived table. When present, it exposes ``hippocampal_volume`` (+ ventricle
+    / cortex / whole-brain / intracranial) columns; rows without a volume row get
+    NaN. Extra columns are allowed by the contract, so ``validate_table`` still
+    passes either way. The join never drops or duplicates subject rows (the volume
+    table is de-duplicated on ``subject_id`` first).
+    """
+    if not OASIS_VOLUMES_CSV.exists():
+        return frame
+    vols = pd.read_csv(OASIS_VOLUMES_CSV)
+    if "subject_id" not in vols.columns:
+        return frame
+    keep = ["subject_id"] + [c for c in _VOLUME_COLS if c in vols.columns]
+    vols = vols[keep].copy()
+    vols["subject_id"] = vols["subject_id"].astype(str)
+    vols = vols.drop_duplicates("subject_id", keep="first")
+    return frame.merge(vols, on="subject_id", how="left")
 
 
 def _dx_from_cdr(cdr: float) -> object:
@@ -149,6 +186,10 @@ def load_oasis(which: str = "both") -> pd.DataFrame:
     # subject_id must be unique; a handful of OASIS-2 IDs could collide only if
     # both cohorts included the same key — the OAS1_/OAS2_ prefixes prevent it.
     frame = frame.drop_duplicates("subject_id", keep="first").reset_index(drop=True)
+
+    # Additively attach FastSurfer volumes if the derived CSV exists (no-op when
+    # absent — the feeder is fully functional without any GPU-derived table).
+    frame = _join_volumes(frame)
 
     contract.validate_table(frame)
     return frame

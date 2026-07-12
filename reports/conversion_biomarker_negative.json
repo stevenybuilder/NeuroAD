@@ -1,0 +1,103 @@
+{
+  "analysis": "imaging-only conversion within biomarker-NEGATIVE subgroups",
+  "question": "does structural imaging flag converters that the plasma test calls low-risk / reassures?",
+  "cohort": "ADNI conversion-labeled + plasma-tested (n=498, 142 converters)",
+  "method": "probe.auc_ci_perm within each subgroup: site-disjoint CV, in-fold auto-PCA, bootstrap CI, permutation null",
+  "ptau217_split": "median of the triangulated z-scored ensemble",
+  "subgroups": [
+    {
+      "subgroup": "ptau217_low",
+      "n": 248,
+      "converters": 23,
+      "imaging_only": {
+        "auc": 0.7695,
+        "ci": [
+          0.6786,
+          0.8547
+        ],
+        "p_perm": 0.005,
+        "ci_excludes_chance": true
+      },
+      "plasma_only": {
+        "auc": 0.6435,
+        "ci": [
+          0.5059,
+          0.7595
+        ],
+        "p_perm": 0.008,
+        "ci_excludes_chance": true
+      }
+    },
+    {
+      "subgroup": "ptau217_high",
+      "n": 250,
+      "converters": 119,
+      "imaging_only": {
+        "auc": 0.6362,
+        "ci": [
+          0.5645,
+          0.705
+        ],
+        "p_perm": 0.013,
+        "ci_excludes_chance": true
+      },
+      "plasma_only": {
+        "auc": 0.6936,
+        "ci": [
+          0.6264,
+          0.7615
+        ],
+        "p_perm": 0.001,
+        "ci_excludes_chance": true
+      }
+    },
+    {
+      "subgroup": "amyloid_negative",
+      "n": 424,
+      "converters": 57,
+      "imaging_only": {
+        "auc": 0.6611,
+        "ci": [
+          0.578,
+          0.7431
+        ],
+        "p_perm": 0.001,
+        "ci_excludes_chance": true
+      },
+      "plasma_only": {
+        "auc": 0.6302,
+        "ci": [
+          0.5508,
+          0.7144
+        ],
+        "p_perm": 0.002,
+        "ci_excludes_chance": true
+      }
+    },
+    {
+      "subgroup": "amyloid_positive",
+      "n": 464,
+      "converters": 223,
+      "imaging_only": {
+        "auc": 0.6417,
+        "ci": [
+          0.5913,
+          0.6914
+        ],
+        "p_perm": 0.001,
+        "ci_excludes_chance": true
+      },
+      "plasma_only": {
+        "auc": 0.6352,
+        "ci": [
+          0.5849,
+          0.6847
+        ],
+        "p_perm": 0.001,
+        "ci_excludes_chance": true
+      }
+    }
+  ],
+  "reading": "Within a biomarker-negative subgroup plasma's range is restricted, so plasma-only collapses toward chance there; imaging-only retaining a CI-clears-chance signal is the evidence that imaging adds orthogonal value exactly where the blood test goes quiet.",
+  "compliance": "Derived contract features only; AUC-grade numbers only."
+}
