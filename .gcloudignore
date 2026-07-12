@@ -24,6 +24,15 @@
 # public MNI152 template + demo ROI masks and ARE served by the demo image.
 data/**/*.nii
 data/**/*.nii.gz
+# Dockerfile.backend COPYs data/registry.yaml + data/real/ (public OASIS tables +
+# manifests). Keep gated / NeuroJEPA-derived / stub data OUT: embeddings already
+# match *embeddings*.csv above; also exclude the gated ADNI table, the PCA fixture,
+# the stub CSVs, and the empty raw/processed trees.
+data/raw/
+data/processed/
+data/real/_gated/
+data/real/_stubs/
+data/real/fixtures/
 
 # --- everything not needed to serve the static demo ---
 .git/
@@ -42,8 +51,6 @@ mri_visualizations/
 audit/
 scratch/
 skills/
-policy/
-data/
 app/build_demo_data.py
 app/README.md
 .pytest_cache/
