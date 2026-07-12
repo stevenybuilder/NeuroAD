@@ -2069,30 +2069,33 @@ class Component extends React.Component {
     const q=(this.state.chatDraft||'').trim(); if(!q) return;
     const n=this.state.extra.length;
     const id='f'+n;
-    const node={ id, x:1180, y:1130+n*150, role:'gold', label:q.length>34?q.slice(0,32)+'…':q, sub:'follow-up · re-entering gauntlet' };
-    // Spawn the gold offshoot locally (unchanged), and show a pending bubble
-    // that the real backend fills in.
+    const node={ id, x:1180, y:1130+n*150, role:'gold', label:q.length>34?q.slice(0,32)+'…':q, sub:'Claude · follow-up' };
+    // Spawn the gold offshoot locally (visual), and show a pending bubble that the
+    // real LLM fills in — /api/ask answers grounded in this investigation's case.
     const baseMsgs=this.state.chatMsgs.concat([{role:'user',text:q},{role:'assistant',text:'Claude is thinking…',pending:true}]);
     const thinkingIdx=baseMsgs.length-1;
     this.setState({ extra:this.state.extra.concat([node]), extraEdges:this.state.extraEdges.concat([['root',id,'gold','follow-up']]), chatMsgs:baseMsgs, chatDraft:'', railOpen:true, playing:false });
     clearTimeout(this._timer);
     setTimeout(()=>this.animateTo(this.frameDetail(node,1.0,0)), 40);
     const setBubble=(text)=>this.setState(s=>{ const m=s.chatMsgs.slice(); if(m[thinkingIdx]) m[thinkingIdx]={role:'assistant',text}; return {chatMsgs:m}; });
-    // Non-blocking POST to the real orchestrator with a 15s abort timeout.
+    // Non-blocking POST to the repo-grounded Ask-Claude endpoint (real LLM, live iff
+    // ANTHROPIC_API_KEY is set on the server). Pass the current hypothesis + live case
+    // as context so answers cite this investigation's real numbers. 30s abort.
     let ctrl=null; try{ ctrl=(typeof AbortController!=='undefined')?new AbortController():null; }catch(e){}
-    const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 15000);
+    const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 30000);
+    const offline='I couldn’t reach the model. Start the server with ANTHROPIC_API_KEY set to get answers grounded in this investigation. (offline)';
     try {
-      fetch('/api/orchestrate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal:q}),signal:ctrl?ctrl.signal:undefined})
+      const body=JSON.stringify({ question:q, hypothesis:this.state.entryValue||'', case:this.heroCase()||null });
+      fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body,signal:ctrl?ctrl.signal:undefined})
         .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
         .then(resp=>{
           clearTimeout(to);
-          const path=resp&&resp.path;
-          const label = path==='live_tool_runner' ? ' (Claude · live)' : (path==='scripted_offline' ? ' (offline template)' : '');
-          const finalTxt=(resp&&resp.final) ? resp.final : 'Spawned a gold offshoot; it re-enters the confound gauntlet before it can produce candidates.';
-          setBubble(finalTxt+label);
+          const ans=(resp&&resp.answer)||'';
+          const badge=(resp&&resp.live)?('\n\n— Claude · '+(resp.model||'live')):'';
+          setBubble(ans ? (ans+badge) : offline);
         })
-        .catch(()=>{ clearTimeout(to); setBubble('Offline: spawned a gold offshoot locally. It inherits the cohort provenance and re-enters the confound gauntlet before it can produce candidates. (offline template)'); });
-    } catch(e){ clearTimeout(to); setBubble('Offline: spawned a gold offshoot locally. It inherits the cohort provenance and re-enters the confound gauntlet before it can produce candidates. (offline template)'); }
+        .catch(()=>{ clearTimeout(to); setBubble(offline); });
+    } catch(e){ clearTimeout(to); setBubble(offline); }
   };
 
   chips = [

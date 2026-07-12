@@ -47,6 +47,48 @@ _log = logging.getLogger("neuroad.server")
 
 _MAX_HYPOTHESIS_CHARS = 2000
 
+# --- "Ask Claude" rail: repo-grounded Q&A (NOT the deterministic referee) -----
+# A real LLM answers questions about the current investigation, grounded ONLY in
+# the case + hypothesis registry we pass it. Live iff ANTHROPIC_API_KEY is set.
+_ASK_MODEL = os.environ.get("ASK_MODEL", "claude-opus-4-7")
+_ASK_SYSTEM = (
+    "You are the NeuroAD assistant. NeuroAD is an Alzheimer's structural-MRI "
+    "discovery referee: it points a linear probe at frozen Neuro-JEPA brain-MRI "
+    "embeddings, runs a five-test confound gauntlet (site/scanner, age/sex, "
+    "brain-age, biomarker anchor, replication), and only promotes signals that "
+    "survive. Answer the user's question about THIS investigation, grounded ONLY "
+    "in the CONTEXT below (the live case, its ranked protein targets, cohort, "
+    "gauntlet tests, and the hypothesis registry). Be concise (2-5 sentences), "
+    "specific, and hedged — never overclaim; candidate targets are HYPOTHESES to "
+    "test, not validated drugs. Cite concrete numbers/fields from the context. If "
+    "the answer is not in the context, say so plainly rather than inventing it. "
+    "Frozen-embedding scanner/site leakage is published prior art — cite, don't claim."
+)
+
+
+def _build_ask_context(payload: dict) -> str:
+    """Assemble a compact, grounded knowledge context from the passed case + the
+    committed hypothesis registry. Bounded so the prompt stays cheap."""
+    blocks: list[str] = []
+    hyp = str(payload.get("hypothesis", "")).strip()
+    if hyp:
+        blocks.append("HYPOTHESIS UNDER INVESTIGATION:\n" + hyp[:_MAX_HYPOTHESIS_CHARS])
+    case = payload.get("case")
+    if isinstance(case, dict) and case:
+        keep = {k: case[k] for k in (
+            "verdict", "score", "naive_effect", "leakage_margin", "tests",
+            "translation", "cohort", "biology_hypothesis", "next_experiment",
+            "caveats") if k in case}
+        blocks.append("CURRENT INVESTIGATION CASE (real referee output):\n"
+                      + json.dumps(keep, default=str)[:6000])
+    try:
+        reg = json.loads((_APP_DIR / "hypothesis_registry.json").read_text())
+        blocks.append("HYPOTHESIS REGISTRY (real hypothesis -> real cohort -> cited "
+                      "verdict):\n" + json.dumps(reg.get("hypotheses", []), default=str)[:6000])
+    except Exception:  # noqa: BLE001
+        pass
+    return "\n\n".join(blocks) if blocks else "(no structured context provided)"
+
 # The live Silent-Failure Guard (MRI QC) backend. The frontend talks to it via a
 # same-origin /api/sfg/* proxy so the demo stays one origin and self-contained.
 # Point SFG_BACKEND at a deployed instance to use that instead of a local run.
@@ -73,6 +115,13 @@ _STATIC = {
     "/vendor/niivue.umd.js": ("vendor/niivue.umd.js", "text/javascript; charset=utf-8"),
     "/scans/mni152.nii.gz": ("scans/mni152.nii.gz", "application/gzip"),
 }
+
+# The root page is env-controlled so the SAME backend serves NeuroAD at "/"
+# (localhost default) or Claude Science at "/" (the Cloud Run demo entry, matching
+# the static deploy) without a code change. Only known pages are honored.
+_ROOT_PAGE = os.environ.get("ROOT_PAGE", "neuroad.html")
+if _ROOT_PAGE in ("neuroad.html", "claude_science.html", "zui.html", "index.html"):
+    _STATIC["/"] = (_ROOT_PAGE, "text/html; charset=utf-8")
 
 
 def _claude_live() -> bool:
@@ -258,7 +307,7 @@ class Handler(BaseHTTPRequestHandler):
             raw = self.rfile.read(length) if length else b""
             self._proxy_sfg("POST", raw)
             return
-        if route not in ("/api/investigate", "/api/orchestrate"):
+        if route not in ("/api/investigate", "/api/orchestrate", "/api/ask"):
             self._send_json({"error": f"not found: {route}"}, 404)
             return
         try:
@@ -270,6 +319,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if route == "/api/orchestrate":
             self._handle_orchestrate(payload)
+            return
+
+        if route == "/api/ask":
+            self._handle_ask(payload)
             return
 
         hypothesis = str(payload.get("hypothesis", "")).strip()
@@ -348,6 +401,43 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             _log.exception("orchestrate failed")
             self._send_json({"error": f"orchestrate failed: {exc}"}, 500)
+
+    def _handle_ask(self, payload: dict) -> None:
+        """Ask Claude rail: a real LLM answers a question about the current
+        investigation, grounded in the passed case + registry. Live iff a key is
+        set; otherwise returns an honest offline notice (never a faked answer)."""
+        question = str(payload.get("question", "")).strip()
+        if not question:
+            self._send_json({"error": "question is required"}, 400)
+            return
+        if len(question) > _MAX_HYPOTHESIS_CHARS:
+            self._send_json({"error": "question too long"}, 400)
+            return
+        if not _claude_live():
+            self._send_json({
+                "answer": "Ask Claude is offline — no ANTHROPIC_API_KEY is set on "
+                          "the server, so I can't reach the model. Set the key and "
+                          "restart to get answers grounded in this investigation.",
+                "live": False, "model": None})
+            return
+        context = _build_ask_context(payload)
+        try:
+            import anthropic  # lazy import: offline path needs no dependency
+            client = anthropic.Anthropic()
+            msg = client.messages.create(
+                model=_ASK_MODEL,
+                max_tokens=1024,
+                system=_ASK_SYSTEM,
+                messages=[{"role": "user",
+                           "content": f"CONTEXT:\n{context}\n\n---\n\nQUESTION: {question}"}],
+            )
+            answer = "".join(
+                b.text for b in msg.content if getattr(b, "type", None) == "text").strip()
+            self._send_json({"answer": answer or "(no answer returned)",
+                             "live": True, "model": _ASK_MODEL})
+        except Exception as exc:  # noqa: BLE001
+            _log.exception("ask failed")
+            self._send_json({"error": f"ask failed: {exc}", "live": False}, 500)
 
 
 def main(argv: list[str] | None = None) -> int:
