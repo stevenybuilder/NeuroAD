@@ -19,9 +19,11 @@
 *embeddings*.csv
 *_emb.csv
 *.npy
-*.nii
-*.nii.gz
 *.mgz
+# gated volumes live under data/ (excluded below); app/scans/*.nii.gz are the
+# public MNI152 template + demo ROI masks and ARE served by the demo image.
+data/**/*.nii
+data/**/*.nii.gz
 
 # --- everything not needed to serve the static demo ---
 .git/
@@ -37,6 +39,7 @@ notebooks/
 reports/
 docs/
 design/
+mri_visualizations/
 audit/
 scratch/
 skills/
