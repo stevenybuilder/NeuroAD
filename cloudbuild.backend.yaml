@@ -1,0 +1,16 @@
+# Builds the live Python backend image (Dockerfile.backend) for the neuroad-demo
+# Cloud Run service — enables the real Ask Claude rail (/api/ask). Submit with:
+#   gcloud builds submit --config cloudbuild.backend.yaml .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.backend
+      - -t
+      - us-central1-docker.pkg.dev/project-flash-490419/cloud-run-source-deploy/neuroad-demo:backend
+      - .
+images:
+  - us-central1-docker.pkg.dev/project-flash-490419/cloud-run-source-deploy/neuroad-demo:backend
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -19,7 +19,9 @@ WORKDIR /srv
 # installed. Add `pip install anthropic` to the RUN below to enable live Claude.
 COPY requirements.txt pyproject.toml README.md ./
 COPY src/ ./src/
-RUN pip install --no-cache-dir -e .
+# anthropic enables the live "Ask Claude" rail (/api/ask); it stays offline-safe
+# without a key. The registry (app/hypothesis_registry.json) ships via COPY app/.
+RUN pip install --no-cache-dir -e . anthropic
 
 # App + the vendored open data / policy the referee reads at runtime.
 COPY app/ ./app/
