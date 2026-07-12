@@ -1560,7 +1560,7 @@ class BrainViewer extends React.Component {
       const nv = new NV.Niivue({
         backColor:[0.086,0.078,0.070,1],          // matches the recessed --ink viewport
         show3Dcrosshair:true,
-        crosshairColor:[1,1,1,0.85],                 // white — never blends with the warm ROI overlay
+        crosshairColor:[0.23,0.51,0.96,1],           // blue — standard NiiVue crosshair; pops against the warm attention overlay
         crosshairWidth:1,
         isColorbar:false,
         textHeight:0.028,
@@ -2314,13 +2314,26 @@ class Component extends React.Component {
     if(node.id==='neuro'||node.id==='neur2'||node.id==='cand2'||node.story==='iterate'||node.story==='compounds') return 'Neuroinflammation · insula–cingulate signature';
     return 'Synaptic / medial-temporal signature';
   }
-  // The pathway's region set, painted as a warm overlay so those regions light up
-  // ON the 3D render (and on the multiplanar slices) at their MNI coordinates.
+  // Aggregate attentive-probe attribution for this pathway (max |expected d| over
+  // its regions), normalised to ~0..1 — drives how hot/opaque the warm overlay
+  // renders. Honest framing: this is the L2 attentive probe's per-region
+  // attribution (expected effect), NOT a measured spatial attention map — the
+  // pooled NeuroJEPA embedding has no per-region tokens (see demo_data note).
+  pathwayAttention(node){
+    const ds=this.brainRegions(node).map(r=>Math.abs(parseFloat(String(r.d).replace(/[^0-9.]/g,''))||0));
+    return ds.length?Math.max(0,Math.min(1,Math.max(...ds)/0.8)):0.6;
+  }
+  // The pathway's region set, painted as a WARM attention heatmap ('warm' colormap)
+  // so those regions glow hot ON the 3D render (and on the multiplanar slices) at
+  // their MNI coordinates — the hotter/more opaque the blob, the stronger the
+  // probe's attribution for that pathway.
   pathwayOverlay(node){
     let key='synaptic';
     if(node.id==='vasc'||node.id==='vasc2'||node.id==='cand3'||node.story==='confound2'||node.story==='experiments') key='vascular';
     else if(node.id==='neuro'||node.id==='neur2'||node.id==='cand2'||node.story==='iterate'||node.story==='compounds') key='neuro';
-    return { kind:'mask', url:'/scans/roi_'+key+'.nii.gz', colormap:'red', opacity:0.75, cal_min:0.4, cal_max:1, alphaThreshold:true };
+    const a=this.pathwayAttention(node);
+    const opacity=+(0.55+0.4*a).toFixed(2);              // stronger attribution → hotter, more opaque
+    return { kind:'heatmap', url:'/scans/roi_'+key+'.nii.gz', colormap:'warm', opacity, cal_min:0.35, cal_max:1, alphaThreshold:true };
   }
   fmriSlice(node){
     const regs=this.brainRegions(node); const sel=this.state.selRoi;
@@ -2429,9 +2442,10 @@ class Component extends React.Component {
         el(BrainViewer,{key:'nv',mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢')
       ]),
-      el('div',{key:'prov',style:{marginTop:'7px',fontSize:'10.5px',color:C.mute,display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
+      el('div',{key:'cap',style:{marginTop:'7px',fontSize:'10.5px',color:C.mute,lineHeight:1.4}},'Warm overlay = attentive-probe attribution · expected effect, not a measured spatial attention map'),
+      el('div',{key:'prov',style:{marginTop:'5px',fontSize:'10.5px',color:C.mute,display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
         el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
-        'Select a region to fly the crosshair there'
+        'Click the scan for a blue crosshair · select a region to fly there'
       ]),
       el('div',{key:'sig',style:{marginTop:'11px',fontSize:'11px',color:C.ink2,fontWeight:600}}, this.pathwayLabel(node)),
       el('div',{key:'chips',style:{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'7px'}}, regs.map(rg=>{
@@ -2523,8 +2537,12 @@ class Component extends React.Component {
         ])
       ]);
     };
+    const ctx=el('div',{key:'ctx',style:{fontSize:'10.5px',color:C.ink2,margin:'0 0 8px',display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
+      el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
+      flags.length+' anomalies caught before use · injected as context to the hypothesis model'
+    ]);
     return el('div',{key:'qc'},[
-      header(openCount), sub,
+      header(openCount), sub, ctx,
       kill?el('div',{key:'k',style:{margin:'0 0 4px',padding:'8px 10px',background:C.claySoft,borderRadius:'8px',fontSize:'11.5px',lineHeight:1.45,color:C.clayDeep}},'This branch was killed on a scanner confound — the intensity check below is the live imaging evidence.'):null,
       el('div',{key:'list',style:{border:'1px solid '+C.edge,borderRadius:'10px',overflow:'hidden',marginTop:'6px'}},[
         el('div',{key:'sp',style:{height:'1px'}}),
