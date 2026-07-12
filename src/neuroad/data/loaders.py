@@ -15,7 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from neuroad.data import (synthetic, real, openbhb, openbhb_jepa, oasis_jepa,
-                          adni_jepa, gated)
+                          adni_jepa, adni_conversion_jepa, gated)
 
 # Conventional drop location for a mapped gated export (see scripts/adni_to_contract.py).
 _GATED_DIR = Path(__file__).resolve().parents[3] / "data" / "real" / "_gated"
@@ -48,6 +48,16 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
     # own representation — the raw-MRI -> Neuro-JEPA stage output, made consumable.
     if low in ("adni:neurojepa", "adni:jepa"):
         return adni_jepa.load_adni_neurojepa()
+
+    # ADNI MCI-conversion cohort with REAL frozen Neuro-JEPA embeddings: the
+    # 334-subject PROGNOSTIC cohort (58 pMCI / 276 sMCI, multi-site, real plasma) on
+    # the foundation model's own 768-d representation. Target = 'conversion' (pMCI
+    # vs sMCI), NOT cross-sectional dx. This is the regime where structural imaging
+    # is expected to earn its keep — the cross-sectional AD-vs-CN cohort is dominated
+    # by plasma p-tau217. 'adni:mci' is an alias. MUST precede the generic 'adni:'
+    # scanner-slice branch below (which would otherwise mis-route these names).
+    if low in ("adni:conversion", "adni:mci"):
+        return adni_conversion_jepa.load_adni_conversion_neurojepa()
 
     # ADNI ComBat-harmonized full cohort: 'adni:combat' removes the scanner
     # (field-strength) batch effect from the emb_* features while preserving the
@@ -104,7 +114,8 @@ def honest_substrate(name: str) -> str:
     low = (name or "").strip().lower()
     if low.startswith("synthetic:"):
         return "synthetic contract embeddings (badged demo cohort)"
-    if ":neurojepa" in low or ":jepa" in low:
+    if (":neurojepa" in low or ":jepa" in low
+            or low in ("adni:conversion", "adni:mci")):
         return "frozen Neuro-JEPA structural embeddings"
     if low.startswith("adni"):
         return ("ADNI z-standardized FreeSurfer morphometry "
@@ -130,6 +141,8 @@ AVAILABLE = [
     "openbhb:neurojepa",
     "oasis:neurojepa",
     "adni",
+    "adni:neurojepa",
+    "adni:conversion",
     "oasis3",
     "nacc",
     "epad",
