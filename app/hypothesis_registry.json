@@ -11,88 +11,219 @@
   },
   "hypotheses": [
     {
+      "id": "ad_vs_cn_combat_flagship",
+      "hypothesis": "p-tau217-anchored hippocampal atrophy separates Alzheimer's disease from cognitively normal",
+      "claim": {
+        "target": "dx_binary",
+        "group_a": "AD",
+        "group_b": "CN",
+        "anchor": "plasma p_tau217"
+      },
+      "dataset": {
+        "name": "adni:combat",
+        "n": 1615,
+        "positives": "462 AD / 1153 CN",
+        "cohort": "ADNI ComBat-harmonized FreeSurfer morphometry (batch = MRI field strength; age/sex protected, dx-blind), site-disjoint CV over 70 sites"
+      },
+      "expected": {
+        "headline": "A promoted AD-vs-CN survivor, de-confounded of field strength the honest way.",
+        "within_adni_auc": 0.922,
+        "within_adni_ci": [
+          0.906,
+          0.938
+        ],
+        "p_perm": 0.005,
+        "deconfound": "Holds within each field strength (3T-only 0.925, 1.5T-only 0.935; both within +/-0.05 of the pooled 0.922) -> not the 1.5T/3T split. Residual field-strength predictability after fold-honest harmonization is AUC ~0.65 (not fully removed), but the outcome exceeds it by +0.28.",
+        "covariates": "Age/sex-adjusted 0.905; strictest predicted-brain-age-adjusted 0.786.",
+        "replication": "External held-out AUROC 0.92 [0.79, 1.00], n=41 over 11 sites - supportive, not confirmatory.",
+        "verdict": "strong candidate (promoted for one confirmatory experiment; not adoption)"
+      },
+      "why_meaningful": "The flagship promoted survivor: a real AD-vs-CN imaging signal that survives the confound gauntlet AND the decisive within-field-strength de-confound, then routes to a tau-anchored molecular follow-up. Diagnosis (AD vs CN), not conversion.",
+      "sources": [
+        "adni_dx_3T_survivor.json",
+        "P1_FLAGSHIP_AUDIT.md"
+      ],
+      "demo_priority": "lead"
+    },
+    {
       "id": "ad_vs_cn_imaging",
       "hypothesis": "AD is decodable from the frozen structural-MRI embedding (AD vs CN).",
-      "claim": { "target": "dx_binary", "group_a": "AD", "group_b": "CN" },
-      "dataset": { "name": "adni:neurojepa", "n": 590, "positives": "87 AD / 503 CN (expands to 494 AD after the AD-expansion merge)", "cohort": "ADNI frozen NeuroJEPA embeddings" },
+      "claim": {
+        "target": "dx_binary",
+        "group_a": "AD",
+        "group_b": "CN"
+      },
+      "dataset": {
+        "name": "adni:neurojepa",
+        "n": 590,
+        "positives": "87 AD / 503 CN (expands to 494 AD after the AD-expansion merge)",
+        "cohort": "ADNI frozen NeuroJEPA embeddings"
+      },
       "expected": {
         "headline": "The tool catches its own feeder cheating.",
-        "within_adni_auc": 0.848, "within_adni_ci": [0.805, 0.888], "p_perm": 0.001,
+        "within_adni_auc": 0.848,
+        "within_adni_ci": [
+          0.805,
+          0.888
+        ],
+        "p_perm": 0.001,
         "leakage": "RAW cohort/scanner leakage AUC 0.9996 (separable = batch artifact) -> referee de-rates; after ComBat leakage drops to 0.563 and pooled AD-vs-CN holds at 0.861 [0.829, 0.892]",
         "ad_expansion_precision_note": "5.7x AD expansion (87->494) HALVED the CI (0.081->0.039, audited sqrt(n) gain) but did NOT improve discrimination or de-confound: scanner-matched 3T-only AUC 0.861 [0.835,0.885] ~= 0.857 baseline (+0.004); raw pooled 0.891 is inflated ~0.03 by field-strength confound (40% added AD are 1.5T, 100% CN are 3T; embedding reads field strength at AUC 0.990). Report 0.861 (3T-matched), not 0.891. See reports/AD_EXPANSION_ANALYSIS.md",
         "verdict": "FRAGILE / not promoted on the raw embedding (scanner artifact); the de-confounded, biomarker-anchored signal is what survives"
       },
       "why_meaningful": "A flashy 0.85-0.94 imaging AUC is exposed as mostly acquisition batch before anyone ships it. This is the flagship rigor story.",
-      "sources": ["adni_neurojepa_crosscohort.json", "ADNI_FIRST_CARDS.md"],
+      "sources": [
+        "adni_neurojepa_crosscohort.json",
+        "ADNI_FIRST_CARDS.md"
+      ],
       "demo_priority": "lead"
     },
     {
       "id": "conversion_prognosis",
       "hypothesis": "MCI->AD conversion is decodable from ADNI structural features.",
-      "claim": { "target": "conversion" },
-      "dataset": { "name": "adni:combat", "n": 1199, "positives": "1199 conversion-labeled (412 converters)", "cohort": "ADNI ComBat-harmonized, FreeSurfer features" },
+      "claim": {
+        "target": "conversion"
+      },
+      "dataset": {
+        "name": "adni:combat",
+        "n": 1199,
+        "positives": "1199 conversion-labeled (412 converters)",
+        "cohort": "ADNI ComBat-harmonized, FreeSurfer features"
+      },
       "expected": {
-        "naive_oof_auc": 0.644, "n": 1199, "cv": "site-disjoint OOF + permutation null",
+        "naive_oof_auc": 0.644,
+        "n": 1199,
+        "cv": "site-disjoint OOF + permutation null",
         "verdict": "PROMOTED - robust enough for follow-up; a real-but-modest prognostic signal"
       },
       "why_meaningful": "Prognosis is harder than diagnosis; a cross-validated, permutation-significant AUC above chance is a genuine structural signal, reported with honest uncertainty.",
-      "sources": ["adni_conversion_card.json", "ADNI_CONVERSION.md"],
+      "sources": [
+        "adni_conversion_card.json",
+        "ADNI_CONVERSION.md"
+      ],
       "demo_priority": "supporting"
     },
     {
       "id": "ptau217_anchor",
       "hypothesis": "The frozen MRI embedding's AD axis reflects tau biology (plasma p-tau217), not just scanner.",
-      "claim": { "target": "biomarker_anchor", "anchor": "plasma p_tau217" },
-      "dataset": { "name": "adni:neurojepa", "n": 590, "positives": "291 with a p-tau217 high/low call", "cohort": "ADNI NeuroJEPA embeddings + measured 3-assay plasma" },
+      "claim": {
+        "target": "biomarker_anchor",
+        "anchor": "plasma p_tau217"
+      },
+      "dataset": {
+        "name": "adni:neurojepa",
+        "n": 590,
+        "positives": "291 with a p-tau217 high/low call",
+        "cohort": "ADNI NeuroJEPA embeddings + measured 3-assay plasma"
+      },
       "expected": {
-        "embedding_predicts_ptau217_high_vs_low_auc": 0.6533, "ci": [0.6092, 0.6966], "p_perm": 0.001,
+        "embedding_predicts_ptau217_high_vs_low_auc": 0.6533,
+        "ci": [
+          0.6092,
+          0.6966
+        ],
+        "p_perm": 0.001,
         "verdict": "The frozen MRI representation encodes tau signal -> the imaging AD axis is partly real biology, not purely batch artifact (the survivor of the KILL)"
       },
       "why_meaningful": "Grounds the imaging phenotype in an independent molecular axis; this is what pulls the killed diagnosis card partly back toward real AD biology.",
-      "sources": ["adni_neurojepa_crosscohort.json", "attentive_probe_ad.json"],
+      "sources": [
+        "adni_neurojepa_crosscohort.json",
+        "attentive_probe_ad.json"
+      ],
       "demo_priority": "lead"
     },
     {
       "id": "fusion_vs_plasma",
       "hypothesis": "Adding imaging (NeuroJEPA) to plasma improves MCI->AD conversion prediction.",
-      "claim": { "target": "conversion", "modalities": ["imaging", "plasma", "neurojepa"] },
-      "dataset": { "name": "adni:combat + NeuroJEPA frame", "n": 323, "positives": "58 converters / 265 stable", "cohort": "ADNI AD/CN-conversion + plasma-complete slice" },
+      "claim": {
+        "target": "conversion",
+        "modalities": [
+          "imaging",
+          "plasma",
+          "neurojepa"
+        ]
+      },
+      "dataset": {
+        "name": "adni:combat + NeuroJEPA frame",
+        "n": 323,
+        "positives": "58 converters / 265 stable",
+        "cohort": "ADNI AD/CN-conversion + plasma-complete slice"
+      },
       "expected": {
-        "fused_auc": 0.821, "fused_ci": [0.760, 0.878], "p_perm": 0.001,
-        "gates": { "imaging": 0.28, "plasma": 0.50, "neurojepa": 0.22 },
+        "fused_auc": 0.821,
+        "fused_ci": [
+          0.76,
+          0.878
+        ],
+        "p_perm": 0.001,
+        "gates": {
+          "imaging": 0.28,
+          "plasma": 0.5,
+          "neurojepa": 0.22
+        },
         "neurojepa_leave_one_out_delta": 0.0008,
         "verdict": "NO CI-supported gain over plasma alone (plasma dominates, gate 0.50). HONEST NEGATIVE - complementarity, not superiority",
         "corroborating": "adni_conversion_multimodal: best fusion 0.827 vs plasma 0.814, not CI-separable at n=498"
       },
       "why_meaningful": "The tool refuses an overclaim its own CIs don't support. Owning this is the credibility move.",
-      "sources": ["adni_conversion_fusion.json", "ADNI_CONVERSION_FUSION.md", "adni_conversion_multimodal.json"],
+      "sources": [
+        "adni_conversion_fusion.json",
+        "ADNI_CONVERSION_FUSION.md",
+        "adni_conversion_multimodal.json"
+      ],
       "demo_priority": "lead"
     },
     {
       "id": "external_generalization",
       "hypothesis": "The AD imaging signal generalizes to an independent cohort (OASIS), not just held-out ADNI.",
-      "claim": { "target": "dx_binary", "group_a": "AD", "group_b": "CN", "mode": "train ADNI -> test OASIS" },
-      "dataset": { "name": "train adni:neurojepa -> test oasis:oasis1", "n": "590 train / 44 test", "positives": "8 AD in OASIS clinical (CDR>=1)", "cohort": "external OASIS-1 NeuroJEPA embeddings" },
+      "claim": {
+        "target": "dx_binary",
+        "group_a": "AD",
+        "group_b": "CN",
+        "mode": "train ADNI -> test OASIS"
+      },
+      "dataset": {
+        "name": "train adni:neurojepa -> test oasis:oasis1",
+        "n": "590 train / 44 test",
+        "positives": "8 AD in OASIS clinical (CDR>=1)",
+        "cohort": "external OASIS-1 NeuroJEPA embeddings"
+      },
       "expected": {
-        "oasis_ad_vs_cn_auc": 0.811, "oasis_n": 44,
-        "raw_cohort_leakage": 0.9996, "combat_cohort_leakage": 0.563, "pooled_after_combat_auc": 0.861,
+        "oasis_ad_vs_cn_auc": 0.811,
+        "oasis_n": 44,
+        "raw_cohort_leakage": 0.9996,
+        "combat_cohort_leakage": 0.563,
+        "pooled_after_combat_auc": 0.861,
         "verdict": "Honest OUT-OF-COHORT transfer number (small OASIS AD n) - generalization is MEASURED, not assumed; pooling only valid after ComBat drops cohort-separability toward chance"
       },
       "why_meaningful": "Directly answers 'how do you know it generalizes?' with an a-priori external-cohort number instead of internal CV. AIBL/NACC are the next drop-ins.",
-      "sources": ["oasis_neurojepa_ad.json", "adni_neurojepa_crosscohort.json", "oasis_neurojepa_combined.json"],
+      "sources": [
+        "oasis_neurojepa_ad.json",
+        "adni_neurojepa_crosscohort.json",
+        "oasis_neurojepa_combined.json"
+      ],
       "demo_priority": "lead"
     },
     {
       "id": "target_prioritization",
       "hypothesis": "Which druggable protein targets does the tau-anchored imaging phenotype prioritize for AD?",
-      "claim": { "target": "target_ranking" },
-      "dataset": { "name": "discovery adapters", "cohort": "STRING PPI + LINCS L1000 reversal + Boltz-2 structure, routed from the plasma anchor" },
+      "claim": {
+        "target": "target_ranking"
+      },
+      "dataset": {
+        "name": "discovery adapters",
+        "cohort": "STRING PPI + LINCS L1000 reversal + Boltz-2 structure, routed from the plasma anchor"
+      },
       "expected": {
         "output": "ranked druggable targets (e.g. APP, MAPT, BACE1, APOE) with per-target evidence and a suggested wet-lab experiment",
         "verdict": "A falsifiable target shortlist for the bench - these are HYPOTHESES to test, NOT outcome-validated drug targets"
       },
       "why_meaningful": "The 'so what' - the pipeline hands the wet lab a biology-grounded shortlist, not a black-box classifier. This is the discovery-engine payoff.",
-      "sources": ["candidate_ranking.json", "candidate_ranking.md", "target_prioritization_validation.json"],
+      "sources": [
+        "candidate_ranking.json",
+        "candidate_ranking.md",
+        "target_prioritization_validation.json"
+      ],
       "demo_priority": "supporting"
     }
   ]

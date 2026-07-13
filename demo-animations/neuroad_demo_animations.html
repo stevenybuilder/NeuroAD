@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroAD — Demo Animations (Player)</title>
+<!--
+  NeuroAD Demo Animations — MASTER PLAYER
+  Single self-contained file. Double-click to open (file://) and present.
+  Loads each standalone scene into a full-bleed <iframe> via src= (NOT srcdoc),
+  so every scene stays perfectly isolated and its animation restarts on switch.
+  Controls: click a tab, prev/next, Left/Right arrows, number keys 1-5, h = hide bar.
+  No external requests: all CSS/JS is inline, system fonts only.
+-->
+<style>
+  :root{
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --bar-h:52px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    font-family:var(--sans); color:var(--ink); background:var(--paper);
+    display:flex; flex-direction:column; overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---- Top bar ---- */
+  .bar{
+    flex:0 0 var(--bar-h); height:var(--bar-h);
+    display:flex; align-items:center; gap:14px;
+    padding:0 14px; background:var(--card);
+    border-bottom:1px solid var(--edge);
+    user-select:none; position:relative; z-index:5;
+  }
+  .bar.hidden{ display:none; }
+
+  .brand{ display:flex; align-items:center; gap:9px; font-weight:700; font-size:15px; letter-spacing:-.01em; color:var(--ink); flex:0 0 auto; }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 4px var(--clay-soft); }
+  .brand .ad{ color:var(--clay); }
+
+  .tabs{ display:flex; align-items:center; gap:3px; margin:0 auto; }
+  .tab{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--sans); font-size:12.5px; font-weight:600; letter-spacing:.005em;
+    color:var(--ink2); background:transparent;
+    border:1px solid transparent; border-radius:8px;
+    padding:6px 11px; cursor:pointer; transition:background .15s, color .15s, border-color .15s;
+    white-space:nowrap;
+  }
+  .tab .n{ font-size:10.5px; color:var(--mute); font-weight:700; font-variant-numeric:tabular-nums; }
+  .tab:hover{ color:var(--ink); background:var(--paper2); }
+  .tab.active{ color:#FCFBF7; background:var(--clay); border-color:var(--clay-deep); }
+  .tab.active .n{ color:rgba(252,251,247,.75); }
+
+  .nav{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+  .navbtn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:30px; border-radius:8px;
+    border:1px solid var(--edge); background:transparent; color:var(--ink2);
+    font-size:15px; cursor:pointer; transition:background .15s, border-color .15s, color .15s;
+  }
+  .navbtn:hover{ color:var(--ink); border-color:var(--edge2); background:var(--paper2); }
+  .navbtn:disabled{ opacity:.35; cursor:default; }
+
+  .hint{ font-size:11px; color:var(--mute); letter-spacing:.01em; flex:0 0 auto; margin-left:2px; }
+  .hint kbd{
+    font-family:var(--sans); font-size:10px; font-weight:700; color:var(--ink2);
+    background:var(--paper2); border:1px solid var(--edge); border-radius:4px;
+    padding:1px 5px; margin:0 1px;
+  }
+  .hidebtn{
+    font-family:var(--sans); font-size:11px; font-weight:600; color:var(--ink2);
+    background:transparent; border:1px solid var(--edge); border-radius:8px;
+    padding:6px 10px; cursor:pointer; flex:0 0 auto; transition:background .15s, border-color .15s;
+  }
+  .hidebtn:hover{ border-color:var(--edge2); background:var(--paper2); }
+
+  /* ---- Stage / iframe ---- */
+  .stage{ flex:1 1 auto; position:relative; background:var(--paper); min-height:0; }
+  .stage iframe{
+    position:absolute; inset:0; width:100%; height:100%;
+    border:0; display:block; background:var(--paper);
+  }
+
+  /* Floating "show bar" pill when chrome is hidden */
+  .peek{
+    position:fixed; top:10px; left:50%; transform:translateX(-50%);
+    display:none; align-items:center; gap:7px; z-index:10;
+    font-family:var(--sans); font-size:11px; font-weight:600; color:var(--ink2);
+    background:var(--card); border:1px solid var(--edge); border-radius:999px;
+    padding:5px 12px; box-shadow:0 2px 10px rgba(38,36,31,.08);
+    cursor:pointer; opacity:0; transition:opacity .25s;
+  }
+  .peek.show{ display:inline-flex; }
+  .peek:hover{ opacity:1 !important; }
+  .peek .pdot{ width:6px; height:6px; border-radius:50%; background:var(--clay); }
+
+  @media (max-width:720px){
+    .hint{ display:none; }
+    .tab .lbl{ display:none; }
+    .tab{ padding:6px 9px; }
+  }
+</style>
+</head>
+<body>
+  <div class="bar" id="bar">
+    <div class="brand"><span class="dot"></span><span>Neuro<span class="ad">AD</span></span></div>
+
+    <div class="tabs" id="tabs"><!-- tabs injected by JS --></div>
+
+    <div class="nav">
+      <button class="navbtn" id="prev" title="Previous scene (←)" aria-label="Previous scene">‹</button>
+      <button class="navbtn" id="next" title="Next scene (→)" aria-label="Next scene">›</button>
+    </div>
+
+    <div class="hint">open direct: <kbd>scenes/…</kbd></div>
+    <button class="hidebtn" id="hide" title="Hide bar (h)">Hide bar <kbd style="margin-left:4px">h</kbd></button>
+  </div>
+
+  <div class="stage">
+    <iframe id="frame" title="NeuroAD scene" allow="autoplay"></iframe>
+  </div>
+
+  <div class="peek" id="peek" title="Show bar (h)"><span class="pdot"></span>Show bar · press h</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SCENES = [
+    { file:"scenes/scene0_title.html",    label:"Title",    hint:"Title / opener" },
+    { file:"scenes/scene1_pipeline.html", label:"Pipeline", hint:"Discovery pipeline" },
+    { file:"scenes/scene2_flywheel.html", label:"Flywheel", hint:"Discovery flywheel" },
+    { file:"scenes/scene3_claude.html",   label:"Claude",   hint:"Orchestrated by Claude" },
+    { file:"scenes/scene4_probe.html",    label:"Probe",    hint:"One probe, three questions" }
+  ];
+
+  var frame = document.getElementById("frame");
+  var tabsEl = document.getElementById("tabs");
+  var prevBtn = document.getElementById("prev");
+  var nextBtn = document.getElementById("next");
+  var hideBtn = document.getElementById("hide");
+  var bar = document.getElementById("bar");
+  var peek = document.getElementById("peek");
+
+  var idx = -1;      // current scene index
+  var tabEls = [];
+
+  // Build tabs
+  SCENES.forEach(function(s, i){
+    var b = document.createElement("button");
+    b.className = "tab";
+    b.title = s.hint;
+    b.innerHTML = '<span class="n">' + (i+1) + '</span><span class="lbl">' + s.label + '</span>';
+    b.addEventListener("click", function(){ go(i); });
+    tabsEl.appendChild(b);
+    tabEls.push(b);
+  });
+
+  function go(i){
+    if(i < 0 || i >= SCENES.length) return;
+    idx = i;
+    // Reload iframe from scratch so the scene animation restarts (clean take).
+    // Reassigning src (even to the same value) forces a fresh load.
+    frame.src = SCENES[i].file;
+    frame.setAttribute("title", "NeuroAD — " + SCENES[i].hint);
+
+    tabEls.forEach(function(el, k){ el.classList.toggle("active", k === i); });
+    prevBtn.disabled = (i === 0);
+    nextBtn.disabled = (i === SCENES.length - 1);
+
+    // Reflect scene in URL hash (non-destructive; helps deep-link/reload).
+    try { history.replaceState(null, "", "#" + (i+1)); } catch(e){}
+  }
+
+  function step(delta){ go(Math.min(SCENES.length - 1, Math.max(0, idx + delta))); }
+
+  prevBtn.addEventListener("click", function(){ step(-1); });
+  nextBtn.addEventListener("click", function(){ step(1); });
+
+  // ---- Hide / show bar (full-bleed recording) ----
+  var peekTimer = null;
+  function setBar(hidden){
+    bar.classList.toggle("hidden", hidden);
+    peek.classList.toggle("show", hidden);
+    if(hidden){
+      // Briefly reveal the peek pill, then fade so it stays out of the take.
+      peek.style.opacity = "1";
+      clearTimeout(peekTimer);
+      peekTimer = setTimeout(function(){ peek.style.opacity = "0"; }, 1600);
+    } else {
+      clearTimeout(peekTimer);
+    }
+  }
+  hideBtn.addEventListener("click", function(){ setBar(true); });
+  peek.addEventListener("click", function(){ setBar(false); });
+
+  // ---- Keyboard ----
+  document.addEventListener("keydown", function(e){
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    var k = e.key;
+    if(k === "ArrowRight" || k === " " || k === "PageDown"){ e.preventDefault(); step(1); return; }
+    if(k === "ArrowLeft"  || k === "PageUp"){ e.preventDefault(); step(-1); return; }
+    if(k === "h" || k === "H"){ e.preventDefault(); setBar(!bar.classList.contains("hidden")); return; }
+    if(k >= "1" && k <= "5"){
+      var n = parseInt(k, 10) - 1;
+      if(n < SCENES.length){ e.preventDefault(); go(n); }
+    }
+  });
+
+  // ---- Initial scene (honor #hash deep-link, else scene 0) ----
+  var start = 0;
+  var m = (location.hash || "").match(/(\d)/);
+  if(m){ var v = parseInt(m[1], 10) - 1; if(v >= 0 && v < SCENES.length) start = v; }
+  go(start);
+})();
+</script>
+</body>
+</html>

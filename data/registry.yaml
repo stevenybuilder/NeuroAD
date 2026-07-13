@@ -77,10 +77,12 @@ datasets:
   - name: ADNI
     long_name: "Alzheimer's Disease Neuroimaging Initiative"
     access: gated-application
-    vendored: false
+    vendored: true            # LOCALLY only: data/real/_gated/adni.csv is gitignored (DUA), NOT committed
+    local_path: data/real/_gated/adni.csv
     stub_path: data/real/_stubs/adni_stub.csv
     direct_url: "https://adni.loni.usc.edu/ (LONI IDA)"
-    subjects: 2000+
+    subjects: 2951            # real vendored count (dx: CN 1153 / MCI 1299 / AD 462 / 37 unlabeled)
+    labeled_subjects: 2914    # dx in {CN,MCI,AD}; AD+CN complete-case = 1615
     tabular_features: [FreeSurfer volumes, hippocampal volume, cortical thickness]
     labels: [diagnosis (CN/MCI/AD), conversion]
     biomarkers: [amyloid-PET, p_tau217, gfap, nfl, apoe4]
@@ -93,7 +95,8 @@ datasets:
       institutional affiliation (unaffiliated/personal-email applicants are
       usually denied). Export the UCSF Cross-Sectional FreeSurfer table + plasma
       biomarker tables. The reference AD cohort WITH plasma p-tau217/GFAP -> the
-      intended real biomarker-anchor gate. STUB pending access.
+      real biomarker-anchor gate. VENDORED LOCALLY under the LONI DUA (gitignored,
+      not committed); the live referee scores the real 2951-subject table.
 
   - name: NACC
     long_name: "National Alzheimer's Coordinating Center — UDS + MRI"

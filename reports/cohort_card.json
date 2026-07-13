@@ -23,5 +23,5 @@
     "nfl": 0.463,
     "apoe4": 0.909
   },
-  "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). Multi-site with real plasma p-tau217 \u2014 the biomarker anchor no open cohort ships. The 3T/1.5T split dominates the full cohort (SURVIVOR restricts to 3T)."
+  "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). Multi-site with real plasma p-tau217 \u2014 the biomarker anchor no open cohort ships. The KILL shows the 3T/1.5T field-strength split dominating the full cohort (scanner AUC ~0.99, margin <0); the SURVIVOR removes it label-blind with ComBat (scanner AUC ~0.37) over the whole AD-vs-CN cohort (n=1615). Naive cohort-expansion gains reflect PRECISION (tighter CI), not de-confounding \u2014 report 0.861 (3T-matched), not raw pooled 0.891 (see app/hypothesis_registry.json)."
 }

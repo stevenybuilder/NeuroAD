@@ -18,6 +18,7 @@ Also here:
 """
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 import numpy as np
@@ -29,6 +30,8 @@ from sklearn.preprocessing import StandardScaler
 from . import contract
 from .probe import (LinearProbe, N_BOOT, N_PERM, auc_ci_perm, cross_val_auc,
                     point_head)
+
+_log = logging.getLogger("neuroad.leakage")
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +81,41 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
     o_boot = o.get("boot", np.empty(0))
     o_perm = o.get("perm", np.empty(0))
 
+    # ICV (head-size) adjustment for ROI-VOLUME cohorts. On a FreeSurfer named-ROI
+    # cohort (df.attrs['region_columns'] set) every feature is a raw regional
+    # volume, so a bigger head inflates the ROI and the outcome AUROC partly rides
+    # on head size, not atrophy. We report an ICV-residualized companion AUROC
+    # (nuisance fit INSIDE each fold, site groups honored — the same fold-honest
+    # machinery as the age/sex adjustment) so the displayed headline can be the
+    # head-size-adjusted number, with the raw kept for audit. This is additive:
+    # the score/margin path below still uses the raw `outcome_auc`, so promotion
+    # decisions are unchanged — only the DISPLAYED region AUROC becomes honest.
+    outcome_auc_icv_adj = None
+    icv_adjusted = False
+    if target in ("conversion", "dx_binary") and "icv" in df.columns \
+            and df.attrs.get("region_columns"):
+        try:
+            if target == "conversion":
+                m_icv = pd.to_numeric(df["conversion"], errors="coerce").notna().to_numpy()
+            else:
+                m_icv = df["dx"].astype("string").map({"AD": 1, "CN": 0}).notna().to_numpy()
+            icv_v = pd.to_numeric(df["icv"], errors="coerce").to_numpy(float)[m_icv]
+            if np.isfinite(icv_v).sum() >= 5 and np.nanstd(icv_v) > 0:
+                icv_v = np.nan_to_num(icv_v, nan=np.nanmean(icv_v))
+                from .probe import residualized_cross_val_auc
+                adj = residualized_cross_val_auc(
+                    Xo, icv_v.reshape(-1, 1), yo, go, kind="covariate")
+                # residualized_cross_val_auc returns a 0.5 sentinel (WITHOUT
+                # raising) when the CV is infeasible — too thin, or a single-class
+                # evaluated fold. Treat an exact 0.5 as "not computed" rather than
+                # a genuine head-size null, so the FE never labels an uncomputed
+                # value "head-size corrected"; the header then shows raw only.
+                if abs(float(adj) - 0.5) > 1e-9:
+                    outcome_auc_icv_adj = round(float(adj), 4)
+                    icv_adjusted = True
+        except Exception as exc:  # noqa: BLE001
+            _log.debug("ICV-adjusted outcome AUC failed, reporting raw only: %r", exc)
+
     conf = _scanner_target(df)
     if conf is None:
         scanner_auc = 0.5
@@ -93,6 +131,16 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
         s_boot = s.get("boot", np.empty(0))
 
     margin = outcome_auc - scanner_auc
+
+    # Within-acquisition-stratum invariance — the DECISIVE de-confound. A confound
+    # (e.g. field strength) cannot explain a contrast that is measured inside a
+    # single level of it. We re-measure the outcome AUROC restricted to each
+    # scanner/site level; if the effect holds at ~the pooled value within every
+    # stratum, the pooled number is not the confound leaking. This is the honest
+    # evidence to DISPLAY — the whole-cohort scanner_auc above can look optimistic
+    # when the harmonization saw the held-out rows, so it must not be shown as
+    # "scanner ruled out". Additive: the score/margin path is untouched.
+    fs_invariance = _within_stratum_invariance(df, target, outcome_auc, conf)
 
     # Margin CI: percentile CI of outcome_boot - scanner_boot (paired by index;
     # truncated to the shorter run). Independent resampling of the two row sets
@@ -123,6 +171,8 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
 
     return {
         "outcome_auc": round(float(outcome_auc), 4),
+        "outcome_auc_icv_adj": outcome_auc_icv_adj,
+        "icv_adjusted": icv_adjusted,
         "scanner_auc": round(float(scanner_auc), 4),
         "margin": round(float(margin), 4),
         "confound": conf if conf is not None else "none (single scanner/site)",
@@ -138,6 +188,67 @@ def leakage_margin(df: pd.DataFrame, target: str = "conversion",
         "margin_ci_hi": None if margin_ci_hi is None else round(margin_ci_hi, 4),
         "margin_p": None if margin_p is None else round(margin_p, 4),
         "margin_ci_excludes_zero": bool(margin_ci_lo is not None and margin_ci_lo > 0),
+        "field_strength_invariance": fs_invariance,
+    }
+
+
+# ---------------------------------------------------------------------------
+def _within_stratum_invariance(df: pd.DataFrame, target: str,
+                               pooled_auc: float, conf: Optional[str],
+                               band: float = 0.05, min_n: int = 40) -> Optional[dict]:
+    """Re-measure the outcome AUROC inside each single acquisition stratum.
+
+    A confound (scanner / field strength / site) cannot inflate a contrast that
+    is computed within one level of it. If the outcome holds at ~``pooled_auc``
+    within every stratum, the pooled effect is not that confound leaking — the
+    honest, decisive de-confound (mirrors the reference paper's ±0.05 AUROC
+    field-strength equivalence band, Nature Medicine doi:10.1038/s41591-026-04497-1
+    Extended Data Fig. 6d).
+
+    Returns ``None`` when it does not apply (non-outcome target, single stratum,
+    or every stratum too thin / single-class) so callers can fall back to the
+    scanner-margin display. Uses the same site-disjoint ``cross_val_auc`` as the
+    headline, so each stratum AUROC is measured on equal footing.
+    """
+    if target not in ("dx_binary", "conversion") or conf not in ("scanner", "site"):
+        return None
+    try:
+        levels = [lv for lv in df[conf].dropna().unique()]
+    except Exception:  # noqa: BLE001
+        return None
+    if len(levels) < 2:
+        return None
+
+    strata: list[dict] = []
+    for lv in levels:
+        sub = df[df[conf].astype("string") == str(lv)]
+        try:
+            Xs, ys, gs = point_head(sub, target)
+        except Exception:  # noqa: BLE001
+            continue
+        if len(ys) < min_n or len(np.unique(ys)) < 2:
+            continue
+        try:
+            auc = float(cross_val_auc(Xs, ys, groups=gs))
+        except Exception:  # noqa: BLE001
+            continue
+        # A degenerate CV returns the 0.5 sentinel — skip rather than show a
+        # spurious "chance within stratum".
+        if abs(auc - 0.5) < 1e-9:
+            continue
+        strata.append({"level": str(lv), "auc": round(auc, 4), "n": int(len(ys))})
+
+    if len(strata) < 2:
+        return None
+    max_abs_delta = max(abs(s["auc"] - pooled_auc) for s in strata)
+    strata.sort(key=lambda s: s["n"], reverse=True)
+    return {
+        "confound": conf,
+        "pooled_auc": round(float(pooled_auc), 4),
+        "strata": strata,
+        "max_abs_delta": round(float(max_abs_delta), 4),
+        "band": band,
+        "within_band": bool(max_abs_delta <= band),
     }
 
 

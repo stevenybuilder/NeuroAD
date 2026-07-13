@@ -1,0 +1,618 @@
+<!doctype html>
+<meta charset="utf-8">
+<!-- ============================================================
+  NeuroAD Demo — Scene 1: "The Discovery Pipeline"  (REF A: horizontal card flow)
+  Standalone, self-animating. No external requests. System fonts only.
+  Auto-plays, loops. Honors prefers-reduced-motion. ↻ Replay bottom-right.
+============================================================ -->
+<title>NeuroAD — The Discovery Pipeline</title>
+<style>
+  :root{
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+    --gold:#C08415; --gold-edge:#D69A1F; --gold-soft:#FBF2DD;
+    --gray:#B0ABA1; --gray-edge:#CBC7BC;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --shadow:0 1px 2px rgba(40,36,28,.04), 0 8px 30px rgba(40,36,28,.10);
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:var(--paper);
+    background-image:radial-gradient(1100px 620px at 60% 22%,#FBFAF6 0%,var(--paper) 62%);
+    overflow:hidden;
+  }
+  /* faint engineering dot-grid */
+  .grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(40,36,28,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(1200px 760px at 55% 46%,#000 60%,transparent 100%);
+            mask-image:radial-gradient(1200px 760px at 55% 46%,#000 60%,transparent 100%);
+  }
+
+  .stage{
+    position:relative; z-index:1;
+    height:100%; width:100%;
+    display:flex; flex-direction:column;
+    padding:40px 64px 34px;
+  }
+
+  /* ---------- header ---------- */
+  .wordmark{
+    position:fixed; top:28px; left:64px; z-index:3;
+    font-size:15px; font-weight:700; letter-spacing:-.01em; color:var(--ink);
+  }
+  .wordmark b{color:var(--clay); font-weight:700}
+  .head{ margin-top:34px; }
+  .kicker{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--clay-deep); background:var(--clay-soft);
+    border:1px solid #EBCBBB; border-radius:8px; padding:6px 11px;
+  }
+  .kicker .kd{ width:6px;height:6px;border-radius:50%;background:var(--clay); display:inline-block }
+  .title{
+    margin-top:14px; font-size:44px; line-height:1.02; font-weight:700;
+    letter-spacing:-.022em; color:var(--ink);
+  }
+  .title .soft{ color:var(--mute); font-weight:700 }
+
+  /* ---------- pipeline band ---------- */
+  .band{ position:relative; flex:1; display:flex; align-items:center; }
+  .pipeline{
+    position:relative; width:100%; max-width:1792px; margin:0 auto;
+    display:flex; align-items:stretch; gap:30px;
+  }
+  .overlay{ position:absolute; inset:0; z-index:4; pointer-events:none; overflow:visible }
+
+  /* ---------- card ---------- */
+  .card{
+    position:relative; z-index:2;
+    flex:1 1 0; min-width:0;
+    background:var(--card); border:1.5px solid var(--edge2); border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:16px 15px 15px; min-height:238px;
+    display:flex; flex-direction:column;
+    opacity:0; transform:translateY(12px);
+    transition:opacity .5s var(--ease), transform .55s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease);
+  }
+  .card.in{ opacity:1; transform:translateY(0) }
+  .card.active{ transform:translateY(-7px); box-shadow:0 2px 3px rgba(40,36,28,.05), 0 16px 40px rgba(40,36,28,.14) }
+  .card.focal{ transform:translateY(-10px) scale(1.035); }
+
+  .crow{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px }
+  .pill{
+    font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+    padding:5px 8px; border-radius:7px; white-space:nowrap;
+    background:var(--paper2); color:var(--ink2); border:1px solid var(--edge);
+  }
+  .handle{
+    width:11px;height:11px;border-radius:50%;flex:none;margin-top:2px;
+    background:var(--card); border:2.5px solid var(--gray-edge);
+  }
+  .handle .ping{ display:none }
+  .card.active .handle{ border-color:currentColor }
+  .card.active .handle::after{
+    content:""; position:absolute;
+  }
+  .hwrap{ position:relative; flex:none }
+  .hwrap-ring{
+    position:absolute; inset:0; border-radius:50%;
+    border:2.5px solid currentColor; opacity:0; transform:scale(1);
+  }
+  .card.pinged .hwrap-ring{ animation:ping .9s var(--ease) 1 }
+  @keyframes ping{
+    0%{ opacity:.55; transform:scale(1) }
+    100%{ opacity:0; transform:scale(2.4) }
+  }
+
+  .glyph{
+    margin:16px auto 4px; width:52px;height:52px;
+    display:grid; place-items:center; color:var(--ink2);
+    transition:color .4s var(--ease), transform .5s var(--ease);
+  }
+  .glyph svg{ width:46px;height:46px; fill:none; stroke:currentColor; stroke-width:2;
+    stroke-linecap:round; stroke-linejoin:round; }
+  .card.active .glyph{ transform:scale(1.06) }
+
+  .body{ margin-top:auto }
+  .ctitle{ font-size:15px; font-weight:700; letter-spacing:-.01em; color:var(--ink); line-height:1.15 }
+  .csub{ margin-top:5px; font-size:12px; line-height:1.34; color:var(--ink2) }
+  .foot{ margin-top:11px; display:flex; align-items:center; min-height:22px }
+  .metric{
+    font-family:var(--mono); font-size:12px; font-weight:600; color:var(--ink);
+    background:var(--paper2); border:1px solid var(--edge); border-radius:7px; padding:3px 8px;
+  }
+  .tag{ font-size:11px; color:var(--mute); letter-spacing:.01em; font-weight:600 }
+  .caveat{
+    margin-top:9px; font-size:11px; line-height:1.3; color:var(--clay-deep);
+    opacity:0; transform:translateY(3px);
+    transition:opacity .5s var(--ease), transform .5s var(--ease);
+  }
+  .card.focal .caveat{ opacity:1; transform:translateY(0) }
+
+  /* ---------- per-state color skins ---------- */
+  .card[data-state="ink"]{ }
+  .card[data-state="ink"] .glyph{ color:var(--ink2) }
+  .card[data-state="ink"].active{ border-color:var(--edge2) }
+  .card[data-state="ink"] .handle{ color:var(--ink2) }
+
+  .card[data-state="slate"] .pill{ background:#EDEAE0; color:var(--ink2); border-color:var(--edge2) }
+  .card[data-state="slate"] .glyph{ color:#6E6A5F }
+  .card[data-state="slate"] .handle{ color:#6E6A5F }
+  .card[data-state="slate"].active{ border-color:#C9C4B6 }
+
+  .card[data-state="gold"] .pill{ background:var(--gold-soft); color:#8A6210; border-color:#EBD9A6 }
+  .card[data-state="gold"] .glyph{ color:var(--gold) }
+  .card[data-state="gold"] .handle{ color:var(--gold-edge) }
+  .card[data-state="gold"].active{ border-color:var(--gold-edge) }
+
+  .card[data-state="green"] .pill{ background:var(--green-soft); color:#0C7452; border-color:#BEE4D4 }
+  .card[data-state="green"] .glyph{ color:var(--green) }
+  .card[data-state="green"] .handle{ color:var(--green-edge) }
+  .card[data-state="green"].active{ border-color:var(--green-edge) }
+
+  .card[data-state="clay"]{ }
+  .card[data-state="clay"] .pill{ background:var(--clay-soft); color:var(--clay-deep); border-color:#EBCBBB }
+  .card[data-state="clay"] .glyph{ color:var(--clay) }
+  .card[data-state="clay"] .handle{ color:var(--clay) }
+  .card[data-state="clay"].active,
+  .card[data-state="clay"].focal{ border-color:var(--clay); }
+  .card[data-state="clay"].focal{
+    box-shadow:0 2px 3px rgba(40,36,28,.05), 0 18px 46px rgba(201,100,66,.20);
+  }
+
+  /* ---------- killed offshoot stub (referee) ---------- */
+  .stub{
+    position:absolute; z-index:2; width:150px;
+    background:var(--paper); border:1.5px dashed var(--gray-edge); border-radius:12px;
+    padding:9px 11px; opacity:0; transform:translateY(-6px);
+    transition:opacity .55s var(--ease), transform .55s var(--ease);
+  }
+  .stub.show{ opacity:1; transform:translateY(0) }
+  .stub .sh{ display:flex; align-items:center; gap:7px }
+  .stub .sdot{ width:8px;height:8px;border-radius:50%;background:var(--gray); flex:none }
+  .stub .slabel{ font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray) }
+  .stub .sbody{ margin-top:4px; font-size:11px; line-height:1.3; color:var(--mute) }
+
+  /* ---------- caption + replay ---------- */
+  .caption{
+    text-align:center; font-size:13px; color:var(--mute); letter-spacing:.005em;
+    padding-top:6px;
+  }
+  .caption b{ color:var(--ink2); font-weight:600 }
+  .replay{
+    position:fixed; bottom:26px; right:30px; z-index:6;
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--mute);
+    background:var(--card); border:1px solid var(--edge); border-radius:8px;
+    padding:7px 12px; cursor:pointer; box-shadow:0 1px 2px rgba(40,36,28,.04);
+    transition:color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .replay:hover{ color:var(--ink2); border-color:var(--edge2) }
+  .replay .r{ font-size:13px }
+
+  @media (prefers-reduced-motion: reduce){
+    .card,.glyph,.caveat,.stub{ transition:none !important }
+  }
+</style>
+
+<div class="grid"></div>
+
+<div class="wordmark">Neuro<b>AD</b></div>
+
+<div class="stage">
+  <div class="head">
+    <span class="kicker"><span class="kd"></span>Pipeline</span>
+    <h1 class="title">What happens to one hypothesis.</h1>
+  </div>
+
+  <div class="band">
+    <div class="pipeline" id="pipeline">
+      <svg class="overlay" id="overlay"></svg>
+
+      <!-- STAGE 0 -->
+      <article class="card" data-state="ink">
+        <div class="crow">
+          <span class="pill">Stage 0 · Input</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <rect x="6" y="18" width="20" height="14" rx="3"/>
+          <rect x="9" y="14" width="20" height="14" rx="3" opacity=".55"/>
+          <rect x="12" y="10" width="20" height="14" rx="3" opacity=".3"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">Raw signal</div>
+          <div class="csub">Multi-sequence MRI + clinical table — plasma p-tau217, cognition.</div>
+          <div class="foot"><span class="tag">ADNI · OASIS · EPAD</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 1 -->
+      <article class="card" data-state="slate">
+        <div class="crow">
+          <span class="pill">Stage 1 · Frozen</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <line x1="20" y1="6" x2="20" y2="34"/>
+          <line x1="7.9" y1="13" x2="32.1" y2="27"/>
+          <line x1="7.9" y1="27" x2="32.1" y2="13"/>
+          <path d="M20 11 l-3 3 M20 11 l3 3"/>
+          <path d="M20 29 l-3 -3 M20 29 l3 -3"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">The eyes</div>
+          <div class="csub">Neuro-JEPA, a 3D vision transformer, kept frozen — each scan → one embedding.</div>
+          <div class="foot"><span class="metric">1.5M scans</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 2 -->
+      <article class="card" data-state="gold">
+        <div class="crow">
+          <span class="pill">Stage 2 · Probe</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <line x1="5" y1="20" x2="15" y2="20"/>
+          <path d="M15 27 L23 11 L27 29 Z"/>
+          <line x1="27" y1="16" x2="35" y2="12"/>
+          <line x1="27" y1="20" x2="36" y2="20"/>
+          <line x1="27" y1="24" x2="35" y2="28"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">Three questions</div>
+          <div class="csub">One lightweight head, swap the label — the disagreement is the discovery.</div>
+          <div class="foot"><span class="tag">Disease · Scanner · Protein</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 3 -->
+      <article class="card" data-state="green">
+        <div class="crow">
+          <span class="pill">Stage 3 · Referee</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <path d="M20 6 L31 10 V20 C31 27 26 31 20 34 C14 31 9 27 9 20 V10 Z"/>
+          <path d="M15 20 l4 4 l7 -9"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">Kill weak, surface strong</div>
+          <div class="csub">A falsification gauntlet: age/sex, scanner leakage, brain-age, held-out replication.</div>
+          <div class="foot"><span class="tag">Only robust signals pass</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 4 -->
+      <article class="card" data-state="green">
+        <div class="crow">
+          <span class="pill">Stage 4 · Bridge</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <path d="M6 26 C6 17 34 17 34 26"/>
+          <line x1="6" y1="26" x2="6" y2="31"/>
+          <line x1="34" y1="26" x2="34" y2="31"/>
+          <line x1="4" y1="31" x2="36" y2="31"/>
+          <line x1="15" y1="21" x2="15" y2="31"/>
+          <line x1="25" y1="21" x2="25" y2="31"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">Route the mechanism</div>
+          <div class="csub">Does it track an independent molecular axis? p-tau217 → amyloid/tau.</div>
+          <div class="foot"><span class="metric">r ≥ 0.2</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 5 -->
+      <article class="card" data-state="green">
+        <div class="crow">
+          <span class="pill">Stage 5 · Targeting</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <line x1="20" y1="20" x2="9" y2="12"/>
+          <line x1="20" y1="20" x2="31" y2="11"/>
+          <line x1="20" y1="20" x2="11" y2="30"/>
+          <line x1="20" y1="20" x2="30" y2="30"/>
+          <circle cx="20" cy="20" r="3.4" fill="currentColor" stroke="none"/>
+          <circle cx="9" cy="12" r="2.7"/>
+          <circle cx="31" cy="11" r="2.7"/>
+          <circle cx="11" cy="30" r="2.7"/>
+          <circle cx="30" cy="30" r="2.7"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">Rank the targets</div>
+          <div class="csub">PI4AD multi-omics over GWAS + networks → nodal hub genes, recovers known targets.</div>
+          <div class="foot"><span class="metric">ranked 0–10</span></div>
+        </div>
+      </article>
+
+      <!-- STAGE 6·7 (merged: structure → output) -->
+      <article class="card" data-state="clay">
+        <div class="crow">
+          <span class="pill">Stage 6·7 · Output</span>
+          <span class="hwrap"><span class="handle"></span><span class="hwrap-ring"></span></span>
+        </div>
+        <div class="glyph" aria-hidden="true"><svg viewBox="0 0 40 40">
+          <path d="M16 7 h8 M17.5 7 v6.5 L10.5 29 a3 3 0 0 0 2.7 4.2 h13.6 a3 3 0 0 0 2.7 -4.2 L22.5 13.5 V7"/>
+          <line x1="13.5" y1="25" x2="26.5" y2="25"/>
+          <circle cx="18" cy="29" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="22" cy="30.5" r="1" fill="currentColor" stroke="none"/>
+        </svg></div>
+        <div class="body">
+          <div class="ctitle">One experiment to run</div>
+          <div class="csub">Structure-grounded target (AlphaFold 3 · pLDDT) → one falsifiable iPSC/organoid test.</div>
+          <div class="foot"><span class="metric">~6-week readout</span></div>
+          <div class="caveat">Decision-support candidate — a hypothesis to test.</div>
+        </div>
+      </article>
+
+      <!-- killed offshoot stub (positioned under referee at runtime) -->
+      <div class="stub" id="stub">
+        <div class="sh"><span class="sdot"></span><span class="slabel">Killed</span></div>
+        <div class="sbody">Predicts disease <b>and</b> the scanner — a machine artifact, refused.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="caption">
+    <b>Imaging finds it. Proteins confirm it.</b> Every stage is a filter — only real biology reaches the wet-lab experiment, in weeks not years.
+  </div>
+</div>
+
+<button class="replay" id="replay" aria-label="Replay animation"><span class="r">↻</span> Replay</button>
+
+<script>
+(function(){
+  var pipeline = document.getElementById('pipeline');
+  var overlay  = document.getElementById('overlay');
+  var stub     = document.getElementById('stub');
+  var cards    = Array.prototype.slice.call(pipeline.querySelectorAll('.card'));
+  var REFEREE_INDEX = 3;
+  var OUTPUT_INDEX  = cards.length - 1;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var timers = [];
+  var rafId = null;
+  var centers = [];      // {x,y} per card, in overlay coords
+  var edges = [];        // {x,y} right edge per card
+  var lefts = [];        // {x,y} left edge per card
+  var railY = 0;
+  var pulseNode = null;
+
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; if(rafId){ cancelAnimationFrame(rafId); rafId=null; } }
+  function after(ms, fn){ timers.push(setTimeout(fn, ms)); }
+
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function hx(c){ return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]; }
+  var CLAY = hx('#C96442'), GREEN = hx('#12936A');
+  function pulseColor(t){
+    var r=Math.round(lerp(CLAY[0],GREEN[0],t)), g=Math.round(lerp(CLAY[1],GREEN[1],t)), b=Math.round(lerp(CLAY[2],GREEN[2],t));
+    return 'rgb('+r+','+g+','+b+')';
+  }
+
+  // ----- measure geometry & (re)build the static connector layer -----
+  function layout(){
+    var pr = pipeline.getBoundingClientRect();
+    overlay.setAttribute('width', pr.width);
+    overlay.setAttribute('height', pr.height);
+    overlay.setAttribute('viewBox', '0 0 '+pr.width+' '+pr.height);
+
+    centers = []; edges = []; lefts = [];
+    var glyph0 = cards[0].querySelector('.glyph').getBoundingClientRect();
+    railY = (glyph0.top + glyph0.bottom)/2 - pr.top;
+
+    cards.forEach(function(c){
+      var r = c.getBoundingClientRect();
+      centers.push({ x:(r.left+r.right)/2 - pr.left, y:railY });
+      edges.push({ x:r.right - pr.left, y:railY, bottom:r.bottom - pr.top, cx:(r.left+r.right)/2 - pr.left });
+      lefts.push({ x:r.left - pr.left, y:railY });
+    });
+
+    // rebuild svg content
+    while(overlay.firstChild) overlay.removeChild(overlay.firstChild);
+
+    var defs = document.createElementNS(SVGNS,'defs');
+    defs.innerHTML =
+      '<marker id="arw" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">'+
+        '<path d="M1 1 L8 5 L1 9" fill="none" stroke="#CBC7BC" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '</marker>'+
+      '<radialGradient id="pglow" cx="50%" cy="50%" r="50%">'+
+        '<stop offset="0%" stop-color="#C96442" stop-opacity="0.55"/>'+
+        '<stop offset="55%" stop-color="#C96442" stop-opacity="0.14"/>'+
+        '<stop offset="100%" stop-color="#C96442" stop-opacity="0"/>'+
+      '</radialGradient>';
+    overlay.appendChild(defs);
+
+    // connectors in the gaps
+    for(var i=0;i<cards.length-1;i++){
+      var x1 = edges[i].x + 3, x2 = lefts[i+1].x - 3;
+      var seg = document.createElementNS(SVGNS,'line');
+      seg.setAttribute('x1', x1); seg.setAttribute('y1', railY);
+      seg.setAttribute('x2', x2); seg.setAttribute('y2', railY);
+      seg.setAttribute('stroke', '#D9D5C7'); seg.setAttribute('stroke-width','2.4');
+      seg.setAttribute('stroke-linecap','round');
+      seg.setAttribute('marker-end','url(#arw)');
+      seg.setAttribute('class','conn'); seg.setAttribute('data-i', i);
+      seg.style.opacity = reduce ? '1' : '0';
+      seg.style.transition = 'opacity .45s cubic-bezier(.4,0,.2,1)';
+      overlay.appendChild(seg);
+    }
+
+    // dashed killed connector (referee -> stub), added but hidden
+    var kc = document.createElementNS(SVGNS,'path');
+    kc.setAttribute('id','killconn');
+    kc.setAttribute('fill','none'); kc.setAttribute('stroke','#CBC7BC');
+    kc.setAttribute('stroke-width','2'); kc.setAttribute('stroke-dasharray','6 6');
+    kc.setAttribute('stroke-linecap','round');
+    kc.style.opacity = reduce ? '1' : '0';
+    kc.style.transition = 'opacity .5s cubic-bezier(.4,0,.2,1)';
+    overlay.appendChild(kc);
+
+    // pulse (above, drawn last)
+    var g = document.createElementNS(SVGNS,'g');
+    g.setAttribute('id','pulse'); g.style.opacity = '0';
+    var glow = document.createElementNS(SVGNS,'circle');
+    glow.setAttribute('r','26'); glow.setAttribute('fill','url(#pglow)'); glow.setAttribute('class','pglow');
+    var core = document.createElementNS(SVGNS,'circle');
+    core.setAttribute('r','5'); core.setAttribute('fill','#C96442'); core.setAttribute('class','pcore');
+    var core2 = document.createElementNS(SVGNS,'circle');
+    core2.setAttribute('r','2'); core2.setAttribute('fill','#FFFFFF'); core2.setAttribute('opacity','.85'); core2.setAttribute('class','pcore2');
+    g.appendChild(glow); g.appendChild(core); g.appendChild(core2);
+    overlay.appendChild(g);
+    pulseNode = g;
+
+    positionStub();
+  }
+
+  function positionStub(){
+    // place stub below the referee card, aligned to its right half
+    var pr = pipeline.getBoundingClientRect();
+    var rc = cards[REFEREE_INDEX].getBoundingClientRect();
+    var left = (rc.left - pr.left) + rc.width*0.34;
+    var top  = (rc.bottom - pr.top) + 34;
+    stub.style.left = left + 'px';
+    stub.style.top  = top + 'px';
+
+    // route the dashed connector from referee bottom to stub top
+    var kc = document.getElementById('killconn');
+    if(kc){
+      var sx = (rc.left - pr.left) + rc.width*0.5;
+      var sy = (rc.bottom - pr.top) - 2;
+      var ex = left + 22;
+      var ey = top - 2;
+      kc.setAttribute('d','M'+sx+' '+sy+' C '+sx+' '+((sy+ey)/2)+' '+ex+' '+((sy+ey)/2)+' '+ex+' '+ey);
+    }
+  }
+
+  // ----- activation of a single card as the pulse arrives -----
+  function activate(i){
+    var c = cards[i];
+    if(c.classList.contains('active')) return;
+    c.classList.add('active');
+    c.classList.add('pinged');
+    after(950, function(){ c.classList.remove('pinged'); });
+    if(i === REFEREE_INDEX){
+      var kc = document.getElementById('killconn');
+      if(kc) kc.style.opacity = '1';
+      stub.classList.add('show');
+    }
+    if(i === OUTPUT_INDEX){
+      c.classList.add('focal');
+    }
+  }
+
+  // ----- reset to hidden pre-roll state -----
+  function reset(){
+    clearTimers();
+    layout();
+    cards.forEach(function(c){ c.classList.remove('in','active','pinged','focal'); });
+    stub.classList.remove('show');
+    if(pulseNode) pulseNode.style.opacity = '0';
+    var kc = document.getElementById('killconn'); if(kc) kc.style.opacity='0';
+    Array.prototype.forEach.call(overlay.querySelectorAll('.conn'), function(s){ s.style.opacity='0'; });
+  }
+
+  // ----- final composed state (reduced motion) -----
+  function staticFinal(){
+    clearTimers();
+    layout();
+    cards.forEach(function(c){ c.classList.add('in'); });
+    cards[OUTPUT_INDEX].classList.add('focal');
+    stub.classList.add('show');
+    // connectors + kill connector shown by reduce-branch opacity in layout()
+  }
+
+  // ----- the choreographed run -----
+  var REVEAL0 = 320, STAGGER = 190;
+  var PULSE_DELAY = 520, PULSE_DUR = 5200, DWELL = 2400;
+
+  function run(){
+    if(reduce){ staticFinal(); return; }
+    reset();
+
+    // 1) sequential reveal, connectors fade in behind each new card
+    cards.forEach(function(c,i){
+      after(REVEAL0 + i*STAGGER, function(){
+        c.classList.add('in');
+        if(i>0){
+          var conn = overlay.querySelector('.conn[data-i="'+(i-1)+'"]');
+          if(conn) conn.style.opacity = '1';
+        }
+      });
+    });
+
+    var revealEnd = REVEAL0 + (cards.length-1)*STAGGER;
+
+    // 2) travelling pulse
+    after(revealEnd + PULSE_DELAY, startPulse);
+
+    // 3) loop
+    after(revealEnd + PULSE_DELAY + PULSE_DUR + DWELL, run);
+  }
+
+  function startPulse(){
+    var x0 = centers[0].x, x1 = centers[OUTPUT_INDEX].x;
+    var t0 = null, nextCard = 0;
+    if(pulseNode) pulseNode.style.opacity = '1';
+
+    function frame(ts){
+      if(t0===null) t0 = ts;
+      var p = (ts - t0)/PULSE_DUR;
+      if(p>1) p = 1;
+      // gentle ease-in-out
+      var pe = p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+      var x = lerp(x0, x1, pe);
+
+      pulseNode.setAttribute('transform','translate('+x+','+railY+')');
+      var col = pulseColor(pe);
+      pulseNode.querySelector('.pcore').setAttribute('fill', col);
+      var glowEl = pulseNode.querySelector('.pglow');
+      // subtle breathing of the glow
+      glowEl.setAttribute('r', 24 + 3*Math.sin(ts/140));
+
+      // activate cards as we pass their centers
+      while(nextCard < centers.length && x >= centers[nextCard].x - 1){
+        activate(nextCard);
+        nextCard++;
+      }
+
+      if(p < 1){
+        rafId = requestAnimationFrame(frame);
+      } else {
+        // make sure everything is lit, fade the pulse into the output card
+        for(; nextCard<centers.length; nextCard++) activate(nextCard);
+        pulseNode.style.transition = 'opacity .5s ease';
+        pulseNode.style.opacity = '0';
+        after(560, function(){ if(pulseNode) pulseNode.style.transition=''; });
+      }
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  // ----- wiring -----
+  document.getElementById('replay').addEventListener('click', run);
+  var rz;
+  window.addEventListener('resize', function(){
+    clearTimeout(rz);
+    rz = setTimeout(function(){ layout(); positionStub(); }, 120);
+  });
+
+  // autoplay after fonts/layout settle
+  window.addEventListener('load', function(){ setTimeout(run, 180); });
+  // fallback if load already fired
+  if(document.readyState === 'complete'){ setTimeout(run, 180); }
+})();
+</script>

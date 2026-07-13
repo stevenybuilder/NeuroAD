@@ -1,0 +1,555 @@
+<!-- ============================================================= -->
+<!-- NeuroAD Demo · scene4_probe.html                              -->
+<!-- "One probe. Three questions."  THE CORE IDEA.                 -->
+<!-- Standalone. No external requests. System fonts only.          -->
+<!-- Auto-plays, loops; honors prefers-reduced-motion.             -->
+<!-- ============================================================= -->
+<meta charset="utf-8">
+<title>NeuroAD · One probe. Three questions.</title>
+<style>
+  :root{
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+    --gold:#C08415; --gold-edge:#D69A1F; --gold-soft:#FBF2DD;
+    --gray:#B0ABA1; --gray-edge:#CBC7BC; --gray-soft:#ECEAE3;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --ease:cubic-bezier(.4,0,.2,1);
+    --sh-card:0 1px 2px rgba(40,36,28,.04),0 8px 30px rgba(40,36,28,.10);
+    --sh-chip:0 1px 2px rgba(40,36,28,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:var(--paper);
+    background-image:radial-gradient(1100px 620px at 60% 20%,#FBFAF6 0%,var(--paper) 62%);
+    overflow:hidden;
+  }
+  /* faint engineering dot-grid */
+  .grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(40,36,28,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+
+  /* ---- viewport chrome (unscaled) ---- */
+  .wordmark{
+    position:fixed; top:34px; left:44px; z-index:6;
+    font-weight:700; font-size:22px; letter-spacing:-.02em;
+  }
+  .wordmark .ad{color:var(--clay)}
+  .wordmark .dot{
+    display:inline-block; width:7px;height:7px;border-radius:50%;
+    background:var(--clay); margin-left:7px; vertical-align:middle;
+    transform:translateY(-2px);
+  }
+  .caption{
+    position:fixed; left:0; right:0; bottom:0; z-index:6;
+    text-align:center; color:var(--mute); font-size:15px;
+    letter-spacing:.005em; padding:26px 0 30px;
+    background:linear-gradient(0deg, rgba(245,244,238,.96) 42%, rgba(245,244,238,0));
+    pointer-events:none;
+  }
+  .caption b{color:var(--ink2); font-weight:600}
+  .replay{
+    position:fixed; right:30px; bottom:26px; z-index:7;
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:var(--sans); font-size:12px; color:var(--mute);
+    background:var(--card); border:1px solid var(--edge);
+    border-radius:8px; padding:7px 12px; cursor:pointer;
+    box-shadow:var(--sh-chip); transition:color .2s,border-color .2s;
+    -webkit-user-select:none; user-select:none;
+  }
+  .replay:hover{color:var(--ink2); border-color:var(--edge2)}
+  .replay .g{font-size:13px}
+
+  /* ---- scaled stage ---- */
+  .fit{ position:fixed; inset:0; z-index:1; display:grid; place-items:center; }
+  .stage{
+    position:relative; width:1500px; height:900px;
+    transform-origin:center center;
+  }
+
+  /* header */
+  .header{ position:absolute; top:2px; left:0; right:0; text-align:center; }
+  .kicker{
+    font-size:12px; font-weight:700; letter-spacing:.14em;
+    color:var(--clay-deep); text-transform:uppercase;
+  }
+  .title{
+    margin-top:10px; font-size:46px; font-weight:700;
+    letter-spacing:-.02em; color:var(--ink); line-height:1.02;
+  }
+  .title .sub{color:var(--clay)}
+
+  /* connectors overlay */
+  .wires{ position:absolute; inset:0; width:1500px; height:900px; overflow:visible; z-index:2; pointer-events:none; }
+  .wire{ fill:none; stroke:var(--edge2); stroke-width:2.6; stroke-linecap:round; }
+  .wire.g{ stroke:var(--green-edge); }
+  .wire.gy{ stroke:var(--gray-edge); stroke-dasharray:7 7; }
+  .pulse{ opacity:0; }
+
+  /* generic reveal */
+  .rv{ opacity:0; transform:translateY(10px); transition:opacity .55s var(--ease), transform .55s var(--ease); }
+  .rv.show{ opacity:1; transform:none; }
+
+  /* ===== EMBEDDING BLOCK ===== */
+  .embed{ position:absolute; left:40px; top:196px; width:252px; z-index:3; }
+  .minipill{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 9px; border-radius:999px;
+    background:var(--gray-soft); color:var(--ink2); border:1px solid var(--edge);
+  }
+  .minipill.frozen{ background:#E7EEF3; color:#3f5a6b; border-color:#D4E0E8; }
+  .embed .lab{ font-size:12px; color:var(--mute); margin-top:9px; }
+  .embed .grid16{
+    margin-top:14px; padding:12px;
+    background:var(--card); border:1px solid var(--edge); border-radius:14px;
+    box-shadow:var(--sh-card);
+    display:grid; grid-template-columns:repeat(4,1fr); gap:7px;
+  }
+  .sq{ aspect-ratio:1/1; border-radius:5px; opacity:0; transform:scale(.5);
+       transition:opacity .35s var(--ease), transform .35s var(--ease); }
+  .sq.in{ opacity:1; transform:none; }
+  .embed .cap{ display:flex; align-items:center; gap:8px; margin-top:11px; font-size:12px; color:var(--ink2); }
+  .snow{ flex:0 0 auto; }
+  .embed .metric{ font-family:var(--mono); font-size:12px; color:var(--ink); }
+
+  /* ===== PROBE BLOCK ===== */
+  .probe{ position:absolute; left:558px; top:262px; width:284px; z-index:3; }
+  .probe .box{
+    background:var(--card); border:1.5px solid var(--edge2); border-radius:18px;
+    box-shadow:var(--sh-card); padding:18px 18px 16px;
+    position:relative;
+  }
+  .port{ position:absolute; width:11px;height:11px;border-radius:50%;
+    background:var(--card); border:2px solid var(--edge2); top:50%; margin-top:-6px; }
+  .port.l{ left:-6px } .port.r{ right:-6px }
+  .probe .role{
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .probe .role .k{ font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--clay-deep); }
+  .probe .node{ width:9px;height:9px;border-radius:50%;border:2px solid var(--clay);background:var(--clay-soft); }
+  .probe .pname{ margin-top:12px; font-size:15px; font-weight:700; color:var(--ink); }
+  .probe .psub{ margin-top:2px; font-size:12px; color:var(--ink2); }
+  .selwrap{ margin-top:14px; }
+  .sellab{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--mute); }
+  .chip{
+    margin-top:7px; position:relative; height:40px; border-radius:10px;
+    background:var(--paper2); border:1px solid var(--edge2);
+    display:flex; align-items:center; padding:0 12px; overflow:hidden;
+    transition:border-color .3s var(--ease), background .3s var(--ease);
+  }
+  .chip .qn{ font-family:var(--mono); font-size:12px; color:var(--mute); margin-right:9px; }
+  .chip .qt{ font-size:14px; font-weight:600; color:var(--ink); transition:opacity .22s var(--ease); }
+  .chip.on-green{ border-color:var(--green-edge); background:var(--green-soft); }
+  .chip.on-gray{ border-color:var(--gray-edge); background:var(--gray-soft); }
+  .chip .sweep{
+    position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--clay);
+    opacity:.0;
+  }
+  .probe .swap{ margin-top:11px; font-size:12px; color:var(--mute); text-align:center; }
+  .probe .swap b{ color:var(--ink2); font-weight:600; }
+
+  /* ===== GAUGES BLOCK ===== */
+  .gauges{ position:absolute; left:992px; top:196px; width:468px; z-index:3; }
+  .gauge{ margin-bottom:26px; }
+  .gauge:last-child{ margin-bottom:0 }
+  .grow{ display:flex; align-items:baseline; justify-content:space-between; }
+  .gq{ font-size:14px; font-weight:600; color:var(--ink); }
+  .gq .q{ font-family:var(--mono); color:var(--mute); font-weight:400; margin-right:6px; font-size:13px; }
+  .gval{ font-family:var(--mono); font-size:16px; color:var(--ink); font-weight:600; }
+  .track{
+    position:relative; margin-top:9px; height:16px; border-radius:8px;
+    background:var(--paper2); border:1px solid var(--edge); overflow:hidden;
+  }
+  .fill{ position:absolute; left:0; top:0; bottom:0; width:0; border-radius:8px;
+    transition:width .95s var(--ease); }
+  .fill.green{ background:linear-gradient(90deg,var(--green),var(--green-edge)); }
+  .fill.gray{ background:linear-gradient(90deg,#BDB9AF,var(--gray)); }
+  .mark{ position:absolute; top:-3px; bottom:-3px; width:0; border-left:2px dashed var(--edge2); z-index:2; }
+  .mtag{ position:absolute; top:20px; transform:translateX(-50%); font-size:11px; color:var(--mute);
+    font-family:var(--mono); white-space:nowrap; }
+  .gsub{ margin-top:20px; font-size:13px; }
+  .gsub.good{ color:var(--green); }
+  .gsub.neut{ color:var(--mute); }
+  .gsub .ic{ font-weight:700; margin-right:5px; }
+
+  .foot{ position:absolute; left:992px; top:566px; width:468px; z-index:3;
+    font-size:12px; color:var(--mute); font-style:italic; }
+
+  /* ===== VERDICT ROW ===== */
+  .verdict{ position:absolute; left:0; top:632px; width:1500px; height:250px; z-index:3; }
+  .vnote{
+    position:absolute; left:50%; top:0; transform:translateX(-50%);
+    font-size:12px; color:var(--mute); text-align:center;
+  }
+  .vnote b{ color:var(--ink2); font-weight:600; }
+  .vcard{
+    position:absolute; top:44px; width:560px; height:196px;
+    background:var(--card); border-radius:16px; padding:20px 22px;
+    box-shadow:var(--sh-card);
+  }
+  .vcard.real{ left:154px; border:1.5px solid var(--green-edge); }
+  .vcard.art{ left:786px; border:1.5px dashed var(--gray-edge); background:#FBFAF6; }
+  .vhead{ display:flex; align-items:center; gap:12px; }
+  .vpill{ font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    padding:4px 10px;border-radius:999px; }
+  .vpill.gp{ background:var(--green-soft); color:#0d7a58; }
+  .vpill.yp{ background:var(--gray-soft); color:var(--mute); }
+  .seal{ margin-left:auto; width:34px;height:34px;border-radius:50%;
+    display:grid;place-items:center; font-size:17px; font-weight:700;
+    transform:scale(.4); opacity:0; transition:transform .4s var(--ease), opacity .4s var(--ease); }
+  .seal.on{ transform:scale(1); opacity:1; }
+  .seal.gp{ background:var(--green-soft); color:var(--green); border:1.5px solid var(--green-edge); }
+  .seal.yp{ background:var(--gray-soft); color:var(--mute); border:1.5px solid var(--gray-edge); }
+  .vtitle{ margin-top:14px; font-size:22px; font-weight:700; letter-spacing:-.01em; }
+  .vcard.art .vtitle{ color:var(--mute); }
+  .vbody{ margin-top:7px; font-size:13px; line-height:1.4; color:var(--ink2); }
+  .vcard.art .vbody{ color:var(--mute); }
+  .vbody .em{ color:var(--ink); font-weight:600; }
+  .vcard.art .vbody .em{ color:var(--ink2); }
+  .vchips{ margin-top:13px; display:flex; gap:8px; flex-wrap:wrap; }
+  .vchip{ font-size:12px; padding:5px 9px; border-radius:7px; display:inline-flex; gap:6px; align-items:center;
+    background:var(--paper2); border:1px solid var(--edge); }
+  .vchip .n{ font-family:var(--mono); }
+  .vchip.g{ background:var(--green-soft); border-color:var(--green-edge); color:#0d7a58; }
+  .vchip.n{ background:var(--gray-soft); border-color:var(--gray-edge); color:var(--ink2); }
+  .vchip.k{ background:var(--gray-soft); border-color:var(--gray-edge); color:var(--mute); }
+  .vchip .tick{ font-weight:700 }
+
+  @media (prefers-reduced-motion: reduce){
+    .rv, .sq, .fill, .seal, .chip, .chip .qt{ transition:none !important; }
+  }
+</style>
+
+<div class="grid"></div>
+
+<div class="wordmark">Neuro<span class="ad">AD</span><span class="dot"></span></div>
+
+<div class="fit">
+  <div class="stage" id="stage">
+
+    <div class="header">
+      <div class="kicker rv" id="kicker">The core idea</div>
+      <div class="title rv" id="title">One probe. <span class="sub">Three questions.</span></div>
+    </div>
+
+    <!-- connectors -->
+    <svg class="wires" viewBox="0 0 1500 900">
+      <path id="wEP"  class="wire"    d="M300,378 C 410,378 470,378 560,378"></path>
+      <path id="wG1"  class="wire g"  d="M840,378 C 905,378 935,258 995,258"></path>
+      <path id="wG2"  class="wire g"  d="M840,378 C 905,378 935,378 995,378"></path>
+      <path id="wG3"  class="wire g"  d="M840,378 C 905,378 935,498 995,498"></path>
+      <!-- verdict divergence -->
+      <path id="wVA"  class="wire g"  d="M700,632 C 640,662 560,672 470,690"></path>
+      <path id="wVB"  class="wire gy" d="M800,632 C 880,662 980,672 1066,690"></path>
+      <circle class="pulse" id="pEP" r="5.5"></circle>
+      <circle class="pulse" id="pG1" r="5.5"></circle>
+      <circle class="pulse" id="pG2" r="5.5"></circle>
+      <circle class="pulse" id="pG3" r="5.5"></circle>
+    </svg>
+
+    <!-- EMBEDDING -->
+    <div class="embed rv" id="embed">
+      <span class="minipill frozen">
+        <svg class="snow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3f5a6b" stroke-width="1.8" stroke-linecap="round">
+          <path d="M12 2v20M4 6l16 12M20 6L4 18"/>
+          <path d="M12 5l-2 2M12 5l2 2M12 19l-2-2M12 19l2-2"/>
+        </svg>
+        Frozen
+      </span>
+      <div class="lab">Neuro-JEPA latent · one scan → one vector</div>
+      <div class="grid16" id="grid16"></div>
+      <div class="cap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink2)" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        <span class="metric">1.5M scans</span> · never retrained
+      </div>
+    </div>
+
+    <!-- PROBE -->
+    <div class="probe rv" id="probe">
+      <div class="box">
+        <span class="port l"></span><span class="port r"></span>
+        <div class="role">
+          <span class="k">One probe head</span>
+          <span class="node"></span>
+        </div>
+        <svg width="120" height="46" viewBox="0 0 120 46" style="margin-top:12px" fill="none">
+          <line x1="14" y1="9"  x2="92" y2="23" stroke="var(--edge2)" stroke-width="1.6"/>
+          <line x1="14" y1="23" x2="92" y2="23" stroke="var(--edge2)" stroke-width="1.6"/>
+          <line x1="14" y1="37" x2="92" y2="23" stroke="var(--edge2)" stroke-width="1.6"/>
+          <circle cx="14" cy="9"  r="3.4" fill="#8C86A8"/>
+          <circle cx="14" cy="23" r="3.4" fill="#6E9E9A"/>
+          <circle cx="14" cy="37" r="3.4" fill="#7C8BA1"/>
+          <circle cx="92" cy="23" r="6"   fill="var(--clay-soft)" stroke="var(--clay)" stroke-width="2"/>
+        </svg>
+        <div class="pname">Attentive-MLP probe</div>
+        <div class="psub">shared weights · +FastSurfer volumes</div>
+        <div class="selwrap">
+          <div class="sellab">Label column</div>
+          <div class="chip" id="chip">
+            <span class="sweep" id="sweep"></span>
+            <span class="qn" id="chipqn">Q1</span>
+            <span class="qt" id="chiptxt">Disease · AD vs CN</span>
+          </div>
+        </div>
+        <div class="swap">same head · <b>swapped label</b></div>
+      </div>
+    </div>
+
+    <!-- GAUGES -->
+    <div class="gauges" id="gauges">
+      <div class="gauge rv" id="ga1">
+        <div class="grow">
+          <div class="gq"><span class="q">Q1</span>Disease · AD vs CN</div>
+          <div class="gval" id="v1">AUC —</div>
+        </div>
+        <div class="track">
+          <div class="mark" style="left:50%"></div>
+          <div class="mtag" style="left:50%">chance .50</div>
+          <div class="fill green" id="f1"></div>
+        </div>
+        <div class="gsub good" id="s1"><span class="ic">✓</span>signal present</div>
+      </div>
+
+      <div class="gauge rv" id="ga2">
+        <div class="grow">
+          <div class="gq"><span class="q">Q2</span>Scanner · site ID</div>
+          <div class="gval" id="v2">AUC —</div>
+        </div>
+        <div class="track">
+          <div class="mark" style="left:50%"></div>
+          <div class="mtag" style="left:50%">chance .50</div>
+          <div class="fill gray" id="f2"></div>
+        </div>
+        <div class="gsub neut" id="s2"><span class="ic">✓</span>near chance — no scanner leak</div>
+      </div>
+
+      <div class="gauge rv" id="ga3">
+        <div class="grow">
+          <div class="gq"><span class="q">Q3</span>Protein · p-tau217</div>
+          <div class="gval" id="v3">r —</div>
+        </div>
+        <div class="track">
+          <div class="mark" style="left:20%"></div>
+          <div class="mtag" style="left:20%">r ≥ .20</div>
+          <div class="fill green" id="f3"></div>
+        </div>
+        <div class="gsub good" id="s3"><span class="ic">✓</span>molecular anchor holds</div>
+      </div>
+    </div>
+
+    <div class="foot rv" id="foot">AUCs illustrative — they demonstrate the decision logic, not a validated result.</div>
+
+    <!-- VERDICT -->
+    <div class="verdict">
+      <div class="vnote rv" id="vnote">The gap between the answers <b>is the product.</b></div>
+
+      <div class="vcard real rv" id="vreal">
+        <div class="vhead">
+          <span class="vpill gp">Verdict · real biology</span>
+          <span class="seal gp" id="sealA">✓</span>
+        </div>
+        <div class="vtitle">Real biology</div>
+        <div class="vbody">Predicts disease <span class="em">and</span> tracks p-tau217 — <span class="em">but not the scanner.</span></div>
+        <div class="vchips">
+          <span class="vchip g"><span class="tick">✓</span>Disease <span class="n">0.86</span></span>
+          <span class="vchip n"><span class="tick">✓</span>Scanner <span class="n">0.54</span></span>
+          <span class="vchip g"><span class="tick">✓</span>p-tau217 <span class="n">r 0.61</span></span>
+        </div>
+      </div>
+
+      <div class="vcard art rv" id="vart">
+        <div class="vhead">
+          <span class="vpill yp">Rival · killed</span>
+          <span class="seal yp" id="sealB">✕</span>
+        </div>
+        <div class="vtitle">Scanner artifact</div>
+        <div class="vbody">A competing signal that predicts disease <span class="em">and the scanner</span> → refused as machinery, not biology.</div>
+        <div class="vchips">
+          <span class="vchip k"><span class="tick">✕</span>Scanner <span class="n">AUC 0.83</span></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="caption">One frozen model. Three questions. <b>The disagreement is the discovery.</b></div>
+<button class="replay" id="replay"><span class="g">↻</span> Replay</button>
+
+<script>
+(function(){
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- fit-to-viewport scaling ---------- */
+  var stage = $('stage');
+  function fit(){
+    var s = Math.min(window.innerWidth/1500, window.innerHeight/1010);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  /* ---------- build embedding heatmap squares ---------- */
+  var grid = $('grid16');
+  var inten = [.20,.70,.44,.90,.62,.30,.82,.50,.36,.76,.55,.24,.66,.40,.86,.48];
+  var squares = [];
+  for(var i=0;i<16;i++){
+    var d = document.createElement('div');
+    d.className='sq';
+    var hue = 210 + (i%4)*11;
+    var light = 40 + inten[i]*36;
+    d.style.background = 'hsl('+hue+',22%,'+light+'%)';
+    grid.appendChild(d); squares.push(d);
+  }
+
+  /* ---------- pulse along a path ---------- */
+  function pulse(path, dot, dur, color){
+    if(reduced) return;
+    var len = path.getTotalLength();
+    dot.setAttribute('fill', color);
+    var start = null;
+    function step(ts){
+      if(start===null) start=ts;
+      var t=(ts-start)/dur;
+      if(t>=1){ dot.style.opacity=0; return; }
+      var p = path.getPointAtLength(t*len);
+      dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+      dot.style.opacity = t<.12 ? t*8.3 : (t>.88 ? (1-t)*8.3 : 1);
+      requestAnimationFrame(step);
+    }
+    dot.style.opacity=0; requestAnimationFrame(step);
+  }
+
+  /* ---------- draw a connector ---------- */
+  function drawPath(path){
+    var len = path.getTotalLength();
+    if(reduced){ path.style.strokeDasharray='none'; path.style.strokeDashoffset=0; return; }
+    path.style.transition='none';
+    path.style.strokeDasharray=len; path.style.strokeDashoffset=len;
+    path.getBoundingClientRect();
+    path.style.transition='stroke-dashoffset .6s cubic-bezier(.4,0,.2,1)';
+    path.style.strokeDashoffset=0;
+  }
+  function resetPath(path){
+    var len=path.getTotalLength();
+    path.style.transition='none';
+    path.style.strokeDasharray=len; path.style.strokeDashoffset=len;
+  }
+
+  /* ---------- number count-up ---------- */
+  function countUp(el, from, to, dur, prefix){
+    if(reduced){ el.textContent = prefix + to.toFixed(2); return; }
+    var start=null;
+    function step(ts){
+      if(start===null) start=ts;
+      var t=Math.min((ts-start)/dur,1);
+      var e = 1-Math.pow(1-t,3);
+      el.textContent = prefix + (from+(to-from)*e).toFixed(2);
+      if(t<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- element refs ---------- */
+  var wEP=$('wEP'),wG1=$('wG1'),wG2=$('wG2'),wG3=$('wG3'),wVA=$('wVA'),wVB=$('wVB');
+  var pEP=$('pEP'),pG1=$('pG1'),pG2=$('pG2'),pG3=$('pG3');
+  var chip=$('chip'),chipqn=$('chipqn'),chiptxt=$('chiptxt'),sweep=$('sweep');
+  var f1=$('f1'),f2=$('f2'),f3=$('f3'),v1=$('v1'),v2=$('v2'),v3=$('v3');
+  var sealA=$('sealA'),sealB=$('sealB');
+  var GREEN='#1BA97A', GRAY='#B0ABA1', CLAY='#C96442';
+
+  var rvIds=['kicker','title','embed','probe','ga1','ga2','ga3','foot','vnote','vreal','vart'];
+
+  function setChip(qn, txt, cls){
+    chiptxt.style.opacity=0;
+    setTimeout(function(){
+      chipqn.textContent=qn; chiptxt.textContent=txt; chiptxt.style.opacity=1;
+      chip.classList.remove('on-green','on-gray');
+      if(cls) chip.classList.add(cls);
+    }, reduced?0:180);
+    if(!reduced){ sweep.style.opacity=.85; sweep.animate(
+      [{transform:'translateX(0)',opacity:.85},{transform:'translateX(260px)',opacity:0}],
+      {duration:520,easing:'cubic-bezier(.4,0,.2,1)'}); }
+  }
+
+  var timers=[];
+  function at(t,fn){ timers.push(setTimeout(fn,t)); }
+
+  function reset(){
+    timers.forEach(clearTimeout); timers=[];
+    rvIds.forEach(function(id){ $(id).classList.remove('show'); });
+    squares.forEach(function(s){ s.classList.remove('in'); });
+    [f1,f2,f3].forEach(function(f){ f.style.transition='none'; f.style.width='0'; });
+    f1.getBoundingClientRect();
+    [f1,f2,f3].forEach(function(f){ f.style.transition=''; });
+    v1.textContent='AUC —'; v2.textContent='AUC —'; v3.textContent='r —';
+    chipqn.textContent='Q1'; chiptxt.textContent='Disease · AD vs CN';
+    chip.classList.remove('on-green','on-gray');
+    sealA.classList.remove('on'); sealB.classList.remove('on');
+    [pEP,pG1,pG2,pG3].forEach(function(p){ p.style.opacity=0; });
+    [wEP,wG1,wG2,wG3,wVA,wVB].forEach(resetPath);
+  }
+
+  function applyFinal(){
+    reset();
+    rvIds.forEach(function(id){ $(id).classList.add('show'); });
+    squares.forEach(function(s){ s.classList.add('in'); });
+    [wEP,wG1,wG2,wG3,wVA,wVB].forEach(function(p){ p.style.strokeDasharray='none'; p.style.strokeDashoffset=0; });
+    f1.style.width='86%'; f2.style.width='54%'; f3.style.width='61%';
+    v1.textContent='AUC 0.86'; v2.textContent='AUC 0.54'; v3.textContent='r 0.61';
+    chipqn.textContent='Q1·2·3'; chiptxt.textContent='Disease / Scanner / Protein';
+    sealA.classList.add('on'); sealB.classList.add('on');
+  }
+
+  function run(){
+    if(reduced){ applyFinal(); return; }
+    reset();
+
+    at(150,  function(){ $('kicker').classList.add('show'); });
+    at(300,  function(){ $('title').classList.add('show'); });
+
+    at(600,  function(){ $('embed').classList.add('show'); });
+    for(var i=0;i<16;i++){ (function(k){ at(820+k*52, function(){ squares[k].classList.add('in'); }); })(i); }
+
+    at(1700, function(){ $('probe').classList.add('show'); });
+    at(1780, function(){ drawPath(wEP); pulse(wEP,pEP,700,CLAY); });
+
+    at(2100, function(){ $('ga1').classList.add('show'); $('ga2').classList.add('show'); $('ga3').classList.add('show'); });
+
+    /* Q1 Disease */
+    at(2350, function(){ setChip('Q1','Disease · AD vs CN','on-green'); drawPath(wG1); pulse(wG1,pG1,720,GREEN);
+                         f1.style.width='86%'; countUp(v1,0.50,0.86,950,'AUC '); });
+    /* Q2 Scanner */
+    at(3550, function(){ setChip('Q2','Scanner · site ID','on-gray'); drawPath(wG2); pulse(wG2,pG2,720,GRAY);
+                         f2.style.width='54%'; countUp(v2,0.50,0.54,700,'AUC '); });
+    /* Q3 Protein */
+    at(4700, function(){ setChip('Q3','Protein · p-tau217','on-green'); drawPath(wG3); pulse(wG3,pG3,720,GREEN);
+                         f3.style.width='61%'; countUp(v3,0.00,0.61,950,'r '); });
+
+    at(5900, function(){ $('foot').classList.add('show'); });
+
+    /* verdict resolves out of the disagreement */
+    at(6250, function(){ $('vnote').classList.add('show'); drawPath(wVA); drawPath(wVB); });
+    at(6550, function(){ $('vreal').classList.add('show'); });
+    at(6950, function(){ sealA.classList.add('on'); });
+    at(7100, function(){ $('vart').classList.add('show'); });
+    at(7500, function(){ sealB.classList.add('on'); });
+
+    /* hold, then loop */
+    at(10600, run);
+  }
+
+  $('replay').addEventListener('click', run);
+  window.addEventListener('load', run);
+  run();
+})();
+</script>

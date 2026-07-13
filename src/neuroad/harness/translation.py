@@ -52,8 +52,8 @@ MECHANISM_GENES: dict[str, list[str]] = {
 _ORGANOID_READOUT = {
     "amyloid_cascade": (
         "In Tanzi-style 3D human neural organoids, knock down the lead target "
-        "(CRISPRi) and read out Aβ42/40 ratio + p-tau217 by MSD at 6 weeks; "
-        "kill if neither moves beyond vehicle ±2SD."
+        "(CRISPRi) and read out Aβ42/40 ratio by MSD at 6 weeks; "
+        "kill if it does not move beyond vehicle ±2SD."
     ),
     "glial": (
         "In iPSC-microglia + neuron co-culture organoids, perturb the lead "
@@ -106,11 +106,19 @@ _ANCHOR_READOUT = {
 }
 
 
-def _anchor_readout(anchor: Optional[str], mechanism: str) -> str:
-    """The organoid readout for the chosen anchor, else the mechanism default."""
-    if anchor and anchor in _ANCHOR_READOUT:
-        return _ANCHOR_READOUT[anchor]
-    return _ORGANOID_READOUT.get(mechanism, "")
+def _anchor_readout(anchor: Optional[str], mechanism: str, lead_gene: str = "") -> str:
+    """The organoid readout for the chosen anchor, else the mechanism default.
+
+    When ``lead_gene`` is the real routed lead (``top_target`` / ``_ANCHOR_LEAD``
+    / ``ranked_targets[0].gene``), name it in place of the generic "the lead
+    target" wording. Falls back to the generic wording when no lead is known yet
+    (e.g. no PI4AD-ranked target) — it never invents a gene.
+    """
+    text = _ANCHOR_READOUT.get(anchor, "") if anchor else ""
+    text = text or _ORGANOID_READOUT.get(mechanism, "")
+    if lead_gene:
+        text = text.replace("the lead target", lead_gene)
+    return text
 
 
 @dataclass
@@ -582,7 +590,7 @@ def translate(
             prov["pathway_enrichment"] = lead.pathway_enrichment[0].get(
                 "snapshot_source", "ad_pathway_snapshot_v1")
 
-    lead.wet_lab_experiment = _anchor_readout(anc, mech)
+    lead.wet_lab_experiment = _anchor_readout(anc, mech, lead.top_target)
     lead.status = "translated"
     lead.provenance = prov
     return lead.to_dict()

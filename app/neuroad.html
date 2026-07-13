@@ -1935,23 +1935,28 @@ class Component extends React.Component {
   W = 1200; H = 640;
   reduced = false;
 
+  // Node y-coordinates are spread so a full story card (~410px, tallest is the
+  // 5-test gauntlet) fits between vertically-adjacent branch nodes at the minimum
+  // story-render zoom — otherwise stacked confound cards overlapped (the gauntlet
+  // card was clipped by the offshoot card below it). Horizontal flow is unchanged;
+  // the left branch column now sits ~450 units apart instead of ~250.
   nodes = [
-    { id:'root', x:270, y:700, role:'root', label:'p-tau217 → hippocampal atrophy', sub:'Root hypothesis', story:'cohort' },
-    { id:'syn',  x:720, y:190, role:'green', label:'Synaptic-loss pathway', sub:'survives gauntlet', story:'confound' },
-    { id:'synk', x:1120,y:320, role:'gray', label:'Tau-PET redundant', sub:'pruned' },
-    { id:'syn2', x:1200,y:190, role:'green', label:'Confirmed pathway', sub:'' },
-    { id:'cand1',x:1740,y:190, role:'clay', label:'Ranked protein targets', sub:'3 proteins', story:'proteins' },
-    { id:'neuro',x:720, y:440, role:'gold', label:'Neuroinflammation offshoot', sub:'iterated · GFAP', story:'iterate' },
-    { id:'neurk',x:1120,y:565, role:'gray', label:'Microglial subtype', sub:'underpowered n' },
-    { id:'neur2',x:1200,y:440, role:'green', label:'Refined · GFAP anchor', sub:'' },
-    { id:'cand2',x:1740,y:850, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
-    { id:'scan', x:720, y:700, role:'gray', label:'Scanner-site artifact', sub:'killed', story:'kill' },
-    { id:'scand',x:1060,y:760, role:'gray', label:'site batch', sub:'' },
-    { id:'vasc', x:720, y:950, role:'green', label:'Vascular contribution', sub:'survives', story:'confound2' },
-    { id:'vasc2',x:1200,y:950, role:'green', label:'WMH-linked pathway', sub:'' },
-    { id:'cand3',x:1740,y:1400, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
-    { id:'age',  x:720, y:1210,role:'gray', label:'Age-only confound', sub:'killed', story:'kill2' },
-    { id:'aged', x:1060,y:1270,role:'gray', label:'cohort skew', sub:'' }
+    { id:'root', x:270, y:1260, role:'root', label:'p-tau217 → hippocampal atrophy', sub:'Root hypothesis', story:'cohort' },
+    { id:'syn',  x:720, y:342, role:'green', label:'Synaptic-loss pathway', sub:'survives gauntlet', story:'confound' },
+    { id:'synk', x:1120,y:576, role:'gray', label:'Tau-PET redundant', sub:'pruned' },
+    { id:'syn2', x:1200,y:342, role:'green', label:'Confirmed pathway', sub:'' },
+    { id:'cand1',x:1740,y:342, role:'clay', label:'Ranked protein targets', sub:'3 proteins', story:'proteins' },
+    { id:'neuro',x:720, y:792, role:'gold', label:'Neuroinflammation offshoot', sub:'iterated · GFAP', story:'iterate' },
+    { id:'neurk',x:1120,y:1017, role:'gray', label:'Microglial subtype', sub:'underpowered n' },
+    { id:'neur2',x:1200,y:792, role:'green', label:'Refined · GFAP anchor', sub:'' },
+    { id:'cand2',x:1740,y:1530, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
+    { id:'scan', x:720, y:1260, role:'gray', label:'Scanner-site artifact', sub:'killed', story:'kill' },
+    { id:'scand',x:1060,y:1368, role:'gray', label:'site batch', sub:'' },
+    { id:'vasc', x:720, y:1710, role:'green', label:'Vascular contribution', sub:'survives', story:'confound2' },
+    { id:'vasc2',x:1200,y:1710, role:'green', label:'WMH-linked pathway', sub:'' },
+    { id:'cand3',x:1740,y:2520, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
+    { id:'age',  x:720, y:2178,role:'gray', label:'Age-only confound', sub:'killed', story:'kill2' },
+    { id:'aged', x:1060,y:2286,role:'gray', label:'cohort skew', sub:'' }
   ];
   edges = [
     ['root','syn','green'],['root','neuro','gold','iterate'],['root','scan','gray'],['root','vasc','green'],['root','age','gray'],
@@ -1966,11 +1971,11 @@ class Component extends React.Component {
     data:null, card:null, claudeLive:false, liveError:false, substrate:'adni',
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, trailExplOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
-    entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
+    entryValue:"p-tau217-anchored hippocampal atrophy separates Alzheimer's disease from cognitively normal",
     chatDraft:'',
     composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false, selectedTarget:null,
     chatMsgs:[ { role:'assistant', text:'I grew the tree from your hypothesis. Green branches survived the confound gauntlet; gray ones were killed; clay nodes are candidate targets to test. Ask a follow-up to spawn a new branch.' } ],
-    cam:{ cx:900, cy:700, scale:0.35 }
+    cam:{ cx:900, cy:1280, scale:0.22 }
   };
 
   get nmap(){ const m={}; this.allNodes().forEach(n=>m[n.id]=n); return m; }
@@ -2081,6 +2086,13 @@ class Component extends React.Component {
   }
   // Push the real case onto the fixed-topology tree: candidate counts + the
   // branch AUC subs come straight from the card — never a fabricated number.
+  // Grow the tree from the REAL case, not the static scaffold. The branch
+  // COLORS (survived → green, killed → gray) follow the actual verdict, and the
+  // confound-branch subtitles carry the real gauntlet stats (scanner AUC, age-
+  // retained fraction) with a fired/ruled-out readout — so a hypothesis the
+  // gauntlet KILLS greys its survivor pathways and its candidate leaves, instead
+  // of always showing the promoted happy-path picture. No fabricated numbers:
+  // every value is read from sv (case) tests[]/translation.
   _applyCaseToTree(sv){
     if(!sv) return;
     const tx=sv.translation||{};
@@ -2088,13 +2100,41 @@ class Component extends React.Component {
     const nC=(tx.repurposing||[]).length;
     const nE=tx.wet_lab_experiment?1:0;
     const plur=(n,w)=> n+' '+w+(n===1?'':'s');
-    const set=(id,sub)=>{ const n=this.nodes.find(x=>x.id===id); if(n) n.sub=sub; };
-    set('cand1', plur(nB,'protein'));
-    set('cand2', plur(nC,'compound'));
-    set('cand3', plur(nE,'experiment'));
+    const get=(id)=> this.nodes.find(x=>x.id===id);
+    const set=(id,sub)=>{ const n=get(id); if(n) n.sub=sub; };
+    const setRole=(id,role)=>{ const n=get(id); if(n) n.role=role; };
     const auc=sv.naive_effect&&sv.naive_effect.value;
-    const aucLabel=(auc!=null)?('AUC '+auc.toFixed(2)):'';
+    // The task/contrast rides WITH the AUROC even on the compact branch labels, so a
+    // diagnosis AUROC is never read as a conversion one (the 0.64-vs-0.92 bug).
+    const _contrast=this._taskContrast((sv.naive_effect||{}).target);
+    const aucLabel=(auc!=null)?((_contrast?(_contrast+' · '):'')+'AUC '+auc.toFixed(2)):'';
     set('syn2', aucLabel); set('neur2', aucLabel); set('vasc2', aucLabel);
+
+    const promoted=!!sv.promoted;
+    const tests=(sv.tests||[]); const byK={}; tests.forEach(t=>{ byK[t.key]=t; });
+    // Survivor pathways track the real verdict: green only when the finding was
+    // actually promoted, gray when the gauntlet killed it.
+    const survRole=promoted?'green':'gray';
+    ['syn','syn2','vasc','vasc2','neur2'].forEach(id=>setRole(id, survRole));
+    setRole('neuro', promoted?'gold':'gray');
+    // Candidate leaves exist only for a promoted finding (no translation otherwise).
+    setRole('cand1', promoted?'clay':'gray'); setRole('cand2', promoted?'clay':'gray'); setRole('cand3', promoted?'clay':'gray');
+    set('cand1', promoted?plur(nB,'protein'):'no targets');
+    set('cand2', promoted?plur(nC,'compound'):'no compounds');
+    set('cand3', promoted?plur(nE,'experiment'):'no experiments');
+
+    // Confound branches ← their real gauntlet tests.
+    const rlabel=(r)=> r==='passed'?'ruled out' : r==='weakened'?'partly explains' : r==='failed'?'drives signal' : 'N/A';
+    const scanT=byK['site_scanner'];
+    if(scanT){ const st=scanT.stats||{}; const fsi=this._fsInv(st);
+      // Prefer the HONEST de-confound: the outcome holding within each acquisition
+      // stratum. The whole-cohort scanner AUC can look optimistically low (the
+      // harmonization saw the held-out rows), so we never show it as "ruled out".
+      set('scan', fsi ? (fsi.tag+' · '+fsi.pairs)
+        : ((st.scanner_auc!=null?('scanner AUC '+(+st.scanner_auc).toFixed(2)+' · '):'')+rlabel(scanT.result))); }
+    const ageT=byK['age_sex'];
+    if(ageT){ const rt=(ageT.stats||{}).retained;
+      set('age', (rt!=null?(Math.round(rt*100)+'% signal retained · '):'')+rlabel(ageT.result)); }
   }
   // Real gauntlet helpers (no fabricated numbers): mark + Δ from case.tests[] stats.
   _testMark(r){ return r==='passed'?'✓' : r==='failed'?'✗' : '—'; }
@@ -2132,6 +2172,15 @@ class Component extends React.Component {
     if(r!=null && n!=null) return 'anchored to plasma '+this.fmtBiomarker(bm)+' · r=+'+(+r).toFixed(2)+', n='+n+' (measured)';
     if(anc.ptau217_r!=null) return 'anchored to plasma p-tau217 · r=+'+(+anc.ptau217_r).toFixed(2)+', n='+anc.ptau217_n+' (measured)';
     return null;
+  }
+  // Head-size (ICV) context for ROI-volume cohorts. The headline AUROC above is
+  // raw regional volume, which scales with head size; this surfaces the
+  // ICV-residualized (head-size-corrected) companion so the number is never
+  // silently raw. Null for non-ROI cohorts (plasma/embedding), where ICV does
+  // not apply — no clutter added there.
+  _icvNote(lm){
+    if(!lm || !lm.icv_adjusted || lm.outcome_auc_icv_adj==null) return null;
+    return 'ICV-adjusted AUROC '+(+lm.outcome_auc_icv_adj).toFixed(2)+' · head-size corrected';
   }
   _activeAnchor(){ return this.state.anchorFocus || ((this.heroTx()||{}).dominant_biomarker) || 'p_tau217'; }
   cohortChipLabel(){ const co=this.heroCohort(); if(!co) return 'multi-site cohort'; const parts=[]; if(co.n_subjects!=null) parts.push(co.n_subjects+' subjects'); if(co.n_sites!=null) parts.push(co.n_sites+' sites'); return parts.length?parts.join(' · '):'multi-site cohort'; }
@@ -2228,10 +2277,14 @@ class Component extends React.Component {
     const n=this.nmap[id]; if(!n) return;
     clearTimeout(this._timer); this._playing=false; this._justRevealed=null;
     const ok=this.eligible(n);
-    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?(n.story==='proteins'?'protein':'summary'):'reason', selectedTarget:null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false, trailExplOpen:false });
+    const dTab=ok?(n.story==='proteins'?'protein':'summary'):'reason';
+    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: dTab, selectedTarget: dTab==='protein'?this.topTargetGene():null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false, trailExplOpen:false });
     this.animateTo(this.frameDetail(n, n.role==='clay'?1.05:1.2, ok?150:0));
   };
-  setDrawerTab=(t)=>this.setState({drawerTab:t});
+  setDrawerTab=(t)=>{
+    const selectedTarget=(t==='protein'&&!this.state.selectedTarget)?this.topTargetGene():this.state.selectedTarget;
+    this.setState({drawerTab:t, selectedTarget});
+  };
   toggleArtifacts=()=>this.setState({artifactsOpen:!this.state.artifactsOpen});
   toggleTrailExpl=()=>this.setState({trailExplOpen:!this.state.trailExplOpen});
   setBrainView=(v)=>this.setState({brainView:v});
@@ -2309,6 +2362,15 @@ class Component extends React.Component {
   toggleStruct=()=>this.setState({structOpen:!this.state.structOpen});
   selectTarget=(g)=>this.setState({selectedTarget:g});
   clearTarget=()=>this.setState({selectedTarget:null});
+  // Top-ranked target's gene, read straight from the case's translation (tx.top_target,
+  // falling back to ranked_targets[0]) — never a literal gene name. Used to auto-open the
+  // AlphaFold structure the moment the Protein-data tab becomes active.
+  topTargetGene(){
+    const tx=this.heroTx()||{}; const rt=tx.ranked_targets||[];
+    if(!rt.length) return null;
+    const lead=(tx.top_target&&rt.find(t=>t&&t.gene===tx.top_target))||rt[0];
+    return (lead&&lead.gene)||null;
+  }
   setComposerBiomarker=(e)=>this.setState({composerBiomarker:e.target.value});
   setComposerDraft=(e)=>this.setState({composerDraft:e.target.value});
   onComposerKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onComposerSubmit(); } };
@@ -2363,8 +2425,12 @@ class Component extends React.Component {
     // real LLM fills in — /api/ask answers grounded in this investigation's case.
     const baseMsgs=this.state.chatMsgs.concat([{role:'user',text:q},{role:'assistant',text:'Claude is thinking…',pending:true}]);
     const thinkingIdx=baseMsgs.length-1;
-    this.setState({ extra:this.state.extra.concat([node]), extraEdges:this.state.extraEdges.concat([['root',id,'gold','follow-up']]), chatMsgs:baseMsgs, chatDraft:'', railOpen:true, playing:false });
-    clearTimeout(this._timer);
+    // A follow-up is a deliberate user action that INTERRUPTS the intro grow: stop
+    // the grow/step player (both timers + the _playing flag) AND clear the transient
+    // reasoning overlay. Without reasoning:null, killing _timer mid-grow freezes the
+    // last verb ("Pruning confounded branches…") on screen forever — the stuck bug.
+    clearTimeout(this._timer); clearTimeout(this._revealTimer); this._playing=false;
+    this.setState({ extra:this.state.extra.concat([node]), extraEdges:this.state.extraEdges.concat([['root',id,'gold','follow-up']]), chatMsgs:baseMsgs, chatDraft:'', railOpen:true, playing:false, reasoning:null });
     setTimeout(()=>this.animateTo(this.frameDetail(node,1.0,0)), 40);
     const setBubble=(text)=>this.setState(s=>{ const m=s.chatMsgs.slice(); if(m[thinkingIdx]) m[thinkingIdx]={role:'assistant',text}; return {chatMsgs:m}; });
     // Non-blocking POST to the repo-grounded Ask-Claude endpoint (real LLM, live iff
@@ -2581,15 +2647,13 @@ class Component extends React.Component {
         // (those are PI4AD priority scores), so significance shows ONCE, here, not per row.
         const c=this.heroCase()||{}; const lm=c.leakage_margin||{};
         const anc=((c.tests||[]).find(t=>t.key==='biomarker_anchor')||{}).stats||{};
-        const aucTxt = (lm.outcome_auc!=null)
-          ? ('AUROC '+lm.outcome_auc.toFixed(2)
-             + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
-             + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
-          : null;
+        const aucTxt = this._findingAurocLine();
         const ancTxt = this._anchorLine(anc, this._activeAnchor());
+        const icvTxt = this._icvNote(lm);
         const sigHeader = aucTxt ? el('div',{key:'sig',style:{padding:'10px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px',marginBottom:'12px'}},[
           el('div',{key:'t',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
           el('div',{key:'a',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'13px',color:C.ink}}, aucTxt),
+          icvTxt ? el('div',{key:'icv',style:{marginTop:'4px',fontSize:'11px',color:C.mute}}, icvTxt) : null,
           ancTxt ? el('div',{key:'n',style:{marginTop:'4px',fontSize:'11.5px',color:C.ink2}}, ancTxt) : null
         ]) : null;
         const targets=(tx.ranked_targets||[]);
@@ -3221,10 +3285,47 @@ class Component extends React.Component {
       ):null
     ]);
   }
-  // ≤3 reasoning bullets from real stats, first one comparative ("beats X").
+  // The TASK an AUROC measures travels WITH the number — a diagnosis AUROC and a
+  // conversion AUROC are different quantities, and reporting one as the other is
+  // exactly the 0.64-vs-0.92 routing bug. Derived from the case's real target.
+  _taskWord(t){ return t==='conversion'?'Conversion' : t==='dx_binary'?'Diagnosis' : t==='site'?'Site-leakage' : t==='scanner'?'Scanner-leakage' : 'Discrimination'; }
+  _taskContrast(t){ return t==='conversion'?'MCI→AD' : t==='dx_binary'?'AD vs CN' : t==='site'?'site A/B' : t==='scanner'?'3T/1.5T' : ''; }
+  // One source of truth for the finding-level "<Task> AUROC 0.92 [CI] · p=… (contrast)"
+  // string, so the header, Protein tab, and captions can never drift.
+  _findingAurocLine(){
+    const c=this.heroCase()||{}; const lm=c.leakage_margin||{};
+    if(lm.outcome_auc==null) return null;
+    const tgt=((c.naive_effect||{}).target)||'';
+    const contrast=this._taskContrast(tgt);
+    return this._taskWord(tgt)+' AUROC '+lm.outcome_auc.toFixed(2)
+      + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
+      + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):'')
+      + (contrast?(' ('+contrast+')'):'');
+  }
+  // Honest within-acquisition-stratum de-confound, formatted for display, or null.
+  // The engine (leakage.field_strength_invariance) re-measures the outcome AUROC
+  // inside each single field-strength/site level — a confound can't inflate a
+  // contrast measured within one level of it. This is the number we DISPLAY as the
+  // de-confound, in place of the whole-cohort scanner AUC (which the harmonization
+  // can drive optimistically below chance).
+  _fsInv(stats){
+    const f=stats&&stats.field_strength_invariance;
+    if(!f||!f.within_band||!(f.strata||[]).length) return null;
+    const isFS=(f.confound==='scanner') && f.strata.every(s=>/t\s*$/i.test(s.level||''));
+    const tag=isFS?'field-strength invariant':(f.confound==='site'?'site invariant':'scanner invariant');
+    const pairs=f.strata.map(s=>s.level+' '+(+s.auc).toFixed(2)).join(' / ');
+    return {tag, pairs, kind:(isFS?'field strength':(f.confound||'acquisition')),
+            strata:f.strata, delta:f.max_abs_delta, band:f.band, pooled:f.pooled_auc};
+  }
+  // ≤3 reasoning bullets from real stats, first one the honest de-confound.
   _reasoningBullets(node){
     const c=this.heroCase(); if(!c) return []; const lk=c.leakage_margin||{}; const tests=c.tests||[]; const val=this._valence(node); const out=[];
-    if(lk.outcome_auc!=null&&lk.scanner_auc!=null){
+    const fsi=this._fsInv(lk);
+    if(!val.killed && fsi){
+      // Survivor: lead with the DECISIVE, honest de-confound — the effect holds
+      // within each acquisition stratum, so it is not that confound leaking.
+      out.push({cmp:true,t:'AD-vs-CN holds within each '+fsi.kind+' ('+fsi.pairs+'; within ±'+(+fsi.band).toFixed(2)+' of the pooled '+this._num(fsi.pooled)+'), so it is not the '+fsi.kind+' split.'});
+    } else if(lk.outcome_auc!=null&&lk.scanner_auc!=null){
       const marg=this._num(lk.margin); const mci=(lk.margin_ci_lo!=null)?this._ci([lk.margin_ci_lo,lk.margin_ci_hi]):'';
       const cf=lk.confound||'confound';
       out.push({cmp:true,t: val.killed
@@ -3433,15 +3534,13 @@ class Component extends React.Component {
     // Finding-level discrimination (AUROC + CI + p + plasma anchor), read from the case, shown ONCE.
     const c=this.heroCase()||{}; const lm=c.leakage_margin||{};
     const anc=((c.tests||[]).find(t=>t.key==='biomarker_anchor')||{}).stats||{};
-    const aucLine=(lm.outcome_auc!=null)
-      ? ('AUROC '+lm.outcome_auc.toFixed(2)
-         + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
-         + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
-      : null;
+    const aucLine=this._findingAurocLine();
     const ancLine=this._anchorLine(anc, this._activeAnchor());
+    const icvLine=this._icvNote(lm);
     const discHeader=el('div',{key:'disc',style:{padding:'11px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px'}},[
       el('div',{key:'k',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
       el('div',{key:'a',style:{fontFamily:M,fontSize:'13px',color:C.ink}}, aucLine||'—'),
+      icvLine?el('div',{key:'icv',style:{marginTop:'4px',fontSize:'11px',color:C.mute}}, icvLine):null,
       ancLine?el('div',{key:'n',style:{marginTop:'4px',fontSize:'11.5px',color:C.ink2}}, ancLine):null,
       el('div',{key:'x',style:{marginTop:'6px',fontSize:'11px',color:C.mute,lineHeight:1.4}},'The ranking below derives from this finding — targets carry PI4AD priority, not their own AUROC.')
     ]);
