@@ -18,6 +18,7 @@ module imports cleanly even before the rest of the engine has landed.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional, Union
 
 import pandas as pd
@@ -156,8 +157,20 @@ def _naive_effect(df: pd.DataFrame, claim: Claim) -> dict:
     from neuroad import probe
     target = claim.target if claim.target in contract.LABEL_TARGETS else "conversion"
     X, y, groups = probe.point_head(df, target)
-    auc = probe.cross_val_auc(X, y, groups=groups,
-                              n_repeats=probe.N_REPEATS_ENSEMBLE)
+    # n_reps budget lever for the live-miss path. Default = full N_REPEATS_ENSEMBLE
+    # rigor (identical to the warmed grid); an operator may cap it via
+    # NEUROAD_LIVE_N_REPEATS ONLY to speed a genuinely cold coordinate — at the
+    # cost of a slightly noisier ensemble AUC than a warmed cell. N_BOOT is NOT
+    # this lever (gauntlet bootstrap time is flat in N_BOOT). Off by default so no
+    # displayed number changes unless the knob is explicitly set.
+    n_reps = probe.N_REPEATS_ENSEMBLE
+    try:
+        _override = int(os.environ.get("NEUROAD_LIVE_N_REPEATS", "0"))
+        if _override > 0:
+            n_reps = _override
+    except (TypeError, ValueError):
+        pass
+    auc = probe.cross_val_auc(X, y, groups=groups, n_repeats=n_reps)
 
     # Age/sex-residualized primary AUC (fold-honest: the nuisance regression is
     # fit inside each fold on train rows only). Reported ALONGSIDE the naive AUC

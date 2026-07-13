@@ -442,20 +442,38 @@ class Handler(BaseHTTPRequestHandler):
         # source of truth — an unknown name raises ValueError -> 400, everything
         # else is a genuine 500.
         try:
+            # Out-of-scope guard BEFORE the cache: an unsupported target
+            # (e.g. "tau-PET SUVR trajectory") keyword-infers to the default
+            # "conversion" and would otherwise COLLIDE with a legit promoted
+            # conversion cell — serving a SURVIVOR result for a question the
+            # engine cannot answer. Route it straight to compute_investigate, which
+            # returns the honest refusal (promoted=False, no fabricated effect).
+            out_of_scope = False
+            try:
+                from neuroad.harness.orchestrator import _out_of_scope_reason
+                out_of_scope = bool(_out_of_scope_reason(hypothesis))
+            except Exception:  # noqa: BLE001
+                out_of_scope = False
+
             # Precomputed-grid FAST PATH: every hypothesis maps to a finite
             # coordinate (dataset, target, anchor), so a preloaded cell is a real
             # result served by lookup (<1s) instead of a ~25s recompute. Miss ->
             # compute live and back-fill the cell (self-warming).
-            cached = investigate_cache.get(dataset, hypothesis, anchor, want_api)
+            cached = None if out_of_scope else investigate_cache.get(
+                dataset, hypothesis, anchor, want_api)
             if cached is not None:
                 self._send_json(investigate_cache.personalize(cached, hypothesis, dataset))
                 return
             result = compute_investigate(
                 hypothesis, dataset, seed=seed, anchor=anchor, want_api=want_api)
-            try:
-                investigate_cache.put(dataset, hypothesis, anchor, want_api, result)
-            except Exception:  # noqa: BLE001
-                _log.debug("investigate cache back-fill failed", exc_info=True)
+            # Never back-fill an out-of-scope refusal: its keyword-inferred key
+            # collides with a legit conversion cell, so persisting it would
+            # overwrite a real SURVIVOR result with the refusal.
+            if not out_of_scope:
+                try:
+                    investigate_cache.put(dataset, hypothesis, anchor, want_api, result)
+                except Exception:  # noqa: BLE001
+                    _log.debug("investigate cache back-fill failed", exc_info=True)
             self._send_json(result)
         except ValueError as exc:  # unknown dataset name from loaders.load
             self._send_json(

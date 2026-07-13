@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NeuroAD — Title / Opener (scene0)</title>
+<!--
+  NeuroAD Demo Animation — SCENE 0: Title / Opener
+  Emulates REF C (winner's title page) re-skinned into the NeuroAD ZUI palette.
+  Standalone: all CSS/JS inline, no external requests, system fonts only.
+  Auto-plays, idle-bobs forever, re-runs the entrance every ~9s. Honors reduced-motion.
+-->
+<style>
+  :root{
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+    --gold:#C08415; --gold-edge:#D69A1F; --gold-soft:#FBF2DD;
+    --gray:#B0ABA1; --gray-edge:#CBC7BC;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --ease:cubic-bezier(.4,0,.2,1);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:var(--paper);
+    /* warm radial glow sky */
+    background-image:radial-gradient(1100px 640px at 50% 26%, #FCFBF7 0%, #F5F4EE 60%);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  .stage{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+
+  /* faint engineering dot-grid */
+  .grid{
+    position:absolute; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(40,36,28,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(120% 90% at 50% 40%, #000 55%, transparent 100%);
+            mask-image:radial-gradient(120% 90% at 50% 40%, #000 55%, transparent 100%);
+  }
+
+  /* bottom hill / wave silhouette */
+  .waves{ position:absolute; left:0; right:0; bottom:0; z-index:0; width:100%; height:34vh; pointer-events:none; }
+
+  /* soft glow behind the wordmark */
+  .halo{
+    position:absolute; z-index:0; width:min(58vw,900px); height:min(30vw,440px);
+    top:34%; left:50%; transform:translate(-50%,-50%);
+    background:radial-gradient(closest-side, rgba(201,100,66,.10), rgba(201,100,66,0) 70%);
+    pointer-events:none;
+  }
+
+  /* ---- brand + kicker ---- */
+  .brand{
+    position:absolute; top:34px; left:40px; z-index:5;
+    font-weight:700; font-size:15px; letter-spacing:-.01em; color:var(--ink);
+    display:flex; align-items:center; gap:9px;
+  }
+  .brand .dot{ width:9px; height:9px; border-radius:50%; background:var(--clay); box-shadow:0 0 0 4px var(--clay-soft); }
+  .brand .ad{ color:var(--clay); }
+
+  .replay{
+    position:absolute; bottom:26px; right:30px; z-index:6;
+    font-family:var(--sans); font-size:12px; color:var(--mute);
+    background:transparent; border:1px solid var(--edge); border-radius:8px;
+    padding:7px 12px; cursor:pointer; letter-spacing:.02em;
+    transition:color .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .replay:hover{ color:var(--ink2); border-color:var(--edge2); background:rgba(255,255,255,.5); }
+
+  /* ---- center composition ---- */
+  .center{ position:relative; z-index:3; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 24px; }
+
+  .kicker{
+    font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--clay-deep); margin-bottom:22px;
+    display:inline-flex; align-items:center; gap:10px;
+  }
+  .kicker::before,.kicker::after{ content:""; width:26px; height:1px; background:var(--edge2); display:inline-block; }
+
+  .wordmark{
+    font-weight:800; letter-spacing:-.03em; line-height:.98;
+    font-size:clamp(64px, 8.4vw, 100px);
+    color:var(--ink);
+  }
+  .wordmark .ad{ color:var(--clay); }
+
+  .tagline{
+    margin-top:26px;
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--card); border:1px solid var(--edge);
+    border-radius:999px; padding:10px 20px;
+    font-size:15px; color:var(--ink2); letter-spacing:-.005em;
+    box-shadow:0 1px 2px rgba(40,36,28,.04), 0 8px 30px rgba(40,36,28,.06);
+  }
+  .tagline .tdot{ width:7px; height:7px; border-radius:50%; background:var(--clay); flex:0 0 auto; }
+  .tagline b{ font-weight:700; color:var(--ink); }
+
+  .subline{
+    margin-top:20px; font-size:15px; color:var(--ink2); letter-spacing:.01em;
+  }
+  .subline .kill{ color:var(--mute); }
+  .subline .surface{ color:var(--green); font-weight:600; }
+  .subline .earn{ color:var(--clay-deep); font-weight:600; }
+  .subline .sep{ color:var(--edge2); margin:0 4px; }
+
+  .begin{
+    margin-top:34px; position:relative;
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--clay); color:#FCFBF7;
+    border:none; border-radius:999px; padding:13px 26px;
+    font-family:var(--sans); font-size:15px; font-weight:600; letter-spacing:.01em;
+    cursor:default;
+    box-shadow:0 6px 18px rgba(169,78,48,.24);
+  }
+  .begin .tri{ font-size:12px; transform:translateY(0); }
+  /* gentle pulse ring */
+  .begin::after{
+    content:""; position:absolute; inset:0; border-radius:999px;
+    box-shadow:0 0 0 0 rgba(201,100,66,.34);
+    animation:pulse 2.8s var(--ease) infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(201,100,66,.30); }
+    70%{ box-shadow:0 0 0 16px rgba(201,100,66,0); }
+    100%{ box-shadow:0 0 0 0 rgba(201,100,66,0); }
+  }
+
+  .cohorts{
+    margin-top:26px; font-size:12px; color:var(--mute); letter-spacing:.02em;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .cohorts .lbl{ text-transform:uppercase; letter-spacing:.1em; font-size:11px; color:var(--mute); }
+  .cohorts .chip{
+    border:1px solid var(--edge); background:var(--paper2); border-radius:999px;
+    padding:3px 10px; color:var(--ink2); font-weight:600; font-size:12px;
+  }
+
+  .caption{
+    position:absolute; bottom:30px; left:50%; transform:translateX(-50%);
+    z-index:5; font-size:13px; color:var(--mute); letter-spacing:.01em; text-align:center;
+    max-width:80vw;
+  }
+  .caption em{ font-style:normal; color:var(--ink2); }
+
+  /* ---- floating doodles ---- */
+  .doodle{ position:absolute; z-index:1; pointer-events:none; opacity:.9; }
+  .doodle-inner{ will-change:transform; }
+  .doodle svg{ display:block; overflow:visible; }
+
+  /* ---- entrance: fade + rise with per-element delay ---- */
+  .rise{
+    opacity:0; transform:translateY(16px);
+    transition:opacity .72s var(--ease) var(--d,0s), transform .72s var(--ease) var(--d,0s);
+  }
+  .stage.play .rise{ opacity:1; transform:translateY(0); }
+  /* doodles fade in a touch softer and are placed by JS transform on inner */
+  .doodle.rise{ transform:translateY(20px); }
+  .stage.play .doodle.rise{ opacity:.9; transform:translateY(0); }
+
+  /* ---- reduced motion: cross-fade only, final state, no bob/pulse ---- */
+  @media (prefers-reduced-motion: reduce){
+    .rise{ transform:none !important; transition:opacity .5s ease; }
+    .stage.play .rise{ transform:none !important; }
+    .begin::after{ animation:none; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="grid"></div>
+    <div class="halo"></div>
+
+    <!-- bottom wave / hill silhouette -->
+    <svg class="waves" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,220 C240,170 420,255 720,235 C1010,216 1180,150 1440,205 L1440,320 L0,320 Z" fill="var(--paper2)"/>
+      <path d="M0,268 C260,232 470,300 760,282 C1050,264 1230,222 1440,262 L1440,320 L0,320 Z" fill="var(--clay-soft)" opacity=".55"/>
+    </svg>
+
+    <!-- brand lockup (corner) -->
+    <div class="brand rise" style="--d:.05s"><span class="dot"></span><span>Neuro<span class="ad">AD</span></span></div>
+
+    <!-- center composition -->
+    <div class="center">
+      <div class="kicker rise" style="--d:.10s">NeuroAD Discovery Engine</div>
+      <div class="wordmark rise" style="--d:.20s">Neuro<span class="ad">AD</span></div>
+
+      <div class="tagline rise" style="--d:.44s">
+        <span class="tdot"></span>
+        <span>An <b>AlphaFold</b> for Alzheimer's neuroimaging</span>
+      </div>
+
+      <div class="subline rise" style="--d:.60s">
+        <span class="kill">Kill weak hypotheses.</span>
+        <span class="sep">·</span>
+        <span class="surface">Surface strong ones.</span>
+        <span class="sep">·</span>
+        <span class="earn">Accelerate the experiment.</span>
+      </div>
+
+      <button class="begin rise" style="--d:.78s" type="button" tabindex="-1">
+        <span class="tri">▸</span><span>Begin investigation</span>
+      </button>
+
+      <div class="cohorts rise" style="--d:.94s">
+        <span class="lbl">Real cohorts</span>
+        <span class="chip">ADNI</span>
+        <span class="chip">OASIS</span>
+        <span class="chip">EPAD</span>
+      </div>
+    </div>
+
+    <!-- floating doodles (entrance on outer .doodle, sin-bob applied to .doodle-inner by JS) -->
+    <div class="doodle rise" style="left:12%; top:24%; --d:.36s" data-amp="9"  data-speed="1.05" data-phase="0.0" data-rot="2.2">
+      <div class="doodle-inner">
+        <!-- brain outline -->
+        <svg width="104" height="86" viewBox="0 0 104 86" fill="none">
+          <path d="M20,50 C10,28 30,12 46,20 C52,8 78,10 82,30 C96,32 98,54 84,60 C86,74 66,80 56,70 C46,80 26,76 26,62 C12,62 10,54 20,50 Z"
+                stroke="var(--ink2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".7"/>
+          <path d="M54,18 C50,34 56,48 58,68" stroke="var(--ink2)" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>
+          <path d="M34,32 C42,36 42,44 34,48" stroke="var(--ink2)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+          <path d="M72,38 C64,42 66,50 74,52" stroke="var(--ink2)" stroke-width="1.6" stroke-linecap="round" opacity=".45"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="doodle rise" style="right:11%; top:21%; --d:.48s" data-amp="11" data-speed="0.86" data-phase="1.7" data-rot="3.0">
+      <div class="doodle-inner">
+        <!-- hexagon molecule -->
+        <svg width="90" height="96" viewBox="0 0 90 96" fill="none">
+          <path d="M45,10 L75,27 L75,61 L45,78 L15,61 L15,27 Z"
+                stroke="var(--clay-deep)" stroke-width="2" stroke-linejoin="round" opacity=".6"/>
+          <line x1="45" y1="10" x2="45" y2="44" stroke="var(--clay-deep)" stroke-width="1.4" opacity=".4"/>
+          <line x1="75" y1="27" x2="45" y2="44" stroke="var(--clay-deep)" stroke-width="1.4" opacity=".4"/>
+          <line x1="15" y1="61" x2="45" y2="44" stroke="var(--clay-deep)" stroke-width="1.4" opacity=".4"/>
+          <circle cx="45" cy="44" r="4.5" fill="var(--clay)" opacity=".85"/>
+          <circle cx="45" cy="10" r="3.4" fill="var(--card)" stroke="var(--clay-deep)" stroke-width="1.6"/>
+          <circle cx="75" cy="27" r="3.4" fill="var(--card)" stroke="var(--clay-deep)" stroke-width="1.6"/>
+          <circle cx="15" cy="61" r="3.4" fill="var(--card)" stroke="var(--clay-deep)" stroke-width="1.6"/>
+          <circle cx="75" cy="61" r="3" fill="var(--clay-soft)"/>
+          <circle cx="15" cy="27" r="3" fill="var(--clay-soft)"/>
+          <circle cx="45" cy="78" r="3" fill="var(--clay-soft)"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="doodle rise" style="left:9%; top:60%; --d:.56s" data-amp="8" data-speed="1.22" data-phase="3.1" data-rot="0">
+      <div class="doodle-inner">
+        <!-- 4-point sparkle -->
+        <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+          <path d="M26,4 C28,18 34,24 48,26 C34,28 28,34 26,48 C24,34 18,28 4,26 C18,24 24,18 26,4 Z"
+                fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.6" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="doodle rise" style="right:9%; top:61%; --d:.64s" data-amp="10" data-speed="0.96" data-phase="2.3" data-rot="1.6">
+      <div class="doodle-inner">
+        <!-- DNA double helix -->
+        <svg width="64" height="92" viewBox="0 0 64 92" fill="none">
+          <path d="M18,6 C46,24 46,40 18,58 C46,76 46,86 18,90" stroke="var(--green)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+          <path d="M46,6 C18,24 18,40 46,58 C18,76 18,86 46,90" stroke="var(--green-edge)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+          <line x1="24" y1="16" x2="40" y2="16" stroke="var(--green)" stroke-width="1.5" opacity=".45"/>
+          <line x1="30" y1="32" x2="34" y2="32" stroke="var(--green)" stroke-width="1.5" opacity=".45"/>
+          <line x1="24" y1="48" x2="40" y2="48" stroke="var(--green)" stroke-width="1.5" opacity=".45"/>
+          <line x1="30" y1="66" x2="34" y2="66" stroke="var(--green)" stroke-width="1.5" opacity=".45"/>
+          <line x1="24" y1="82" x2="40" y2="82" stroke="var(--green)" stroke-width="1.5" opacity=".45"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="doodle rise" style="left:21%; top:78%; --d:.72s" data-amp="9" data-speed="0.78" data-phase="4.4" data-rot="2.4">
+      <div class="doodle-inner">
+        <!-- erlenmeyer flask -->
+        <svg width="60" height="72" viewBox="0 0 60 72" fill="none">
+          <path d="M24,8 L36,8 M25,8 L25,26 L12,58 C10,63 13,66 18,66 L42,66 C47,66 50,63 48,58 L35,26 L35,8"
+                stroke="var(--ink2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".65"/>
+          <path d="M18,46 L42,46 L48,58 C50,63 47,66 42,66 L18,66 C13,66 10,63 12,58 Z" fill="var(--clay-soft)" opacity=".7"/>
+          <circle cx="26" cy="56" r="2.2" fill="var(--clay)" opacity=".7"/>
+          <circle cx="35" cy="60" r="1.6" fill="var(--clay)" opacity=".55"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- narration hook -->
+    <div class="caption rise" style="--d:1.02s">
+      <em>Imaging finds it. Proteins confirm it.</em> The system says what to test next.
+    </div>
+
+    <button class="replay" id="replay" type="button">&#8635; Replay</button>
+  </div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var replay = document.getElementById('replay');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- entrance sequence (re-triggerable) ----
+  function play(){
+    stage.classList.remove('play');
+    // force reflow so the transition restarts cleanly
+    void stage.offsetWidth;
+    requestAnimationFrame(function(){ stage.classList.add('play'); });
+  }
+  play();
+  replay.addEventListener('click', play);
+
+  // re-run the entrance on a gentle loop so a screen-recording loops cleanly
+  if(!reduce){
+    setInterval(play, 9000);
+  }
+
+  // ---- continuous sin() idle-bob for the floating doodles ----
+  if(!reduce){
+    var inners = [].slice.call(document.querySelectorAll('.doodle')).map(function(d){
+      return {
+        el: d.querySelector('.doodle-inner'),
+        amp: parseFloat(d.getAttribute('data-amp')) || 8,
+        speed: parseFloat(d.getAttribute('data-speed')) || 1,
+        phase: parseFloat(d.getAttribute('data-phase')) || 0,
+        rot: parseFloat(d.getAttribute('data-rot')) || 0
+      };
+    });
+    function frame(t){
+      var s = t / 1000;
+      for(var i=0;i<inners.length;i++){
+        var o = inners[i];
+        var y = Math.sin(s * o.speed + o.phase) * o.amp;
+        var x = Math.cos(s * o.speed * 0.6 + o.phase) * (o.amp * 0.35);
+        var r = o.rot ? Math.sin(s * o.speed * 0.7 + o.phase) * o.rot : 0;
+        o.el.style.transform = 'translate(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px) rotate(' + r.toFixed(2) + 'deg)';
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>

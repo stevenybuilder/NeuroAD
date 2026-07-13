@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "purpose": "Canonical, single-source-of-truth facts for the 'Ask Claude' feature. Ask Claude must cite these verbatim and must NEVER state a number that contradicts canonical_metrics. Updated when the pipeline changes.",
+    "version": "2026-07-12",
+    "honesty_rule": "The project's entire brand is rigor. Prefer the honest, confound-matched number over the flashier raw number every time. If a question isn't answered here or in the live case, say so plainly rather than inventing a figure."
+  },
+
+  "project": {
+    "name": "NeuroAD Discovery Engine",
+    "one_liner": "An AlphaFold for Alzheimer's neuroimaging: raw brain MRI -> frozen foundation-model embedding -> adversarial rigor gauntlet -> ranked, wet-lab-testable protein targets.",
+    "what_it_is": "A referee/auditor that bridges clinical neuroimaging and molecular target discovery. It finds a candidate signal in brain-MRI embeddings, stress-tests it to throw out batch/acquisition/aging artifacts, requires independent corroboration, and — only for what survives — has Claude adjudicate the mechanism and the single next experiment.",
+    "aspiration": "Be the reusable, trusted layer for AD the way AlphaFold became infrastructure for structure: brain scan -> testable molecular hypothesis. We have built the end-to-end skeleton, every layer real and running; we do not claim to have arrived.",
+    "who_for": ["Translational AD researchers deciding if an imaging signal is worth a quarter of their time", "Neurodegeneration drug-discovery teams needing prioritized, structure-modeled molecular hypotheses for iPSC/organoid benches", "Biomarker and foundation-model labs needing an external referee that quantifies how much of an embedding's signal is batch/site artifact"],
+    "own_these_words": ["referee", "auditor", "red-team", "gauntlet"],
+    "never_claim": ["we discovered leakage (it is published prior art we cite)", "co-scientist", "discovery platform", "a validated drug"],
+    "killer_one_liner": "It turns a brain scan into a wet-lab experiment — and kills the ones that are just the scanner, before you waste a quarter on them.",
+    "end_to_end_proof_metric": "Lead with the leakage collapse as a decision: 0.99 -> 0.56 -> 0.86 (the same scan predicts the scanner as well as Alzheimer's; strip the batch effect and the real signal holds at 0.86). Then stamp the surviving recommendation with 0.728 (p=0.003) — the target list is non-circularly enriched for genuinely-known AD genes. Collapse = the filter works; 0.728 = the output is real biology.",
+    "full_circle_final_card": {
+      "principle": "The LAST thing the user sees must restate THEIR original hypothesis, give a VALIDATED/KILLED verdict with the reason, and end on ONE concrete next move — never a bare number or a dead end. Close the loop: hypothesis -> verdict -> why -> next experiment.",
+      "survivor_template": "Your hypothesis: '<H>'. VALIDATED — survived all 5 gauntlet tests (<score>/100); scanner stripped 0.99->0.56, signal holds at 0.86. Do this next: test <top_target> in an iPSC/organoid model (<cohort>, ~<N> subjects). Why trust it: ranked targets enriched for known AD genes, 0.728 (p=0.003).",
+      "kill_template": "Your hypothesis: '<H>'. KILLED as artifact — the same features predict the scanner as well as the outcome (leakage margin <margin>). Batch, not biology. What it saved you: a quarter chasing acquisition noise. Do this next: harmonize (ComBat) and re-test, or anchor to plasma p-tau217 first."
+    }
+  },
+
+  "data_scale": {
+    "adni_scans_processed": 2951,
+    "adni_scan_breakdown": {"CN": 1153, "AD": 462, "MCI": 1299, "unlabeled": 37},
+    "adni_field_strength": {"3T": 2109, "1.5T": 842},
+    "adni_ida_query_pool": 8372,
+    "cohorts": {
+      "ADNI": {"scans": 2951, "role": "primary disease cohort (AD/MCI/CN), real plasma p-tau217"},
+      "OASIS-1": {"rows": 436, "embedded": 210, "role": "external AD replication"},
+      "OASIS-2": {"rows": 373, "embedded": 150, "role": "MCI->AD conversion"},
+      "OpenBHB": {"subjects": 3984, "embedded": 96, "role": "HEALTHY-ONLY multi-scanner leakage/brain-age control cohort (no disease)"}
+    },
+    "subjects_total_across_cohorts_approx": 7700,
+    "subjects_embedded_through_neurojepa_approx": 1500,
+    "raw_mri_downloaded_gb_approx": 17,
+    "voxels_per_scan": 11534336,
+    "voxels_per_scan_human": "~11.5 million (a 176x256x256 T1 volume)",
+    "embedding_dim": 768,
+    "data_unit_note": "Our atomic data point is a BRAIN VOLUME: one 3D scan of a living patient, ~11.5M voxels, compressed by the frozen encoder to a 768-d embedding. By raw data volume and dimensionality (not row count), one brain volume carries ~460,000x the data of a 200-base-pair designed-DNA element.",
+    "sample_size_reporting_rule": "When stating SAMPLE SIZE or 'n', ALWAYS use SUBJECTS (the independent unit of statistical analysis), e.g. n=2,951 ADNI subjects. NEVER report voxels, GB, or dimensions AS sample size / n: voxels within a scan are spatially correlated, not independent, so calling them n is a statistical error a rigor judge will catch — the exact overclaim this project's referee exists to kill. Use voxels / GB / 768-d ONLY as DATA SCALE or RICHNESS (a separate claim answering 'how much / how dense'), never as n. Note that to a translational audience, patient-n is the gold unit and is harder to obtain than in-vitro n. Winning framing: 'small n, but each n is a whole human brain (~11.5M voxels), validated with the rigor small-n demands (permutation nulls, site-disjoint CV, ComBat).'"
+  },
+
+  "voxels_and_training": {
+    "did_we_train_on_voxels": false,
+    "canonical_answer": "No voxel-level training happened. The NeuroJEPA foundation encoder (a 3D Vision Transformer) is used FROZEN — we did not pretrain it. Our GPU compute was (1) frozen-embedding INFERENCE across thousands of ADNI/OASIS/OpenBHB scans, and (2) Boltz-2 structure folding. Downstream we fit only small linear/MLP probes on cached embeddings or FreeSurfer morphometry. No gradient in our work ever touched a voxel.",
+    "neurojepa_pretraining_is_not_ours": "NeuroJEPA was pretrained on ~1.55M scans / 282,693 patients (internal NYU) by its authors. That scale is the encoder's provenance, NOT our training. Never cite it as compute we spent.",
+    "our_gpu_work": "Frozen NeuroJEPA embedding extraction (Colab T4/A100) + Boltz-2 GPU complex folding. Inference and folding, not foundation-model training."
+  },
+
+  "canonical_metrics": {
+    "headline_ad_vs_cn": {
+      "value": 0.861,
+      "ci95": [0.829, 0.892],
+      "definition": "ADNI AD-vs-CN, 3T-scanner-MATCHED, post-ComBat harmonization. THE honest headline imaging number. Report this one.",
+      "confusable_variants_do_not_swap_in": {
+        "0.925 (n=1615)": "full-ADNI FreeSurfer morphometry probe, raw, NOT field-strength-matched. A real number for a different slice; not the honest headline.",
+        "0.891": "raw pooled AD-vs-CN — INFLATED ~0.03 by a field-strength confound (40% of added AD are 1.5T, 100% CN are 3T; embedding reads field strength at AUC 0.990). DO NOT report as the result.",
+        "0.85 [0.81-0.89]": "conservative cross-cohort framing used in some docs; consistent with the headline but not the primary figure."
+      }
+    },
+    "leakage_collapse": {
+      "raw": 0.9996,
+      "post_combat": 0.563,
+      "surviving_signal": 0.861,
+      "definition": "Scanner/batch leakage AUC before -> after ComBat harmonization. Raw embeddings separate cohort almost perfectly (batch artifact); after harmonization that collapses and the biological AD signal survives at the headline. THIS collapse is the product — lead with it."
+    },
+    "oasis_ad_vs_cn": {"value": 0.81, "definition": "independent OASIS clinical AD-vs-CN replication (weight-free structural features)"},
+    "mci_to_ad_conversion": {"value": 0.71, "verdict": "fragile", "definition": "the hard prognostic task; honestly rated fragile"},
+    "openbhb_scanner_leakage": {"structural": 0.89, "neurojepa_embedding": 0.93, "brain_age_r2": 0.83, "definition": "the batch artifact the referee gates against, measured on real healthy multi-scanner data"},
+    "target_ranking_clean": {
+      "value": 0.728, "p": 0.003,
+      "definition": "CLEAN, non-circular held-out recovery of independently-known AD-risk genes (OpenTargets vs GWAS, held-out non-genetic evidence). The trustworthy discovery number.",
+      "do_not_lead_with": {"0.869": "PI4AD vs GWAS — residually circular (PI4AD ingests GWAS)", "0.858 / 0.967": "OpenTargets overall — CIRCULAR, leaks the gold set", "0.516 (p=0.43)": "druggability vs FDA drug targets held-out — HONEST NEGATIVE, at chance; volunteer this"}
+    }
+  },
+
+  "the_stack": {
+    "layer1_foundation": "NeuroJEPA — frozen 3D Vision Transformer (ViT-Base-MoE, 768-d, V-JEPA-2 latent prediction). Transformer #1. Used frozen under CC BY-NC-ND.",
+    "layer2_probe": "Attentive MLP probe on the frozen embedding + leave-one-group-out attribution (what drives the signal: embedding vs plasma). Exact volumes from FastSurfer.",
+    "layer3_fusion": "From-scratch multi-head cross-attention (scaled-dot-product, layernorm, per-subject tokenization) over imaging x plasma. Transformer #2. HONEST CAVEAT: it is a fixed, NON-trained feature map (seeded Q/K/V; only a downstream linear head is fitted). It requires >=2 modalities (needs plasma), so it runs for ADNI and is N/A (empty) for plasma-less OASIS. The fully-trained ncomms2025 (vkola-lab) transformer is a wired-ready seam that is NOT run by default.",
+    "layer3_biomarker_fusion_caveat": "The default biomarker fusion is an OFFLINE SURROGATE LOGISTIC (hand-set coefficients), NOT the ncomms2025 transformer. Never describe surrogate output as the published transformer.",
+    "layer4_gauntlet": "Five adversarial confound tests (age/sex 15; scanner/site leakage 25; brain-age 25; biomarker anchor 20; replication 15) that try to falsify every signal before it is reported.",
+    "layer5_multiomics": "PI4AD (Priority Index for AD) + Open Targets network propagation over the protein interactome -> ranked candidate genes/pathways.",
+    "layer6_molecular_targeting": "AlphaFold DB structures (live, precomputed) + open MIT-licensed Boltz-2 GPU folding for the complex step. Boltz-2 has folded 3 real complexes (APOE|APP, APP|BACE1, APP|MAPT) so far; unfolded targets are honestly deferred, never faked."
+  },
+
+  "discovery_framing": {
+    "unsupervised_result": "Unsupervised phenotype discovery promotes 0 phenotypes on BOTH OpenBHB (healthy, n=96) AND ADNI (n=2951). Clusters recover scanner/site batch structure with sub-threshold stability (<0.60), and the referee flags them as acquisition/age/sex artifacts.",
+    "why_zero_is_the_thesis_not_a_failure": "Unsupervised clustering of brain embeddings recovers BATCH/acquisition, not disease — and the gauntlet refuses to promote it. That is the project's core claim firing on real data: a working negative control, not an empty engine.",
+    "engine_is_not_zero_output": "Discovery-null does NOT mean the engine produces nothing. The SUPERVISED arm (AD-vs-CN probe -> PI4AD ranking -> structure) yields ranked candidate targets. A typical hero run outputs ~3 candidate biomarkers, ~2 candidate compounds, and 1 falsifiable experiment; clean target-ranking recovery is AUC 0.728 (p=0.003).",
+    "always_end_on_a_recommendation": "On any null (including 0 promotable phenotypes) the engine must emit a concrete NEXT STEP rather than a bare zero — e.g. harmonize first (ComBat), anchor to a plasma-biomarker-labelled subset, take the supervised route instead of unsupervised, or acquire a disease-labelled multi-scanner cohort. The value of a null is that it saved a scientist from chasing 2 artifact clusters."
+  },
+
+  "how_our_data_compares": {
+    "vs_designed_dna_oligo_datasets": "A designed-DNA element (oligo) is ~200 base pairs = 400 bits, cheaply array-synthesized and read out en masse in one MPRA dish. One of our brain scans is ~11.5M voxels = ~184 million bits — ~460,000x the raw data. Our ~17 GB of 3D MRI across ~7,700 real human subjects vs a ~20 MB oligo library. State this as data VOLUME and DIMENSIONALITY (bulletproof), not 'information' (raw bytes include redundancy). Neither team gathered their own data — both use open datasets — but ours is human brains from a ~$100M, ~20-year study."
+  },
+
+  "licensing": {
+    "code": "MIT",
+    "neurojepa_weights": "CC BY-NC-ND, used FROZEN only — no fine-tuning, no derivative, never committed to the repo",
+    "boltz2": "open, MIT-licensed"
+  },
+
+  "deployment_provenance": {
+    "served_numbers_are_real_but_baked": "The results shown in the served demo are REAL results computed offline from gated ADNI on a dev box and baked into app/demo_data.json (a 'frozen seam'). The deployed image intentionally excludes gated ADNI + embeddings (cannot be published), so production does not live-recompute on real cohorts. This is honest and defensible AS LONG AS it is labeled baked/offline-computed, not implied as live production inference."
+  },
+
+  "common_qa": [
+    {"q": "How many voxels did you train on?", "a": "None — no voxel-level training. NeuroJEPA is used frozen; our compute was frozen-embedding inference across thousands of scans plus Boltz-2 folding, then small probes on cached features. Each scan is ~11.5M voxels, but no gradient of ours touched a voxel."},
+    {"q": "How many scans / how much data?", "a": "2,951 ADNI T1 scans (1,153 CN / 462 AD / 1,299 MCI) from an 8,372-image query, plus OASIS-1/2 and OpenBHB — ~7,700 real subjects and ~17 GB of raw 3D MRI; ~1,500 embedded through the frozen encoder."},
+    {"q": "What is your AUROC?", "a": "Headline ADNI AD-vs-CN is 0.861 [0.829, 0.892], 3T-matched and post-ComBat. The raw 0.99 is scanner leakage; the collapse to 0.86 after harmonization is the whole point. Clean, non-circular target-ranking recovery is 0.728 (p=0.003)."},
+    {"q": "Did you find any biomarkers or phenotypes?", "a": "The supervised arm produces ranked candidate targets (a hero run: ~3 candidate biomarkers, ~2 compounds, 1 experiment). Unsupervised discovery promotes 0 — because clustering brain embeddings recovers scanner/batch, not disease, and the referee correctly kills it. That null is the thesis, and it ships with a concrete recommendation, not a dead end."},
+    {"q": "Why 0 promotable phenotypes — isn't that bad?", "a": "No — it is the rigor working. On both healthy (OpenBHB) and disease (ADNI) data, unsupervised clusters are batch/acquisition artifacts with stability below 0.60, so the gauntlet refuses to promote them. The engine still outputs ranked candidates via the supervised route, and always ends on a next-step recommendation (harmonize, anchor to plasma, or supervised route)."},
+    {"q": "Did you train the foundation model?", "a": "No. NeuroJEPA was pretrained by others on ~1.55M NYU scans. We stand on it frozen and build the unsolved downstream bridge — the deliberate, published-best-practice choice."},
+    {"q": "Is your fusion a real transformer?", "a": "Two transformers are in the stack: NeuroJEPA (a frozen 3D ViT) and a from-scratch multi-head cross-attention fusion layer. The cross-attention is genuine transformer machinery but a fixed, non-trained feature map; the fully-trained ncomms2025 transformer is a wired-ready seam, not run by default. We are precise about which is which."},
+    {"q": "How does your data compare to a designed-DNA / MPRA project?", "a": "One brain scan is ~11.5M voxels — ~460,000x the raw data of a 200-bp oligo; ~17 GB of 3D MRI across ~7,700 human subjects vs a ~20 MB oligo library. Neither team gathered their own data, but ours is human brains from a ~$100M, ~20-year study."}
+  ]
+}

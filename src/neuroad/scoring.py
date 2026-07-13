@@ -67,20 +67,26 @@ def apply_honesty_caps(results: dict, score: int, verdict: Verdict) -> tuple[int
     single finding never gets two different scores/verdicts (the judge_reasoning
     string must agree with the meter the viewer sees).
 
-    CAP 1 — an UNRUN molecular anchor must not renormalize to the top band. When
-    the biomarker gate is NA (e.g. OASIS ships no plasma p-tau217/GFAP), the
-    NA-renormalization drops its weight from the denominator, so an otherwise
-    clean card can float up to 100 and read "strong candidate". A signal with NO
-    molecular corroboration is not a strong candidate: cap just below the STRONG
-    band (85) so the verdict lands at "robust enough for follow-up". Only bites
-    when the score would otherwise reach the top band.
+    CAP 1 (generalized) — the top "strong candidate" band requires a COMPLETE
+    gauntlet. ANY NA test (the molecular anchor when a cohort ships no plasma, an
+    uninformative brain-age control, an unrun scanner star) is dropped from the
+    denominator, so an otherwise clean card can renormalize up to 100 on the tests
+    that DID run and read "strong candidate". A signal with an unrun test is not a
+    strong candidate: if any test is NA, cap just below the STRONG band (85) so the
+    verdict lands at "robust enough for follow-up". A genuine 5/5 (no NA) is
+    untouched and earns up to 100. Only bites when the score would reach the top band.
 
     CAP 2 — a FAILED scanner/site star test is a likely-artifact signal.
     Replication cannot rescue it (a batch artifact "replicates" in every cohort
     that shares the confound), so cap the verdict language to "fragile".
     """
-    anchor = results.get("biomarker_anchor", TestResult.NA)
-    if anchor == TestResult.NA and score >= 85:
+    # CAP 1 (generalized) - the top "strong candidate" band requires a COMPLETE
+    # gauntlet. Every NA test is dropped from the denominator, so a card missing
+    # an artifact control (brain-age / scanner star) OR the molecular anchor can
+    # renormalize up to 100 on the tests that DID run. If ANY test is NA, cap just
+    # below STRONG (85 -> 84) so no unrun test can launder a signal into the
+    # promote band. A genuine 5/5 (no NA) is untouched and earns up to 100.
+    if any(r == TestResult.NA for r in results.values()) and score >= 85:
         score = 84
         verdict = verdict_for(score)
     if results.get("site_scanner") == TestResult.FAILED and verdict != Verdict.FRAGILE:

@@ -63,13 +63,22 @@ _REGION_DATASETS = ("adni:roi", "adni:freesurfer", "adni:fsx")
 
 
 def _infer_target(hypothesis: str) -> str:
-    """The same keyword target the engine routes to (df-free: safe, a mismatch
-    only ever causes a cache miss, never a wrong number)."""
+    """The SAME target the engine routes to — via the one canonical router
+    (``claude.router.route_target``: routing-cache hit -> LLM-on-miss -> keyword
+    backstop). Because ``claim_parser._fallback`` routes through the same function,
+    the cache key's target can never diverge from the engine's routed target. A
+    cache-hit is pure Python (<1ms), so the hot path stays fast; only a novel typed
+    hypothesis pays one classify call, once. Any failure -> keyword -> "conversion",
+    a miss, never a wrong number."""
     try:
-        from neuroad.claude.claim_parser import _infer_target as _it
-        return _it(hypothesis or "", None)
+        from neuroad.claude.router import route_target
+        return route_target(hypothesis or "", None)
     except Exception:  # noqa: BLE001
-        return "conversion"
+        try:
+            from neuroad.claude.claim_parser import _infer_target as _it
+            return _it(hypothesis or "", None)
+        except Exception:  # noqa: BLE001
+            return "conversion"
 
 
 def _region_for_key(dataset: str, hypothesis: str) -> str:

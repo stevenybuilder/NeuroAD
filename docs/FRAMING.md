@@ -368,3 +368,132 @@ label columns and predictors to measured features, the engine **cannot silently 
 result for an ungrounded input** — by design. (Caveat: the parser maps vague inputs to the
 *nearest* target by default; the substrate check is what stops that from producing a
 meaningless number.)
+
+---
+
+## 13. Team Q&A — imaging→omics connection, PI4AD & data provenance (2026-07-13)
+
+Answers to the questions that come up when a teammate traces the pipeline end to end.
+State these as design decisions, not confessions — the boundaries here are the credibility.
+
+**The connection in one line:** *imaging routes, PI4AD ranks — the plasma biomarker is the
+hinge.* The MRI finds and validates a signal and picks the **mechanism**; the genetics/omics
+side supplies the **ranking** for that mechanism's genes. That split is deliberate: the
+ranking is an external, citable authority, not a number we tuned.
+
+- **"How does the ADNI data connect to the PI4AD ranking table?"** → Through the
+  **plasma-biomarker column**. The ADNI CSV carries, per subject, the 768-d NeuroJEPA
+  embedding (`emb_*`) + measured plasma (`p_tau217`/`gfap`/`nfl`/`amyloid`) +
+  `dx/age/sex/site/scanner`. Flow: probe `emb_*` for a signal → referee kills confounds →
+  **correlate the survivor with the biomarker columns; whichever it tracks selects the
+  mechanism** (`p_tau217→amyloid_cascade`, `gfap→glial`, `nfl→vascular`, in
+  `_MECH_BIOMARKER`) → the mechanism indexes a gene set → looked up in the PI4AD priority
+  table → ranked targets → AlphaFold on the top one. The biomarker is a real molecular
+  readout (p-tau217 = measured phospho-tau), so it's a legitimate hinge, not a leap.
+
+- **"Is the ranking computed from the MRI?"** → No, and it can't be — for anyone. A
+  structural scan carries brain shape/atrophy; gene *priority* is a population-genetics
+  statement (GWAS/eQTL/networks across thousands of people). The MRI's job is discovery +
+  validation + **mechanism routing**; the genetics ranking is PI4AD's. Say **"imaging
+  routes, PI4AD ranks,"** not "the MRI computes the ranking." (Optional upgrade: condition
+  the ranking on regional atrophy via Allen-atlas expression — scoped at ~2 days for a
+  demo-tier version; documented, not built.)
+
+- **"Is this based on PI4AD? Do we run it?"** → The target ranking **is** PI4AD (real
+  published priorities: APP 8.60/#18, MAPT 7.30/#151, …). We don't run its R package (no R
+  runtime, by design); we ship a **provenance-stamped snapshot** of its portal output (74
+  top genes, cross-checked vs the paper) with an **optional live-fetch** path, and run our
+  **own STRING-RWR network propagation** on top. Using an external authority is the point —
+  the calibration check (recovers APP/ESR1) only carries weight *because* the numbers aren't
+  ours. (The fuller 1–5 ranker in §12 blends PI4AD with STRING/LINCS/AlphaFold/OpenTargets;
+  the demo card the team saw is the PI4AD-priority view.)
+
+- **"What omics data do we use?"** → GWAS / eQTL / PCHi-C are **upstream, baked into
+  PI4AD's precomputed ranking** — we consume the output, we don't ingest those files. The
+  one omics-type dataset we compute on directly is **STRING** (protein-interaction network,
+  our RWR propagation). Everything we ingest is **imaging (MRI→embeddings) + plasma
+  biomarkers + clinical** — not raw omics. Say "we stand on PI4AD's multi-omics ranking and
+  run our own network propagation," not "we do multi-omics integration."
+
+- **"Are the ranked proteins the biomarkers?"** → No — different jobs. **Biomarkers
+  (p-tau217/GFAP/NfL) are what we measure** to confirm the signal is real biology and route
+  the mechanism. **Ranked proteins (APP/MAPT/APOE) are drug targets** — what to intervene
+  on. They overlap in biology (MAPT = the tau gene; p-tau217 = measured tau protein) but one
+  is the evidence, the other is the target.
+
+- **"What genome do we derive from?"** → None per-subject — we don't sequence anyone. Genes
+  resolve to the **human reference via Ensembl IDs** (Open Targets on GRCh38); proteins/
+  structures via **UniProt** (APP = P05067). The genomic evidence lives in **PI4AD's
+  population genetics** (GWAS/eQTL). State the limitation plainly: the underlying GWAS is
+  **European-ancestry-biased**.
+
+- **"Raw ADNI scans, or preprocessed tables?"** → Raw, and processed by us. We pulled raw
+  DICOM MPRAGE (590 + 407 + 334 across three collections) and ran our own preprocessing —
+  skull-strip (deepbet / SynthStrip), resample, **NeuroJEPA-encode into our own
+  embeddings**, FastSurfer for volumes. The embeddings are ours, not someone else's
+  spreadsheet. Note: these are **structural T1, not fMRI** — classical fMRI steps (temporal
+  motion correction, slice-timing) don't apply; the structural analogs (skull-strip,
+  orientation/affine, QC annotation) are already built and run in the SFG module
+  (`mri_visualizations/backend/sfg/`).
+
+**Language — use vs avoid (this cluster):**
+- **Use:** "imaging routes, PI4AD ranks"; "the biomarker is the hinge to the omics side";
+  "PI4AD is an external, citable authority"; "we run our own STRING propagation"; "our own
+  NeuroJEPA embeddings from raw scans."
+- **Avoid:** "the MRI computes the ranking"; "we do multi-omics integration"; "these
+  proteins are the biomarkers"; "we derive from genome X"; "classical fMRI on our data."
+
+---
+
+## 14. Live vs frozen — how the demo actually runs (deployment architecture, 2026-07-13)
+
+**The one line:** the backend is **live cloud compute**, not a replay. On Cloud Run,
+`/api/investigate` recomputes the full referee per request and `/api/ask` is live Claude
+(Opus) — and the **ADNI / Neuro-JEPA headline recomputes live**, not from a cache.
+
+**Three tiers — what runs where:**
+
+| Layer | Where | Live or precomputed |
+|---|---|---|
+| Neuro-JEPA embedding of raw MRI + FastSurfer | Colab GPU, offline | **Precomputed** — Cloud Run has no GPU; the output is a small embedding table |
+| Referee (probe → 5-gauntlet → score → verdict) | Cloud Run CPU, per request | **Live recompute** — numpy/sklearn, no GPU in the request path |
+| Claude narration / courtroom (`/api/ask`) | Cloud Run → Anthropic API | **Live** — Opus, `claude_live:true` |
+| `demo_data.json` prefilled happy-path | static asset | **Frozen** — the offline "insurance" replay for the static / GitHub-Pages demo; the live backend recomputes instead |
+
+**Verified live receipts (deployed URL, 2026-07-13):**
+- `adni:neurojepa` → **live** AUC 0.857 (adj 0.764), n=590, real Neuro-JEPA embeddings + real
+  gated p-tau217 anchor; robustness computed live (age/sex passed, scanner weakened,
+  brain-age passed).
+- `oasis` (weight-free feeder) → live AUC 0.468/0.482, n=86.
+- `synthetic:KILL` → live AUC 0.935 (the KILL beat).
+
+- **"How is the API live without a GPU — is it all cached?"** → No. The *only* precomputed
+  step is the **GPU Neuro-JEPA embedding of raw scans** (Cloud Run has no GPU; the embedding
+  is a one-time transform). Everything downstream — the whole referee + Claude — runs **live
+  per request** on CPU against the cohort tables baked into the container. A production
+  version doesn't "add live compute"; it already has it. It only adds an **on-demand GPU
+  worker** so a user could upload a *brand-new* MRI and embed it live.
+
+- **"The Neuro-JEPA embeddings are license-restricted — how are they in the live ADNI demo?
+  Isn't that a leak?"** → No, and the boundary is deliberate. The ADNI embedding tables + the
+  gated ADNI clinical table are **baked into the PRIVATE Cloud Run image** (explicit
+  `.gcloudignore` negations) but stay **OUT of public GitHub** (gitignored). The distinction
+  that keeps it clean: a **private service** that exposes only **aggregate results** (an AUC,
+  a verdict) over the API is **not public distribution** of the tables — users never receive
+  the subject-level data. Non-commercial (hackathon), de-identified, inside the private GCP
+  project. **Public GitHub = no embeddings; private Cloud Run image = embeddings baked in.**
+  *(Design rationale, not legal advice — license read in `docs/HF_ACCESS.md` + ignore-file
+  headers.)*
+
+- **⚠️ Demo-safety:** for a **live** "watch it compute" moment, drive typed hypotheses to
+  `adni:neurojepa` (live, the headline) or the open cohorts (`oasis`/`openbhb`/`synthetic`).
+  Do **not** type an `oasis:neurojepa` hypothesis live — that specific embedding table isn't
+  shipped, so it errors honestly. The prefilled happy-path is the frozen fallback (real
+  numbers) if the network/API is down.
+
+**Language — use vs avoid (this cluster):**
+- **Use:** "the backend is live cloud compute"; "ADNI recomputes live on the private Cloud
+  Run image"; "only the GPU embedding is precomputed"; "embeddings ship to the private image,
+  never to public GitHub."
+- **Avoid:** "we cached the results and replay them"; "it's not really live"; "the embeddings
+  are on GitHub."
