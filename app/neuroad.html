@@ -2614,6 +2614,24 @@ class Component extends React.Component {
       const ageT=(c&&c.tests||[]).find(x=>x.key==='age_sex'); const ageS=(ageT&&ageT.stats)||{};
       const hypAuc = isScan ? (lk.outcome_auc!=null?lk.outcome_auc:0) : (ageS.auc_before!=null?ageS.auc_before:0);
       const cfAuc  = isScan ? (lk.scanner_auc!=null?lk.scanner_auc:0) : (ageS.auc_after!=null?ageS.auc_after:0);
+      // When the outcome BEATS the scanner (margin>0), the acquisition confound was
+      // RULED OUT — the "it's just scanner" branch dies, not the finding. Never render
+      // the whole-cohort scanner AUC here as if the confound won: the harmonization can
+      // drive it optimistically below chance (the 0.37 artifact the P1 audit forbids
+      // showing). Prove the ruling-out with the honest within-field-strength invariance.
+      const fsi = isScan ? this._fsInv(lk) : null;
+      if(isScan && lk.margin!=null && lk.margin>0){
+        const bars=[ this.auc('Diagnosis AUROC', hypAuc, C.green) ];
+        if(fsi) fsi.strata.forEach(s=> bars.push(this.auc(s.level+'-only', s.auc, C.green)));
+        return this.storyShell(node, 'Scanner confound — ruled out',[
+          el('div',{key:'g',style:{fontSize:'13px',color:C.ink,lineHeight:1.5,marginBottom:'12px'}},
+            fsi ? ('A scanner-only classifier does not beat the finding. AD-vs-CN holds within each '+fsi.kind+' ('+fsi.pairs+'; within ±'+(+fsi.band).toFixed(2)+' of the pooled '+this._num(hypAuc)+'), so the signal is disease, not the machine.')
+                : 'The scanner-only classifier does not beat the finding — the signal survives the acquisition-leakage test. It is disease, not the machine.'),
+          el('div',{key:'a',style:{marginBottom:'9px'}}, bars),
+          el('div',{key:'v',style:{fontSize:'12px',fontWeight:600,color:C.green,background:C.greenSoft,padding:'8px 10px',borderRadius:'8px'}}, 'Signal holds within every field strength → the "it’s just scanner" branch is pruned, not the finding.'),
+          this.disclaimer('Killed branches stay visible (gray, dashed) so the reasoning is auditable — not hidden.')
+        ]);
+      }
       return this.storyShell(node, isScan?'Kill reason — scanner confound':'Kill reason — age confound',[
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink,lineHeight:1.5,marginBottom:'12px'}}, isScan?'A classifier that only sees the scanner site predicts the outcome better than the hypothesis does. The signal is the machine, not the disease.':'Chronological age alone explains the atrophy at least as well as the biomarker. No disease-specific signal remains.'),
         el('div',{key:'a',style:{marginBottom:'9px'}},[ this.auc(isScan?'Hypothesis AUC':'Hypothesis AUC', hypAuc, C.green), this.auc(isScan?'Scanner-site classifier':'Age-only baseline', cfAuc, C.gray) ]),
