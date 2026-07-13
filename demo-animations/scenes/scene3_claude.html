@@ -48,8 +48,8 @@
   .wordmark{position:absolute; top:44px; left:56px; font-size:22px; font-weight:700; letter-spacing:-.02em}
   .wordmark b{color:var(--ink)} .wordmark span{color:var(--clay)}
   .head{position:absolute; top:56px; left:0; right:0; text-align:center}
-  .kicker{font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px}
-  .title{font-size:44px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+  .kicker{font-size:14px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px}
+  .title{font-size:48px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
   .title .dot{color:var(--clay)}
 
   /* --- connector svg layer --- */
@@ -61,12 +61,12 @@
   .colhead{
     position:absolute; transform:translateX(-50%);
     background:var(--card); border:1px solid var(--edge2); border-radius:8px;
-    padding:7px 16px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    padding:7px 16px; font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
     color:var(--ink2); box-shadow:0 1px 2px rgba(40,36,28,.04);
     display:flex; align-items:center; gap:9px; white-space:nowrap;
   }
   .colhead .arw{color:var(--clay); font-weight:700}
-  .colhead .cnt{font-family:var(--mono); font-size:11px; color:var(--mute); font-weight:600; letter-spacing:0}
+  .colhead .cnt{font-family:var(--mono); font-size:12px; color:var(--mute); font-weight:600; letter-spacing:0}
 
   /* --- cards --- */
   .card{
@@ -76,7 +76,7 @@
   }
   .card .pill{
     position:absolute; top:10px; left:12px;
-    font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
     padding:2px 8px; border-radius:6px;
   }
   .card .handle{
@@ -87,27 +87,27 @@
   .card .handle.r{right:-6px} .card .handle.l{left:-6px}
   .card .body{position:absolute; left:14px; right:16px; top:34px; display:flex; gap:12px; align-items:center}
   .card .glyph{
-    flex:0 0 auto; width:34px; height:34px; border-radius:9px;
+    flex:0 0 auto; width:38px; height:38px; border-radius:9px;
     display:flex; align-items:center; justify-content:center;
-    font-size:20px; line-height:1;
+    font-size:22px; line-height:1;
   }
   .card .txt{min-width:0}
-  .card .ct{font-size:17px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.15}
-  .card .cs{font-size:13px; color:var(--ink2); margin-top:3px; line-height:1.28}
+  .card .ct{font-size:23px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.15}
+  .card .cs{font-size:17px; color:var(--ink2); margin-top:4px; line-height:1.3}
   .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
 
   /* right artifact cards a touch taller / richer */
-  .card.out .ct{font-size:17px}
-  .card.out .cs{font-size:13px}
+  .card.out .ct{font-size:23px}
+  .card.out .cs{font-size:17px}
 
   /* --- hub --- */
   #hublabel{
     position:absolute; left:960px; top:548px; transform:translate(-50%,-50%);
-    text-align:center; width:180px; pointer-events:none;
+    text-align:center; width:200px; pointer-events:none;
   }
-  #hublabel .h1{font-size:17px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
-  #hublabel .h2{font-size:13px; color:var(--ink2); margin-top:4px; font-weight:600}
-  #hublabel .h3{font-size:12px; color:var(--mute); margin-top:3px; line-height:1.3}
+  #hublabel .h1{font-size:23px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
+  #hublabel .h2{font-size:15px; color:var(--ink2); margin-top:4px; font-weight:600}
+  #hublabel .h3{font-size:16px; color:var(--mute); margin-top:6px; line-height:1.34}
 
   /* --- hypothesis in (Claude's claim-parser / router) --- */
   #hypoIn{
@@ -117,16 +117,16 @@
     box-shadow:0 1px 2px rgba(40,36,28,.04), 0 10px 30px rgba(40,36,28,.08);
     padding:13px 18px 14px;
   }
-  #hypoIn .hk{font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
-  #hypoIn .hx{font-size:16px; font-weight:600; color:var(--ink); margin-top:7px; line-height:1.28}
-  #hypoIn .hr{font-size:12px; color:var(--ink2); margin-top:8px; line-height:1.32}
+  #hypoIn .hk{font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
+  #hypoIn .hx{font-size:21px; font-weight:600; color:var(--ink); margin-top:8px; line-height:1.3}
+  #hypoIn .hr{font-size:15px; color:var(--ink2); margin-top:9px; line-height:1.36}
   #hypoIn .hr b{color:var(--clay-deep); font-weight:700}
   #stage.playing #hypoIn{animation:fadeUp .6s ease both; animation-delay:.3s}
 
   /* --- caption --- */
   .caption{
     position:absolute; left:0; right:0; bottom:52px; text-align:center;
-    font-size:13px; color:var(--mute); letter-spacing:.01em;
+    font-size:18px; color:var(--mute); letter-spacing:.01em;
   }
   .caption b{color:var(--ink2); font-weight:600}
 
@@ -232,7 +232,6 @@
     <!-- hub label -->
     <div id="hublabel">
       <div class="h1">Claude</div>
-      <div class="h2">Opus orchestrator</div>
       <div class="h3">parses &amp; routes the hypothesis · calls the tools · synthesizes</div>
     </div>
 
@@ -266,10 +265,10 @@
   ];
 
   /* ---------- layout ---------- */
-  var LW = 322, LH = 86, LGAP = 15, LX = 152;
+  var LW = 348, LH = 104, LGAP = 16, LX = 148;
   var Ltot = LEFT.length*LH + (LEFT.length-1)*LGAP;
   var Lstart = HUBY - Ltot/2;
-  var RW = 330, RH = 122, RGAP = 30, RX = 1438;
+  var RW = 352, RH = 142, RGAP = 28, RX = 1420;
   var Rtot = RIGHT.length*RH + (RIGHT.length-1)*RGAP;
   var Rstart = HUBY - Rtot/2;
 

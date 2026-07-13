@@ -7,11 +7,11 @@ DIR = pathlib.Path(__file__).parent
 MASTER = (DIR / "neuroad_demo_animations.html").read_text(encoding="utf-8")
 
 SCENES = [
-    ("scene0_title.html",    "Title",    "Title / opener"),
-    ("scene1_pipeline.html", "Pipeline", "Discovery pipeline"),
-    ("scene2_flywheel.html", "Flywheel", "Discovery flywheel"),
-    ("scene3_claude.html",   "Claude",   "Orchestrated by Claude"),
-    ("scene4_probe.html",    "Probe",    "One probe, three questions"),
+    ("scene0_title.html",       "Title",      "Title / opener"),
+    ("scene0b_validation.html", "Validation", "Validated in the field"),
+    ("scene1_pipeline.html",    "Pipeline",   "Discovery pipeline"),
+    ("scene4_probe.html",       "Probe",      "One probe, three questions"),
+    ("scene3_claude.html",      "Claude",     "Orchestrated by Claude"),
 ]
 
 def b64(name):

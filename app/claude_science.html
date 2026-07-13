@@ -344,8 +344,17 @@ function submitInput(){
   const text = (field ? field.value : '').trim();
   if(state.phase==='empty'){
     if(!text) return;
-    // typing a slash-only path is handled via slash menu; plain text stays in empty
-    state.rawInput = field.value;
+    // a slash-only path is handled via the slash menu; leave it in place
+    if(text.startsWith('/')){ state.rawInput = field.value; return; }
+    // plain hypothesis: auto-connect NeuroAD and run it so the send button never
+    // dead-ends (previously it only stored the text and returned).
+    state.connected = true;
+    state.hypothesis = text;
+    state.matched = matchDatasets(text);
+    state.phase = 'result';
+    state.resultStage = 'pulling';
+    render();
+    startTimeline();
     return;
   }
   if(state.phase==='connected'){
