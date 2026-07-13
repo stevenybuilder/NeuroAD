@@ -1,4 +1,6 @@
 .venv/
+.venv
+mri_visualizations/.venv-sfg
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -61,3 +63,5 @@ data/real/fixtures/
 # amyloid per RID) under the LONI DUA — same class as data/real/_gated/. Never commit.
 data/real/_manifests/adni_image_manifest.csv
 data/real/_manifests/adni*.csv
+.claude/
+private-context/
