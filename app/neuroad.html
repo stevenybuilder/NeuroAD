@@ -1639,6 +1639,117 @@ class BrainViewer extends React.Component {
   }
 }
 
+// ---- 3Dmol.js loader: inject the vendored viewer <script> exactly once, guarded.
+// Never throws; on any load failure it calls back with null so callers fall back.
+const VENDORED_STRUCTURES = ['APP','MAPT','APOE','PSEN1','BACE1','ESR1'];
+function get3Dmol(){ try{ return window.$3Dmol || window['3Dmol'] || null; }catch(e){ return null; } }
+function ensure3Dmol(cb){
+  try {
+    const existing = get3Dmol();
+    if (existing) return cb(existing);
+    if (window.__zui3dmolState === 'error') return cb(null);
+    window.__zui3dmolCbs = window.__zui3dmolCbs || [];
+    window.__zui3dmolCbs.push(cb);
+    if (window.__zui3dmolState === 'loading') return;
+    window.__zui3dmolState = 'loading';
+    const s = document.createElement('script');
+    s.src = '/vendor/3Dmol-min.js';
+    s.async = true;
+    const flush = ()=>{ const mod = get3Dmol(); window.__zui3dmolState = mod ? 'ready' : 'error'; const cbs = window.__zui3dmolCbs || []; window.__zui3dmolCbs = []; cbs.forEach(f=>{ try{ f(mod); }catch(e){} }); };
+    s.onload = flush;
+    s.onerror = ()=>{ window.__zui3dmolState = 'error'; const cbs = window.__zui3dmolCbs || []; window.__zui3dmolCbs = []; cbs.forEach(f=>{ try{ f(null); }catch(e){} }); };
+    document.head.appendChild(s);
+  } catch(e){ try{ cb(null); }catch(_){} }
+}
+
+// AlphaFold pLDDT confidence bands (per-residue b-factor → blue=high, orange=low).
+function plddtColor(b){
+  if (b > 90) return '#0053D6';   // very high
+  if (b > 70) return '#65CBF3';   // confident
+  if (b > 50) return '#FFDB13';   // low
+  return '#FF7D45';               // very low
+}
+
+// In-demo 3D structure viewer for the top ranked target. Payoff of the ranked-targets
+// card. MUST degrade gracefully: any missing asset / WebGL failure / fetch error falls
+// back to the plain pLDDT bar + link (rendered by the parent via props.fallback).
+class StructViewer extends React.Component {
+  constructor(p){ super(p); this.state = { status:'loading' }; this._dead = false; }
+  componentDidMount(){ try{ this._mount(); }catch(e){ this._fail(); } }
+  componentWillUnmount(){
+    this._dead = true;
+    try { if (this._viewer){ if (this._viewer.spin) this._viewer.spin(false); if (this._viewer.clear) this._viewer.clear(); } } catch(e){}
+    this._viewer = null;
+  }
+  _fail(){ if (!this._dead) this.setState({ status:'failed' }); }
+  _mount(){
+    const gene = (this.props.gene||'').toUpperCase();
+    if (VENDORED_STRUCTURES.indexOf(gene) < 0) return this._fail();
+    // Feature-detect WebGL before touching 3Dmol.
+    try {
+      const canary = document.createElement('canvas');
+      const gl = canary.getContext('webgl') || canary.getContext('experimental-webgl');
+      if (!gl) return this._fail();
+    } catch(e){ return this._fail(); }
+    ensure3Dmol(($3Dmol)=>{
+      if (this._dead) return;
+      if (!$3Dmol || !this.host) return this._fail();
+      let ctrl = null; try{ ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null; }catch(e){}
+      const to = setTimeout(()=>{ try{ ctrl && ctrl.abort(); }catch(e){} }, 12000);
+      fetch('/structures/'+gene+'.cif', { signal: ctrl?ctrl.signal:undefined })
+        .then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.text(); })
+        .then(cif=>{
+          clearTimeout(to);
+          if (this._dead || !this.host) return;
+          try {
+            const viewer = $3Dmol.createViewer(this.host, { backgroundColor:'#16150F', antialias:true });
+            this._viewer = viewer;
+            viewer.addModel(cif, 'cif');
+            viewer.setStyle({}, { cartoon:{ colorfunc:(atom)=>plddtColor(atom.b) } });
+            viewer.zoomTo();
+            viewer.render();
+            try { viewer.zoom(1.15, 600); viewer.spin('y', 0.4); } catch(e){}
+            this.setState({ status:'ready' });
+          } catch(e){ this._fail(); }
+        })
+        .catch(()=>{ clearTimeout(to); this._fail(); });
+    });
+  }
+  _boltzLine(){
+    const bt = this.props.boltz;
+    if (!bt || bt.iptm==null) return null;
+    const pair = [bt.gene_a, bt.gene_b].filter(Boolean).join('·') || 'complex';
+    return el('div',{key:'bz',style:{marginTop:'8px',display:'flex',alignItems:'baseline',justifyContent:'space-between',gap:'10px',fontSize:'11px',color:C.ink2,lineHeight:1.4}},[
+      el('span',{key:'l'},[ el('b',{key:'p',style:{fontWeight:600,color:C.ink}}, pair), ' interface confidence ', el('span',{key:'s',style:{color:C.mute}},'(Boltz-2, no coordinates)') ]),
+      el('span',{key:'v',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink,fontWeight:600}}, 'iPTM '+(+bt.iptm).toFixed(2))
+    ]);
+  }
+  render(){
+    if (this.state.status === 'failed') {
+      // Graceful fallback: the exact pre-existing pLDDT bar + link, plus the honest Boltz scalar.
+      return el('div',{}, [ this.props.fallback, this._boltzLine() ]);
+    }
+    const plddt = this.props.plddt;
+    const mono = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    return el('div',{key:'sv',style:{marginTop:'12px'}},[
+      el('div',{key:'host',ref:(c)=>{ this.host = c; },style:{position:'relative',width:'100%',height:'220px',borderRadius:'10px',overflow:'hidden',background:'#16150F',border:'1px solid '+C.edge}},
+        this.state.status==='loading' ? el('div',{key:'ld',style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',color:'rgba(255,255,255,.55)',fontSize:'12px'}},'Loading structure…') : null
+      ),
+      el('div',{key:'lg',style:{marginTop:'8px',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'10px',flexWrap:'wrap'}},[
+        el('div',{key:'sc',style:{display:'flex',alignItems:'center',gap:'6px'}},[
+          el('span',{key:'a',style:{fontSize:'10px',color:C.mute}},'pLDDT'),
+          el('span',{key:'b',style:{width:'56px',height:'7px',borderRadius:'4px',background:'linear-gradient(90deg,#FF7D45,#FFDB13,#65CBF3,#0053D6)'}}),
+          el('span',{key:'c',style:{fontSize:'10px',color:C.mute}},'low → high'),
+          plddt!=null ? el('span',{key:'d',style:{fontSize:'11px',fontFamily:mono,color:C.ink,marginLeft:'2px'}},'mean '+plddt.toFixed(1)) : null
+        ]),
+        this.props.modelUrl ? el('a',{key:'ln',href:this.props.modelUrl,target:'_blank',rel:'noopener',style:{fontSize:'11px',fontFamily:mono,color:C.clayDeep}}, (this.props.uniprot||'model')+' →') : null
+      ]),
+      el('div',{key:'cap',style:{marginTop:'6px',fontSize:'11px',lineHeight:1.4,color:C.ink2}},'Real AlphaFold DB structure, colored by per-residue confidence (pLDDT).'),
+      this._boltzLine()
+    ]);
+  }
+}
+
 class Component extends React.Component {
 
   render(){
@@ -1664,9 +1775,29 @@ class Component extends React.Component {
           el('div',{key:'body',style:{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'12px'}},
             v.chatMsgs.map((m,i)=>el('div',{key:i,style:m.wrap},el('div',{style:m.bubble},m.text)))
           ),
+          el('div',{key:'composer',style:{padding:'10px 12px 0',borderTop:'1px solid var(--edge)'}},[
+            el('button',{key:'tg',onClick:v.toggleComposer,style:{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'8px',background:'none',border:'none',padding:'2px 0',cursor:'pointer',fontSize:'12px',color:'var(--ink2)',fontFamily:'inherit'}},[
+              el('span',{key:'l',style:{display:'flex',alignItems:'center',gap:'6px'}},[ el('span',{key:'d',style:{width:'6px',height:'6px',borderRadius:'50%',background:'var(--clay)'}}), 'Anchor a biomarker hypothesis' ]),
+              el('span',{key:'c',style:{color:'var(--mute)',fontSize:'13px',transform:v.composerOpen?'rotate(180deg)':'none',transition:'transform .18s'}},'⌄')
+            ]),
+            v.composerOpen ? el('div',{key:'bd',style:{marginTop:'8px',paddingBottom:'10px',display:'flex',flexDirection:'column',gap:'7px'}},
+              v.composerNoPlasma ? [
+                el('div',{key:'np',style:{fontSize:'11px',lineHeight:1.45,color:'var(--mute)',background:'var(--paper2)',borderRadius:'8px',padding:'9px 10px'}},'OASIS has no plasma biomarkers — p-tau217 / GFAP / amyloid / NfL can’t be anchored here. Switch to ADNI to anchor a hypothesis.')
+              ] : [
+                el('select',{key:'sel',value:v.composerBiomarker,onChange:v.setComposerBiomarker,style:{fontSize:'13px',padding:'8px 28px 8px 10px',border:'1px solid var(--edge2)',borderRadius:'8px',background:'var(--paper) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2710%27 height=%276%27 fill=%27none%27%3E%3Cpath d=%27M1 1l4 4 4-4%27 stroke=%27%238A877D%27 stroke-width=%271.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") no-repeat right 11px center',color:'var(--ink)',outline:'none',fontFamily:'inherit',WebkitAppearance:'none',appearance:'none'}},[
+                  el('option',{key:'amy',value:'amyloid'},'amyloid — positivity enrichment'),
+                  el('option',{key:'pt',value:'p_tau217'},'p-tau217 — plasma anchor'),
+                  el('option',{key:'gf',value:'gfap'},'GFAP — astrocyte anchor'),
+                  el('option',{key:'nf',value:'nfl'},'NfL — neurodegeneration')
+                ]),
+                el('input',{key:'ip',value:v.composerDraft,onChange:v.setComposerDraft,onKeyDown:v.onComposerKey,placeholder:'State a hypothesis…',style:{fontSize:'13px',padding:'9px 11px',border:'1px solid var(--edge2)',borderRadius:'8px',background:'var(--paper)',color:'var(--ink)',outline:'none',fontFamily:'inherit'}}),
+                el('button',{key:'go',onClick:v.onComposerSubmit,style:{fontSize:'13px',fontWeight:500,padding:'9px 12px',border:'none',borderRadius:'8px',background:'var(--clay)',color:'#fff',cursor:'pointer',fontFamily:'inherit'}},'Investigate')
+              ]
+            ) : null
+          ]),
           el('div',{key:'foot',style:{padding:'12px',borderTop:'1px solid var(--edge)',display:'flex',gap:'8px'}},[
             el('input',{key:'i',value:v.chatDraft,onChange:v.setChatDraft,onKeyDown:v.onChatKey,placeholder:'Ask a follow-up…',style:{flex:1,fontSize:'13px',padding:'9px 11px',border:'1px solid var(--edge2)',borderRadius:'8px',background:'var(--paper)',color:'var(--ink)',outline:'none',fontFamily:'inherit'}}),
-            el('button',{key:'s',onClick:v.onChatSend,style:{fontSize:'13px',padding:'0 12px',border:'none',borderRadius:'8px',background:'var(--clay)',color:'#fff',cursor:'pointer'}},'→')
+            el('button',{key:'s',onClick:v.onChatSend,style:{fontSize:'13px',padding:'0 12px',border:'1px solid var(--edge2)',borderRadius:'8px',background:'none',color:'var(--ink2)',cursor:'pointer'}},'→')
           ])
         ]),
         el('button',{key:'handle',onClick:v.toggleRail,style:v.handleStyle},'Ask Claude'),
@@ -1749,12 +1880,12 @@ class Component extends React.Component {
     { id:'neuro',x:720, y:440, role:'gold', label:'Neuroinflammation offshoot', sub:'iterated · GFAP', story:'iterate' },
     { id:'neurk',x:1120,y:565, role:'gray', label:'Microglial subtype', sub:'underpowered n' },
     { id:'neur2',x:1200,y:440, role:'green', label:'Refined · GFAP anchor', sub:'' },
-    { id:'cand2',x:1740,y:440, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
+    { id:'cand2',x:1740,y:850, role:'clay', label:'Repurposing compounds', sub:'2 compounds', story:'compounds' },
     { id:'scan', x:720, y:700, role:'gray', label:'Scanner-site artifact', sub:'killed', story:'kill' },
     { id:'scand',x:1060,y:760, role:'gray', label:'site batch', sub:'' },
     { id:'vasc', x:720, y:950, role:'green', label:'Vascular contribution', sub:'survives', story:'confound2' },
     { id:'vasc2',x:1200,y:950, role:'green', label:'WMH-linked pathway', sub:'' },
-    { id:'cand3',x:1740,y:950, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
+    { id:'cand3',x:1740,y:1400, role:'clay', label:'Wet-lab experiments', sub:'4 experiments', story:'experiments' },
     { id:'age',  x:720, y:1210,role:'gray', label:'Age-only confound', sub:'killed', story:'kill2' },
     { id:'aged', x:1060,y:1270,role:'gray', label:'cohort skew', sub:'' }
   ];
@@ -1773,6 +1904,7 @@ class Component extends React.Component {
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
+    composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false,
     chatMsgs:[ { role:'assistant', text:'I grew the tree from your hypothesis. Green branches survived the confound gauntlet; gray ones were killed; clay nodes are candidate targets to test. Ask a follow-up to spawn a new branch.' } ],
     cam:{ cx:900, cy:700, scale:0.35 }
   };
@@ -1857,6 +1989,17 @@ class Component extends React.Component {
   heroTx(){ const c=this.heroCase(); return c?c.translation:null; }
   heroCohort(){ try{ if(this.state.card&&this.state.card.case&&this.state.card.case.cohort) return this.state.card.case.cohort; return this.state.data.substrates[this.state.substrate].cohort; }catch(e){ return null; } }
   srcBadge(s){ const m={offline_snapshot:'SNAPSHOT',live:'LIVE',surrogate:'SURROGATE',candidate_only:'CANDIDATE'}; return m[s]||(s?String(s).toUpperCase():'SNAPSHOT'); }
+  // Honest live-vs-baked provenance. A non-null state.card means a live /api/investigate
+  // call just recomputed this result on the registered cohort; otherwise we are showing the
+  // REAL result that was computed offline from gated ADNI (which cannot be published in the
+  // deployed image) and baked into demo_data.json — a frozen seam, not a live recompute.
+  provenanceNote(){
+    if(this.state.card) return 'Live: recomputed just now by /api/investigate on the registered cohort.';
+    const sub=this.state.substrate||'';
+    const src = sub.indexOf('adni')===0 ? 'gated ADNI (cannot be published in the deployed image)'
+      : (sub.indexOf('oasis')===0 ? 'the OASIS cohort' : 'the source cohort');
+    return 'Baked seam: real result computed offline from '+src+' and frozen into demo_data.json — not a live production recompute.';
+  }
   shortDesc(t){ const n=(t&&t.evidence_note)||''; const m=n.match(/\(([^)]+)\)/); return m?m[1]:n; }
   nctUrl(ref){ const m=(ref||'').match(/NCT\d{8}/); return m?('https://clinicaltrials.gov/study/'+m[0]):'https://clinicaltrials.gov/'; }
   verdictCounts(){
@@ -1913,6 +2056,24 @@ class Component extends React.Component {
   fmtBiomarker(b){ const m={p_tau217:'p-tau217',gfap:'GFAP',nfl:'NfL',amyloid:'amyloid',apoe4:'APOE4'}; return m[b]|| (b?String(b).replace(/_/g,'-'):''); }
   cohortChipLabel(){ const co=this.heroCohort(); if(!co) return 'multi-site cohort'; const parts=[]; if(co.n_subjects!=null) parts.push(co.n_subjects+' subjects'); if(co.n_sites!=null) parts.push(co.n_sites+' sites'); return parts.length?parts.join(' · '):'multi-site cohort'; }
   anchorChipLabel(){ const tx=this.heroTx(); const b=tx&&tx.dominant_biomarker; return 'anchor · '+(b?this.fmtBiomarker(b):'p-tau217'); }
+  // Amyloid-positivity enrichment anchor line. This is a binary-positivity group
+  // difference (probe score amyloid+ minus amyloid-) reported with a point-biserial r —
+  // NOT a Pearson correlation. OASIS has no plasma/amyloid → rendered honestly as N/A.
+  amyloidAnchorLine(c){
+    const t=(c&&c.tests||[]).find(x=>x.key==='biomarker_anchor'); const s=(t&&t.stats)||{};
+    const mono='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const has=s.amyloid_delta!=null;
+    return el('div',{key:'amy',style:{marginTop:'10px',padding:'9px 10px',background:C.paper2,borderRadius:'8px',fontSize:'12px',lineHeight:1.45,color:C.ink2}}, has ? [
+      el('div',{key:'r',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:'10px',marginBottom:'6px'}},[
+        el('span',{key:'l',style:{fontWeight:600,color:C.ink}},'Amyloid-positivity enrichment'),
+        el('span',{key:'v',style:{fontFamily:mono,color:C.ink}},'r '+(+s.amyloid_point_biserial_r).toFixed(2))
+      ]),
+      this.bar(Math.max(0,Math.min(1,+s.amyloid_point_biserial_r)), C.green),
+      el('div',{key:'c',style:{marginTop:'6px',fontSize:'11px',color:C.mute}},'Probe score higher in amyloid+ vs amyloid− · Δ +'+(+s.amyloid_delta).toFixed(2)+' · 95% CI ≥ '+(+s.amyloid_ci_lo).toFixed(2)+' · n='+s.amyloid_n+' ('+s.amyloid_n_pos+'+ / '+s.amyloid_n_neg+'−). Binary positivity, not a Pearson r.')
+    ] : [
+      el('span',{key:'na'},[ el('span',{style:{fontWeight:600,color:C.ink}},'Amyloid-positivity enrichment · '), el('span',{style:{fontFamily:mono,color:C.mute}},'N/A'), ' — no plasma/amyloid coverage in this cohort.' ])
+    ]);
+  }
   loadNotes(){ try{ return JSON.parse(localStorage.getItem('neuroad-notes')||'{}'); }catch(e){ return {}; } }
   saveNotes(n){ try{ localStorage.setItem('neuroad-notes', JSON.stringify(n)); }catch(e){} }
   componentWillUnmount(){
@@ -2062,6 +2223,50 @@ class Component extends React.Component {
 
   toggleRail=()=>this.setState({railOpen:!this.state.railOpen});
   setChatDraft=(e)=>this.setState({chatDraft:e.target.value});
+  // ---- biomarker-anchor + hypothesis composer (inline mini-widget) ----
+  toggleComposer=()=>this.setState({composerOpen:!this.state.composerOpen});
+  toggleStruct=()=>this.setState({structOpen:!this.state.structOpen});
+  setComposerBiomarker=(e)=>this.setState({composerBiomarker:e.target.value});
+  setComposerDraft=(e)=>this.setState({composerDraft:e.target.value});
+  onComposerKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onComposerSubmit(); } };
+  // Human-readable summary that FOREGROUNDS the chosen biomarker's already-computed
+  // anchor from the loaded case (never re-derives it). Region is surfaced as the
+  // existing attribution OUTPUT — not an input that would change the computation.
+  anchorFocusSummary(bm){
+    const c=this.heroCase(); const t=(c&&c.tests||[]).find(x=>x.key==='biomarker_anchor'); const s=(t&&t.stats)||{};
+    const path=this.pathwayLabel({}); // survivor default → medial-temporal signature (output attribution)
+    const region=(this.brainRegions({})[0]||{}).l||'medial-temporal cortex';
+    const tail=' Attribution localizes to the '+path.toLowerCase()+' ('+region+') — surfaced as an output of the attentive probe, not an input.';
+    if(!t || t.result==='not_available'){
+      return 'No plasma p-tau217 / GFAP / amyloid coverage in this cohort, so the '+this.fmtBiomarker(bm)+' anchor is N/A here — route to ADNI/EPAD to anchor.'+tail;
+    }
+    if(bm==='amyloid'){
+      if(s.amyloid_delta==null) return 'Amyloid anchor is N/A for this cohort.'+tail;
+      return 'Amyloid-positivity enrichment: probe score Δ +'+(+s.amyloid_delta).toFixed(2)+' higher in amyloid+ vs amyloid− (point-biserial r '+(+s.amyloid_point_biserial_r).toFixed(2)+', 95% CI ≥ '+(+s.amyloid_ci_lo).toFixed(2)+', n='+s.amyloid_n+'). Binary positivity enrichment, not a Pearson r.'+tail;
+    }
+    if(bm==='p_tau217'){
+      if(s.ptau217_r==null) return 'p-tau217 anchor is N/A for this cohort.'+tail;
+      return 'p-tau217 anchor: r +'+(+s.ptau217_r).toFixed(2)+' (95% CI ≥ '+(+s.ptau217_ci_lo).toFixed(2)+', n='+s.ptau217_n+') — the dominant molecular anchor for this survivor.'+tail;
+    }
+    if(bm==='gfap'){
+      if(s.gfap_r==null) return 'GFAP anchor is N/A for this cohort.'+tail;
+      return 'GFAP astrocyte anchor: r +'+(+s.gfap_r).toFixed(2)+' (95% CI ≥ '+(+s.gfap_ci_lo).toFixed(2)+', n='+s.gfap_n+') — secondary to p-tau217 on this branch.'+tail;
+    }
+    // NfL: not separately computed in this cohort — stay honest.
+    return 'NfL was not separately anchored for this cohort; the computed anchors here are p-tau217 (r +'+(s.ptau217_r!=null?(+s.ptau217_r).toFixed(2):'—')+') and amyloid positivity (Δ +'+(s.amyloid_delta!=null?(+s.amyloid_delta).toFixed(2):'—')+').'+tail;
+  }
+  onComposerSubmit=()=>{
+    const hyp=(this.state.composerDraft||'').trim(); if(!hyp) return;
+    if(this.state.substrate==='oasis') return; // no plasma → guarded by UI too
+    const bm=this.state.composerBiomarker||'p_tau217';
+    const summary=this.anchorFocusSummary(bm);
+    this.setState(s=>({
+      entryValue:hyp, anchorFocus:bm, railOpen:true, composerOpen:false, composerDraft:'',
+      chatMsgs:s.chatMsgs.concat([{role:'user',text:hyp+'  ·  anchor: '+this.fmtBiomarker(bm)},{role:'assistant',text:summary}])
+    }));
+    // Fire the SAME real investigation the chat/entry uses; grows the tree + hits /api/investigate.
+    this.onInvestigate(hyp);
+  };
   setEntry=(e)=>this.setState({entryValue:e.target.value});
   onChatKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onChatSend(); } };
 
@@ -2142,7 +2347,7 @@ class Component extends React.Component {
     } catch(e){}
     clearTimeout(this._timer); clearTimeout(this._revealTimer);
     this._playing=false;
-    this.setState({stage:'canvas', playing:false, pinned:null, showVerdict:false, stepIndex:0, revealed:['root'], reasoning:this.growSeq[0].verb});
+    this.setState({card:null, stage:'canvas', playing:false, pinned:null, showVerdict:false, stepIndex:0, revealed:['root'], reasoning:this.growSeq[0].verb});
     setTimeout(()=>{
       this.measure();
       this.setState({cam:this.frameDetail(this.nmap.root,1.15,0)});
@@ -2221,7 +2426,7 @@ class Component extends React.Component {
           this.kv('scanners', co.n_scanners!=null?String(co.n_scanners):'—'),
           this.kv('mean age', co.age_mean!=null?co.age_mean.toFixed(1):'—'),
         ]),
-        this.disclaimer(co.substrate_line || co.note || 'Provenance bound to the source cohort — every downstream node inherits it.')
+        this.disclaimer((co.substrate_line || co.note || 'Provenance bound to the source cohort — every downstream node inherits it.') + ' ' + this.provenanceNote())
       ]);
     }
     if(k==='confound'){
@@ -2233,6 +2438,7 @@ class Component extends React.Component {
       return this.storyShell(node,'Confound gauntlet — 5 tests',[
         el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Does the signal survive when we strip each nuisance explanation? Lower Δ = less confounded.'),
         ...rows,
+        this.amyloidAnchorLine(c),
         this.disclaimer(tests.length? ('Passed '+nPass+'/'+tests.length+' — every mark and Δ comes from the referee on the loaded cohort.') : 'No gauntlet result available for this cohort.')
       ]);
     }
@@ -2257,6 +2463,12 @@ class Component extends React.Component {
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink,lineHeight:1.5,marginBottom:'12px'}}, isScan?'A classifier that only sees the scanner site predicts the outcome better than the hypothesis does. The signal is the machine, not the disease.':'Chronological age alone explains the atrophy at least as well as the biomarker. No disease-specific signal remains.'),
         el('div',{key:'a',style:{marginBottom:'9px'}},[ this.auc(isScan?'Hypothesis AUC':'Hypothesis AUC', hypAuc, C.green), this.auc(isScan?'Scanner-site classifier':'Age-only baseline', cfAuc, C.gray) ]),
         el('div',{key:'v',style:{fontSize:'12px',fontWeight:600,color:C.clayDeep,background:C.claySoft,padding:'8px 10px',borderRadius:'8px'}}, 'Confound ≥ signal → branch killed. Pruned from candidate generation.'),
+        el('div',{key:'rec',style:{marginTop:'9px',fontSize:'12px',lineHeight:1.5,color:C.green,background:C.greenSoft,padding:'8px 10px',borderRadius:'8px'}}, [
+          el('span',{key:'lbl',style:{fontWeight:600}},'Do this next — '),
+          isScan
+            ? 'harmonize the cohort with ComBat and re-run. If the signal survives once the scanner is removed, it is biology, not the machine.'
+            : 'regress out brain-age and anchor to plasma p-tau217 before re-testing. A molecular anchor is what separates disease from generic aging.'
+        ]),
         this.disclaimer('Killed branches stay visible (gray, dashed) so the reasoning is auditable — not hidden.')
       ]);
     }
@@ -2276,19 +2488,30 @@ class Component extends React.Component {
       const tx=this.heroTx();
       if(tx){
         const targets=(tx.ranked_targets||[]);
-        const rows=targets.map(t=> this.rankRow(
-          t.rank!=null?('#'+t.rank):'—', t.gene, this.shortDesc(t), t.priority_score,
+        const rows=targets.map((t,i)=> this.rankRow(
+          String(i+1), t.gene, this.shortDesc(t)+(t.rank!=null?(' · PI4AD #'+t.rank):''), t.priority_score,
           { frac: (t.priority_score!=null? Math.max(0,Math.min(1,t.priority_score/10)) : 0), badge:this.srcBadge(t.source) }
         ));
         const stc=tx.structure||{};
         const plddt=stc.mean_plddt;
+        // Pre-existing pLDDT bar + link — used verbatim as the graceful fallback if the
+        // 3D viewer can't load (missing asset, WebGL error, network). Never removed.
+        const afFallback = el('div',{key:'af',style:{marginTop:'12px',padding:'10px',background:C.paper2,borderRadius:'8px'}},[
+          el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · '+(stc.gene_symbol||stc.uniprot||'—')),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}}, plddt!=null?plddt.toFixed(1):'—')]),
+          this.bar(plddt!=null? plddt/100 : 0, C.green),
+          stc.model_url ? el('div',{key:'m',style:{marginTop:'7px',fontSize:'11px'}}, el('a',{href:stc.model_url,target:'_blank',rel:'noopener',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.clayDeep,textDecoration:'none'}}, (stc.uniprot||'model')+' · AlphaFold '+(stc.model_version||'')+' →')) : null
+        ]);
         return this.storyShell(node,'Ranked protein targets',[
           el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Ranked by PI4AD priority score (0–10), routed via the dominant fluid biomarker — hypotheses to test, not validated targets.'),
           ...rows,
-          el('div',{key:'af',style:{marginTop:'12px',padding:'10px',background:C.paper2,borderRadius:'8px'}},[
-            el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · '+(stc.gene_symbol||stc.uniprot||'—')),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}}, plddt!=null?plddt.toFixed(1):'—')]),
-            this.bar(plddt!=null? plddt/100 : 0, C.green),
-            stc.model_url ? el('div',{key:'m',style:{marginTop:'7px',fontSize:'11px'}}, el('a',{href:stc.model_url,target:'_blank',rel:'noopener',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.clayDeep,textDecoration:'none'}}, (stc.uniprot||'model')+' · AlphaFold '+(stc.model_version||'')+' →')) : null
+          el('div',{key:'sv'},[
+            el('button',{key:'tg',onClick:this.toggleStruct,style:{display:'flex',alignItems:'center',gap:'6px',width:'100%',marginTop:'12px',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px',cursor:'pointer',fontSize:'12px',color:C.ink2,fontFamily:'inherit',textAlign:'left'}},[
+              el('span',{key:'a',style:{flex:1}}, this.state.structOpen?'Hide 3D structure':'View 3D structure — real AlphaFold fold'),
+              el('span',{key:'c',style:{color:C.mute,transform:this.state.structOpen?'rotate(180deg)':'none',transition:'transform .18s'}},'⌄')
+            ]),
+            this.state.structOpen
+              ? el(StructViewer,{ key:'v', gene:(stc.gene_symbol||''), plddt:plddt, uniprot:stc.uniprot, modelVersion:stc.model_version, modelUrl:stc.model_url, boltz:stc.boltz_targeting, fallback:afFallback })
+              : afFallback
           ]),
           el('div',{key:'cav',style:{marginTop:'12px',fontSize:'11px',lineHeight:1.45,color:C.clayDeep,background:C.claySoft,border:'1px solid '+C.edge,borderRadius:'8px',padding:'9px 10px'}}, tx.caveat),
           this.disclaimer('Candidate targets to test — not validated.')
@@ -2824,13 +3047,24 @@ class Component extends React.Component {
   // 6-layer pipeline trail; lit layers are derived from what the real case produced.
   _pipelineTrail(node){
     const c=this.heroCase(); const tx=(c&&c.translation)||{}; const tests=(c&&c.tests)||[];
+    // L1 must name the ACTUAL substrate this case ran on. The adni:combat hero is a
+    // weight-free FreeSurfer morphometry feeder, NOT the frozen Neuro-JEPA model — only
+    // claim JEPA when the case's substrate is genuinely JEPA-derived.
+    const _sub=String(((c&&c.naive_effect)||{}).substrate||'');
+    const _isJepa=/jepa/i.test(_sub);
     const ranTests=tests.some(t=>t.result!=='not_available');
-    const hasFusion=!!(tx.cross_attention_fusion||tx.biomarker_fusion);
+    // Fusion is only genuinely present when cross-attention has content (an empty
+    // {} is truthy in JS but means "not run" — e.g. plasma-less OASIS) OR the
+    // biomarker surrogate actually fuses >=2 modalities (age-only is not fusion).
+    const _caf=tx.cross_attention_fusion, _bf=tx.biomarker_fusion;
+    const _hasCA=!!(_caf&&Object.keys(_caf).length>0);
+    const _hasBF=!!(_bf&&Array.isArray(_bf.features_used)&&_bf.features_used.length>=2);
+    const hasFusion=_hasCA||_hasBF;
     const hasTargets=!!(tx.ranked_targets&&tx.ranked_targets.length);
     const hasStruct=!!(tx.structure||(tx.repurposing&&tx.repurposing.length));
     const val=this._valence(node);
     const layers=[
-      {id:'L1',name:'JEPA',full:'Neuro-JEPA embedding',lit:true},
+      {id:'L1',name:_isJepa?'JEPA':'Morph',full:_isJepa?'Neuro-JEPA embedding':(_sub||'FreeSurfer morphometry (weight-free feeder)'),lit:true},
       {id:'L2',name:'Probe',full:'Attentive MLP probe',lit:true},
       {id:'L3',name:'Fusion',full:'Multimodal fusion',lit:hasFusion},
       {id:'L4',name:'Refine',full:'Kill-weak / surface-strong',lit:ranTests},
@@ -2886,11 +3120,32 @@ class Component extends React.Component {
     return rows.slice(0,2);
   }
   strengthDots(frac,color){ const N=5; const on=Math.round(Math.max(0,Math.min(1,frac||0))*N); const d=[]; for(let i=0;i<N;i++) d.push(el('span',{key:i,style:{width:'6px',height:'6px',borderRadius:'50%',background:i<on?color:C.edge2,display:'inline-block'}})); return el('div',{style:{display:'inline-flex',gap:'4px',alignItems:'center'}},d); }
+  // Real frozen-foundation-model evidence (Neuro-JEPA), shown as its OWN honest result —
+  // NOT attributed to the FreeSurfer hero AUC. Numbers come straight from demo_data.json
+  // `neurojepa_evidence` (frozen embeddings, inference only; weights never committed).
+  _neurojepaEl(){
+    const nj=(this.state.data&&this.state.data.neurojepa_evidence)||null; if(!nj) return null;
+    const sc=nj.scanner_leakage||{}; const ad=nj.ad_signal||{};
+    const stat=(label,val,sub)=> el('div',{key:label,style:{flex:'1 1 40%',minWidth:'120px',background:C.card,border:'1px solid '+C.edge,borderRadius:'10px',padding:'11px 12px'}},[
+      el('div',{key:'l',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},label),
+      el('div',{key:'v',style:{fontSize:'17px',fontWeight:600,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink,lineHeight:1.05}},val),
+      sub?el('div',{key:'s',style:{fontSize:'10px',color:C.mute,marginTop:'3px'}},sub):null
+    ]);
+    const stats=[];
+    if(ad.auc!=null) stats.push(stat('AD vs CN', 'AUC '+this._num(ad.auc), (ad.n!=null?('n='+ad.n+' · '):'')+'real OASIS-1 volumes'));
+    if(sc.auc_honest!=null) stats.push(stat('Scanner leakage', 'AUC '+this._num(sc.auc_honest), (sc.n!=null?('n='+sc.n):'')+(sc.n_sites!=null?(' · '+sc.n_sites+' sites'):'')));
+    if(!stats.length) return null;
+    return el('div',{key:'njepa'},[
+      this._secLabel('Frozen foundation model (Neuro-JEPA)'),
+      el('div',{key:'s',style:{display:'flex',gap:'9px',flexWrap:'wrap'}},stats),
+      el('div',{key:'n',style:{fontSize:'11px',lineHeight:1.5,color:C.mute,marginTop:'9px'}}, 'Measured on the frozen Neuro-JEPA embedding itself (inference only). Separate from the hero AUC above, which runs on FreeSurfer morphometry. '+(nj.provenance||''))
+    ]);
+  }
   // LIVE driving-analysis figure: the REAL-cohort unsupervised discovery clustering.
   // Bind to `discovery_real` (real embeddings; note the honest "0 promotable" result)
   // — NOT `discovery`, which is a synthetic planted-ground-truth method-validation run.
   discoveryFigure(node){
-    const data=this.state.data; const disc=data&&(data.discovery_real||data.discovery); if(!disc||!disc.clusters) return null;
+    const data=this.state.data; const disc=data&&data.discovery_real; if(!disc||!disc.clusters||!disc.real) return null;
     const phen=(p)=> p?String(p).replace(/_/g,' '):null;
     const rows=disc.clusters.map((cl,i)=>{
       const promoted=!!cl.promoted; const auc=cl.naive_effect&&cl.naive_effect.value; const score=cl.score!=null?cl.score:0;
@@ -2908,7 +3163,10 @@ class Component extends React.Component {
     });
     return el('div',{},[
       el('div',{key:'h',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'2px'}},[
-        el('div',{key:'a',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Unsupervised discovery · real cohort'),
+        el('div',{key:'a',style:{display:'flex',alignItems:'center',gap:'7px'}},[
+          el('span',{key:'t',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Unsupervised discovery · real cohort'),
+          this.chip('REAL','real')
+        ]),
         el('div',{key:'b',style:{fontSize:'10px',color:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}}, (disc.method||'kmeans')+' · k='+disc.k+' · sil '+this._num(disc.silhouette))
       ]),
       el('div',{key:'r'},rows),
@@ -2955,7 +3213,7 @@ class Component extends React.Component {
     const anTone= an.state==='passed'?C.green:(an.state==='na'?C.mute:C.gold);
     const anChip= chip('Anchor', an.state==='na'?'n/a':(an.effect!=null?this._num(an.effect):'✓'), an.label, anTone);
     return el('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}},[
-      pill(c.verdict||'Robust enough for follow-up','Survived the confound gauntlet; ranked into testable next steps.',scoreTxt),
+      pill(c.verdict||'Robust enough for follow-up','Cleared '+cf.pass+'/'+cf.total+' confound tests — a robustness score, not a confidence level; provisional, a licence to follow up.',scoreTxt),
       el('div',{key:'chips',style:{display:'flex',gap:'9px',flexWrap:'wrap'}},[aucChip,cfChip,anChip]),
       el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
       verdictLink
@@ -3002,7 +3260,9 @@ class Component extends React.Component {
         ]); })
       ]),
       el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
-      el('div',{key:'fig'},[ this._secLabel('Driving analysis'), this.discoveryFigure(node) ])
+      this._neurojepaEl(),
+      el('div',{key:'fig'},[ this._secLabel('Driving analysis'), this.discoveryFigure(node) ]),
+      el('div',{key:'prov',style:{fontSize:'11px',lineHeight:1.45,color:C.mute,borderTop:'1px solid '+C.edge,paddingTop:'10px'}}, this.provenanceNote())
     ]);
   }
   buildTabs(node){
@@ -3164,6 +3424,9 @@ class Component extends React.Component {
       handleStyle:{position:'absolute',left:'20px',bottom:'20px',display:st.railOpen?'none':'flex',alignItems:'center',gap:'8px',fontSize:'13px',fontWeight:500,letterSpacing:'-.005em',color:'#fff',background:C.clay,border:'none',borderRadius:'100px',padding:'11px 18px',cursor:'pointer',boxShadow:'0 6px 22px rgba(201,100,66,.28)',zIndex:24},
       toggleRail:this.toggleRail,
       chatMsgs:chat, chatDraft:st.chatDraft, setChatDraft:this.setChatDraft, onChatSend:this.onChatSend, onChatKey:this.onChatKey,
+      composerOpen:st.composerOpen, composerBiomarker:st.composerBiomarker, composerDraft:st.composerDraft,
+      composerNoPlasma: st.substrate==='oasis',
+      toggleComposer:this.toggleComposer, setComposerBiomarker:this.setComposerBiomarker, setComposerDraft:this.setComposerDraft, onComposerKey:this.onComposerKey, onComposerSubmit:this.onComposerSubmit,
 
       setCanvas:this.setCanvas,
       camTransform,
