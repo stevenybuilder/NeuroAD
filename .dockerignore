@@ -14,8 +14,15 @@ data/processed/
 # ZERO PTIDs — verified). These ship so /api/investigate runs ADNI live; they stay
 # gitignored (never on public GitHub). Negations override the rules just above.
 !data/real/_gated/adni.csv
+!data/real/_gated/adni_roi.csv
 !data/real/adni_neurojepa_embeddings.csv
 !data/real/adni_conversion_neurojepa_embeddings.csv
+# Open-cohort Neuro-JEPA embeddings (OASIS = public OAS* IDs, OpenBHB = anonymized
+# integer IDs; no gated identifiers). Ship so oasis:neurojepa / openbhb:neurojepa
+# run live too. Openly licensed (unlike ADNI's DUA); stay gitignored regardless.
+!data/real/oasis1_neurojepa_embeddings.csv
+!data/real/oasis2_neurojepa_embeddings.csv
+!data/real/openbhb_neurojepa_embeddings.csv
 
 # Secrets / local env
 .env

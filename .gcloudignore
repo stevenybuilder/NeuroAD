@@ -44,8 +44,15 @@ data/real/_manifests/
 # integer subject_id, ZERO PTIDs / IMAGEUIDs (verified) — and stay gitignored (never
 # on public GitHub). These negations override the *embeddings*.csv + _gated rules above.
 !data/real/_gated/adni.csv
+!data/real/_gated/adni_roi.csv
 !data/real/adni_neurojepa_embeddings.csv
 !data/real/adni_conversion_neurojepa_embeddings.csv
+# Open-cohort Neuro-JEPA embeddings so oasis:neurojepa / openbhb:neurojepa also run
+# live. OASIS = public OAS* IDs, OpenBHB = anonymized integer IDs (no gated IDs,
+# verified). Openly licensed vs ADNI's DUA; stay gitignored (never on public GitHub).
+!data/real/oasis1_neurojepa_embeddings.csv
+!data/real/oasis2_neurojepa_embeddings.csv
+!data/real/openbhb_neurojepa_embeddings.csv
 
 # --- everything not needed to serve the static demo ---
 .git/

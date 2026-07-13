@@ -10,6 +10,7 @@ Names:
 """
 from __future__ import annotations
 
+import functools
 from pathlib import Path
 
 import pandas as pd
@@ -21,8 +22,14 @@ from neuroad.data import (synthetic, real, openbhb, openbhb_jepa, oasis_jepa,
 _GATED_DIR = Path(__file__).resolve().parents[3] / "data" / "real" / "_gated"
 
 
+@functools.lru_cache(maxsize=32)
 def load(name: str, *, seed: int = 0) -> pd.DataFrame:
-    """Return a contract-valid table for a registered dataset ``name``."""
+    """Return a contract-valid table for a registered dataset ``name``.
+
+    Cached per (name, seed): a live /api/investigate request loads each cohort
+    twice (referee + case enrichment); memoizing means the embeddings load once
+    per process instead of on every request — a major live-latency win. Callers
+    treat the table as read-only (the referee residualizes fold-locally)."""
     key = name.strip()
     low = key.lower()
 
@@ -58,6 +65,14 @@ def load(name: str, *, seed: int = 0) -> pd.DataFrame:
     # scanner-slice branch below (which would otherwise mis-route these names).
     if low in ("adni:conversion", "adni:mci"):
         return adni_conversion_jepa.load_adni_conversion_neurojepa()
+
+    # ADNI FreeSurfer named-ROI feeder: emb_i IS a real brain region's volume, so a
+    # region parsed from a hypothesis conditions the whole probe. The ONLY cohort
+    # carrying df.attrs['region_columns'] — every other cohort treats region as a
+    # silent no-op.
+    if low in ("adni:freesurfer", "adni:roi", "adni:fsx"):
+        from neuroad.data import freesurfer_roi
+        return freesurfer_roi.load_adni_roi(_GATED_DIR / "adni_roi.csv", seed=seed)
 
     # ADNI ComBat-harmonized full cohort: 'adni:combat' removes the scanner
     # (field-strength) batch effect from the emb_* features while preserving the
