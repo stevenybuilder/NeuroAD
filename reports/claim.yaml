@@ -25,6 +25,8 @@ naive_effect:
     ComBat differs by <0.003 AUC
 leakage_margin:
   outcome_auc: 0.922
+  outcome_auc_icv_adj: null
+  icv_adjusted: false
   scanner_auc: 0.374
   margin: 0.549
   confound: scanner
@@ -44,6 +46,19 @@ leakage_margin:
   margin_ci_hi: 0.575
   margin_p: 0.001
   margin_ci_excludes_zero: true
+  field_strength_invariance:
+    confound: scanner
+    pooled_auc: 0.9225
+    strata:
+    - level: 3T
+      auc: 0.9253
+      n: 1193
+    - level: 1.5T
+      auc: 0.9351
+      n: 422
+    max_abs_delta: 0.0126
+    band: 0.05
+    within_band: true
 leakage_margin_note: Leakage-margin 95% CI 0.522..0.575 (excludes zero).
 verdict: strong candidate
 score: 100

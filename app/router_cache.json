@@ -61,5 +61,12 @@
 "model": "claude-sonnet-5",
 "confidence": "high",
 "text": "site-adjusted structural signal still separates ad from cn"
+},
+"4227a165d591e7c82a05ae17b8ce3b5d99ba9159": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "medium",
+"text": "alzheimer's disease is linked with increased amyloid volume in neocortex"
 }
 }
