@@ -26,7 +26,7 @@ from ..imaging import load, vox_to_world
 from ..registration import affine_register, conform_ras, dice, resample_to_grid
 from ..registry import Scan
 from ..resources import ResourceStore, make_key
-from ..skullstrip import synthstrip_mask
+from ..skullstrip import synthstrip_mask, weak_strip
 from .base import register
 
 DICE_OK = 0.85
@@ -53,7 +53,13 @@ class RegistrationCheck:
         data, affine, _img = load(ref)
         mask = synthstrip_mask(ref.modality_path(), config.STRIP_DIR / f"{ref.scan_id}_synthstrip.nii.gz")
         if mask is None:
-            return []  # SynthStrip unavailable; registration demo needs a clean brain
+            # SynthStrip weights aren't installed — fall back to the classical stripper
+            # (the same weak_strip the skull-strip check uses). It's a rough brain mask,
+            # but this check only needs a brain to synthetically misalign and
+            # re-register; the residual mismatch heatmap is still meaningful.
+            mask = weak_strip(data)
+        if mask is None or not mask.any():
+            return []
         brain = data * mask
         fixed, caffine = conform_ras(brain, affine)
         fixed = self._norm(fixed)

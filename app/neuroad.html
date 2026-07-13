@@ -3281,7 +3281,7 @@ class Component extends React.Component {
       const cor=ids.find(i=>/CORRUPT/i.test(i)); if(cor) pick.push(cor);
       const seenSite={};                              // one ADNI per site (up to 4) for the intensity confound
       scans.filter(s=>s.source==='adni').forEach(s=>{ const k=s.site||s.scan_id; if(!seenSite[k]&&Object.keys(seenSite).length<4){ seenSite[k]=1; pick.push(s.scan_id); } });
-      const ixi=ids.find(i=>/IXI/i.test(i)); if(ixi) pick.push(ixi);
+      const ixi=ids.find(i=>/IXI.*Guys/i.test(i))||ids.find(i=>/IXI/i.test(i)); if(ixi) pick.push(ixi);   // Guy's IXI = the registration (1.5) reference brain
       runCohort(pick.length?pick:null);
     }).catch(()=>runCohort(null));
   }
