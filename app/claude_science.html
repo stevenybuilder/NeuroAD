@@ -135,10 +135,14 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
 
 // ---- demo datasets (real reference cohorts, presented as the researcher's workspace) ----
 const DATASETS = {
-  adni:    {name:'ADNI',    mono:'AD', n:'~1,600 subjects', desc:'plasma p-tau217'},
-  oasis1:  {name:'OASIS-1', mono:'O1', n:'210 subjects',    desc:'structural MRI'},
-  oasis2:  {name:'OASIS-2', mono:'O2', n:'150 subjects',    desc:'conversion'},
-  openbhb: {name:'OpenBHB', mono:'OB', n:'3,984 subjects',  desc:'brain-age control'}
+  // Voxels (data volume) not subjects for the imaging cohorts — ~11.5M voxels per
+  // 3D scan × volumes processed (ADNI 2,951 → ~34B; OASIS-1 210 → ~2.4B; OASIS-2
+  // 150 → ~1.7B). OpenBHB stays subjects: its 3,984 is TABULAR (only 96 volumes
+  // embedded) — a voxel count there would overclaim.
+  adni:    {name:'ADNI',    mono:'AD', n:'~34 billion voxels',  desc:'plasma p-tau217'},
+  oasis1:  {name:'OASIS-1', mono:'O1', n:'~2.4 billion voxels', desc:'structural MRI'},
+  oasis2:  {name:'OASIS-2', mono:'O2', n:'~1.7 billion voxels', desc:'conversion'},
+  openbhb: {name:'OpenBHB', mono:'OB', n:'3,984 subjects',      desc:'brain-age control'}
 };
 const DS_ORDER = ['adni','oasis1','oasis2','openbhb'];
 
@@ -252,7 +256,7 @@ function conversationHTML(){
 
 // scan phrases keyed by stage
 const SCAN_PHRASE = {
-  pulling:    'Pulling your relevant datasets…',
+  pulling:    'Pulling in relevant datasets…',
   researching:'Researching…',
   connecting: 'Connecting to NeuroAD…'
 };
@@ -271,8 +275,9 @@ function resultFlowHTML(){
       chips+
     '</div>';
   }
-  // ready: minimal dataset banner, then the existing open widget
-  const rows = state.matched.map(k=>{
+  // ready: minimal dataset banner — show the FULL workspace (all real cohorts), not
+  // just the ones matched to this hypothesis, so OpenBHB + OASIS-2 are visible too.
+  const rows = DS_ORDER.map(k=>{
     const d = DATASETS[k];
     return '<div class="dsrow">'+
       '<div class="dsname">'+esc(d.name)+'</div>'+
