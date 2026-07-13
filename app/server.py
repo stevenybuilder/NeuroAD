@@ -84,6 +84,17 @@ _ASK_SYSTEM = (
     "needs it."
 )
 
+# Appended to the Ask system prompt ONLY when a screenshot is attached (note
+# review). It authorizes Claude to actually read the MRI frame it was handed.
+_ASK_IMAGE_ADDENDUM = (
+    "\n\nAN IMAGE IS ATTACHED: a screenshot of the structural-MRI viewer in THIS "
+    "investigation, showing the region a researcher pinned a note on. Treat it as "
+    "legitimate context - you may describe what is visible in the scan (anatomy, "
+    "orientation, obvious artifacts) and relate it to the note and the case. Stay "
+    "grounded: do not invent measurements the image cannot support, and say so if "
+    "the frame is ambiguous or too coarse to judge."
+)
+
 # --- QC summary rail: a plain-language read of the silent-failure guard flags ---
 # Given the live imaging-QC flags (+ prior investigation context), Claude returns a
 # short, ranked list of the major data-quality problems, each tagged with the check
@@ -143,6 +154,25 @@ def _parse_qc_items(text: str) -> list:
         return parsed if isinstance(parsed, list) else []
     except Exception:  # noqa: BLE001
         return []
+
+
+def _image_block(data_url: object) -> dict | None:
+    """Turn a `data:image/...;base64,...` URL (a viewer screenshot) into an
+    Anthropic image content block, or None if absent/oversized/malformed. Bounded
+    at ~5 MB base64 so a stray frame can't blow up the request."""
+    if not isinstance(data_url, str) or not data_url.startswith("data:image"):
+        return None
+    try:
+        header, b64 = data_url.split(",", 1)
+    except ValueError:
+        return None
+    if len(b64) > 5_000_000:
+        return None
+    media_type = header.split(";")[0].split(":", 1)[1] or "image/png"
+    if media_type not in ("image/png", "image/jpeg", "image/webp", "image/gif"):
+        return None
+    return {"type": "image",
+            "source": {"type": "base64", "media_type": media_type, "data": b64}}
 
 
 def _build_ask_context(payload: dict) -> str:
@@ -534,15 +564,25 @@ class Handler(BaseHTTPRequestHandler):
                 "live": False, "model": None})
             return
         context = _build_ask_context(payload)
+        # Optional screenshot (a data: URL of the MRI area a note was pinned on) so
+        # Claude can SEE the region, not just read the note text. Multimodal content
+        # when present; plain text otherwise. Bounded so a huge frame can't blow up
+        # the request.
+        qtext = f"CONTEXT:\n{context}\n\n---\n\nQUESTION: {question}"
+        image_block = _image_block(payload.get("image"))
+        user_content = ([image_block, {"type": "text", "text": qtext}]
+                        if image_block else qtext)
+        # When a screenshot is attached, relax the "grounded ONLY in text context"
+        # rule so Claude will actually read the MRI frame it was given.
+        system = _ASK_SYSTEM + (_ASK_IMAGE_ADDENDUM if image_block else "")
         try:
             import anthropic  # lazy import: offline path needs no dependency
             client = anthropic.Anthropic()
             msg = client.messages.create(
                 model=_ASK_MODEL,
                 max_tokens=1024,
-                system=_ASK_SYSTEM,
-                messages=[{"role": "user",
-                           "content": f"CONTEXT:\n{context}\n\n---\n\nQUESTION: {question}"}],
+                system=system,
+                messages=[{"role": "user", "content": user_content}],
             )
             answer = "".join(
                 b.text for b in msg.content if getattr(b, "type", None) == "text").strip()

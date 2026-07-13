@@ -2196,12 +2196,52 @@ class Component extends React.Component {
     const sn=this.state.scanNote; if(!sn) return;
     const text=(sn.draft||'').trim();
     if(!text){ this.setState({scanNote:null, scanNoteSaving:false}); return; }
-    const commit=()=>{ const notes={...this.state.notes}; const cur=(notes[node.id]||[]); const maxN=cur.reduce((m,x)=>Math.max(m,x.n||0),0); const n=maxN>0?maxN+1:cur.length+1; notes[node.id]=cur.concat([{text, ts:Date.now(), x:sn.x, y:sn.y, view:this.state.brainView, n}]); this.saveNotes(notes); this.setState({notes, scanNote:null, scanNoteSaving:false}); };
+    const agent=(sn.agent && sn.agent.status!=='loading')?sn.agent:undefined;  // carry a completed reply onto the note
+    const commit=()=>{ const notes={...this.state.notes}; const cur=(notes[node.id]||[]); const maxN=cur.reduce((m,x)=>Math.max(m,x.n||0),0); const n=maxN>0?maxN+1:cur.length+1; notes[node.id]=cur.concat([{text, ts:Date.now(), x:sn.x, y:sn.y, view:this.state.brainView, n, agent}]); this.saveNotes(notes); this.setState({notes, scanNote:null, scanNoteSaving:false}); };
     if(this.reduced){ commit(); } else { this.setState({scanNoteSaving:true}); setTimeout(commit, 360); }  // let the sticky peel away first
   };
   onScanNoteKey=(node,e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.saveScanNote(node); } else if(e.key==='Escape'){ e.preventDefault(); this.cancelScanNote(); } };
   delScanNote=(node,idx)=>{ const notes={...this.state.notes}; notes[node.id]=(notes[node.id]||[]).filter((_,i)=>i!==idx); this.saveNotes(notes); this.setState({notes}); };
   toggleScanPins=()=>this.setState({scanPinsHidden:!this.state.scanPinsHidden});
+  // Grab a PNG data-URL of the live MRI viewer. The WebGL context has no
+  // preserveDrawingBuffer, so (like NiiVue's own saveScene) we must draw then read
+  // in the same tick. Returns null if the viewer isn't mounted.
+  captureScanShot(){
+    try { const bv=this._brainRef; if(bv&&bv.nv&&bv.canvas){ bv.nv.drawScene(); return bv.canvas.toDataURL('image/png'); } } catch(e){}
+    return null;
+  }
+  // Ask Claude about a pinned note, giving it a SCREENSHOT of the MRI area the note
+  // sits on (multimodal) plus the investigation context. The response is stored on
+  // the note (shown inline, scrollable). The screenshot is sent transiently — only
+  // the text answer is persisted.
+  askNoteAgent=(node,idx)=>{
+    const patch=(agent)=>{ const notes={...this.state.notes}; const l=(notes[node.id]||[]).slice(); if(!l[idx]) return; l[idx]={...l[idx],agent}; notes[node.id]=l; this.setState({notes}); return notes; };
+    patch({status:'loading',response:''});
+    const note=(this.state.notes[node.id]||[])[idx]||{}; const img=this.captureScanShot();
+    const where=note.region?(' near '+note.region):(typeof note.x==='number'?(' at ~x'+Math.round(note.x)+'% y'+Math.round(note.y)+'% of the view'):'');
+    const q='A researcher pinned this note on the structural T1 MRI'+where+': "'+String(note.text||'').slice(0,1400)+'". Using the attached screenshot of that MRI region (if present) and the investigation context, give a brief, grounded read: what the note likely refers to, whether it holds up, and one concrete thing to check next. 2-4 sentences, plain and specific.';
+    const body={question:q, hypothesis:this.state.entryValue, case:this.heroCase()||undefined}; if(img) body.image=img;
+    fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.ok?r.json():Promise.reject()).then(d=>{
+        const notes=patch({status:(d&&d.live===false?'offline':'done'), response:(d&&d.answer)||'(no answer returned)', hadImage:!!img});
+        if(notes) this.saveNotes(notes);
+      }).catch(()=>patch({status:'error', response:'Claude is unreachable — start the demo with a key to enable note review.'}));
+  };
+  // Same agent interaction, but from the pin-creation sticky (before the note is
+  // saved). Operates on the draft in state.scanNote; the reply is carried onto the
+  // note when it's pinned. Captures a screenshot of the MRI under the sticky.
+  askStickyAgent=(node)=>{
+    const sn0=this.state.scanNote; if(!sn0) return;
+    const setAgent=(agent)=>{ const s=this.state.scanNote; if(s) this.setState({scanNote:{...s,agent}}); };
+    setAgent({status:'loading',response:''});
+    const text=(sn0.draft||'').trim(); const img=this.captureScanShot();
+    const where=' at ~x'+Math.round(sn0.x)+'% y'+Math.round(sn0.y)+'% of the view';
+    const q='A researcher is pinning a note on the structural T1 MRI'+where+(text?(': "'+text.slice(0,1400)+'"'):' (no note text yet)')+'. Using the attached screenshot of that MRI region, give a brief, grounded read: what is visible there and one concrete thing worth checking. 2-4 sentences, plain and specific.';
+    const body={question:q, hypothesis:this.state.entryValue, case:this.heroCase()||undefined}; if(img) body.image=img;
+    fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.ok?r.json():Promise.reject()).then(d=>setAgent({status:(d&&d.live===false?'offline':'done'), response:(d&&d.answer)||'(no answer returned)', hadImage:!!img}))
+      .catch(()=>setAgent({status:'error', response:'Claude is unreachable — start the demo with a key to enable note review.'}));
+  };
   setNoteDraft=(e)=>this.setState({noteDraft:e.target.value});
   addNote=()=>{
     const t=(this.state.noteDraft||'').trim(); const id=this.state.pinned; if(!t||!id) return;
@@ -2741,18 +2781,35 @@ class Component extends React.Component {
   scanSticky(node){
     const sn=this.state.scanNote; if(!sn || sn.nodeId!==node.id) return null;
     const saving=this.state.scanNoteSaving;
-    const left='clamp(6px, '+sn.x+'%, calc(100% - 196px))', top='clamp(6px, '+(sn.y+5)+'%, calc(100% - 132px))';
+    const asking=sn.agent&&sn.agent.status==='loading';
+    const w=sn.agent?272:186;   // widen to fit the agent reply
+    const left='clamp(6px, '+sn.x+'%, calc(100% - '+(w+10)+'px))', top='clamp(6px, '+(sn.y+5)+'%, calc(100% - '+(sn.agent?230:132)+'px))';
     const anim=this.reduced?'none':(saving?'stickyOut .42s cubic-bezier(.5,0,.75,0) forwards':'stickyIn .28s cubic-bezier(.2,1.15,.35,1) both');
-    return el('div',{key:'sticky',style:{position:'absolute',left:left,top:top,width:'186px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 14px 30px rgba(40,36,28,.3)',padding:'10px 11px 9px',zIndex:12,transform:'rotate(-2.4deg)',transformOrigin:'top left',animation:anim}},[
+    return el('div',{key:'sticky',style:{position:'absolute',left:left,top:top,width:w+'px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 14px 30px rgba(40,36,28,.3)',padding:'10px 11px 9px',zIndex:12,transform:'rotate(-2.4deg)',transformOrigin:'top left',animation:anim}},[
       el('div',{key:'tape',style:{position:'absolute',top:'-7px',left:'20px',width:'32px',height:'13px',background:'rgba(201,132,21,.16)',borderRadius:'2px',transform:'rotate(-3deg)'}}),
       el('textarea',{key:'ta',autoFocus:true,value:sn.draft,onChange:this.setScanDraft,onKeyDown:(e)=>this.onScanNoteKey(node,e),placeholder:'Note on this location…',style:{width:'100%',border:'none',outline:'none',resize:'none',background:'transparent',fontFamily:'inherit',fontSize:'12.5px',lineHeight:1.45,color:'#5b4a1f',height:'50px',boxSizing:'border-box'}}),
-      el('div',{key:'row',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'5px'}},[
-        el('span',{key:'k',style:{fontSize:'10px',color:'#a98c4a'}},'Enter to pin · Esc'),
+      this.noteAgentBox(sn),
+      el('div',{key:'row',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'5px',gap:'8px'}},[
+        el('button',{key:'ask',onMouseDown:(e)=>{e.preventDefault();this.askStickyAgent(node);},disabled:asking,style:{fontSize:'11px',fontWeight:600,color:asking?'#a98c4a':C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer'}}, asking?'Asking…':(sn.agent?'Re-ask':'Ask Claude')),
         el('button',{key:'s',onMouseDown:(e)=>{e.preventDefault();this.saveScanNote(node);},style:{fontSize:'11px',fontWeight:600,color:'#fff',background:C.clay,border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer'}},'Pin note')
       ])
     ]);
   }
   // The "Scan notes" subsection that lives under the scan in the Brain data tab.
+  // The Claude reply for a note — a compact, SCROLLABLE box so a long answer never
+  // takes over the note card. Only shown once the note has been asked.
+  noteAgentBox(n){
+    const a=n&&n.agent; if(!a) return null;
+    const loading=a.status==='loading'; const bad=a.status==='error';
+    const badge = loading?{t:'…',c:C.mute} : bad?{t:'offline',c:C.clayDeep} : a.status==='offline'?{t:'offline',c:C.mute} : {t:'Claude',c:C.green};
+    return el('div',{key:'agent',style:{marginTop:'7px',border:'1px solid '+C.edge2,borderRadius:'8px',background:'#FFFDF7',overflow:'hidden'}},[
+      el('div',{key:'h',style:{display:'flex',alignItems:'center',gap:'6px',padding:'5px 8px',borderBottom:'1px solid '+C.edge}},[
+        el('span',{key:'l',style:{fontSize:'9.5px',fontWeight:700,letterSpacing:'.05em',color:badge.c}},'AGENT · '+badge.t),
+        (a.hadImage&&!loading)?el('span',{key:'i',style:{fontSize:'9px',color:C.mute}},'· saw the scan'):null
+      ]),
+      el('div',{key:'b',style:{maxHeight:'104px',overflowY:'auto',padding:'8px 9px',fontSize:'12px',lineHeight:1.5,color:bad?C.clayDeep:C.ink2,whiteSpace:'pre-wrap',wordBreak:'break-word'}}, loading?'Reading the note + MRI region…':a.response)
+    ]);
+  }
   scanNotesSection(node){
     const list=(this.state.notes[node.id]||[]);
     if(list.length===0) return null;  // empty-state: no panel chrome; the provenance hint already teaches the gesture
@@ -2774,9 +2831,13 @@ class Component extends React.Component {
               : el('span',{key:'bd',style:{flex:'0 0 auto',width:'6px',height:'6px',marginTop:'6px',borderRadius:'50%',background:C.clay}}),
             el('div',{key:'m',style:{flex:1,minWidth:0}},[
               el('div',{key:'t',style:{fontSize:'13px',lineHeight:1.45,color:C.ink,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
-              el('div',{key:'meta',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px'}},[
-                el('span',{key:'ts',style:{fontSize:'11px',color:C.mute}}, fmt(n.ts)+(typeof n.x==='number'?(' · x'+Math.round(n.x)+'% y'+Math.round(n.y)+'%'+(vtag?' · '+vtag:'')):'')),
-                el('button',{key:'del',onClick:()=>this.delScanNote(node,i),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer',padding:0}},'Delete')
+              this.noteAgentBox(n),
+              el('div',{key:'meta',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px',gap:'10px'}},[
+                el('span',{key:'ts',style:{fontSize:'11px',color:C.mute,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, fmt(n.ts)+(typeof n.x==='number'?(' · x'+Math.round(n.x)+'% y'+Math.round(n.y)+'%'+(vtag?' · '+vtag:'')):'')),
+                el('span',{key:'act',style:{display:'flex',gap:'12px',flex:'0 0 auto'}},[
+                  el('button',{key:'ask',onClick:()=>this.askNoteAgent(node,i),disabled:(n.agent&&n.agent.status==='loading'),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',cursor:'pointer',padding:0,fontWeight:600,opacity:(n.agent&&n.agent.status==='loading')?0.5:1}}, (n.agent&&n.agent.status==='loading')?'Asking…':(n.agent?'Re-ask Claude':'Ask Claude')),
+                  el('button',{key:'del',onClick:()=>this.delScanNote(node,i),style:{fontSize:'11px',color:C.mute,background:'none',border:'none',cursor:'pointer',padding:0}},'Delete')
+                ])
               ])
             ])
           ]);
@@ -2798,7 +2859,7 @@ class Component extends React.Component {
         el('div',{key:'b',style:{fontSize:'11px',color:C.mute}}, this.state.brainView==='render'?'drag to rotate':'scroll to scrub')]),
       this.viewToggle(),
       el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
-        el(BrainViewer,{key:'nv',mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
+        el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
         ...this.scanPins(node),
         this.scanSticky(node)
