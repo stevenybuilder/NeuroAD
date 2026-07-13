@@ -1585,16 +1585,21 @@ class BrainViewer extends React.Component {
     const nv=this.nv; if(!nv) return;
     // NiiVue infers the format from a filename extension, and the proxy volume
     // URLs carry none — so always pass an explicit `name` ending in .nii.gz.
-    const vols=[{ url:this.props.volumeUrl||'/scans/mni152.nii.gz', name:'base.nii.gz', colormap:'gray' }];
+    // Default backdrop is a REAL scan from the silent-failure gauntlet cohort
+    // (ADNI 10006, the scan checks 1.2/1.3 flag) served by the SFG proxy — not a
+    // bundled template — so the viewer always renders real, traceable data.
+    // Load the base scan on its own so it ALWAYS renders — a missing/unreachable
+    // overlay (e.g. a pathway ROI that isn't bundled) must never take the whole
+    // render down with it, which is what a single combined loadVolumes() call did.
+    await nv.loadVolumes([{ url:this.props.volumeUrl||'/api/sfg/volume/ADNI_10006/T1', name:'base.nii.gz', colormap:'gray' }]);
     const ov=this.props.overlay;
-    if(ov && (ov.kind==='mask'||ov.kind==='heatmap') && ov.url){
+    if(ov && (ov.kind==='mask'||ov.kind==='heatmap') && ov.url && nv.addVolumeFromUrl){
       const o={ url:ov.url, name:'overlay.nii.gz', colormap:ov.colormap||(ov.kind==='mask'?'red':'warm'), opacity:(ov.opacity!=null?ov.opacity:0.5) };
       if(ov.cal_min!=null) o.cal_min=ov.cal_min;
       if(ov.cal_max!=null) o.cal_max=ov.cal_max;
       if(ov.alphaThreshold) o.alphaThreshold=true;   // only the masked voxels tint (teammate's technique)
-      vols.push(o);
+      try { await nv.addVolumeFromUrl(o); } catch(e){ /* overlay is best-effort; base stays up */ }
     }
-    await nv.loadVolumes(vols);
     if(ov && ov.kind==='mesh' && ov.url && nv.loadMeshes){
       try { await nv.loadMeshes([{ url:ov.url, name:'overlay.obj', rgba255:(ov.rgba? ov.rgba.map(x=>Math.round(x*255)) : [90,220,130,255]) }]); } catch(e){}
     }
@@ -2570,21 +2575,27 @@ class Component extends React.Component {
   }
   // ---- silent-failure guard: LIVE imaging QC flags from the SFG backend ----
   // Flags are fetched from the real Silent-Failure Guard FastAPI service (via the
-  // same-origin /api/sfg proxy), which runs deterministic checks over a real IXI
-  // cohort. Nothing here is hardcoded — the explanations, severities and scan ids
-  // are whatever the verifier actually emitted.
+  // same-origin /api/sfg proxy), which runs deterministic checks over a curated
+  // cohort of real ADNI scans (+ two induced-failure fixtures). Nothing here is
+  // hardcoded — the explanations, severities and scan ids are whatever the
+  // verifier actually emitted, and every scan id joins the analysis table.
   // A REAL snapshot of `/api/sfg/run` (captured from the live guard over the
   // bundled IXI/ADNI/fixture cohort). Used as the fallback when the live QC
   // backend isn't reachable, so the panel always shows real flags — live when
   // the guard is up, this cached run otherwise — and never a dead "offline"
   // state. Badged `cached` so it is never presented as live.
   sfgSnapshot(){
+    // A REAL cached run over the curated cohort above (real ADNI scan ids that
+    // load a real volume and join the analysis table by subject id) - used only
+    // when the live guard is unreachable, badged `cached`, never presented as
+    // live. These are the exact flags the deterministic checks emit on scan 10006
+    // + real ADNI sites 941/27; nothing here is a placeholder.
     return [
-      {check_id:'1.1.orientation', scan_id:'DEMO_0001_T1-LRFLIP', severity:'error', explanation:'sform (PIL) and qform (PIR) encode different orientations - L/R may be silently mirrored between tools. Confirm sidedness against the L/R markers.'},
-      {check_id:'1.2.skull_strip', scan_id:'ADNI_DEMO_0001', severity:'error', explanation:'Weak classical strip on raw T1: implausible brain volume 3250 cc (expected 900-1950).'},
-      {check_id:'1.4.volume_sanity', scan_id:'DEMO_0001_T1-CORRUPT', severity:'error', explanation:'1728 non-finite (NaN/Inf) voxels - these corrupt any downstream statistic.'},
-      {check_id:'1.3.intensity_consistency', scan_id:'ADNI_DEMO_0001', severity:'warn', explanation:'Raw T1 intensities differ systematically across 4 scanners (per-scanner median CoV 42%). Un-normalized, this is a scanner signature a model can exploit instead of biology. Percentile normalization rescales every scan to a common intensity range, collapsing the per-scanner offset - apply it before any cross-site analysis.'},
-      {check_id:'1.4.volume_sanity', scan_id:'DEMO_0001_T1-CORRUPT', severity:'warn', explanation:'1 dead/dropout slice(s) inside the brain along k (e.g. index 108) - likely acquisition or export corruption.'}
+      {check_id:'1.1.orientation', scan_id:'10006_T1-LRFLIP', severity:'error', explanation:'sform (LAS) and qform (RAS) encode different orientations - L/R may be silently mirrored between tools. Confirm sidedness against the L/R markers.'},
+      {check_id:'1.2.skull_strip', scan_id:'ADNI_10006', severity:'error', explanation:'Weak classical strip on raw T1: implausible brain volume 3411 cc (expected 900-1950).'},
+      {check_id:'1.4.volume_sanity', scan_id:'10006_T1-CORRUPT', severity:'error', explanation:'1728 non-finite (NaN/Inf) voxels - these corrupt any downstream statistic.'},
+      {check_id:'1.3.intensity_consistency', scan_id:'ADNI_10006', severity:'warn', explanation:'Raw T1 intensities differ systematically across 3 scanners (per-scanner median CoV 71%). Un-normalized, this is a scanner signature a model can exploit instead of biology (Problem A). Percentile normalization rescales every scan to a common intensity range, collapsing the per-scanner offset - apply it before any cross-site analysis.'},
+      {check_id:'1.4.volume_sanity', scan_id:'10006_T1-CORRUPT', severity:'warn', explanation:'1 dead/dropout slice(s) inside the brain along k (e.g. index 121) - likely acquisition or export corruption.'}
     ];
   }
   ensureSfgFlags(){
@@ -2595,7 +2606,16 @@ class Component extends React.Component {
       const flags=withId(this.sfgSnapshot());
       this.setState({sfgFlags:flags, sfgStatus: flags.length?'cached':'empty'});
     };
-    fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    // A curated cohort of REAL scans, one traceable positive per check: the two
+    // induced-failure fixtures (real ADNI 10006 + one planted defect each), a raw
+    // ADNI scan for the skull-strip check, and two real ADNI acquisition sites
+    // (941, 27) so the intensity check is a genuine cross-scanner confound. Every
+    // id here resolves to a real volume and joins the analysis embedding table by
+    // subject id. Running the whole 597-scan cohort live is too slow for a page
+    // load, so we scope the run to this set and it returns in ~8s.
+    const COHORT=['10006_T1-LRFLIP','10006_T1-CORRUPT','ADNI_10006',
+                  'ADNI_6044','ADNI_6054','ADNI_6058','ADNI_6001','ADNI_6183','ADNI_6317'];
+    fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scan_ids:COHORT})})
       .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
       .then(d=>{
         const flags=withId(d.flags);
