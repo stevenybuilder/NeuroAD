@@ -1576,25 +1576,27 @@ class BrainViewer extends React.Component {
       this.nv = nv;
       nv.attachToCanvas(this.canvas);
       nv.opts.multiplanarShowRender = (NV.SHOW_RENDER ? NV.SHOW_RENDER.ALWAYS : 1);
-      await this._loadVolumes();
-      this._loaded = true;
-      this._applyMode();
-      this._applyFly();
-      this._applyMarkers();
-    } catch(e){ this._failed=true; console.error('[BrainViewer] init failed', e); }
+    } catch(e){ this._failed=true; console.error('[BrainViewer] WebGL init failed', e); this.host&&this.forceUpdate(); return; }
+    // WebGL is up. Volume loading is a SEPARATE failure mode: a missing/unreachable
+    // scan must surface as "scan unavailable", never the misleading "needs WebGL2".
+    try {
+      await this._loadVolumes();               // sets this._loaded (false when it skips a not-yet-known backdrop)
+      if(this._loaded){ this._volErr = false; this._applyMode(); this._applyFly(); this._applyMarkers(); }
+    } catch(e){ this._volErr = true; console.error('[BrainViewer] volume load failed', e); }
     this.host && this.forceUpdate();
   }
   async _loadVolumes(){
     const nv=this.nv; if(!nv) return;
     // NiiVue infers the format from a filename extension, and the proxy volume
     // URLs carry none — so always pass an explicit `name` ending in .nii.gz.
-    // Default backdrop is a REAL scan from the silent-failure gauntlet cohort
-    // (ADNI 10006, the scan checks 1.2/1.3 flag) served by the SFG proxy — not a
-    // bundled template — so the viewer always renders real, traceable data.
-    // Load the base scan on its own so it ALWAYS renders — a missing/unreachable
-    // overlay (e.g. a pathway ROI that isn't bundled) must never take the whole
-    // render down with it, which is what a single combined loadVolumes() call did.
-    await nv.loadVolumes([{ url:this.props.volumeUrl||'/api/sfg/volume/ADNI_10006/T1', name:'base.nii.gz', colormap:'gray' }]);
+    // Backdrop = a REAL scan THIS backend serves, passed in as volumeUrl (the parent
+    // derives it from /api/sfg/scans). If it isn't ready yet, DON'T load a hardcoded
+    // id — that 404s and used to surface as a bogus "needs WebGL2". Record the empty
+    // key so we don't spin, and reload once a real url arrives (componentDidUpdate).
+    // The base loads on its own so a missing overlay never takes the render down.
+    const baseUrl=this.props.volumeUrl;
+    if(!baseUrl){ this._loadedKey='|'+JSON.stringify(this.props.overlay||null)+'|'+JSON.stringify(this.props.calWindow||null); this._loaded=false; return; }
+    await nv.loadVolumes([{ url:baseUrl, name:'base.nii.gz', colormap:'gray' }]);
     // Shared intensity window: pin cal_min/cal_max on the base so sibling scans
     // (cohort exemplars) render on ONE scale and a cross-scanner brightness offset
     // stays visible instead of being auto-windowed away per scan.
@@ -1619,6 +1621,7 @@ class BrainViewer extends React.Component {
       try { await nv.loadMeshes([{ url:ov.url, name:'overlay.obj', rgba255:(ov.rgba? ov.rgba.map(x=>Math.round(x*255)) : [90,220,130,255]) }]); } catch(e){}
     }
     this._loadedKey = (this.props.volumeUrl||'')+ '|' + JSON.stringify(this.props.overlay||null) + '|' + JSON.stringify(this.props.calWindow||null);
+    this._loaded = true; this._volErr = false;   // a real base volume is up
   }
   _applyMode(){
     const nv=this.nv; if(!nv) return;
@@ -1652,13 +1655,14 @@ class BrainViewer extends React.Component {
     try { nv.drawScene && nv.drawScene(); } catch(e){}
   }
   componentDidUpdate(prev){
-    if(!this.nv || !this._loaded) return;
+    if(!this.nv) return;   // WebGL is up; reload even if a prior volume load was skipped/failed
     const key=(this.props.volumeUrl||'')+'|'+JSON.stringify(this.props.overlay||null)+'|'+JSON.stringify(this.props.calWindow||null);
     if(key!==this._loadedKey){
-      // Base volume or overlay changed (e.g. loading a flagged scan) — reload.
-      this._loadVolumes().then(()=>{ this._applyMode(); this._applyFly(); this._applyMarkers(); this.forceUpdate(); }).catch(()=>{});
+      // Base volume or overlay changed (a real backdrop arrived, or a flagged scan) — reload.
+      this._loadVolumes().then(()=>{ if(this._loaded){ this._applyMode(); this._applyFly(); this._applyMarkers(); } this.forceUpdate(); }).catch(()=>{ this._volErr=true; this.forceUpdate(); });
       return;
     }
+    if(!this._loaded) return;   // no volume yet — nothing to re-fly/re-mode
     if(prev.mode!==this.props.mode) this._applyMode();
     if(String(prev.flyMm)!==String(this.props.flyMm)) this._applyFly();
     if(JSON.stringify(prev.markers||null)!==JSON.stringify(this.props.markers||null)) this._applyMarkers();
@@ -1671,7 +1675,7 @@ class BrainViewer extends React.Component {
     const h=(this.props.height||236);
     return el('div',{ref:c=>this.host=c, style:{position:'relative',width:'100%',height:h+'px',background:'#16150F'}}, [
       el('canvas',{key:'cv', ref:c=>this.canvas=c, style:{width:'100%',height:h+'px',display:'block',touchAction:'none',cursor:'grab'}}),
-      this._failed ? el('div',{key:'err',style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',textAlign:'center',color:'rgba(255,255,255,.66)',fontSize:'12px',padding:'0 20px',lineHeight:1.5}},'Live 3D viewer needs WebGL2 — unavailable in this browser.') : null
+      (this._failed||this._volErr) ? el('div',{key:'err',style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',textAlign:'center',color:'rgba(255,255,255,.66)',fontSize:'12px',padding:'0 20px',lineHeight:1.5}}, this._failed?'Live 3D viewer needs WebGL2 — unavailable in this browser.':'Scan volume unavailable — the guard backend has no data for this scan id.') : null
     ]);
   }
 }
@@ -2020,7 +2024,7 @@ class Component extends React.Component {
     stage:'entry', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
     data:null, card:null, claudeLive:false, liveError:false, substrate:'adni',
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, trailExplOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
-    sfgFlags:null, sfgStatus:'idle', sfgView:null,
+    sfgFlags:null, sfgStatus:'idle', sfgView:null, sfgScans:null,
     guardOpen:false, guardSel:null, guardGroupOpen:{}, qcChecks:null, qcSummary:null, qcSummaryStatus:'idle',
     dockHover:false, dockDraft:'', dockPin:null, dockAgent:null, dockFly:null, dockPulse:0,
     entryValue:"p-tau217-anchored hippocampal atrophy separates Alzheimer's disease from cognitively normal",
@@ -2329,8 +2333,9 @@ class Component extends React.Component {
     const n=this.nmap[id]; if(!n) return;
     clearTimeout(this._timer); this._playing=false; this._justRevealed=null;
     const ok=this.eligible(n);
-    const dTab=ok?(n.story==='proteins'?'protein':'summary'):'reason';
-    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: dTab, selectedTarget: dTab==='protein'?this.topTargetGene():null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false, trailExplOpen:false });
+    const dTab=ok?(n.story==='proteins'?'data':'summary'):'reason';   // ranked-targets node opens on Brain data (was 'protein')
+    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: dTab, selectedTarget: n.story==='proteins'?this.topTargetGene():null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false, trailExplOpen:false });
+    if(ok) this.ensureSfgFlags();   // pre-warm the SFG scan list so the Brain-data MRI backdrop is ready
     this.animateTo(this.frameDetail(n, n.role==='clay'?1.05:1.2, ok?150:0));
   };
   setDrawerTab=(t)=>{
@@ -3193,7 +3198,7 @@ class Component extends React.Component {
         el('div',{key:'b',style:{fontSize:'11px',color:C.mute}}, this.state.brainView==='render'?'drag to rotate':'scroll to scrub')]),
       this.viewToggle(),
       el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
-        el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
+        el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, volumeUrl:this.backdropUrl(), overlay:this.pathwayOverlay(node), height:236}),
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
         ...this.scanPins(node)
         // note composer moved to the bottom notes dock (this.noteDock)
@@ -3245,24 +3250,46 @@ class Component extends React.Component {
       const flags=withId(this.sfgSnapshot());
       this.setState({sfgFlags:flags, sfgStatus: flags.length?'cached':'empty'}, ()=>this.ensureQcSummary());
     };
-    // A curated cohort of REAL scans, one traceable positive per check: the two
-    // induced-failure fixtures (real ADNI 10006 + one planted defect each), a raw
-    // ADNI scan for the skull-strip check, and two real ADNI acquisition sites
-    // (941, 27) so the intensity check is a genuine cross-scanner confound. Every
-    // id here resolves to a real volume and joins the analysis embedding table by
-    // subject id. Running the whole 597-scan cohort live is too slow for a page
-    // load, so we scope the run to this set and it returns in ~8s.
-    const COHORT=['10006_T1-LRFLIP','10006_T1-CORRUPT','ADNI_10006',
-                  'ADNI_6044','ADNI_6054','ADNI_6058','ADNI_6001','ADNI_6183','ADNI_6317',
-                  'IXI016-Guys-0697','IXI035-IOP-0873'];   // IXI Guy's = registration (1.5) reference; Guy's + IOP are two different-vendor scanners, so the intensity check (1.3) gets a visible cross-scanner brightness step for its exemplar scans
-    fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scan_ids:COHORT})})
-      .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
-      .then(d=>{
-        const flags=withId(d.flags);
-        if(flags.length) this.setState({sfgFlags:flags, sfgStatus:'ok'}, ()=>this.ensureQcSummary());
-        else fallback();                              // live reachable but empty -> real cached run
-      })
-      .catch(fallback);                               // live down -> real cached run, never "offline"
+    const runCohort=(ids)=>{
+      // Empty ids -> omit scan_ids so the backend runs its own default cohort.
+      const body=(ids&&ids.length)?{scan_ids:ids}:{};
+      fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
+        .then(d=>{
+          const flags=withId(d.flags);
+          if(flags.length) this.setState({sfgFlags:flags, sfgStatus:'ok'}, ()=>this.ensureQcSummary());
+          else fallback();                            // live reachable but empty -> real cached run
+        })
+        .catch(fallback);                             // live down -> real cached run, never "offline"
+    };
+    // Derive the cohort from the REAL scans THIS backend actually has — the scan ids
+    // differ per environment, so hardcoding one machine's ids 500s the run (one
+    // missing id kills the whole batch) and 404s every volume. Pick one traceable
+    // positive per check: the induced-failure fixtures (*-LRFLIP -> orientation,
+    // *-CORRUPT -> volume-sanity), one raw ADNI (skull-strip), one ADNI per distinct
+    // acquisition site (cross-scanner intensity), plus an IXI reference if present
+    // (registration). Falls back to the backend's own default cohort if /api/sfg/scans
+    // is unreachable. Every id is real and resolves to a real volume + analysis row.
+    fetch('/api/sfg/scans').then(r=>r.ok?r.json():Promise.reject()).then(list=>{
+      const scans=Array.isArray(list)?list:[];
+      const ids=scans.map(s=>s.scan_id);
+      this.setState({sfgScans:ids});                  // remembered for the default MRI backdrop
+      const pick=[];
+      const lr=ids.find(i=>/LRFLIP/i.test(i)); if(lr) pick.push(lr);
+      const cor=ids.find(i=>/CORRUPT/i.test(i)); if(cor) pick.push(cor);
+      const seenSite={};                              // one ADNI per site (up to 4) for the intensity confound
+      scans.filter(s=>s.source==='adni').forEach(s=>{ const k=s.site||s.scan_id; if(!seenSite[k]&&Object.keys(seenSite).length<4){ seenSite[k]=1; pick.push(s.scan_id); } });
+      const ixi=ids.find(i=>/IXI/i.test(i)); if(ixi) pick.push(ixi);
+      runCohort(pick.length?pick:null);
+    }).catch(()=>runCohort(null));
+  }
+  // Default MRI backdrop: a real scan THIS backend serves (first discovered ADNI, else
+  // any scan), so the viewer never points at a hardcoded id that 404s. Null until the
+  // scan list loads — the pathway viewer waits for it rather than loading a dead id.
+  backdropUrl(){
+    const ids=this.state.sfgScans||[];
+    const adni=ids.find(i=>i.indexOf('ADNI_')===0); const any=adni||ids[0];
+    return any?('/api/sfg/volume/'+encodeURIComponent(any)+'/T1'):null;
   }
   // --- Guard-report data: the check catalog + the auto AI summary --------------
   ensureQcChecks(){
@@ -3629,7 +3656,7 @@ class Component extends React.Component {
     const selReg=regs.find(r=>r.id===sel);
     const sv=this.state.sfgView;                 // a flagged real scan, if one was opened
     const flyMm = sv ? sv.flyMm : (selReg?selReg.mni:null);
-    const volumeUrl = sv ? sv.volumeUrl : undefined;
+    const volumeUrl = sv ? sv.volumeUrl : this.backdropUrl();
     const overlay = sv ? sv.overlay : this.pathwayOverlay(node);
     const markers = sv ? sv.markers : null;
     const close=()=>this.setState({scanFull:false, sfgView:null});
