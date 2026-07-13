@@ -89,6 +89,24 @@ def _build_ask_context(payload: dict) -> str:
     """Assemble a compact, grounded knowledge context from the passed case + the
     committed hypothesis registry. Bounded so the prompt stays cheap."""
     blocks: list[str] = []
+    # Canonical project fact base — the single source of truth for data scale,
+    # voxels, GB, the honest headline metrics (and the confusable variants NOT to
+    # swap in), the stack, discovery framing, and common Q&A. Injected FIRST and
+    # marked authoritative so Ask-Claude cites these verbatim instead of
+    # improvising numbers that contradict the rest of the demo.
+    try:
+        kb = json.loads((_APP_DIR / "knowledge_base.json").read_text())
+        kb_facts = {k: kb[k] for k in (
+            "project", "data_scale", "voxels_and_training", "canonical_metrics",
+            "the_stack", "discovery_framing", "how_our_data_compares",
+            "deployment_provenance", "common_qa") if k in kb}
+        blocks.append(
+            "PROJECT KNOWLEDGE BASE (CANONICAL — authoritative; cite these facts and "
+            "numbers verbatim, and NEVER state a figure that contradicts "
+            "canonical_metrics; prefer the honest confound-matched number over the "
+            "raw one):\n" + json.dumps(kb_facts, default=str)[:9000])
+    except Exception:  # noqa: BLE001
+        pass
     hyp = str(payload.get("hypothesis", "")).strip()
     if hyp:
         blocks.append("HYPOTHESIS UNDER INVESTIGATION:\n" + hyp[:_MAX_HYPOTHESIS_CHARS])
@@ -133,6 +151,10 @@ _STATIC = {
     # MNI152 T1). Routing only — not part of the science pipeline.
     "/vendor/niivue.umd.js": ("vendor/niivue.umd.js", "text/javascript; charset=utf-8"),
     "/scans/mni152.nii.gz": ("scans/mni152.nii.gz", "application/gzip"),
+    # 3Dmol.js viewer for the in-demo protein-structure payoff on the ranked-targets
+    # card. Routing only — not part of the science pipeline. Per-gene AlphaFold CIFs
+    # are served by the /structures/<GENE>.cif prefix handler in do_GET.
+    "/vendor/3Dmol-min.js": ("vendor/3Dmol-min.js", "text/javascript; charset=utf-8"),
 }
 
 # The root page is env-controlled so the SAME backend serves NeuroAD at "/"
@@ -303,6 +325,13 @@ class Handler(BaseHTTPRequestHandler):
             name = route[len("/scans/"):]
             if "/" not in name and ".." not in name:
                 self._send_static(f"scans/{name}", "application/gzip")
+                return
+        # Serve vendored AlphaFold structures from app/structures/<GENE>.cif for the
+        # in-demo 3D protein viewer. Basename-only, so no path traversal.
+        if route.startswith("/structures/") and route.endswith(".cif"):
+            name = route[len("/structures/"):]
+            if "/" not in name and ".." not in name:
+                self._send_static(f"structures/{name}", "chemical/x-cif")
                 return
         if route == "/api/health":
             self._send_json({
