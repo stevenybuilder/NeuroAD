@@ -1846,7 +1846,7 @@ class Component extends React.Component {
                 el('div',{key:'t',style:{fontSize:'15px',fontWeight:600,color:'var(--ink)',lineHeight:1.25}},v.drawerTitle),
                 el('button',{key:'x',onClick:v.onCloseDrawer,style:{flex:'0 0 auto',fontSize:'16px',color:'var(--mute)',background:'none',border:'none',cursor:'pointer',lineHeight:1,marginTop:'1px'}},'×')
               ]),
-              el('div',{key:'tabs',style:{display:'flex',gap:'4px',marginTop:'12px'}},
+              el('div',{key:'tabs',style:{display:'flex',flexWrap:'wrap',gap:'4px',rowGap:'6px',marginTop:'12px'}},
                 v.drawerTabs.map((t,i)=>el('button',{key:i,onClick:t.onClick,style:t.style},t.label))
               )
             ]),
@@ -1904,7 +1904,7 @@ class Component extends React.Component {
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
-    composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false,
+    composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false, selectedTarget:null,
     chatMsgs:[ { role:'assistant', text:'I grew the tree from your hypothesis. Green branches survived the confound gauntlet; gray ones were killed; clay nodes are candidate targets to test. Ask a follow-up to spawn a new branch.' } ],
     cam:{ cx:900, cy:700, scale:0.35 }
   };
@@ -2148,7 +2148,7 @@ class Component extends React.Component {
     const n=this.nmap[id]; if(!n) return;
     clearTimeout(this._timer); this._playing=false; this._justRevealed=null;
     const ok=this.eligible(n);
-    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?'summary':'reason', selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false });
+    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?(n.story==='proteins'?'protein':'summary'):'reason', selectedTarget:null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false });
     this.animateTo(this.frameDetail(n, n.role==='clay'?1.05:1.2, ok?150:0));
   };
   setDrawerTab=(t)=>this.setState({drawerTab:t});
@@ -2226,6 +2226,8 @@ class Component extends React.Component {
   // ---- biomarker-anchor + hypothesis composer (inline mini-widget) ----
   toggleComposer=()=>this.setState({composerOpen:!this.state.composerOpen});
   toggleStruct=()=>this.setState({structOpen:!this.state.structOpen});
+  selectTarget=(g)=>this.setState({selectedTarget:g});
+  clearTarget=()=>this.setState({selectedTarget:null});
   setComposerBiomarker=(e)=>this.setState({composerBiomarker:e.target.value});
   setComposerDraft=(e)=>this.setState({composerDraft:e.target.value});
   onComposerKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onComposerSubmit(); } };
@@ -2487,32 +2489,34 @@ class Component extends React.Component {
     if(k==='proteins'){
       const tx=this.heroTx();
       if(tx){
+        // Finding-level measured significance (AUROC + CI), read from the case — the
+        // ranking DERIVES from this imaging finding. Per-protein AUROC does not exist
+        // (those are PI4AD priority scores), so significance shows ONCE, here, not per row.
+        const c=this.heroCase()||{}; const lm=c.leakage_margin||{};
+        const anc=((c.tests||[]).find(t=>t.key==='biomarker_anchor')||{}).stats||{};
+        const aucTxt = (lm.outcome_auc!=null)
+          ? ('AUROC '+lm.outcome_auc.toFixed(2)
+             + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
+             + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
+          : null;
+        const ancTxt = (anc.ptau217_r!=null)
+          ? ('anchored to plasma p-tau217 · r=+'+anc.ptau217_r.toFixed(2)+', n='+anc.ptau217_n+' (measured)')
+          : null;
+        const sigHeader = aucTxt ? el('div',{key:'sig',style:{padding:'10px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px',marginBottom:'12px'}},[
+          el('div',{key:'t',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
+          el('div',{key:'a',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'13px',color:C.ink}}, aucTxt),
+          ancTxt ? el('div',{key:'n',style:{marginTop:'4px',fontSize:'11.5px',color:C.ink2}}, ancTxt) : null
+        ]) : null;
         const targets=(tx.ranked_targets||[]);
         const rows=targets.map((t,i)=> this.rankRow(
           String(i+1), t.gene, this.shortDesc(t)+(t.rank!=null?(' · PI4AD #'+t.rank):''), t.priority_score,
           { frac: (t.priority_score!=null? Math.max(0,Math.min(1,t.priority_score/10)) : 0), badge:this.srcBadge(t.source) }
         ));
-        const stc=tx.structure||{};
-        const plddt=stc.mean_plddt;
-        // Pre-existing pLDDT bar + link — used verbatim as the graceful fallback if the
-        // 3D viewer can't load (missing asset, WebGL error, network). Never removed.
-        const afFallback = el('div',{key:'af',style:{marginTop:'12px',padding:'10px',background:C.paper2,borderRadius:'8px'}},[
-          el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · '+(stc.gene_symbol||stc.uniprot||'—')),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}}, plddt!=null?plddt.toFixed(1):'—')]),
-          this.bar(plddt!=null? plddt/100 : 0, C.green),
-          stc.model_url ? el('div',{key:'m',style:{marginTop:'7px',fontSize:'11px'}}, el('a',{href:stc.model_url,target:'_blank',rel:'noopener',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.clayDeep,textDecoration:'none'}}, (stc.uniprot||'model')+' · AlphaFold '+(stc.model_version||'')+' →')) : null
-        ]);
         return this.storyShell(node,'Ranked protein targets',[
+          sigHeader,
           el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Ranked by PI4AD priority score (0–10), routed via the dominant fluid biomarker — hypotheses to test, not validated targets.'),
           ...rows,
-          el('div',{key:'sv'},[
-            el('button',{key:'tg',onClick:this.toggleStruct,style:{display:'flex',alignItems:'center',gap:'6px',width:'100%',marginTop:'12px',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px',cursor:'pointer',fontSize:'12px',color:C.ink2,fontFamily:'inherit',textAlign:'left'}},[
-              el('span',{key:'a',style:{flex:1}}, this.state.structOpen?'Hide 3D structure':'View 3D structure — real AlphaFold fold'),
-              el('span',{key:'c',style:{color:C.mute,transform:this.state.structOpen?'rotate(180deg)':'none',transition:'transform .18s'}},'⌄')
-            ]),
-            this.state.structOpen
-              ? el(StructViewer,{ key:'v', gene:(stc.gene_symbol||''), plddt:plddt, uniprot:stc.uniprot, modelVersion:stc.model_version, modelUrl:stc.model_url, boltz:stc.boltz_targeting, fallback:afFallback })
-              : afFallback
-          ]),
+          el('div',{key:'ph',style:{marginTop:'12px',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px',fontSize:'11.5px',color:C.ink2,lineHeight:1.45}},'3D structure, AUROC & AlphaFold DB links → open the Protein data tab.'),
           el('div',{key:'cav',style:{marginTop:'12px',fontSize:'11px',lineHeight:1.45,color:C.clayDeep,background:C.claySoft,border:'1px solid '+C.edge,borderRadius:'8px',padding:'9px 10px'}}, tx.caveat),
           this.disclaimer('Candidate targets to test — not validated.')
         ]);
@@ -3064,12 +3068,12 @@ class Component extends React.Component {
     const hasStruct=!!(tx.structure||(tx.repurposing&&tx.repurposing.length));
     const val=this._valence(node);
     const layers=[
-      {id:'L1',name:_isJepa?'JEPA':'Morph',full:_isJepa?'Neuro-JEPA embedding':(_sub||'FreeSurfer morphometry (weight-free feeder)'),lit:true},
-      {id:'L2',name:'Probe',full:'Attentive MLP probe',lit:true},
+      {id:'L1',name:_isJepa?'Embedding':'Morphometry',full:_isJepa?'Neuro-JEPA embedding':(_sub||'FreeSurfer morphometry (weight-free feeder)'),lit:true},
+      {id:'L2',name:'AD probe',full:'Attentive MLP probe',lit:true},
       {id:'L3',name:'Fusion',full:'Multimodal fusion',lit:hasFusion},
-      {id:'L4',name:'Refine',full:'Kill-weak / surface-strong',lit:ranTests},
-      {id:'L5',name:'PI4AD',full:'Network & pathway',lit:hasTargets&&!val.killed},
-      {id:'L6',name:'Target',full:'Molecular targeting',lit:hasStruct&&!val.killed}
+      {id:'L4',name:'Gauntlet',full:'Confound gauntlet — kill-weak / surface-strong',lit:ranTests},
+      {id:'L5',name:'Ranking',full:'PI4AD network & pathway ranking',lit:hasTargets&&!val.killed},
+      {id:'L6',name:'Structure',full:'Molecular targeting (AlphaFold / Boltz)',lit:hasStruct&&!val.killed}
     ];
     const driving=val.killed?['L4']:(hasTargets?['L5','L6']:['L2','L4']);
     return { layers, driving, chosen: val.killed?'pruned at L4 — confound ≥ signal':'chosen via L5→L6' };
@@ -3078,12 +3082,12 @@ class Component extends React.Component {
     const tr=this._pipelineTrail(node); const val=this._valence(node); const items=[];
     tr.layers.forEach((L,i)=>{
       const drive=tr.driving.indexOf(L.id)>=0;
-      items.push(el('div',{key:L.id,title:L.full,style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',flex:'0 0 auto'}},[
-        el('div',{key:'d',style:{width:drive?'11px':'9px',height:drive?'11px':'9px',borderRadius:'50%',background:L.lit?(drive?val.accent:C.ink2):C.edge2,boxShadow:drive?('0 0 0 3px '+val.soft):'none'}}),
-        el('div',{key:'i',style:{fontSize:'10px',fontWeight:drive?700:600,color:L.lit?C.ink2:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},L.id),
-        el('div',{key:'n',style:{fontSize:'9px',color:C.mute,whiteSpace:'nowrap'}},L.name)
+      items.push(el('div',{key:L.id,title:L.full,style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'5px',flex:'0 0 auto'}},[
+        el('div',{key:'d',style:{width:drive?'13px':'11px',height:drive?'13px':'11px',borderRadius:'50%',background:L.lit?(drive?val.accent:C.ink2):C.edge2,boxShadow:drive?('0 0 0 3px '+val.soft):'none'}}),
+        el('div',{key:'i',style:{fontSize:'14px',fontWeight:drive?700:600,color:L.lit?C.ink2:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},L.id),
+        el('div',{key:'n',style:{fontSize:'14px',color:C.ink2,whiteSpace:'nowrap'}},L.name)
       ]));
-      if(i<tr.layers.length-1) items.push(el('div',{key:'a'+i,style:{flex:'0 0 auto',color:C.edge2,fontSize:'11px',marginTop:'1px'}},'→'));
+      if(i<tr.layers.length-1) items.push(el('div',{key:'a'+i,style:{flex:'0 0 auto',color:C.edge2,fontSize:'14px',marginTop:'3px'}},'→'));
     });
     return el('div',{},[
       el('div',{key:'r',style:{display:'flex',alignItems:'flex-start',gap:'6px',flexWrap:'wrap'}},items),
@@ -3273,6 +3277,7 @@ class Component extends React.Component {
     defs.push(['artifacts','Artifacts']);
     if(node.story) defs.push(['reason','Reasoning']);
     defs.push(['data','Brain data']);
+    if(node.story==='proteins') defs.push(['protein','Protein data']);
     return defs.map(d=>({ label:d[1], onClick:()=>this.setDrawerTab(d[0]), style:cur===d[0]?on:off }));
   }
   drawerContent(node){
@@ -3280,11 +3285,97 @@ class Component extends React.Component {
     if(t==='summary') return this.summaryEl(node);
     if(t==='artifacts') return this.artifactsEl(node);
     if(t==='data') return this.brainDataEl(node);
+    if(t==='protein') return this.proteinDataEl(node);
     return this.storyEl(node) || this.summaryEl(node);
   }
 
   kv(k,v){ return el('div',{key:k},[ el('div',{key:'k',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.08em',color:C.mute}},k), el('div',{key:'v',style:{fontSize:'15px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},v) ]); }
   auc(label,val,color){ return el('div',{key:label,style:{marginBottom:'8px'}},[ el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'4px'}},[el('span',{key:'a'},label),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},val.toFixed(2))]), this.bar(val,color) ]); }
+
+  // Protein data drawer tab (full-circle gate): finding-level AUROC/CI header (shared context,
+  // NEVER per-protein), then the PI4AD-ranked candidate list as a GATE — click a target to open
+  // its own card (per-gene AlphaFold structure + PI4AD rank/priority/evidence). Every number traces
+  // to the case (leakage_margin, tests[].stats, translation.ranked_targets); no hardcoding.
+  proteinDataEl(node){
+    const M='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const tx=this.heroTx()||{}; const stc=tx.structure||{};
+    const targets=(tx.ranked_targets||[]);
+    const UNIPROT={APP:'P05067',MAPT:'P10636',APOE:'P02649',PSEN1:'P49768',BACE1:'P56817',ESR1:'P03372'};
+    const VENDORED=['APP','MAPT','APOE','PSEN1','BACE1','ESR1'];
+    const afUrl=(u)=> u?('https://alphafold.ebi.ac.uk/entry/'+u):'https://alphafold.ebi.ac.uk/';
+    // Finding-level discrimination (AUROC + CI + p + plasma anchor), read from the case, shown ONCE.
+    const c=this.heroCase()||{}; const lm=c.leakage_margin||{};
+    const anc=((c.tests||[]).find(t=>t.key==='biomarker_anchor')||{}).stats||{};
+    const aucLine=(lm.outcome_auc!=null)
+      ? ('AUROC '+lm.outcome_auc.toFixed(2)
+         + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
+         + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
+      : null;
+    const ancLine=(anc.ptau217_r!=null)?('anchored to plasma p-tau217 · r=+'+anc.ptau217_r.toFixed(2)+', n='+anc.ptau217_n+' (measured)'):null;
+    const discHeader=el('div',{key:'disc',style:{padding:'11px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px'}},[
+      el('div',{key:'k',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
+      el('div',{key:'a',style:{fontFamily:M,fontSize:'13px',color:C.ink}}, aucLine||'—'),
+      ancLine?el('div',{key:'n',style:{marginTop:'4px',fontSize:'11.5px',color:C.ink2}}, ancLine):null,
+      el('div',{key:'x',style:{marginTop:'6px',fontSize:'11px',color:C.mute,lineHeight:1.4}},'The ranking below derives from this finding — targets carry PI4AD priority, not their own AUROC.')
+    ]);
+    const sel=this.state.selectedTarget;
+    const selT=sel?targets.find(t=>t.gene===sel):null;
+
+    if(selT){
+      const gene=selT.gene; const uni=UNIPROT[gene]||''; const canFold=VENDORED.indexOf(gene)>=0;
+      const isTop=targets[0]&&targets[0].gene===gene;
+      const foldFallback=el('div',{key:'fb',style:{padding:'10px',background:C.paper2,borderRadius:'8px',fontSize:'12px',color:C.ink2}},[
+        'View structure at ', el('a',{key:'a',href:afUrl(uni),target:'_blank',rel:'noopener',style:{fontFamily:M,color:C.clayDeep,textDecoration:'none'}}, 'AlphaFold '+(uni||'DB')+' →')
+      ]);
+      return el('div',{style:{display:'flex',flexDirection:'column',gap:'14px'}},[
+        el('button',{key:'back',onClick:this.clearTarget,style:{alignSelf:'flex-start',display:'flex',alignItems:'center',gap:'6px',background:'none',border:'none',cursor:'pointer',fontSize:'12.5px',color:C.ink2,fontFamily:'inherit',padding:'2px 0'}},[el('span',{key:'x'},'←'),' Ranked targets']),
+        el('div',{key:'hd',style:{display:'flex',alignItems:'baseline',gap:'9px',flexWrap:'wrap'}},[
+          el('span',{key:'g',style:{fontSize:'19px',fontWeight:600,color:C.ink,letterSpacing:'-.01em'}},gene),
+          isTop?el('span',{key:'t',style:{fontSize:'10px',fontWeight:700,letterSpacing:'.03em',color:C.green,background:C.greenSoft,border:'1px solid '+C.green,borderRadius:'999px',padding:'1px 8px'}},'TOP CANDIDATE'):null,
+          el('span',{key:'u',style:{fontFamily:M,fontSize:'11.5px',color:C.mute}},uni||'')
+        ]),
+        selT.evidence_note?el('div',{key:'ev',style:{fontSize:'12.5px',lineHeight:1.5,color:C.ink2}},selT.evidence_note):null,
+        el('div',{key:'rk',style:{display:'flex',gap:'8px'}},[
+          el('div',{key:'p',style:{flex:1,background:C.paper2,borderRadius:'8px',padding:'9px 10px'}},[
+            el('div',{key:'l',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.05em',color:C.mute}},'PI4AD priority'),
+            el('div',{key:'v',style:{fontSize:'16px',fontFamily:M,fontWeight:600,color:C.ink}}, (selT.priority_score!=null?(+selT.priority_score).toFixed(2):'—'))
+          ]),
+          el('div',{key:'r',style:{flex:1,background:C.paper2,borderRadius:'8px',padding:'9px 10px'}},[
+            el('div',{key:'l',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.05em',color:C.mute}},'PI4AD rank'),
+            el('div',{key:'v',style:{fontSize:'16px',fontFamily:M,fontWeight:600,color:C.ink}}, (selT.rank!=null?('#'+selT.rank):'unranked'))
+          ])
+        ]),
+        el('div',{key:'st'},[
+          this._secLabel('AlphaFold structure'),
+          canFold?el(StructViewer,{ key:'sv-'+gene, gene:gene, plddt:(gene===stc.gene_symbol?stc.mean_plddt:null), uniprot:uni, modelVersion:(gene===stc.gene_symbol?stc.model_version:''), modelUrl:afUrl(uni), boltz:(gene===stc.gene_symbol?stc.boltz_targeting:null), fallback:foldFallback }):foldFallback
+        ]),
+        discHeader,
+        el('div',{key:'cav',style:{fontSize:'11px',lineHeight:1.5,color:C.mute}},'Candidate target to test (organoid / iPSC) — a hypothesis routed from the imaging finding, not a validated drug.')
+      ]);
+    }
+
+    const row=(t,i)=>{ const isTop=i===0; const frac=(t.priority_score!=null?Math.max(0,Math.min(1,t.priority_score/10)):0);
+      return el('button',{key:t.gene,onClick:()=>this.selectTarget(t.gene),style:{display:'block',width:'100%',textAlign:'left',cursor:'pointer',fontFamily:'inherit',background:isTop?C.greenSoft:C.paper2,border:'1px solid '+(isTop?C.green:C.edge),borderRadius:'10px',padding:'10px 11px',marginBottom:'8px'}},[
+        el('div',{key:'r',style:{display:'flex',alignItems:'center',gap:'9px'}},[
+          el('span',{key:'i',style:{width:'20px',height:'20px',borderRadius:'50%',flex:'0 0 auto',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:700,fontFamily:M,color:'#fff',background:isTop?C.green:C.ink2}}, String(i+1)),
+          el('span',{key:'g',style:{fontSize:'14px',fontWeight:600,color:C.ink}},t.gene),
+          isTop?el('span',{key:'tp',style:{fontSize:'9.5px',fontWeight:700,letterSpacing:'.04em',color:C.green}},'TOP'):null,
+          el('span',{key:'s',style:{marginLeft:'auto',fontFamily:M,fontSize:'13px',color:C.ink}}, (t.priority_score!=null?(+t.priority_score).toFixed(2):'—')),
+          el('span',{key:'ar',style:{color:C.mute,fontSize:'13px'}},'→')
+        ]),
+        el('div',{key:'d',style:{marginTop:'6px'}}, this.bar(frac, isTop?C.green:C.ink2))
+      ]);
+    };
+    return el('div',{style:{display:'flex',flexDirection:'column',gap:'14px'}},[
+      discHeader,
+      el('div',{key:'lb'},[
+        this._secLabel('Ranked candidate targets · PI4AD'),
+        el('div',{key:'hint',style:{fontSize:'11.5px',color:C.mute,marginTop:'-4px',marginBottom:'10px'}},'Click a target to open its AlphaFold structure and evidence.'),
+        ...targets.map((t,i)=>row(t,i))
+      ]),
+      el('div',{key:'cav',style:{fontSize:'11px',lineHeight:1.5,color:C.mute}},'Ranked by PI4AD priority (0–10), routed via the dominant fluid biomarker — hypotheses to test, not validated drugs.')
+    ]);
+  }
 
   // ---- scene / overlay / minimap ----
   buildScene(){
@@ -3349,8 +3440,8 @@ class Component extends React.Component {
         const r=(RADIUS[n.role]||18)*c.scale; const dead=n.role==='gray';
         const accent = n.role==='clay'?C.clayDeep : n.role==='green'?C.green : n.role==='gold'?C.gold : n.role==='root'?C.ink : C.mute;
         out.push(el('div',{key:'l'+n.id,style:{position:'absolute',left:sx+'px',top:(sy+r+7)+'px',transform:'translateX(-50%)',textAlign:'center',pointerEvents:'none',opacity:dead?0.72:1,zIndex:8,width:'160px'}},[
-          el('div',{key:'a',style:{fontSize:'13px',fontWeight:600,color:accent,lineHeight:1.2,textShadow:'0 1px 2px '+C.paper2}},n.label),
-          n.sub?el('div',{key:'b',style:{fontSize:'11px',color:C.mute,marginTop:'1px',fontFamily:/AUC|0\.|n$/.test(n.sub)?'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace':'inherit'}},n.sub):null,
+          el('div',{key:'a',style:{fontSize:'14px',fontWeight:600,color:accent,lineHeight:1.2,textShadow:'0 1px 2px '+C.paper2}},n.label),
+          n.sub?el('div',{key:'b',style:{fontSize:'12px',color:C.mute,marginTop:'1px',fontFamily:/AUC|0\.|n$/.test(n.sub)?'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace':'inherit'}},n.sub):null,
           (this.state.notes[n.id]||[]).length?el('div',{key:'nb',style:{display:'inline-flex',alignItems:'center',gap:'4px',marginTop:'4px',fontSize:'10px',fontWeight:600,color:'#8a6410',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'20px',padding:'1px 8px'}},[el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:'#C08415'}}),(this.state.notes[n.id].length)+' note'+(this.state.notes[n.id].length>1?'s':'')]):null
         ]));
       });
