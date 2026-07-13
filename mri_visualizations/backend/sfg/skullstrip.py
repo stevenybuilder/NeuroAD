@@ -15,6 +15,7 @@ they tell you where it is untrustworthy.
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -50,11 +51,16 @@ def synthstrip_mask(scan_path: Path, cache_path: Path) -> np.ndarray | None:
     if not config.SYNTHSTRIP_MODEL.exists():
         return None
     cache_path.parent.mkdir(parents=True, exist_ok=True)
+    # Resolve the CLI next to the running interpreter (the server is launched via
+    # <env>/bin/python, so its console script sits in the same bin dir) — do not
+    # rely on the server process inheriting the env's bin on PATH.
+    bin_path = Path(sys.executable).with_name("nipreps-synthstrip")
+    synthstrip = str(bin_path) if bin_path.exists() else "nipreps-synthstrip"
     with tempfile.TemporaryDirectory() as td:
         out_mask = Path(td) / "mask.nii.gz"
         try:
             subprocess.run(
-                ["nipreps-synthstrip", "-i", str(scan_path), "-m", str(out_mask),
+                [synthstrip, "-i", str(scan_path), "-m", str(out_mask),
                  "--model", str(config.SYNTHSTRIP_MODEL)],
                 check=True, capture_output=True, timeout=600,
             )

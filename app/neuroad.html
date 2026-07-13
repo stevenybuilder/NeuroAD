@@ -1578,6 +1578,7 @@ class BrainViewer extends React.Component {
       this._loaded = true;
       this._applyMode();
       this._applyFly();
+      this._applyMarkers();
     } catch(e){ this._failed=true; console.error('[BrainViewer] init failed', e); }
     this.host && this.forceUpdate();
   }
@@ -1620,16 +1621,33 @@ class BrainViewer extends React.Component {
       nv.drawScene();
     } catch(e){ /* pre-load fly requests are harmless no-ops */ }
   }
+  // Render point/points-payload annotations (orientation L/R markers, a non-finite
+  // voxel, a dead slice) as labelled 3D bullets on the render tile — the flags whose
+  // "annotation" is a coordinate, not a voxel overlay. No-op when the flag carries
+  // an overlay/none payload instead.
+  _applyMarkers(){
+    const nv=this.nv; if(!nv || !nv.addLabel) return;
+    try { if(nv.document && Array.isArray(nv.document.labels)) nv.document.labels.length=0; } catch(e){}
+    try { if(nv.opts) nv.opts.showLegend=true; } catch(e){}   // labels only draw when the legend pass is on
+    const ms=this.props.markers||[];
+    ms.forEach(m=>{
+      if(!m || !m.coord_mm) return;
+      const rgba=(m.rgba&&m.rgba.length===4)?m.rgba:[1.0,0.82,0.2,1.0];
+      try { nv.addLabel(m.text||'', {textColor:rgba, textScale:1.6, lineWidth:3, lineColor:rgba, bulletScale:4, bulletColor:rgba}, m.coord_mm); } catch(e){}
+    });
+    try { nv.drawScene && nv.drawScene(); } catch(e){}
+  }
   componentDidUpdate(prev){
     if(!this.nv || !this._loaded) return;
     const key=(this.props.volumeUrl||'')+'|'+JSON.stringify(this.props.overlay||null);
     if(key!==this._loadedKey){
       // Base volume or overlay changed (e.g. loading a flagged scan) — reload.
-      this._loadVolumes().then(()=>{ this._applyMode(); this._applyFly(); this.forceUpdate(); }).catch(()=>{});
+      this._loadVolumes().then(()=>{ this._applyMode(); this._applyFly(); this._applyMarkers(); this.forceUpdate(); }).catch(()=>{});
       return;
     }
     if(prev.mode!==this.props.mode) this._applyMode();
     if(String(prev.flyMm)!==String(this.props.flyMm)) this._applyFly();
+    if(JSON.stringify(prev.markers||null)!==JSON.stringify(this.props.markers||null)) this._applyMarkers();
   }
   componentWillUnmount(){
     try { const gl=this.nv&&this.nv.gl; const lose=gl&&gl.getExtension('WEBGL_lose_context'); lose&&lose.loseContext(); } catch(e){}
@@ -1867,7 +1885,8 @@ class Component extends React.Component {
               ])
             ])
           ) : null,
-          this.state.scanFull ? this.scanFullOverlay() : null
+          this.state.scanFull ? this.scanFullOverlay() : null,
+          this.state.guardOpen ? this.guardReportOverlay() : null
         ])
       ])
     ]);
@@ -1907,6 +1926,7 @@ class Component extends React.Component {
     data:null, card:null, claudeLive:false, substrate:'adni',
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
+    guardOpen:false, guardSel:null, guardGroupOpen:{}, qcChecks:null, qcSummary:null, qcSummaryStatus:'idle',
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
     composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false,
@@ -2827,7 +2847,7 @@ class Component extends React.Component {
     const withId=(list)=>(list||[]).map((f,i)=>({...f, _id:(f.check_id||'')+'#'+(f.scan_id||'')+'#'+i}));
     const fallback=()=>{
       const flags=withId(this.sfgSnapshot());
-      this.setState({sfgFlags:flags, sfgStatus: flags.length?'cached':'empty'});
+      this.setState({sfgFlags:flags, sfgStatus: flags.length?'cached':'empty'}, ()=>this.ensureQcSummary());
     };
     // A curated cohort of REAL scans, one traceable positive per check: the two
     // induced-failure fixtures (real ADNI 10006 + one planted defect each), a raw
@@ -2837,24 +2857,71 @@ class Component extends React.Component {
     // subject id. Running the whole 597-scan cohort live is too slow for a page
     // load, so we scope the run to this set and it returns in ~8s.
     const COHORT=['10006_T1-LRFLIP','10006_T1-CORRUPT','ADNI_10006',
-                  'ADNI_6044','ADNI_6054','ADNI_6058','ADNI_6001','ADNI_6183','ADNI_6317'];
+                  'ADNI_6044','ADNI_6054','ADNI_6058','ADNI_6001','ADNI_6183','ADNI_6317',
+                  'IXI016-Guys-0697'];   // IXI Guy's = the registration (1.5) reference brain
     fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scan_ids:COHORT})})
       .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
       .then(d=>{
         const flags=withId(d.flags);
-        if(flags.length) this.setState({sfgFlags:flags, sfgStatus:'ok'});
+        if(flags.length) this.setState({sfgFlags:flags, sfgStatus:'ok'}, ()=>this.ensureQcSummary());
         else fallback();                              // live reachable but empty -> real cached run
       })
       .catch(fallback);                               // live down -> real cached run, never "offline"
   }
+  // --- Guard-report data: the check catalog + the auto AI summary --------------
+  ensureQcChecks(){
+    // The static catalog of every check the guard KNOWS about (all 5), so the
+    // report can show tests that ran AND tests that produced no flag. Fetched once.
+    if(this.state.qcChecks!==null) return;
+    this.setState({qcChecks:[]});                       // sentinel so we only fetch once
+    fetch('/api/sfg/checks').then(r=>r.ok?r.json():Promise.reject()).then(list=>{
+      this.setState({qcChecks:Array.isArray(list)?list:[]});
+    }).catch(()=>{ this.setState({qcChecks:[]}); });
+  }
+  // One salient number per check, so the AI digest carries real evidence without
+  // shipping voxels/embeddings — matches the `extra` each check emits.
+  _flagDigest(f){
+    const e=f.extra||{};
+    if(e.median_cov_raw_pct!=null) return 'per-scanner median CoV '+e.median_cov_raw_pct+'%';
+    if(e.dice_vs_synthstrip!=null) return 'Dice '+e.dice_vs_synthstrip+' vs SynthStrip';
+    if(e.weak_volume_cc!=null) return 'weak-strip volume '+e.weak_volume_cc+' cc';
+    if(e.n_nonfinite!=null) return e.n_nonfinite+' non-finite voxels';
+    if(e.post_registration_dice!=null) return 'post-registration Dice '+e.post_registration_dice;
+    return '';
+  }
+  ensureQcSummary(){
+    // AUTO, once per session: distill the live flags (+ past investigation context)
+    // into a short ranked list of the major problems. Live Claude when a key is set;
+    // otherwise a deterministic local list built from the flags (never a faked AI
+    // voice). Called from ensureSfgFlags once state.sfgFlags is ready.
+    if(this.state.qcSummaryStatus!=='idle') return;
+    const flags=this.state.sfgFlags||[];
+    const localList=()=>flags.map(f=>({problem:this.sfgTitle(f), tool:f.check_id||'',
+      meaning:(f.explanation||'').split('. ')[0], severity:((f.severity==='error'||f.severity==='critical')?'fail':(f.severity==='warn'?'warn':'info'))}));
+    if(!flags.length){ this.setState({qcSummary:[], qcSummaryStatus:'local'}); return; }
+    if(!this.state.claudeLive){ this.setState({qcSummary:localList(), qcSummaryStatus:'local'}); return; }
+    this.setState({qcSummaryStatus:'loading'});
+    const digest=flags.map(f=>({check_id:f.check_id, severity:f.severity, scan_id:f.scan_id,
+      explanation:f.explanation, extra_digest:this._flagDigest(f)}));
+    const context={case:this.heroCase()||undefined, notes:this.state.notes||undefined};
+    const done=(items)=>this.setState({qcSummary:(items&&items.length)?items:localList(), qcSummaryStatus:(items&&items.length)?'ok':'local'});
+    // Fold in prior adjudications as past context, then ask for the summary.
+    fetch('/api/sfg/adjudications').then(r=>r.ok?r.json():[]).catch(()=>[]).then(adj=>{
+      if(Array.isArray(adj)&&adj.length) context.adjudications=adj.slice(-20);
+      fetch('/api/sfg-summary',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({flags:digest,context})})
+        .then(r=>r.ok?r.json():Promise.reject()).then(d=>done(d.items||[])).catch(()=>done(null));
+    });
+  }
   sfgTitle(f){
-    // A short human title derived from the check id; the backend's `explanation`
-    // carries the full sentence, so this is just a headline.
+    // A short human title derived from the check id (+ payload/severity so the two
+    // skull-strip and two registration flags read distinctly). The backend's
+    // `explanation` carries the full sentence, so this is just a headline.
     const c=(f.check_id||'').toLowerCase();
-    if(c.includes('skull')) return 'Skull-strip verification';
+    const kind=(f.payload&&f.payload.kind)||''; const sev=f.severity||'';
+    if(c.includes('skull')) return kind==='mesh' ? 'Clean brain — SynthStrip reference' : 'Skull-strip: over-inclusive mask';
     if(c.includes('intensity')) return 'Scanner intensity confound';
     if(c.includes('orient')) return 'Orientation / silent L-R flip';
-    if(c.includes('registration')) return 'Registration convergence';
+    if(c.includes('registration')) return sev==='info' ? 'Registration: converged' : 'Registration: failed to align';
     if(c.includes('volume')||c.includes('sanity')) return 'Volume sanity';
     return f.check_id||'QC check';
   }
@@ -2866,17 +2933,33 @@ class Component extends React.Component {
         body:JSON.stringify({scan_id:f.scan_id,check_id:f.check_id,decision:v==='confirm'?'confirm':'reject'})}).catch(()=>{});
     }
   };
+  // Build the NiiVue overlay object from a flag's payload (mask/heatmap/mesh ->
+  // a resource URL). One place so the scanFull viewer and the guard-report popup
+  // annotate identically. Returns null when the payload carries no renderable
+  // overlay (none/point/points/bbox live in the flag's location/markers instead).
+  flagOverlay(f){
+    const p=(f&&f.payload)||{};
+    if((p.kind==='mask'||p.kind==='heatmap') && p.resource)
+      return {kind:p.kind, url:'/api/sfg/resource/'+encodeURIComponent(p.resource), colormap:p.colormap, opacity:p.opacity, cal_min:p.cal_min, cal_max:p.cal_max, alphaThreshold:p.alphaThreshold};
+    if(p.kind==='mesh' && p.resource)
+      return {kind:'mesh', url:'/api/sfg/resource/'+encodeURIComponent(p.resource), rgba:p.rgba};
+    return null;
+  }
+  // Coordinate annotations (drawn as labelled 3D bullets by BrainViewer) for the
+  // point/points payloads: orientation's L/R markers, and volume-sanity's non-finite
+  // voxel / dead-slice point. Returns null for overlay/none payloads.
+  flagMarkers(f){
+    const p=(f&&f.payload)||{};
+    if(p.kind==='points' && Array.isArray(p.markers) && p.markers.length) return p.markers;
+    if(p.kind==='point' && p.coord_mm) return [{coord_mm:p.coord_mm, text:p.text||'', rgba:p.rgba}];
+    return null;
+  }
   showFlagScan=(f)=>{
     // Load the ACTUAL flagged scan (+overlay, if any) into the expanded viewer and
     // fly to the finding's real world/mm coordinate — the flag's native space.
     if(!f || !f.scan_id) return;
     const mm=f.location && f.location.world_mm ? f.location.world_mm : null;
-    let overlay=null; const p=f.payload||{};
-    if((p.kind==='mask'||p.kind==='heatmap') && p.resource)
-      overlay={kind:p.kind, url:'/api/sfg/resource/'+encodeURIComponent(p.resource), colormap:p.colormap, opacity:p.opacity};
-    else if(p.kind==='mesh' && p.resource)
-      overlay={kind:'mesh', url:'/api/sfg/resource/'+encodeURIComponent(p.resource), rgba:p.rgba};
-    this.setState({sfgView:{scanId:f.scan_id, volumeUrl:'/api/sfg/volume/'+encodeURIComponent(f.scan_id)+'/T1', overlay, flyMm:mm, title:this.sfgTitle(f)}, scanFull:true, brainView:'multi'});
+    this.setState({sfgView:{scanId:f.scan_id, volumeUrl:'/api/sfg/volume/'+encodeURIComponent(f.scan_id)+'/T1', overlay:this.flagOverlay(f), markers:this.flagMarkers(f), flyMm:mm, title:this.sfgTitle(f)}, scanFull:true, brainView:'multi'});
   };
   scanQC(node){
     this.ensureSfgFlags();
@@ -2886,7 +2969,10 @@ class Component extends React.Component {
     const kill = node.story==='kill' || node.id==='scan' || node.id==='scand';
     const header=(count)=>el('div',{key:'head',style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'2px'}},[
       el('div',{key:'l',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Silent-failure guard'),
-      count!=null?el('div',{key:'r',style:{fontSize:'11px',color:count?C.clayDeep:C.green,fontWeight:600}}, count?(count+' open'):'all cleared'):null
+      el('div',{key:'r',style:{display:'flex',alignItems:'center',gap:'10px'}},[
+        count!=null?el('span',{key:'c',style:{fontSize:'11px',color:count?C.clayDeep:C.green,fontWeight:600}}, count?(count+' open'):'all cleared'):null,
+        el('button',{key:'fr',onClick:()=>this.openGuard(),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600}},'Full report →')
+      ])
     ]);
     const sub=el('div',{key:'sub',style:{fontSize:'10.5px',color:C.mute,lineHeight:1.4,marginBottom:'6px'}},'Silent imaging failures a spot-check misses.');
     const note=(txt)=>el('div',{key:'n',style:{fontSize:'12px',color:C.mute,textAlign:'center',padding:'20px 12px',border:'1px dashed '+C.edge2,borderRadius:'10px',lineHeight:1.5}},txt);
@@ -2920,13 +3006,172 @@ class Component extends React.Component {
         : flags.length+' anomalies caught before use · injected as context to the hypothesis model'
     ]);
     return el('div',{key:'qc'},[
-      header(openCount), sub, ctx,
+      header(openCount), sub, this.qcSummaryCard(), ctx,
       kill?el('div',{key:'k',style:{margin:'0 0 4px',padding:'8px 10px',background:C.claySoft,borderRadius:'8px',fontSize:'11.5px',lineHeight:1.45,color:C.clayDeep}},'This branch was killed on a scanner confound — the intensity check below is the live imaging evidence.'):null,
       el('div',{key:'list',style:{border:'1px solid '+C.edge,borderRadius:'10px',overflow:'hidden',marginTop:'6px'}},[
         el('div',{key:'sp',style:{height:'1px'}}),
         ...shown.map(row)
       ]),
       flags.length>3?el('button',{key:'more',onClick:()=>this.setState({flagsOpen:!open}),style:{marginTop:'8px',fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer'}}, open?'Show fewer':('Show all '+flags.length+' flags')):null
+    ]);
+  }
+  // --- Full silent-failure-guard report popup ---------------------------------
+  openGuard(){
+    // Open the report on the most-severe finding, with that severity group expanded.
+    this.ensureQcChecks();
+    const flags=this.state.sfgFlags||[];
+    const first=flags.find(f=>f.severity==='error'||f.severity==='critical')||flags[0]||null;
+    const grp=first?((first.severity==='error'||first.severity==='critical')?'fail':(first.severity==='warn'?'warn':'pass')):'fail';
+    this.setState({guardOpen:true, guardSel:first?first._id:null, guardGroupOpen:{[grp]:true}});
+  }
+  qcCounts(){
+    const flags=this.state.sfgFlags||[]; const checks=this.state.qcChecks||[];
+    const g=(f)=>{const s=f.severity; return (s==='error'||s==='critical')?'fail':(s==='warn'?'warn':'pass');};
+    const byGroup={fail:[],warn:[],pass:[],notRun:[]};
+    flags.forEach(f=>byGroup[g(f)].push(f));
+    const flagged=new Set(flags.map(f=>f.check_id));
+    byGroup.notRun=checks.filter(c=>!flagged.has(c.check_id));   // checks that ran but produced no flag
+    return {total:flags.length, fail:byGroup.fail.length, warn:byGroup.warn.length, pass:byGroup.pass.length, notRun:byGroup.notRun.length, byGroup};
+  }
+  // Overlaid per-scanner distribution outlines — the scanner-confound evidence.
+  miniHistogram(hist){
+    if(!hist||!hist.series||!hist.series.length) return null;
+    const W=300,H=84,pad=5;
+    const nb=Math.max(...hist.series.map(s=>(s.counts||[]).length),2);
+    const maxc=Math.max(1,...hist.series.flatMap(s=>s.counts||[]));
+    const X=(i)=>pad+(i/(nb-1))*(W-2*pad); const Y=(c)=>H-pad-(c/maxc)*(H-2*pad);
+    const lines=hist.series.map((s,si)=>el('polyline',{key:si,points:(s.counts||[]).map((c,i)=>X(i)+','+Y(c)).join(' '),fill:'none',stroke:s.color||C.clay,strokeWidth:1.5,opacity:0.85}));
+    return el('div',{key:hist.title,style:{marginTop:'8px'}},[
+      el('div',{key:'t',style:{fontSize:'10.5px',color:C.mute,marginBottom:'3px'}},hist.title),
+      el('svg',{key:'s',viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'none',style:{width:'100%',height:'80px',display:'block',background:C.paper2,borderRadius:'6px'}},lines),
+      el('div',{key:'lg',style:{display:'flex',flexWrap:'wrap',gap:'8px',marginTop:'4px'}}, hist.series.map((s,si)=>el('span',{key:si,style:{display:'flex',alignItems:'center',gap:'3px',fontSize:'9.5px',color:C.mute}},[el('span',{key:'d',style:{width:'9px',height:'2px',background:s.color||C.clay}}),s.name])))
+    ]);
+  }
+  // Rich per-check evidence table (drives off each check's `extra`).
+  qcEvidence(f){
+    const e=f.extra||{}; const cid=f.check_id||''; const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const row=(k,v)=>el('div',{key:k,style:{display:'flex',justifyContent:'space-between',gap:'12px',fontSize:'11px',padding:'4px 0',borderBottom:'1px solid '+C.edge}},[el('span',{style:{color:C.mute}},k),el('span',{style:{color:C.ink,fontFamily:MONO,textAlign:'right',wordBreak:'break-all'}},String(v))]);
+    if(cid.includes('intensity')) return el('div',{key:'ev'},[
+      e.median_cov_raw_pct!=null?row('per-scanner median CoV', e.median_cov_raw_pct+'%'):null,
+      ...(e.histograms||[]).map(h=>this.miniHistogram(h)),
+      e.scanner_medians?el('div',{key:'sm',style:{marginTop:'8px'}},[el('div',{key:'h',style:{fontSize:'10.5px',color:C.mute,marginBottom:'2px'}},'per-scanner median intensity'), ...Object.entries(e.scanner_medians).map(([k,v])=>row(k,(typeof v==='number'?v.toFixed(1):v)))]):null
+    ]);
+    if(cid.includes('skull')) return el('div',{key:'ev'},[
+      e.weak_volume_cc!=null?row('weak-strip volume', e.weak_volume_cc+' cc'):null,
+      e.synthstrip_volume_cc!=null?row('SynthStrip volume', e.synthstrip_volume_cc+' cc'):null,
+      e.dice_vs_synthstrip!=null?row('Dice vs SynthStrip', e.dice_vs_synthstrip):null,
+      e.over_inclusion_cc!=null?row('over-inclusion', e.over_inclusion_cc+' cc'):null,
+      e.weak_components!=null?row('mask components', e.weak_components):null,
+      el('div',{key:'band',style:{fontSize:'10.5px',color:C.mute,marginTop:'6px'}},'plausible brain volume ≈ 900–1950 cc')
+    ]);
+    if(cid.includes('orient')){ const a=e.affine_readout||{}; const ks=['stored_orientation','sform_axcodes','qform_axcodes','sform_code','qform_code','determinant','handedness','canonical_ras'].filter(k=>a[k]!=null);
+      return el('div',{key:'ev'}, ks.length?ks.map(k=>row(k, Array.isArray(a[k])?a[k].join(''):String(a[k]))):[el('div',{key:'n',style:{fontSize:'11px',color:C.mute}},'no affine readout')]); }
+    if(cid.includes('volume')||cid.includes('sanity')) return el('div',{key:'ev'},[
+      e.n_nonfinite!=null?row('non-finite voxels', e.n_nonfinite):null,
+      e.fraction!=null?row('fraction', e.fraction):null,
+      e.dead_indices?row('dead slice (axis '+(e.axis!=null?e.axis:'?')+')', (e.dead_indices||[]).join(', ')):null,
+      e.shape?row('shape', (e.shape||[]).join(' × ')):null,
+      e.zooms_mm?row('spacing mm', (e.zooms_mm||[]).join(' × ')):null
+    ]);
+    if(cid.includes('registration')) return el('div',{key:'ev'},[
+      e.post_registration_dice!=null?row('post-registration Dice', e.post_registration_dice+'  (ok ≥ 0.85)'):null,
+      e.case?row('case', e.case):null
+    ]);
+    return null;
+  }
+  _guardPane(f, check){
+    const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    if(!f && !check) return el('div',{key:'empty',style:{color:C.mute,fontSize:'12px',padding:'24px 4px'}},'Select a finding on the left to load its scan + annotation.');
+    const cid=f?f.check_id:check.check_id;
+    const desc=(this.state.qcChecks||[]).find(c=>c.check_id===cid);
+    const head=el('div',{key:'h',style:{marginBottom:'12px'}},[
+      el('div',{key:'t',style:{fontSize:'14px',fontWeight:600,color:C.ink}}, this.sfgTitle(f||{check_id:cid})),
+      el('div',{key:'c',style:{fontSize:'10.5px',fontFamily:MONO,color:C.mute,margin:'2px 0 6px'}}, cid),
+      desc&&desc.description?el('div',{key:'d',style:{fontSize:'12px',color:C.ink2,lineHeight:1.5}}, desc.description):null
+    ]);
+    if(!f) return el('div',{key:'nr'},[head, el('div',{key:'x',style:{marginTop:'10px',padding:'12px 14px',background:C.paper2,borderRadius:'10px',fontSize:'12px',color:C.ink2,lineHeight:1.5}},'This check produced no flag on the current cohort. The registration check (1.5) and the SynthStrip reference in the skull-strip check need the SynthStrip model weights, which are not installed in this environment.')]);
+    const cached=this.state.sfgStatus==='cached';
+    const mm=f.location&&f.location.world_mm?f.location.world_mm:null; const ov=this.flagOverlay(f); const mk=this.flagMarkers(f);
+    const annKind = ov?(ov.kind+' overlay') : (mk?(f.payload&&f.payload.kind==='points'?'L/R markers':'point marker') : 'no spatial annotation — see evidence');
+    const viewer=cached
+      ? el('div',{key:'nv',style:{padding:'24px',textAlign:'center',fontSize:'12px',color:C.mute,border:'1px dashed '+C.edge2,borderRadius:'12px'}},'Cached run — start the live guard for 3D review of this scan.')
+      : el('div',{key:'vp',style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}}, el(BrainViewer,{key:'nv'+f._id,mode:'multi',flyMm:mm,volumeUrl:'/api/sfg/volume/'+encodeURIComponent(f.scan_id)+'/T1',overlay:ov,markers:mk,height:360}));
+    const a=this.state.flagAdj[f._id];
+    return el('div',{key:'pane'},[
+      head, viewer,
+      el('div',{key:'cap',style:{fontSize:'10.5px',color:C.mute,margin:'8px 0 10px',display:'flex',alignItems:'center',gap:'6px'}},[el('span',{style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}), f.scan_id + ' · ' + annKind + ' · live from the guard']),
+      el('div',{key:'ex',style:{fontSize:'12.5px',lineHeight:1.5,color:C.ink,marginBottom:'8px'}}, f.explanation||''),
+      el('div',{key:'adj',style:{display:'flex',gap:'16px',marginBottom:'14px'}},[
+        el('button',{key:'c',onClick:()=>this.setFlagAdj(f,'confirm'),style:{fontSize:'11px',color:a==='confirm'?C.green:C.ink2,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:a==='confirm'?600:400}}, a==='confirm'?'✓ Confirmed':'✓ Confirm'),
+        el('button',{key:'r',onClick:()=>this.setFlagAdj(f,'dismiss'),style:{fontSize:'11px',color:a==='dismiss'?C.clayDeep:C.mute,background:'none',border:'none',padding:0,cursor:'pointer'}}, a==='dismiss'?'Dismissed':'Dismiss')
+      ]),
+      el('div',{key:'evh',style:{fontSize:'11px',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,margin:'4px 0 6px'}},'Evidence'),
+      this.qcEvidence(f)
+    ]);
+  }
+  guardReportOverlay(){
+    const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const flags=this.state.sfgFlags||[]; const checks=this.state.qcChecks||[];
+    const counts=this.qcCounts(); const close=()=>this.setState({guardOpen:false});
+    const selFlag=flags.find(f=>f._id===this.state.guardSel);
+    const selCheck=selFlag?null:checks.find(c=>c.check_id===this.state.guardSel);
+    const GROUPS=[{key:'fail',label:'Fail',col:C.clay,bg:C.claySoft},{key:'warn',label:'Warn',col:C.gold,bg:'#F6ECD2'},{key:'pass',label:'Pass',col:C.green,bg:C.greenSoft},{key:'notRun',label:'Not run',col:C.mute,bg:C.paper2}];
+    const rail=el('div',{key:'rail',style:{flex:'0 0 232px',borderRight:'1px solid '+C.edge,overflowY:'auto',padding:'12px 12px 16px'}},
+      GROUPS.filter(g=>counts.byGroup[g.key].length).map(g=>{
+        const opencat=!!this.state.guardGroupOpen[g.key]; const items=counts.byGroup[g.key]; const isFlag=g.key!=='notRun';
+        return el('div',{key:g.key,style:{marginBottom:'6px'}},[
+          el('button',{key:'h',onClick:()=>this.setState({guardGroupOpen:{...this.state.guardGroupOpen,[g.key]:!opencat}}),style:{width:'100%',display:'flex',alignItems:'center',gap:'7px',background:'none',border:'none',cursor:'pointer',padding:'5px 2px'}},[
+            el('span',{key:'c',style:{fontSize:'10px',color:C.mute,width:'9px'}}, opencat?'▾':'▸'),
+            el('span',{key:'l',style:{fontSize:'11px',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',color:g.col,flex:1,textAlign:'left'}}, g.label),
+            el('span',{key:'n',style:{fontSize:'10px',fontWeight:700,color:g.col,background:g.bg,borderRadius:'9px',padding:'1px 7px'}}, items.length)
+          ]),
+          opencat?el('div',{key:'items',style:{display:'flex',flexDirection:'column',gap:'3px',margin:'2px 0 6px'}}, items.map((it,i)=>{
+            const id=isFlag?it._id:it.check_id; const on=this.state.guardSel===id;
+            return el('button',{key:id+i,onClick:()=>this.setState({guardSel:id}),style:{textAlign:'left',padding:'6px 8px',borderRadius:'7px',border:'1px solid '+(on?C.clay:C.edge2),background:on?C.clay:C.card,color:on?'#fff':C.ink,cursor:'pointer'}},[
+              el('div',{key:'t',style:{fontSize:'11.5px',fontWeight:600}}, this.sfgTitle(isFlag?it:{check_id:it.check_id})),
+              el('div',{key:'s',style:{fontSize:'9.5px',fontFamily:MONO,color:on?'rgba(255,255,255,.82)':C.mute,marginTop:'1px',wordBreak:'break-all'}}, isFlag?it.scan_id:'needs SynthStrip')
+            ]);
+          })):null
+        ]);
+      })
+    );
+    const chip=(n,l,c,bg)=>el('span',{key:l,style:{fontSize:'10px',fontWeight:700,letterSpacing:'.04em',color:c,background:bg,borderRadius:'6px',padding:'2px 7px'}}, n+' '+l);
+    return el('div',{key:'guard',style:{position:'absolute',inset:0,zIndex:62,background:'rgba(245,244,238,.72)',backdropFilter:'saturate(180%) blur(20px)',WebkitBackdropFilter:'saturate(180%) blur(20px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'28px'},onClick:close},
+      el('div',{style:{width:'min(1180px,100%)',height:'min(760px,100%)',background:C.card,border:'1px solid '+C.edge,borderRadius:'20px',boxShadow:'0 30px 90px rgba(40,36,28,.24)',overflow:'hidden',display:'flex',flexDirection:'column'},onClick:(e)=>e.stopPropagation()},[
+        el('div',{key:'hd',style:{flex:'0 0 auto',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 20px',borderBottom:'1px solid '+C.edge,gap:'12px',flexWrap:'wrap'}},[
+          el('div',{key:'l',style:{display:'flex',alignItems:'baseline',gap:'12px',flexWrap:'wrap'}},[
+            el('span',{key:'t',style:{fontSize:'15px',fontWeight:600,color:C.ink}},'Silent-failure guard · full report'),
+            el('span',{key:'chips',style:{display:'flex',gap:'6px'}}, [chip(counts.fail,'FAIL',C.clay,C.claySoft),chip(counts.warn,'WARN',C.gold,'#F6ECD2'),chip(counts.pass,'PASS',C.green,C.greenSoft),chip(counts.notRun,'NOT-RUN',C.mute,C.paper2)])
+          ]),
+          el('button',{key:'x',onClick:close,style:{fontSize:'18px',color:C.mute,background:'none',border:'none',cursor:'pointer',lineHeight:1}},'×')
+        ]),
+        el('div',{key:'bd',style:{flex:1,display:'flex',minHeight:0}},[ rail, el('div',{key:'pane',style:{flex:1,minWidth:0,overflowY:'auto',padding:'16px 20px'}}, this._guardPane(selFlag, selCheck)) ])
+      ])
+    );
+  }
+  // The auto AI summary card shown on the main guard surface (top of scanQC).
+  qcSummaryCard(){
+    const st=this.state.qcSummaryStatus; if(st==='idle') return null;
+    const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+    const items=this.state.qcSummary||[]; const top=items.slice(0,5);
+    const badge = st==='ok'?{t:'Claude',c:C.green}:(st==='loading'?{t:'…',c:C.mute}:{t:'local',c:C.mute});
+    const sevCol=(s)=>s==='fail'?C.clay:(s==='warn'?C.gold:C.mute);
+    return el('div',{key:'aisum',style:{border:'1px solid '+C.edge,borderRadius:'10px',padding:'10px 11px',marginBottom:'8px',background:C.paper2}},[
+      el('div',{key:'h',style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:top.length?'7px':'0'}},[
+        el('div',{key:'l',style:{display:'flex',alignItems:'center',gap:'6px'}},[el('span',{style:{fontSize:'11.5px',fontWeight:600,color:C.ink}},'Summary of issues'), el('span',{style:{fontSize:'8.5px',fontWeight:700,letterSpacing:'.05em',color:badge.c,border:'1px solid '+C.edge2,borderRadius:'4px',padding:'1px 4px'}},badge.t)]),
+        el('button',{key:'r',onClick:()=>this.openGuard(),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600}},'View details →')
+      ]),
+      st==='loading'?el('div',{key:'ld',style:{fontSize:'11.5px',color:C.mute}},'Claude is reading the flags…')
+        :(top.length?el('div',{key:'ls',style:{display:'flex',flexDirection:'column',gap:'7px'}}, top.map((it,i)=>el('div',{key:i,style:{display:'flex',gap:'7px',alignItems:'flex-start'}},[
+            el('span',{key:'d',style:{width:'6px',height:'6px',borderRadius:'50%',background:sevCol(it.severity),flex:'0 0 auto',marginTop:'5px'}}),
+            el('div',{key:'t',style:{flex:1,minWidth:0}},[
+              el('span',{key:'p',style:{fontSize:'12px',fontWeight:600,color:C.ink}}, it.problem||''),
+              it.tool?el('span',{key:'tl',style:{fontSize:'9px',fontFamily:MONO,color:C.mute,marginLeft:'6px',background:C.card,border:'1px solid '+C.edge2,borderRadius:'4px',padding:'1px 4px',whiteSpace:'nowrap'}}, it.tool):null,
+              it.meaning?el('div',{key:'m',style:{fontSize:'11px',color:C.mute,lineHeight:1.4,marginTop:'2px'}}, it.meaning):null
+            ])
+          ])))
+        :el('div',{key:'no',style:{fontSize:'11.5px',color:C.mute}},'No issues to summarize.')),
+      (items.length>5)?el('div',{key:'more',style:{fontSize:'10.5px',color:C.mute,marginTop:'7px'}},'+'+(items.length-5)+' more in details'):null
     ]);
   }
   scanFullOverlay(){
@@ -2937,6 +3182,7 @@ class Component extends React.Component {
     const flyMm = sv ? sv.flyMm : (selReg?selReg.mni:null);
     const volumeUrl = sv ? sv.volumeUrl : undefined;
     const overlay = sv ? sv.overlay : this.pathwayOverlay(node);
+    const markers = sv ? sv.markers : null;
     const close=()=>this.setState({scanFull:false, sfgView:null});
     const provText = sv
       ? (sv.scanId + ' · live from the silent-failure guard' + (overlay?(' · '+overlay.kind+' overlay'):''))
@@ -2954,7 +3200,7 @@ class Component extends React.Component {
           el('div',{key:'vw',style:{flex:'1 1 60%',minWidth:0,padding:'18px 20px',display:'flex',flexDirection:'column',borderRight:'1px solid '+C.edge}},[
             this.viewToggle(),
             el('div',{key:'vp',style:{position:'relative',flex:1,minHeight:0,borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},
-              el(BrainViewer,{key:'nvbig',mode:this.state.brainView,flyMm,volumeUrl,overlay,height:430})),
+              el(BrainViewer,{key:'nvbig',mode:this.state.brainView,flyMm,volumeUrl,overlay,markers,height:430})),
             el('div',{key:'prov',style:{marginTop:'9px',fontSize:'11px',color:C.mute,display:'flex',alignItems:'center',gap:'6px'}},[
               el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green}}),
               provText
