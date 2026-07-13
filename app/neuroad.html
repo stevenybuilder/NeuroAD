@@ -3233,10 +3233,19 @@ class Component extends React.Component {
   }
   _anchorStat(){
     const c=this.heroCase(); const tests=(c&&c.tests)||[];
-    const t=tests.find(x=>x.key==='biomarker_anchor'); const bm=(c&&c.translation||{}).dominant_biomarker;
-    const label=(bm?this.fmtBiomarker(bm):'plasma')+' anchor';
+    const t=tests.find(x=>x.key==='biomarker_anchor');
+    // Honor the CHOSEN anchor (composer anchorFocus), not just the case's dominant
+    // biomarker — otherwise anchoring on amyloid still shows "p-tau217" here. Pull the
+    // SAME per-anchor stat the anchor line uses (amyloid → positivity Δ, plasma → r) so
+    // the tile and the drawer line never disagree.
+    const bm=this._activeAnchor();
+    const label=this.fmtBiomarker(bm)+' anchor';
     if(!t||t.result==='not_available') return { label, state:'na' };
-    return { label, state:t.result, effect:t.effect };
+    const s=t.stats||{};
+    if(bm==='amyloid' && s.amyloid_delta!=null) return { label, state:t.result, effect:s.amyloid_delta };
+    const key=(bm==='p_tau217')?'ptau217':bm;
+    if(s[key+'_r']!=null) return { label, state:t.result, effect:s[key+'_r'] };
+    return { label, state:'na' };  // chosen anchor has no coverage in this cohort
   }
   // 6-layer pipeline trail; lit layers are derived from what the real case produced.
   _pipelineTrail(node){
@@ -3511,8 +3520,9 @@ class Component extends React.Component {
       ]),
       el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
       this._neurojepaEl(),
-      el('div',{key:'fig'},[ this._secLabel('Driving analysis'), this.discoveryFigure(node) ]),
-      el('div',{key:'prov',style:{fontSize:'11px',lineHeight:1.45,color:C.mute,borderTop:'1px solid '+C.edge,paddingTop:'10px'}}, this.provenanceNote())
+      el('div',{key:'fig'},[ this._secLabel('Driving analysis'), this.discoveryFigure(node) ])
+      // (removed the redundant gray provenance footer here — the live-vs-baked
+      //  provenance note still rides on the root Cohort & datasets card.)
     ]);
   }
   buildTabs(node){
