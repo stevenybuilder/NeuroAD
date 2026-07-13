@@ -89,6 +89,30 @@ def embedding_matrix(df: pd.DataFrame) -> np.ndarray:
     return df[embedding_columns(df)].to_numpy(dtype=float)
 
 
+def restrict_to_region(df: pd.DataFrame, region_columns: list[str]) -> pd.DataFrame:
+    """Restrict a cohort's feature matrix to a named region's emb_* column(s).
+
+    The ONE place a brain region touches compute: keep all non-embedding metadata,
+    replace the emb_* columns with just ``region_columns`` renamed emb_0..emb_k, and
+    carry attrs. A no-op (returns df unchanged) when the region is empty or the
+    cohort carries no region map — so every non-ROI cohort is unaffected. Because
+    everything downstream reads features via :func:`embedding_matrix` (the emb_
+    prefix), this single subset conditions the naive AUROC, the whole gauntlet, and
+    leakage at once — no probe/gauntlet edits."""
+    if not region_columns or not df.attrs.get("region_columns"):
+        return df
+    keep = [c for c in region_columns if c in df.columns]
+    if not keep:
+        return df
+    meta = [c for c in df.columns if not c.startswith(EMBED_PREFIX)]
+    out = df[meta + keep].copy()
+    rename = {c: f"{EMBED_PREFIX}{i}" for i, c in enumerate(keep)}
+    out = out.rename(columns=rename)
+    out.attrs.update(df.attrs)
+    out.attrs["region_restricted_to"] = list(region_columns)
+    return out
+
+
 def make_embedding_frame(X: np.ndarray) -> pd.DataFrame:
     """Wrap an (n, D) array into emb_0..emb_{D-1} columns."""
     X = np.asarray(X, dtype=float)
@@ -223,6 +247,11 @@ class Claim:
     substrate: str = "frozen Neuro-JEPA structural embeddings"
     head: str = "linear probe"
     covariates: list[str] = field(default_factory=lambda: ["age", "sex"])
+    #: Brain region the hypothesis names (empty = whole-panel). Resolved by
+    #: harness.region against the cohort's df.attrs['region_columns']; only the
+    #: adni:roi feeder carries region axes, so this stays "" everywhere else.
+    region: str = ""
+    region_columns: list[str] = field(default_factory=list)
 
 
 @dataclass

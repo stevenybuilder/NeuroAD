@@ -1761,6 +1761,59 @@ class StructViewer extends React.Component {
   }
 }
 
+// Live target grounding from the Open Targets Platform GraphQL API. Fetches the
+// lead gene's REAL Alzheimer-disease association score + small-molecule
+// tractability buckets, and links to the OT target page + a literature search.
+// Honest by construction: renders the OT block ONLY when the live fetch succeeds;
+// on any failure it returns null and the card falls back to the AlphaFold/UniProt
+// links already shown — it never fabricates OT data.
+const OT_ENSEMBL = { APP:'ENSG00000142192', ESR1:'ENSG00000091831', MAPT:'ENSG00000186868', APOE:'ENSG00000130203', PSEN1:'ENSG00000080815', BACE1:'ENSG00000186318' };
+const OT_QUERY = 'query($ens:String!){ target(ensemblId:$ens){ approvedSymbol tractability{ label modality value } associatedDiseases(page:{index:0,size:60}){ rows{ disease{ name } score } } } }';
+class OTGrounding extends React.Component {
+  constructor(p){ super(p); this.state = { status:'loading', ad:null, tract:[] }; this._dead = false; }
+  componentWillUnmount(){ this._dead = true; try{ this._ctrl && this._ctrl.abort(); }catch(e){} }
+  componentDidMount(){
+    const ens = this.props.ens;
+    if (!ens) { this.setState({ status:'fail' }); return; }
+    let ctrl = null; try{ ctrl = new AbortController(); this._ctrl = ctrl; }catch(e){}
+    const to = setTimeout(()=>{ try{ ctrl && ctrl.abort(); }catch(e){} }, 8000);
+    fetch('https://api.platform.opentargets.org/api/v4/graphql', {
+      method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ query: OT_QUERY, variables:{ ens: ens } }),
+      signal: ctrl ? ctrl.signal : undefined
+    })
+      .then(r=>{ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(j=>{ clearTimeout(to); if(this._dead) return;
+        const t = j && j.data && j.data.target;
+        if (!t) return this.setState({ status:'fail' });
+        const rows = (t.associatedDiseases && t.associatedDiseases.rows) || [];
+        const exact = rows.filter(r=>/^alzheimer disease$/i.test(r.disease.name)).map(r=>r.score);
+        const loose = rows.filter(r=>/alzheimer/i.test(r.disease.name)).map(r=>r.score);
+        const ad = (exact.length ? exact[0] : (loose.length ? loose[0] : null));
+        const sm = (t.tractability || []).filter(x=>x.modality==='SM' && x.value).map(x=>x.label);
+        this.setState({ status:'ok', ad: ad, tract: sm });
+      })
+      .catch(()=>{ clearTimeout(to); if(!this._dead) this.setState({ status:'fail' }); });
+  }
+  render(){
+    const s = this.state, gene = this.props.gene, ens = this.props.ens;
+    if (s.status === 'fail') return null;   // graceful: card falls back to AlphaFold/UniProt links
+    const A = { fontSize:'12px', fontWeight:600, color:C.clayDeep, textDecoration:'none' };
+    if (s.status === 'loading') return el('div',{style:{marginTop:'8px',fontSize:'11px',color:C.mute}},'Loading Open Targets evidence…');
+    const bits = [];
+    if (s.ad != null) bits.push('Alzheimer association '+(+s.ad).toFixed(2));
+    if (s.tract && s.tract.length) bits.push('small-molecule tractable ('+s.tract.slice(0,3).join(', ')+')');
+    const litUrl = 'https://europepmc.org/search?query='+encodeURIComponent(gene+' Alzheimer organoid');
+    return el('div',{style:{marginTop:'8px',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px'}},[
+      el('div',{key:'l',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},'Open Targets · live'),
+      el('div',{key:'t',style:{fontSize:'12px',color:C.ink2,lineHeight:1.45,marginBottom:'7px'}}, gene+(bits.length?(' · '+bits.join(' · ')):' target evidence')),
+      el('div',{key:'s',style:{display:'flex',gap:'12px',flexWrap:'wrap'}},[
+        el('a',{key:'ot',href:'https://platform.opentargets.org/target/'+ens,target:'_blank',rel:'noopener',style:A},'Open Targets →'),
+        el('a',{key:'lit',href:litUrl,target:'_blank',rel:'noopener',style:A},'Literature →')
+      ])
+    ]);
+  }
+}
 class Component extends React.Component {
 
   render(){
@@ -1910,7 +1963,7 @@ class Component extends React.Component {
 
   state = {
     stage:'entry', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
-    data:null, card:null, claudeLive:false, substrate:'adni',
+    data:null, card:null, claudeLive:false, liveError:false, substrate:'adni',
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, trailExplOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
@@ -1961,7 +2014,7 @@ class Component extends React.Component {
     }
   }
   stepTitles = ['The whole investigation','Your hypothesis, fanned out','A branch dies — scanner confound','A branch survives the gauntlet','Ranked protein targets','An offshoot iterates on GFAP','Repurposing compounds','Testable wet-lab experiments'];
-  stepVerbs = ['Mapping the investigation…','Fanning out candidate branches…','Testing for a scanner confound…','Clearing confounds on the survivor…','Ranking protein targets…','Re-anchoring the offshoot on GFAP…','Matching repurposing compounds…','Designing testable experiments…'];
+  stepVerbs = ['Mapping the investigation…','Fanning out candidate branches…','Testing for a scanner confound…','Clearing confounds on the survivor…','Ranking protein targets…','Re-checking the branch against the GFAP anchor…','Matching repurposing compounds…','Designing testable experiments…'];
   revealVerbs = ['Reading the hypothesis…','Pulling the imaging cohort…','Running the confound gauntlet…','Pruning dead branches…','Growing the decision tree…'];
 
   componentDidMount(){
@@ -2065,8 +2118,24 @@ class Component extends React.Component {
     return this.nodes.filter(n=> n.role==='gray' && typeof n.story==='string' && n.story.indexOf('kill')===0).length;
   }
   fmtBiomarker(b){ const m={p_tau217:'p-tau217',gfap:'GFAP',nfl:'NfL',amyloid:'amyloid',apoe4:'APOE4'}; return m[b]|| (b?String(b).replace(/_/g,'-'):''); }
+  // Finding-level anchor line, honoring the chosen anchor (composer anchorFocus or the
+  // case's dominant biomarker) and pulling the MATCHING real stats already in the case's
+  // biomarker_anchor block — amyloid uses its positivity Δ, plasma markers use r. Falls
+  // back to p-tau217 when the requested anchor has no coverage. No hardcoded numbers.
+  _anchorLine(anc, bm){
+    if(!anc) return null;
+    bm = bm || 'p_tau217';
+    if(bm==='amyloid' && anc.amyloid_delta!=null && anc.amyloid_n!=null)
+      return 'anchored to amyloid positivity · Δ +'+(+anc.amyloid_delta).toFixed(2)+', n='+anc.amyloid_n+' (measured)';
+    const key = (bm==='p_tau217') ? 'ptau217' : bm;
+    const r = anc[key+'_r'], n = anc[key+'_n'];
+    if(r!=null && n!=null) return 'anchored to plasma '+this.fmtBiomarker(bm)+' · r=+'+(+r).toFixed(2)+', n='+n+' (measured)';
+    if(anc.ptau217_r!=null) return 'anchored to plasma p-tau217 · r=+'+(+anc.ptau217_r).toFixed(2)+', n='+anc.ptau217_n+' (measured)';
+    return null;
+  }
+  _activeAnchor(){ return this.state.anchorFocus || ((this.heroTx()||{}).dominant_biomarker) || 'p_tau217'; }
   cohortChipLabel(){ const co=this.heroCohort(); if(!co) return 'multi-site cohort'; const parts=[]; if(co.n_subjects!=null) parts.push(co.n_subjects+' subjects'); if(co.n_sites!=null) parts.push(co.n_sites+' sites'); return parts.length?parts.join(' · '):'multi-site cohort'; }
-  anchorChipLabel(){ const tx=this.heroTx(); const b=tx&&tx.dominant_biomarker; return 'anchor · '+(b?this.fmtBiomarker(b):'p-tau217'); }
+  anchorChipLabel(node){ const tx=this.heroTx(); const b=(node&&node.anchor)||this.state.anchorFocus||(tx&&tx.dominant_biomarker); return 'anchor · '+(b?this.fmtBiomarker(b):'p-tau217'); }
   // Amyloid-positivity enrichment anchor line. This is a binary-positivity group
   // difference (probe score amyloid+ minus amyloid-) reported with a point-biserial r —
   // NOT a Pearson correlation. OASIS has no plasma/amyloid → rendered honestly as N/A.
@@ -2277,9 +2346,10 @@ class Component extends React.Component {
     this.setState(s=>({
       entryValue:hyp, anchorFocus:bm, railOpen:true, composerOpen:false, composerDraft:'',
       chatMsgs:s.chatMsgs.concat([{role:'user',text:hyp+'  ·  anchor: '+this.fmtBiomarker(bm)},{role:'assistant',text:summary}])
-    }));
-    // Fire the SAME real investigation the chat/entry uses; grows the tree + hits /api/investigate.
-    this.onInvestigate(hyp);
+    // Fire the SAME real investigation the chat/entry uses; grows the tree + hits
+    // /api/investigate. Called in the setState callback so anchorFocus is committed
+    // before onInvestigate reads it for the POST body.
+    }), ()=>this.onInvestigate(hyp));
   };
   setEntry=(e)=>this.setState({entryValue:e.target.value});
   onChatKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onChatSend(); } };
@@ -2353,11 +2423,16 @@ class Component extends React.Component {
     try {
       const hyp=(typeof seed==='string'&&seed)?seed:this.state.entryValue;
       let ctrl=null; try{ ctrl=(typeof AbortController!=='undefined')?new AbortController():null; }catch(e){}
-      const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 40000);  // real feeders (e.g. adni:neurojepa) run ~20-30s; graceful fallback to real demo_data on abort
-      fetch('/api/investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hypothesis:hyp,dataset:this._investigateDataset(),seed:0}),signal:ctrl?ctrl.signal:undefined})
+      const to=setTimeout(()=>{ try{ ctrl&&ctrl.abort(); }catch(e){} }, 120000);  // real feeders (e.g. adni:neurojepa) run ~20-30s; graceful fallback to real demo_data on abort
+      // Pass the chosen anchor so the backend routes the molecular follow-up to it
+      // (amyloid/p_tau217/gfap/nfl). Only sent when the user explicitly anchored via
+      // the composer — the default entry/chip path stays on cohort-dominance routing.
+      const _body={hypothesis:hyp,dataset:this._investigateDataset(),seed:0};
+      if(this.state.anchorFocus) _body.anchor=this.state.anchorFocus;
+      fetch('/api/investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(_body),signal:ctrl?ctrl.signal:undefined})
         .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
         .then(result=>{ clearTimeout(to); if(result&&result.case){ this.setState({card:result},()=>{ this._applyCaseToTree(this.heroCase()); }); } })
-        .catch(()=>{ clearTimeout(to); });
+        .catch((err)=>{ clearTimeout(to); this.setState({liveError:true}); console.warn('live investigate failed', err); });
     } catch(e){}
     clearTimeout(this._timer); clearTimeout(this._revealTimer);
     this._playing=false;
@@ -2384,13 +2459,13 @@ class Component extends React.Component {
       el('div',{key:'h',style:{padding:'12px 14px 10px',borderBottom:'1px solid '+C.edge}},[
         el('div',{key:'t',style:{fontSize:'15px',fontWeight:600,color:C.ink,marginBottom:'8px'}},title),
         el('div',{key:'p',style:{display:'flex',flexWrap:'wrap',gap:'5px'}},[
-          this.chip(this.cohortChipLabel(),'plain'),
-          this.chip(this.anchorChipLabel(),'plain')
+          this.chip(this.anchorChipLabel(node),'plain')
         ])
       ]),
-      el('div',{key:'b',style:{padding:'12px 14px'}}, kids)
+      el('div',{key:'b',style:{padding:'12px 14px'}}, this._storyBody(node, kids))
     ]);
   }
+  _storyBody(node, kids){ return kids; }
   checkRow(mark, label, q, pct){
     const col = mark==='✓'?C.green : mark==='✗'?C.clay : C.gold;
     return el('div',{key:label,style:{display:'flex',gap:'9px',marginBottom:'11px'}},[
@@ -2433,7 +2508,7 @@ class Component extends React.Component {
       if(!co) return null;
       return this.storyShell(node,'Cohort & datasets',[
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'Root of the investigation. Everything below inherits this provenance.'),
-        co.badge? el('div',{key:'bd',style:{marginBottom:'10px'}}, this.chip(co.badge,'plain')) : null,
+        null,
         el('div',{key:'grid',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}},[
           this.kv('participants', co.n_subjects!=null?String(co.n_subjects):'—'),
           this.kv('sites', co.n_sites!=null?String(co.n_sites):'—'),
@@ -2492,7 +2567,7 @@ class Component extends React.Component {
       let gfap=(atn&&atn.I_gfap_r!=null)?atn.I_gfap_r:null;
       if(gfap==null){ const t=(c&&c.tests||[]).find(x=>x.key==='biomarker_anchor'); if(t&&t.stats&&t.stats.gfap_r!=null) gfap=t.stats.gfap_r; }
       return this.storyShell(node,'Iterated offshoot',[
-        el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-ran the gauntlet.'),
+        el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-checked the anchor.'),
         gfap!=null ? el('div',{key:'a'},[ this.auc('GFAP astrocyte anchor · r', gfap, C.green) ])
                    : el('div',{key:'na',style:{fontSize:'12px',color:C.mute}},'GFAP re-anchor not evaluated for this cohort.'),
         this.disclaimer('A follow-up question spawns exactly this kind of gold offshoot — try the Claude · ask rail.')
@@ -2511,9 +2586,7 @@ class Component extends React.Component {
              + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
              + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
           : null;
-        const ancTxt = (anc.ptau217_r!=null)
-          ? ('anchored to plasma p-tau217 · r=+'+anc.ptau217_r.toFixed(2)+', n='+anc.ptau217_n+' (measured)')
-          : null;
+        const ancTxt = this._anchorLine(anc, this._activeAnchor());
         const sigHeader = aucTxt ? el('div',{key:'sig',style:{padding:'10px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px',marginBottom:'12px'}},[
           el('div',{key:'t',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
           el('div',{key:'a',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',fontSize:'13px',color:C.ink}}, aucTxt),
@@ -2522,14 +2595,13 @@ class Component extends React.Component {
         const targets=(tx.ranked_targets||[]);
         const rows=targets.map((t,i)=> this.rankRow(
           String(i+1), t.gene, this.shortDesc(t)+(t.rank!=null?(' · PI4AD #'+t.rank):''), t.priority_score,
-          { frac: (t.priority_score!=null? Math.max(0,Math.min(1,t.priority_score/10)) : 0), badge:this.srcBadge(t.source) }
+          { frac: (t.priority_score!=null? Math.max(0,Math.min(1,t.priority_score/10)) : 0) }
         ));
         return this.storyShell(node,'Ranked protein targets',[
           sigHeader,
-          el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Ranked by PI4AD priority score (0–10), routed via the dominant fluid biomarker — hypotheses to test, not validated targets.'),
+          el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},"Ranked by PI4AD's precomputed AD-target priority (0–10) — an external snapshot; the finding selects the mechanism class, not the ordering. Hypotheses to test, not validated targets."),
           ...rows,
           el('div',{key:'ph',style:{marginTop:'12px',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px',fontSize:'11.5px',color:C.ink2,lineHeight:1.45}},'3D structure, AUROC & AlphaFold DB links → open the Protein data tab.'),
-          el('div',{key:'cav',style:{marginTop:'12px',fontSize:'11px',lineHeight:1.45,color:C.clayDeep,background:C.claySoft,border:'1px solid '+C.edge,borderRadius:'8px',padding:'9px 10px'}}, tx.caveat),
           this.disclaimer('Candidate targets to test — not validated.')
         ]);
       }
@@ -2540,7 +2612,7 @@ class Component extends React.Component {
       if(tx && tx.repurposing){
         const rows=tx.repurposing.map((c,i)=> el('div',{key:'c'+i,style:{marginBottom:'11px'}},[
           el('div',{key:'l',style:{fontSize:'13px'}},[el('b',{key:'a'},c.compound),' ',el('span',{key:'b',style:{color:C.mute,fontSize:'12px'}}, c.target_gene?('→ '+c.target_gene):'')]),
-          el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'}},[ el('a',{key:'n',href:this.nctUrl(c.trial_ref),target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}}, c.trial_ref), this.chip(this.srcBadge(c.source),'plain') ])
+          el('div',{key:'r',style:{marginTop:'5px',display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'}},[ el('a',{key:'n',href:this.nctUrl(c.trial_ref),target:'_blank',rel:'noopener',style:{fontSize:'12px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}}, c.trial_ref) ])
         ]));
         return this.storyShell(node,'Repurposing compounds',[
           el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Existing drugs hypothesized to engage the surviving pathway.'),
@@ -2553,7 +2625,11 @@ class Component extends React.Component {
     if(k==='experiments'){
       const tx=this.heroTx();
       if(tx && tx.wet_lab_experiment){
-        const lead=(tx.ranked_targets&&tx.ranked_targets[0])||null;
+        // Lead = the backend's anchor-congruent top_target (amyloid→APP, p-tau217→MAPT),
+        // resolved against the PI4AD-ranked list. The ranked panel itself stays in PI4AD
+        // order; only the wet-lab lead + its structure/Open-Targets follow the anchor.
+        const _rt=tx.ranked_targets||[];
+        const lead=(tx.top_target&&_rt.find(t=>t&&t.gene===tx.top_target))||_rt[0]||null;
         const st=tx.structure||{};
         const uni=st.uniprot||null;
         const afUrl=uni?('https://alphafold.ebi.ac.uk/entry/'+uni):null;
@@ -2565,19 +2641,19 @@ class Component extends React.Component {
         ) : null;
         const linkStyle={fontSize:'12px',fontWeight:600,color:C.clayDeep,textDecoration:'none'};
         return this.storyShell(node,'Testable wet-lab experiments',[
-          el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,marginBottom:'12px'}},'Concrete next step that would falsify or support the survivor.'),
+          el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,marginBottom:'12px'}},'A standard organoid assay to falsify or support the lead target.'),
           this.expRow(tx.wet_lab_experiment),
           why?el('div',{key:'why',style:{marginTop:'10px',padding:'10px 11px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px'}},[
             el('div',{key:'l',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},'Why this target'),
             el('div',{key:'t',style:{fontSize:'12px',color:C.ink2,lineHeight:1.45,marginBottom:'7px'}}, why),
-            el('div',{key:'cav',style:{fontSize:'11px',color:C.mute,lineHeight:1.45,marginBottom:(afUrl||upUrl)?'7px':0}}, 'Target APP grounded in a real AlphaFold monomer model + STRING PPI evidence (offline snapshot) — STRING interaction evidence, NOT de-novo AlphaFold3 complex folding.'),
             (afUrl||upUrl)?el('div',{key:'s',style:{display:'flex',gap:'12px',flexWrap:'wrap'}},[
               afUrl?el('a',{key:'af',href:afUrl,target:'_blank',rel:'noopener',style:linkStyle},'AlphaFold DB →'):null,
               upUrl?el('a',{key:'up',href:upUrl,target:'_blank',rel:'noopener',style:linkStyle},'UniProt →'):null
             ]):null
           ]):null,
+          lead?el(OTGrounding,{key:'otg', gene:lead.gene, ens:OT_ENSEMBL[lead.gene]}):null,
           this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.'),
-          el('div',{key:'prot',style:{marginTop:'8px',fontSize:'11px',lineHeight:1.4,color:C.mute}}, 'Protocol: standard organoid readout for the amyloid-cascade mechanism (template, not individually optimized).')
+          el('div',{key:'prot',style:{marginTop:'8px',fontSize:'11px',lineHeight:1.4,color:C.mute}}, ('Protocol: standard organoid readout for the '+(((tx.mechanism||'').replace(/_/g,' '))||'routed')+' mechanism.'))
         ]);
       }
       return null;
@@ -3193,7 +3269,7 @@ class Component extends React.Component {
     return el('div',{key:'njepa'},[
       this._secLabel('Frozen foundation model (Neuro-JEPA)'),
       el('div',{key:'s',style:{display:'flex',gap:'9px',flexWrap:'wrap'}},stats),
-      el('div',{key:'n',style:{fontSize:'12px',lineHeight:1.5,color:C.mute,marginTop:'9px'}}, 'Measured on the frozen Neuro-JEPA embedding itself (inference only). Separate from the hero AUC above, which runs on FreeSurfer morphometry. '+(nj.provenance||''))
+      el('div',{key:'n',style:{fontSize:'12px',lineHeight:1.5,color:C.mute,marginTop:'9px'}}, 'Measured on the frozen Neuro-JEPA embedding itself (inference only). Separate from the hero AUC above, which runs on FreeSurfer morphometry. '+((nj.provenance||'').replace(/\s*See docs\/HF_ACCESS\.md\.?/i,'').replace(/NYUMedML\//g,'')))
     ]);
   }
   // LIVE driving-analysis figure: the REAL-cohort unsupervised discovery clustering.
@@ -3311,8 +3387,7 @@ class Component extends React.Component {
           el('div',{key:'m',style:{flex:1,minWidth:0}},[
             el('div',{key:'a',style:{fontSize:'13px',fontWeight:600,color:C.ink}}, r.name),
             el('div',{key:'b',style:{fontSize:'12px',color:C.mute,marginTop:'1px'}}, (r.n!=null?(this._commas(r.n)+' subjects'):'')+((r.n!=null&&r.meta)?' · ':'')+(r.meta||''))
-          ]),
-          this.chip(isReal?'REAL':'SNAPSHOT','plain')
+          ])
         ]); })
       ]),
       el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
@@ -3363,7 +3438,7 @@ class Component extends React.Component {
          + (Array.isArray(lm.outcome_ci)?(' ['+lm.outcome_ci[0].toFixed(2)+'–'+lm.outcome_ci[1].toFixed(2)+']'):'')
          + (lm.outcome_p_perm!=null?(' · p='+(lm.outcome_p_perm<=0.001?'0.001':lm.outcome_p_perm.toFixed(3))):''))
       : null;
-    const ancLine=(anc.ptau217_r!=null)?('anchored to plasma p-tau217 · r=+'+anc.ptau217_r.toFixed(2)+', n='+anc.ptau217_n+' (measured)'):null;
+    const ancLine=this._anchorLine(anc, this._activeAnchor());
     const discHeader=el('div',{key:'disc',style:{padding:'11px 12px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'10px'}},[
       el('div',{key:'k',style:{fontSize:'10.5px',letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,marginBottom:'5px'}},'Measured on the imaging finding'),
       el('div',{key:'a',style:{fontFamily:M,fontSize:'13px',color:C.ink}}, aucLine||'—'),

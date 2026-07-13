@@ -180,7 +180,8 @@ def _classify_novelty(text: str) -> str:
     return guess if guess in allowed else (allowed[0] if allowed else "adjacent")
 
 
-def _mechanism_enrichment(df: Optional[pd.DataFrame]) -> tuple:
+def _mechanism_enrichment(df: Optional[pd.DataFrame],
+                          anchor: Optional[str] = None) -> tuple:
     """Pre-register (mechanism, expected_direction, kill_criterion).
 
     Routes to a mechanism with the same biomarker-dominance rule the Bridge uses,
@@ -190,7 +191,7 @@ def _mechanism_enrichment(df: Optional[pd.DataFrame]) -> tuple:
     mech = "amyloid_cascade"
     try:
         from ..claude.bridge import _route
-        mech = _route(df)
+        mech = _route(df, anchor)
     except Exception as exc:  # pragma: no cover - fallback path
         _log.debug("bridge routing unavailable, defaulting mechanism: %r", exc)
 
@@ -314,10 +315,11 @@ def _unsupported_card(hypothesis: str, dataset: str, reason: str) -> ClaimCard:
     )
 
 
-def _run_supervised(df: pd.DataFrame, claim: Claim) -> ClaimCard:
+def _run_supervised(df: pd.DataFrame, claim: Claim, use_claude: bool = True,
+                    anchor: Optional[str] = None) -> ClaimCard:
     """Named-contrast: point the reused head at the target via the full referee."""
     from .. import pipeline
-    return pipeline.run_referee(df, claim)
+    return pipeline.run_referee(df, claim, use_claude=use_claude, anchor=anchor)
 
 
 def _card_from_cluster(claim: Claim, cluster: dict) -> ClaimCard:
@@ -573,7 +575,7 @@ def _atn_profile(card: ClaimCard, mechanism: str) -> dict:
 # ===========================================================================
 
 def investigate(hypothesis: str, dataset: str, *, api: bool = False,
-                seed: int = 0) -> ExperimentCard:
+                seed: int = 0, anchor: Optional[str] = None) -> ExperimentCard:
     """Turn a plain-language hypothesis into a refereed, honesty-stamped card.
 
     Parameters
@@ -589,6 +591,12 @@ def investigate(hypothesis: str, dataset: str, *, api: bool = False,
         back on any failure.
     seed : int, default 0
         Seed forwarded to the (synthetic) feeder.
+    anchor : str, optional
+        The fluid biomarker the researcher CHOSE to anchor on (amyloid /
+        p_tau217 / gfap / nfl). When given it routes the molecular follow-up
+        mechanism (overriding cohort-dominance) and selects the anchor-congruent
+        lead + organoid readout — a read-only side artifact that never touches
+        the score/verdict.
 
     Returns
     -------
@@ -618,14 +626,14 @@ def investigate(hypothesis: str, dataset: str, *, api: bool = False,
     claim = _parse_claim(hypothesis, df, api=api)
     claim.substrate = loaders.honest_substrate(dataset)   # truthful per-feeder label
     novelty = _classify_novelty(claim.claim_text or hypothesis)
-    mechanism, expected_direction, kill_criterion = _mechanism_enrichment(df)
+    mechanism, expected_direction, kill_criterion = _mechanism_enrichment(df, anchor)
 
     # 2. Route to a discovery mode.
     decision = discovery_router.route(claim, df)
 
     # 3. Referee for that mode.
     if decision.supervised:
-        card = _run_supervised(df, claim)
+        card = _run_supervised(df, claim, use_claude=api, anchor=anchor)
         provenance = {
             "mode": "supervised",
             "engine": decision.engine,

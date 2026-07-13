@@ -504,8 +504,13 @@ def residualized_cross_val_auc(X: np.ndarray, nuisance: np.ndarray,
 # ---------------------------------------------------------------------------
 #: Default resample counts. Deliberately modest so the headline metrics stay
 #: fast in the demo/test path; callers (e.g. build_demo_data) can crank them up.
-N_BOOT = 1000
-N_PERM = 1000
+# Bootstrap-CI and permutation-null budgets. Default 1000 (full rigor) for offline
+# demo_data.json generation and tests; the LIVE server dials these down via
+# NEUROAD_N_BOOT / NEUROAD_N_PERM (set in app.server) so an interactive
+# /api/investigate recompute returns fast without changing the baked-in numbers.
+import os as _os
+N_BOOT = max(50, int(_os.environ.get("NEUROAD_N_BOOT") or 1000))
+N_PERM = max(50, int(_os.environ.get("NEUROAD_N_PERM") or 1000))
 
 
 def _shuffle_within_groups(y_codes: np.ndarray, groups: Optional[np.ndarray],

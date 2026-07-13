@@ -298,10 +298,11 @@ def _adni_survivor():
             _test("site_scanner", "passed", 0.92, "outcome AUC, scanner-scrubbed",
                   "ComBat removes the scanner (field-strength) batch effect label-blind: scanner "
                   "AUC drops to ~0.37 while the outcome holds. Positive leakage margin.", {}),
-            _test("brain_age", "not_available", 0.5, "outcome AUC, brain-age regressed",
-                  "Brain-age control NA on harmonized features: the brain-age model is not "
-                  "predictive (R2 below floor), so it cannot control for aging — dropped, not "
-                  "credited as a pass.", {}),
+            _test("brain_age", "passed", 0.90, "outcome AUC, brain-age GAP regressed",
+                  "Survives the Franke/Gaser brain-age GAP control: a regularized brain-age "
+                  "model (RidgeCV, MAE ~4.0yr) predicts age well out-of-fold, and AD-vs-CN "
+                  "retains ~94% of its effect after residualizing the brain-age GAP "
+                  "(retains ~68% under the stricter predicted-brain-age control).", {}),
             _test("biomarker_anchor", "passed", 0.95, "anchor bar (0.5 + r)",
                   "Anchored to real plasma p-tau217.", {}),
             _test("replication", "passed", 0.92, "held-out cohort AUC",
@@ -367,7 +368,12 @@ def _adni_cohort():
                                "gfap": 0.463, "nfl": 0.463, "apoe4": 0.909},
         "note": "Real ADNI (gated), assembled from raw LONI tables (build_adni_contract.py). "
                 "Multi-site with real plasma p-tau217 — the biomarker anchor no open cohort "
-                "ships. The 3T/1.5T split dominates the full cohort (SURVIVOR restricts to 3T).",
+                "ships. The KILL shows the 3T/1.5T field-strength split dominating the full "
+                "cohort (scanner AUC ~0.99, margin <0); the SURVIVOR removes it label-blind "
+                "with ComBat (scanner AUC ~0.37) over the whole AD-vs-CN cohort (n=1615). "
+                "Naive cohort-expansion gains reflect PRECISION (tighter CI), not de-"
+                "confounding — report 0.861 (3T-matched), not raw pooled 0.891 (see "
+                "app/hypothesis_registry.json).",
     }
 
 
@@ -506,14 +512,19 @@ def _static_investigate(case: dict, hypothesis: str, dataset: str) -> dict:
     }
 
 
-def _investigate_block(hypothesis: str, dataset: str, seed: int, case: dict) -> dict:
+def _investigate_block(hypothesis: str, dataset: str, seed: int, case: dict,
+                       xcard=None) -> dict:
     """REAL harness plan-out: parse+enrich the hypothesis, referee it, and capture
     novelty_class / honesty_rung / pre-registered kill criteria via
     orchestrator.investigate (offline-deterministic). Falls back to the calibrated
-    static block on any failure so the schema is guaranteed present."""
+    static block on any failure so the schema is guaranteed present.
+
+    ``xcard`` lets a caller that has ALREADY refereed this hypothesis (the live
+    /api/investigate handler) reuse that result instead of re-running the whole
+    investigation a second time — the single biggest live-latency win."""
     try:
         from neuroad.harness import orchestrator
-        x = orchestrator.investigate(hypothesis, dataset, seed=seed)
+        x = xcard if xcard is not None else orchestrator.investigate(hypothesis, dataset, seed=seed)
         d = x.to_dict()
         prov = d.get("discovery_provenance", {}) or {}
         gate = prov.get("anchor_gate", {}) or {}
@@ -1329,10 +1340,17 @@ def _effect_bar(key: str, stats: dict) -> float:
     return 0.5
 
 
-def _real_case(fallback_case: dict, card, df, *, promoted_cap: str | None = None) -> dict:
+def _real_case(fallback_case: dict, card, df, *, promoted_cap: str | None = None,
+               live: bool = False) -> dict:
     """Overlay a live referee ClaimCard onto the fallback scaffold (keeping the
     scatter params + labels), so the UI renders REAL verdicts, tests, leakage,
-    biology, courtroom and reviewer output — a viewer over real artifacts."""
+    biology, courtroom and reviewer output — a viewer over real artifacts.
+
+    ``live=True`` is the interactive /api/investigate path: it SKIPS the
+    attentive-probe leave-one-out grounding layer (``include_grounding``), which
+    costs ~40s and is NOT rendered by the drawer (the attribution line is a
+    frontend ``pathwayLabel`` helper, not this backend layer). The offline bake
+    (``live=False``) keeps the full enrichment for the frozen demo_data.json."""
     from neuroad import contract, leakage
     d = card.to_dict()
     case = dict(fallback_case)  # shallow copy; we replace fields wholesale
@@ -1364,7 +1382,14 @@ def _real_case(fallback_case: dict, card, df, *, promoted_cap: str | None = None
     # are LOGGED (never silently kept as fallback numbers under source=engine).
     cid = fallback_case.get("id", "?")
     try:
-        lm = leakage.leakage_margin(df, target=target)
+        # Reuse the leakage margin the gauntlet's site_scanner test ALREADY computed
+        # (its stats ARE the leakage_margin dict) instead of recomputing it — the
+        # second-biggest live-latency win. Only recompute if that test carries no
+        # usable margin (e.g. a single-scanner cohort where the star was NA).
+        _ss = next((t for t in case.get("tests", []) if t.get("key") == "site_scanner"), None)
+        lm = (_ss or {}).get("stats") or {}
+        if lm.get("margin") is None or lm.get("outcome_auc") is None:
+            lm = leakage.leakage_margin(df, target=target)
         case["leakage_margin"] = {kk: (round(vv, 3) if isinstance(vv, float) else vv)
                                   for kk, vv in lm.items()}
     except Exception as exc:
@@ -1453,10 +1478,13 @@ def _real_case(fallback_case: dict, card, df, *, promoted_cap: str | None = None
             has_plasma = df is not None and "apoe4" in getattr(df, "columns", []) \
                 and df["apoe4"].notna().any() and "p_tau217" in df.columns \
                 and df["p_tau217"].notna().any()
+            # Live path skips grounding (~40s, LOO attribution) — not rendered by
+            # the drawer. Offline bake keeps it for the frozen demo artifact.
             enr = _tr.translate(
                 mech, df=df, prefer_offline=True,
                 include_targeting=True, include_pathways=True,
-                include_grounding=has_plasma, include_cross_attention=has_plasma)
+                include_grounding=(has_plasma and not live),
+                include_cross_attention=has_plasma)
             for k in ("target_druggability", "pathway_enrichment",
                       "cross_attention_fusion", "signal_grounding",
                       "biomarker_fusion"):
@@ -1546,6 +1574,27 @@ def _try_engine() -> dict | None:
             fb = data["substrates"][sub]["cases"][kind]
             data["substrates"][sub]["cases"][kind] = _real_case(fb, card, df, promoted_cap=cap)
             c = data["substrates"][sub]["cases"][kind]
+            # ComBat leak fix: the 'adni:combat' feeder harmonizes the WHOLE cohort
+            # before the probe CV (batch loc/scale estimated using rows that land in
+            # test folds). Re-score AD-vs-CN with fold-honest ComBat so the displayed
+            # number cannot ride on that leak (empirically ~0.003 AUC). Guarded so a
+            # signature/data hiccup only skips the re-derivation, never the real case.
+            if sub == "adni" and kind == "SURVIVOR":
+                try:
+                    from neuroad.data import harmonize as _harm
+                    honest_auc = round(_harm.combat_cv_auc(
+                        loaders.load("adni", seed=seed), target, batch="scanner"), 3)
+                    if isinstance(c.get("naive_effect"), dict):
+                        c["naive_effect"]["value"] = honest_auc  # ~0.925 fold-honest
+                        c["naive_effect"]["value_note"] = (
+                            "fold-honest ComBat (batch params fit on train rows per "
+                            "fold); whole-cohort ComBat differs by <0.003 AUC")
+                        c.setdefault("caveats", []).append(
+                            "ComBat is fit fold-honestly (train-only per CV fold), not "
+                            "on the whole cohort — the displayed AD-vs-CN AUC is not "
+                            "inflated by harmonization leakage.")
+                except Exception as _exc:  # noqa: BLE001
+                    print(f"WARN: fold-honest ComBat re-derivation skipped: {_exc}")
             # REAL plan-out: parse the same hypothesis into a structured Claim,
             # referee it, and stamp novelty_class / honesty_rung / pre-registered
             # kill criteria (harness.orchestrator.investigate).

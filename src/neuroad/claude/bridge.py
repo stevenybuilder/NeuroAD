@@ -181,8 +181,26 @@ def _effect_size(values: pd.Series, mask: pd.Series) -> float:
     return float(abs(a.mean() - b.mean()) / sd)
 
 
-def _route(df: Optional[pd.DataFrame]) -> str:
-    """Pick a mechanism key from which biomarker dominates the separation."""
+#: Fluid-biomarker anchor -> mechanism key. A researcher-chosen anchor OVERRIDES
+#: cohort-dominance routing. amyloid & p-tau217 are the A/T poles of the same
+#: amyloid-cascade axis; GFAP is glial, NfL is vascular. (Mirrors
+#: harness.translation._ANCHOR_MECHANISM — kept inline both places to avoid a
+#: bridge<->translation import cycle.)
+_ANCHOR_MECHANISM = {
+    "amyloid": "amyloid_cascade",
+    "p_tau217": "amyloid_cascade",
+    "gfap": "glial",
+    "nfl": "vascular",
+}
+
+
+def _route(df: Optional[pd.DataFrame], anchor: Optional[str] = None) -> str:
+    """Pick a mechanism key. A chosen ``anchor`` routes explicitly; otherwise the
+    mechanism follows which biomarker dominates the cohort separation."""
+    if anchor:
+        m = _ANCHOR_MECHANISM.get(str(anchor).strip().lower())
+        if m:
+            return m
     if df is None or _disease_mask(df) is None:
         return "amyloid_cascade"
     mask = _disease_mask(df)
