@@ -1593,6 +1593,17 @@ class BrainViewer extends React.Component {
     // overlay (e.g. a pathway ROI that isn't bundled) must never take the whole
     // render down with it, which is what a single combined loadVolumes() call did.
     await nv.loadVolumes([{ url:this.props.volumeUrl||'/api/sfg/volume/ADNI_10006/T1', name:'base.nii.gz', colormap:'gray' }]);
+    // Shared intensity window: pin cal_min/cal_max on the base so sibling scans
+    // (cohort exemplars) render on ONE scale and a cross-scanner brightness offset
+    // stays visible instead of being auto-windowed away per scan.
+    const cw=this.props.calWindow;
+    if(cw && nv.volumes && nv.volumes.length){
+      try {
+        if(cw[0]!=null) nv.volumes[0].cal_min=cw[0];
+        if(cw[1]!=null) nv.volumes[0].cal_max=cw[1];
+        nv.updateGLVolume && nv.updateGLVolume();
+      } catch(e){}
+    }
     const ov=this.props.overlay;
     if(ov && (ov.kind==='mask'||ov.kind==='heatmap') && ov.url && nv.addVolumeFromUrl){
       const o={ url:ov.url, name:'overlay.nii.gz', colormap:ov.colormap||(ov.kind==='mask'?'red':'warm'), opacity:(ov.opacity!=null?ov.opacity:0.5) };
@@ -1605,7 +1616,7 @@ class BrainViewer extends React.Component {
     if(ov && ov.kind==='mesh' && ov.url && nv.loadMeshes){
       try { await nv.loadMeshes([{ url:ov.url, name:'overlay.obj', rgba255:(ov.rgba? ov.rgba.map(x=>Math.round(x*255)) : [90,220,130,255]) }]); } catch(e){}
     }
-    this._loadedKey = (this.props.volumeUrl||'')+ '|' + JSON.stringify(this.props.overlay||null);
+    this._loadedKey = (this.props.volumeUrl||'')+ '|' + JSON.stringify(this.props.overlay||null) + '|' + JSON.stringify(this.props.calWindow||null);
   }
   _applyMode(){
     const nv=this.nv; if(!nv) return;
@@ -1640,7 +1651,7 @@ class BrainViewer extends React.Component {
   }
   componentDidUpdate(prev){
     if(!this.nv || !this._loaded) return;
-    const key=(this.props.volumeUrl||'')+'|'+JSON.stringify(this.props.overlay||null);
+    const key=(this.props.volumeUrl||'')+'|'+JSON.stringify(this.props.overlay||null)+'|'+JSON.stringify(this.props.calWindow||null);
     if(key!==this._loadedKey){
       // Base volume or overlay changed (e.g. loading a flagged scan) — reload.
       this._loadVolumes().then(()=>{ this._applyMode(); this._applyFly(); this._applyMarkers(); this.forceUpdate(); }).catch(()=>{});
@@ -1825,7 +1836,7 @@ class Component extends React.Component {
           ])
         ]),
         el('button',{key:'handle',onClick:v.toggleRail,style:v.handleStyle},'Ask Claude'),
-        el('div',{key:'canvas',ref:v.setCanvas,style:{flex:'1 1 auto',position:'relative',overflow:'hidden',background:'radial-gradient(120% 90% at 50% 8%, #FAF9F4 0%, #F5F4EE 46%, #EEECE2 100%)',cursor:'grab'}},[
+        el('div',{key:'canvas',ref:v.setCanvas,onDoubleClick:this.onCanvasDblClick,style:{flex:'1 1 auto',position:'relative',overflow:'hidden',background:'radial-gradient(120% 90% at 50% 8%, #FAF9F4 0%, #F5F4EE 46%, #EEECE2 100%)',cursor:'grab'}},[
           el('svg',{key:'svg',style:{position:'absolute',inset:0,width:'100%',height:'100%',display:'block'}},
             el('g',{transform:v.camTransform},v.sceneEls)
           ),
@@ -1887,7 +1898,10 @@ class Component extends React.Component {
             ])
           ) : null,
           this.state.scanFull ? this.scanFullOverlay() : null,
-          this.state.guardOpen ? this.guardReportOverlay() : null
+          this.state.guardOpen ? this.guardReportOverlay() : null,
+          v.isEntry ? null : this.noteDock(),
+          v.isEntry ? null : this.pinComposer(),
+          ...(v.isEntry ? [] : this.canvasPins())
         ])
       ])
     ]);
@@ -1928,6 +1942,7 @@ class Component extends React.Component {
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     guardOpen:false, guardSel:null, guardGroupOpen:{}, qcChecks:null, qcSummary:null, qcSummaryStatus:'idle',
+    dockHover:false, dockDraft:'', dockPin:null, dockAgent:null, dockCardOpen:false,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
     composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false,
@@ -2183,12 +2198,54 @@ class Component extends React.Component {
   setSubstrate=(key)=>{ this.setState({substrate:key, card:null}, ()=>{ if(this.state.data) this.applyRealLabels(this.state.data); this.forceUpdate(); }); };
   selectRoi=(id)=>this.setState({selRoi:this.state.selRoi===id?null:id});
   // ---- scan notes: double-click the scan to pin a location-anchored note ----
-  onScanDblClick=(node,e)=>{
-    e.preventDefault(); e.stopPropagation();  // don't also trigger NiiVue's native double-click (zoom/reset)
-    const r=e.currentTarget.getBoundingClientRect();
-    const x=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));
-    const y=Math.max(0,Math.min(100,(e.clientY-r.top)/r.height*100));
-    this.setState({scanNote:{nodeId:node.id, x, y, draft:''}, scanNoteSaving:false});
+  PIN_KEY='_pins';  // one shared bucket for all canvas pins
+  // Double-click ANYWHERE on the canvas (or the MRI) -> drop a pending pin at that
+  // spot and open a small composer popup there. Coords are % of the canvas element.
+  makePin=(e)=>{
+    const el0=this.canvasEl; if(!el0) return;
+    const r=el0.getBoundingClientRect();
+    const x=Math.max(2,Math.min(98,(e.clientX-r.left)/r.width*100));
+    const y=Math.max(2,Math.min(98,(e.clientY-r.top)/r.height*100));
+    this.setState({dockPin:{x,y,card:this.cardKey()}, dockDraft:'', dockAgent:null, dockCardOpen:false});
+  };
+  onCanvasDblClick=(e)=>{ this.makePin(e); };
+  onScanDblClick=(node,e)=>{ e.preventDefault(); e.stopPropagation(); this.makePin(e); };  // block NiiVue zoom, pin at canvas coords
+  cancelPin=()=>this.setState({dockPin:null, dockDraft:'', dockAgent:null, dockCardOpen:false});
+  // Identity of the card/modal currently open (or null for the bare board). A pin
+  // remembers this at creation; its canvas marker only shows while that same card is
+  // open, otherwise the pin lives solely in the bottom "Pinned notes" pill.
+  cardKey=()=>{
+    const s=this.state;
+    if(s.guardOpen) return 'guard';
+    if(s.scanFull) return 'scanFull:'+((s.sfgView&&s.sfgView.scanId)||s.pinned||'');
+    if(s.pinned) return 'node:'+s.pinned;
+    return null;
+  };
+  // The morphing "Ask Claude" affordance in the composer: the pill expands into a
+  // card and fires the request the first time it opens.
+  openDockCard=()=>{ this.setState({dockCardOpen:true}); if(!this.state.dockAgent) this.askDockAgent(); };
+  collapseDockCard=()=>this.setState({dockCardOpen:false});
+  // Ask Claude from the composer popup, BEFORE the pin is saved. Screenshot the MRI
+  // if it's on screen; reply is held in dockAgent and carried onto the pin.
+  askDockAgent=()=>{
+    const setA=(agent)=>this.setState({dockAgent:agent});
+    setA({status:'loading',response:''});
+    const text=(this.state.dockDraft||'').trim(); const img=this.captureScanShot();
+    const q='A researcher pinned this note on the NeuroAD board'+(text?(': "'+text.slice(0,1400)+'"'):' (no text yet)')+'. Using the attached MRI screenshot if present and the investigation context, give a brief, grounded read: what it likely refers to and one concrete thing to check next. 2-4 sentences.';
+    const body={question:q, hypothesis:this.state.entryValue, case:this.heroCase()||undefined}; if(img) body.image=img;
+    fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(r=>r.ok?r.json():Promise.reject()).then(d=>setA({status:(d&&d.live===false?'offline':'done'), response:(d&&d.answer)||'(no answer returned)', hadImage:!!img}))
+      .catch(()=>setA({status:'error', response:'Claude is unreachable — start the demo with a key to enable note review.'}));
+  };
+  // Commit the pending pin (+ any Claude reply) to the shared list and open the dock.
+  commitPin=()=>{
+    const text=(this.state.dockDraft||'').trim(); if(!text){ this.cancelPin(); return; }
+    const pin=this.state.dockPin||{}; const notes={...this.state.notes}; const cur=(notes[this.PIN_KEY]||[]);
+    const maxN=cur.reduce((m,x)=>Math.max(m,x.n||0),0);
+    const agent=(this.state.dockAgent && this.state.dockAgent.status!=='loading')?this.state.dockAgent:undefined;
+    notes[this.PIN_KEY]=cur.concat([{text, ts:Date.now(), x:pin.x, y:pin.y, card:pin.card||null, n:maxN+1, agent}]);
+    this.saveNotes(notes);
+    this.setState({notes, dockPin:null, dockDraft:'', dockAgent:null, dockCardOpen:false, dockHover:true});
   };
   setScanDraft=(e)=>{ const sn=this.state.scanNote; if(!sn) return; this.setState({scanNote:{...sn, draft:e.target.value}}); };
   cancelScanNote=()=>this.setState({scanNote:null, scanNoteSaving:false});
@@ -2810,6 +2867,97 @@ class Component extends React.Component {
       el('div',{key:'b',style:{maxHeight:'104px',overflowY:'auto',padding:'8px 9px',fontSize:'12px',lineHeight:1.5,color:bad?C.clayDeep:C.ink2,whiteSpace:'pre-wrap',wordBreak:'break-word'}}, loading?'Reading the note + MRI region…':a.response)
     ]);
   }
+  // Bottom-LEFT drawer: a collapsed pill that pops out on hover to show the shared
+  // history of every pin you've dropped (with or without a Claude conversation).
+  noteDock(){
+    const list=(this.state.notes[this.PIN_KEY]||[]); const nodeRef={id:this.PIN_KEY};
+    const open=this.state.dockHover; const PANEL=320, HANDLE=34, W=340;
+    const fmt=(ts)=>{ try{ return new Date(ts).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+    const noteRow=(n,i)=>el('div',{key:i,style:{border:'1px solid '+C.edge,borderRadius:'9px',padding:'8px 10px',background:'#FBF6E9'}},[
+      el('div',{key:'t',style:{fontSize:'12.5px',lineHeight:1.45,color:C.ink,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
+      this.noteAgentBox(n),
+      el('div',{key:'m',style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginTop:'6px',gap:'10px'}},[
+        el('span',{key:'ts',style:{fontSize:'10.5px',color:C.mute,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}, fmt(n.ts)+(typeof n.x==='number'?(' · pin '+(n.n||(i+1))):'')),
+        el('span',{key:'act',style:{display:'flex',gap:'12px',flex:'0 0 auto'}},[
+          el('button',{key:'ask',onClick:()=>this.askNoteAgent(nodeRef,i),disabled:(n.agent&&n.agent.status==='loading'),style:{fontSize:'11px',color:C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600}}, (n.agent&&n.agent.status==='loading')?'Asking…':(n.agent?'Re-ask':'Ask Claude')),
+          el('button',{key:'del',onClick:()=>this.delScanNote(nodeRef,i),style:{fontSize:'11px',color:C.mute,background:'none',border:'none',padding:0,cursor:'pointer'}},'Delete')
+        ])
+      ])
+    ]);
+    const rows=list.map((n,i)=>({n,i})).reverse();  // newest first, keep original index
+    const body=el('div',{key:'body',style:{flex:1,display:'flex',flexDirection:'column',minHeight:0,padding:'8px 12px 12px'}},[
+      el('div',{key:'hint',style:{fontSize:'10.5px',color:C.mute,margin:'0 2px 8px',lineHeight:1.4}},'Double-click anywhere to drop a pin and ask Claude.'),
+      el('div',{key:'list',style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:'7px'}}, rows.length?rows.map(({n,i})=>noteRow(n,i)):[el('div',{key:'e',style:{fontSize:'11.5px',color:C.mute,textAlign:'center',padding:'18px 8px',lineHeight:1.5}}, 'No pins yet.')])
+    ]);
+    return el('div',{key:'notedock',style:{position:'absolute',left:'16px',bottom:0,zIndex:32,pointerEvents:'none'}},
+      el('div',{onMouseEnter:()=>this.setState({dockHover:true}),onMouseLeave:()=>this.setState({dockHover:false}),style:{pointerEvents:'auto',width:W+'px',background:C.card,border:'1px solid '+C.edge,borderTopLeftRadius:'14px',borderTopRightRadius:'14px',boxShadow:'0 -16px 44px rgba(40,36,28,.16)',height:PANEL+'px',display:'flex',flexDirection:'column',overflow:'hidden',transform:'translateY('+(open?0:(PANEL-HANDLE))+'px)',transition:this.reduced?'none':'transform .26s cubic-bezier(.2,.9,.3,1)'}},[
+        el('div',{key:'handle',style:{flex:'0 0 auto',height:HANDLE+'px',display:'flex',alignItems:'center',gap:'9px',padding:'0 14px',cursor:'pointer',borderBottom:open?'1px solid '+C.edge:'none'}},[
+          el('span',{key:'g',style:{width:'22px',height:'4px',borderRadius:'3px',background:C.edge2}}),
+          el('span',{key:'l',style:{fontSize:'11.5px',fontWeight:600,color:C.ink}},'Pinned notes'),
+          el('span',{key:'n',style:{fontSize:'10.5px',color:list.length?C.clayDeep:C.mute,marginLeft:'auto'}}, list.length?('· '+list.length):'· hover')
+        ]),
+        body
+      ])
+    );
+  }
+  // The floating composer popup shown at a pending pin (double-click). Write the
+  // note; the clay pill morphs open into a Claude card (popover-style); Pin commits
+  // to the shared list, Esc/Cancel discards.
+  pinComposer(){
+    const pin=this.state.dockPin; if(!pin) return null;
+    const ag=this.state.dockAgent; const asking=ag&&ag.status==='loading';
+    const cardOpen=this.state.dockCardOpen; const done=ag&&ag.status!=='loading';
+    const bad=ag&&ag.status==='error'; const w=248;
+    const badge = asking?{t:'thinking…',c:C.mute} : bad?{t:'offline',c:C.clayDeep} : (ag&&ag.status==='offline')?{t:'offline',c:C.mute} : done?{t:'Claude',c:C.green} : {t:'',c:C.mute};
+    const left='clamp(6px, calc('+pin.x+'% + 10px), calc(100% - '+(w+12)+'px))';
+    const top='clamp(6px, calc('+pin.y+'% + 10px), calc(100% - '+(cardOpen?300:150)+'px))';
+    const onKey=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.commitPin(); } else if(e.key==='Escape'){ e.preventDefault(); this.cancelPin(); } };
+    // The morphing affordance: a clay pill that expands into a card in place.
+    const morphInner = cardOpen ? [
+      el('div',{key:'h',style:{display:'flex',alignItems:'center',gap:'6px',padding:'7px 9px 4px'}},[
+        el('span',{key:'l',style:{fontSize:'9.5px',fontWeight:700,letterSpacing:'.05em',color:badge.c}}, 'ASK CLAUDE'+(badge.t?(' · '+badge.t):'')),
+        (ag&&ag.hadImage&&!asking)?el('span',{key:'i',style:{fontSize:'9px',color:C.mute}},'· saw the scan'):null,
+        el('button',{key:'c',onMouseDown:(e)=>{e.preventDefault();this.collapseDockCard();},style:{marginLeft:'auto',fontSize:'14px',lineHeight:1,color:C.mute,background:'none',border:'none',cursor:'pointer',padding:0}},'×')
+      ]),
+      el('div',{key:'b',style:{maxHeight:'150px',overflowY:'auto',padding:'0 10px 7px',fontSize:'12px',lineHeight:1.5,color:bad?C.clayDeep:C.ink2,whiteSpace:'pre-wrap',wordBreak:'break-word',animation:this.reduced?'none':'noteCardIn .3s ease both'}}, asking?'Reading the note + MRI region…':(ag?ag.response:'')),
+      el('div',{key:'a',style:{padding:'0 10px 8px'}},
+        el('button',{key:'re',onMouseDown:(e)=>{e.preventDefault();this.askDockAgent();},disabled:asking,style:{fontSize:'11px',fontWeight:600,color:asking?'#a98c4a':C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer'}}, asking?'Asking…':'Re-ask'))
+    ] : [
+      el('div',{key:'pill',style:{height:'30px',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',fontSize:'11.5px',fontWeight:600,whiteSpace:'nowrap'}},[
+        el('span',{key:'s',style:{fontSize:'12px'}},'✦'),
+        done?'Claude ✓':'Ask Claude'
+      ])
+    ];
+    const morph = el('div',{key:'morph',onMouseDown: cardOpen?undefined:(e)=>{e.preventDefault();this.openDockCard();},style:{
+      marginTop:'7px', overflow:'hidden', boxSizing:'border-box',
+      width: cardOpen?'100%':'128px', maxHeight: cardOpen?'260px':'30px',
+      background: cardOpen?'#FFFDF6':C.clay, color: cardOpen?C.ink2:'#fff',
+      border: cardOpen?'1px solid #EADFC2':'1px solid transparent',
+      borderRadius: cardOpen?'11px':'100px',
+      boxShadow: cardOpen?'0 8px 22px rgba(40,36,28,.15)':'0 3px 10px rgba(201,100,66,.32)',
+      cursor: cardOpen?'default':'pointer',
+      transition:this.reduced?'none':'width .34s cubic-bezier(.22,.9,.24,1), max-height .34s cubic-bezier(.22,.9,.24,1), border-radius .3s ease, background .3s ease, box-shadow .3s ease, color .2s ease'
+    }}, morphInner);
+    return el('div',{key:'composer',style:{position:'absolute',left:left,top:top,width:w+'px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 16px 36px rgba(40,36,28,.32)',padding:'10px 11px 9px',zIndex:72,transform:'rotate(-1.6deg)',transformOrigin:'top left',animation:this.reduced?'none':'stickyIn .26s cubic-bezier(.2,1.15,.35,1) both'}},[
+      el('div',{key:'tape',style:{position:'absolute',top:'-7px',left:'20px',width:'32px',height:'13px',background:'rgba(201,132,21,.16)',borderRadius:'2px',transform:'rotate(-3deg)'}}),
+      el('textarea',{key:'ta',autoFocus:true,value:this.state.dockDraft,onChange:(e)=>this.setState({dockDraft:e.target.value}),onKeyDown:onKey,placeholder:'Note on this spot…',style:{width:'100%',border:'none',outline:'none',resize:'none',background:'transparent',fontFamily:'inherit',fontSize:'12.5px',lineHeight:1.45,color:'#5b4a1f',height:'48px',boxSizing:'border-box'}}),
+      morph,
+      el('div',{key:'row',style:{display:'flex',alignItems:'center',gap:'8px',marginTop:'7px'}},[
+        el('button',{key:'x',onMouseDown:(e)=>{e.preventDefault();this.cancelPin();},style:{fontSize:'11px',color:C.mute,background:'none',border:'none',padding:0,cursor:'pointer'}},'Cancel'),
+        el('button',{key:'s',onMouseDown:(e)=>{e.preventDefault();this.commitPin();},style:{fontSize:'11px',fontWeight:600,color:'#fff',background:C.clay,border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer',marginLeft:'auto'}},'Pin')
+      ])
+    ]);
+  }
+  // Pin markers on the canvas: every saved pin + the pending one.
+  canvasPins(){
+    const list=(this.state.notes[this.PIN_KEY]||[]); const nowCard=this.cardKey();
+    // A pin's marker only shows on the board pin (no card) or while its own card is
+    // open; otherwise it collapses into the bottom pill until that card reopens.
+    const out=list.map((n,i)=> (typeof n.x==='number' && (!n.card || n.card===nowCard))?el('div',{key:'cp'+i,title:n.text,style:{position:'absolute',left:n.x+'%',top:n.y+'%',transform:'translate(-50%,-50%)',width:'19px',height:'19px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 0 2px #F7F5EF, 0 2px 6px rgba(0,0,0,.35)',zIndex:70,pointerEvents:'auto',cursor:'default'}}, (n.agent?'✦':String(n.n||(i+1)))):null).filter(Boolean);
+    const pin=this.state.dockPin;
+    if(pin) out.push(el('div',{key:'cpPending',style:{position:'absolute',left:pin.x+'%',top:pin.y+'%',transform:'translate(-50%,-50%)',width:'22px',height:'22px',borderRadius:'50% 50% 50% 2px',background:C.clayDeep,color:'#fff',fontSize:'12px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 0 2px #F7F5EF, 0 3px 8px rgba(0,0,0,.45)',zIndex:71,pointerEvents:'none',animation:this.reduced?'none':'pinDrop .3s cubic-bezier(.2,1.3,.4,1) both'}},'•'));
+    return out;
+  }
   scanNotesSection(node){
     const list=(this.state.notes[node.id]||[]);
     if(list.length===0) return null;  // empty-state: no panel chrome; the provenance hint already teaches the gesture
@@ -2861,8 +3009,8 @@ class Component extends React.Component {
       el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
         el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, overlay:this.pathwayOverlay(node), height:236}),
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
-        ...this.scanPins(node),
-        this.scanSticky(node)
+        ...this.scanPins(node)
+        // note composer moved to the bottom notes dock (this.noteDock)
       ]),
       el('div',{key:'cap',style:{marginTop:'7px',fontSize:'10.5px',color:C.mute,lineHeight:1.4}},'Warm overlay = attentive-probe attribution · expected effect, not a measured spatial attention map'),
       el('div',{key:'prov',style:{marginTop:'5px',fontSize:'10.5px',color:C.mute,display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
@@ -2920,7 +3068,7 @@ class Component extends React.Component {
     // load, so we scope the run to this set and it returns in ~8s.
     const COHORT=['10006_T1-LRFLIP','10006_T1-CORRUPT','ADNI_10006',
                   'ADNI_6044','ADNI_6054','ADNI_6058','ADNI_6001','ADNI_6183','ADNI_6317',
-                  'IXI016-Guys-0697'];   // IXI Guy's = the registration (1.5) reference brain
+                  'IXI016-Guys-0697','IXI035-IOP-0873'];   // IXI Guy's = registration (1.5) reference; Guy's + IOP are two different-vendor scanners, so the intensity check (1.3) gets a visible cross-scanner brightness step for its exemplar scans
     fetch('/api/sfg/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scan_ids:COHORT})})
       .then(r=>r.ok?r.json():Promise.reject(new Error('http '+r.status)))
       .then(d=>{
@@ -3024,6 +3172,24 @@ class Component extends React.Component {
     if(p.kind==='point' && p.coord_mm) return [{coord_mm:p.coord_mm, text:p.text||'', rgba:p.rgba}];
     return null;
   }
+  // Cohort exemplars (Flag.related[]) -> viewer-ready descriptors. A cohort finding
+  // (the cross-scanner intensity confound) names one representative real scan per
+  // scanner site; each loads its real volume via the SFG proxy on a SHARED window
+  // (calWindow) so a brighter scanner reads brighter and the offset stays visible.
+  // Returns [] when the flag has no exemplars (non-cohort flags, offline snapshot).
+  relatedExemplars(f){
+    const r=(f&&f.related)||[];
+    return r.map(x=>({
+      scanId:x.scan_id,
+      volumeUrl:'/api/sfg/volume/'+encodeURIComponent(x.scan_id)+'/'+encodeURIComponent(x.modality||'T1'),
+      markers:(x.points||[]).map(m=>({coord_mm:m.coord_mm, text:m.text||'', rgba:m.rgba})),
+      caption:x.caption||'', site:x.site||'', stat:x.stat||'',
+      calWindow:(x.cal_max!=null)?[(x.cal_min!=null?x.cal_min:0), x.cal_max]:null
+    }));
+  }
+  // Which exemplar the strip is showing, keyed by flag _id so one finding's choice
+  // never leaks into another. Defaults to 0 via the ||{} read in exemplarStrip.
+  setExemplar=(fid,i)=>{ this.setState({guardExemplar:{...(this.state.guardExemplar||{}),[fid]:i}}); };
   showFlagScan=(f)=>{
     // Load the ACTUAL flagged scan (+overlay, if any) into the expanded viewer and
     // fly to the finding's real world/mm coordinate — the flag's native space.
@@ -3117,6 +3283,32 @@ class Component extends React.Component {
       el('div',{key:'lg',style:{display:'flex',flexWrap:'wrap',gap:'8px',marginTop:'4px'}}, hist.series.map((s,si)=>el('span',{key:si,style:{display:'flex',alignItems:'center',gap:'3px',fontSize:'9.5px',color:C.mute}},[el('span',{key:'d',style:{width:'9px',height:'2px',background:s.color||C.clay}}),s.name])))
     ]);
   }
+  // Cohort exemplars strip: one representative real scan per scanner site, opened
+  // in a single SWITCHING viewer on a SHARED intensity window so the cross-scanner
+  // brightness step is visible in real voxels beside the histogram. Self-hides when
+  // the flag has no exemplars; shows a "loads live" note on the cached/offline path.
+  exemplarStrip(f){
+    const ex=this.relatedExemplars(f);
+    if(!ex.length) return null;
+    const head=el('div',{key:'exh',style:{fontSize:'10.5px',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase',color:C.mute,margin:'12px 0 6px'}},'Representative scan per scanner');
+    if(this.state.sfgStatus==='cached')
+      return el('div',{key:'exs'},[head, el('div',{key:'n',style:{fontSize:'11px',color:C.mute,padding:'8px 10px',background:C.paper2,borderRadius:'8px'}},'Exemplar scans load in the live guard.')]);
+    const active=Math.min(((this.state.guardExemplar||{})[f._id])||0, ex.length-1);
+    const cur=ex[active];
+    const chips=el('div',{key:'chips',style:{display:'flex',flexWrap:'wrap',gap:'6px',marginBottom:'8px'}}, ex.map((x,i)=>{
+      const on=i===active;
+      return el('button',{key:x.scanId+i,onClick:()=>this.setExemplar(f._id,i),style:{fontSize:'11px',padding:'5px 10px',borderRadius:'999px',border:'1px solid '+(on?C.clay:C.edge2),background:on?C.clay:C.card,color:on?'#fff':C.ink2,cursor:'pointer',whiteSpace:'nowrap'}}, x.site||x.scanId);
+    }));
+    // Stable key (no active index) so a chip click RELOADS the one viewer via
+    // _loadedKey rather than remounting a fresh WebGL context each time.
+    const viewer=el('div',{key:'vp',style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},
+      el(BrainViewer,{key:'exnv'+f._id,mode:'multi',volumeUrl:cur.volumeUrl,markers:cur.markers,calWindow:cur.calWindow,height:300}));
+    const cap=el('div',{key:'cap',style:{fontSize:'10.5px',color:C.mute,margin:'8px 0 2px',display:'flex',alignItems:'center',gap:'6px'}},[
+      el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
+      cur.caption + (cur.stat?(' · '+cur.stat):'') + ' · shared window · live from the guard'
+    ]);
+    return el('div',{key:'exs'},[head, chips, viewer, cap]);
+  }
   // Rich per-check evidence table (drives off each check's `extra`).
   qcEvidence(f){
     const e=f.extra||{}; const cid=f.check_id||''; const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
@@ -3124,7 +3316,8 @@ class Component extends React.Component {
     if(cid.includes('intensity')) return el('div',{key:'ev'},[
       e.median_cov_raw_pct!=null?row('per-scanner median CoV', e.median_cov_raw_pct+'%'):null,
       ...(e.histograms||[]).map(h=>this.miniHistogram(h)),
-      e.scanner_medians?el('div',{key:'sm',style:{marginTop:'8px'}},[el('div',{key:'h',style:{fontSize:'10.5px',color:C.mute,marginBottom:'2px'}},'per-scanner median intensity'), ...Object.entries(e.scanner_medians).map(([k,v])=>row(k,(typeof v==='number'?v.toFixed(1):v)))]):null
+      e.scanner_medians?el('div',{key:'sm',style:{marginTop:'8px'}},[el('div',{key:'h',style:{fontSize:'10.5px',color:C.mute,marginBottom:'2px'}},'per-scanner median intensity'), ...Object.entries(e.scanner_medians).map(([k,v])=>row(k,(typeof v==='number'?v.toFixed(1):v)))]):null,
+      this.exemplarStrip(f)
     ]);
     if(cid.includes('skull')) return el('div',{key:'ev'},[
       e.weak_volume_cc!=null?row('weak-strip volume', e.weak_volume_cc+' cc'):null,
