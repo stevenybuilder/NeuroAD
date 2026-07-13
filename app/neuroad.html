@@ -1958,7 +1958,17 @@ class Component extends React.Component {
               el('p',{key:'p',style:{fontSize:'18px',lineHeight:1.45,letterSpacing:'-.01em',color:'var(--ink2)',margin:'0 0 32px',maxWidth:'520px'}},'NeuroAD clears confounds and returns ranked biomarkers and testable experiments.'),
               el('div',{key:'box',style:{display:'flex',alignItems:'center',gap:'8px',background:'var(--card)',border:'1px solid var(--edge2)',borderRadius:'16px',padding:'7px 7px 7px 20px',boxShadow:'0 12px 40px rgba(40,36,28,.09), 0 2px 6px rgba(40,36,28,.04)'}},[
                 el('input',{key:'i',value:v.entryValue,onChange:v.setEntry,onKeyDown:v.onEntryKey,placeholder:'e.g. p-tau217 predicts hippocampal atrophy',style:{flex:1,border:'none',outline:'none',fontSize:'16px',letterSpacing:'-.01em',color:'var(--ink)',fontFamily:'inherit',background:'transparent',padding:'11px 0'}}),
-                el('button',{key:'b',onClick:v.onInvestigate,onMouseEnter:(ev)=>{ev.currentTarget.style.background=C.clayDeep;},onMouseLeave:(ev)=>{ev.currentTarget.style.background='var(--clay)';},style:{flex:'0 0 auto',fontSize:'15px',fontWeight:500,padding:'12px 22px',border:'none',borderRadius:'11px',background:'var(--clay)',color:'#fff',cursor:'pointer',whiteSpace:'nowrap'}},'Investigate →')
+                el('button',{key:'b',onClick:v.onEntryInvestigate,onMouseEnter:(ev)=>{ev.currentTarget.style.background=C.clayDeep;},onMouseLeave:(ev)=>{ev.currentTarget.style.background='var(--clay)';},style:{flex:'0 0 auto',fontSize:'15px',fontWeight:500,padding:'12px 22px',border:'none',borderRadius:'11px',background:'var(--clay)',color:'#fff',cursor:'pointer',whiteSpace:'nowrap'}},'Investigate →')
+              ]),
+              el('div',{key:'anchor',style:{display:'flex',alignItems:'center',gap:'10px',marginTop:'16px',paddingLeft:'3px',flexWrap:'wrap'}},[
+                el('span',{key:'l',style:{fontSize:'13px',color:'var(--mute)',letterSpacing:'-.01em'}},'Anchor to'),
+                el('select',{key:'sel',value:v.composerBiomarker,onChange:v.setComposerBiomarker,disabled:v.composerNoPlasma,style:{fontSize:'13.5px',fontWeight:500,padding:'7px 30px 7px 12px',border:'1px solid var(--edge2)',borderRadius:'9px',background:'var(--card) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2710%27 height=%276%27 fill=%27none%27%3E%3Cpath d=%27M1 1l4 4 4-4%27 stroke=%27%238A877D%27 stroke-width=%271.4%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") no-repeat right 11px center',color:'var(--ink)',outline:'none',fontFamily:'inherit',WebkitAppearance:'none',appearance:'none',cursor:v.composerNoPlasma?'not-allowed':'pointer',opacity:v.composerNoPlasma?0.55:1}},[
+                  el('option',{key:'pt',value:'p_tau217'},'p-tau217 · plasma anchor'),
+                  el('option',{key:'amy',value:'amyloid'},'amyloid · positivity enrichment'),
+                  el('option',{key:'gf',value:'gfap'},'GFAP · astrocyte anchor'),
+                  el('option',{key:'nf',value:'nfl'},'NfL · neurodegeneration')
+                ]),
+                v.composerNoPlasma? el('span',{key:'np',style:{fontSize:'11.5px',color:'var(--mute)'}},'switch to ADNI to anchor a plasma biomarker') : null
               ])
             ])
           ) : null,
@@ -2583,7 +2593,14 @@ class Component extends React.Component {
     { text:'Amyloid PET burden precedes default-mode disruption', verdict:'1 confound killed, 2 targets' },
     { text:'Scanner field strength inflates atrophy estimates', verdict:'confound isolated' }
   ];
-  onEntryKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onInvestigate(); } };
+  onEntryKey=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); this.onEntryInvestigate(); } };
+  // Entry-screen investigate: commit the explicitly chosen anchor biomarker (the
+  // entry "Anchor to" selector) so the molecular follow-up routes to it, then run the
+  // real investigation. Plasma anchors are null'd on OASIS (no plasma panel there).
+  onEntryInvestigate=()=>{
+    const bm=this.state.composerBiomarker||'p_tau217';
+    this.setState({anchorFocus: this.state.substrate==='oasis'? null : bm}, ()=>this.onInvestigate());
+  };
   growSeq = [
     { verb:'Reading the hypothesis…', add:['root'] },
     { verb:'Pulling the imaging cohort…', add:[] },
@@ -4252,6 +4269,7 @@ class Component extends React.Component {
       entryValue: st.entryValue,
       setEntry: this.setEntry,
       onInvestigate: this.onInvestigate,
+      onEntryInvestigate: this.onEntryInvestigate,
       investHover:{background:C.clayDeep},
       onEntryKey: this.onEntryKey,
       chips: this.chips.map(c=>({
