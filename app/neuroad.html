@@ -3198,7 +3198,9 @@ class Component extends React.Component {
         el('div',{key:'b',style:{fontSize:'11px',color:C.mute}}, this.state.brainView==='render'?'drag to rotate':'scroll to scrub')]),
       this.viewToggle(),
       el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
-        el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, volumeUrl:this.backdropUrl(), overlay:this.pathwayOverlay(node), height:236}),
+        (this.state.guardOpen||this.state.scanFull)
+          ? el('div',{key:'nv',style:{height:'236px'}})   // hidden behind a modal — free its WebGL context + volume so the modal's viewer isn't fighting for the GPU
+          : el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, volumeUrl:this.backdropUrl(), overlay:this.pathwayOverlay(node), height:236}),
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
         ...this.scanPins(node)
         // note composer moved to the bottom notes dock (this.noteDock)

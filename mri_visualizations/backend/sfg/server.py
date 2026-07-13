@@ -15,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+import nibabel as nib
+
 from . import config
 from .checks.base import all_checks
 from .checks.loader import load_builtin_checks
@@ -72,6 +74,27 @@ def scan_detail(scan_id: str) -> dict:
     return out
 
 
+_DS_DIR = config.CACHE_DIR / "downsampled"
+
+
+def _preview_volume(path):
+    """Return a cached factor-2 downsampled copy of a NIfTI so the in-browser NiiVue
+    viewer decodes/renders a QC preview fast — full-res T1s are ~15 MB and slow to
+    texture + ray-cast on integrated GPUs. nibabel's slicer preserves world space, so
+    the L/R markers and overlays still align. Generated once per scan, reused after;
+    falls back to the full-res original on any error."""
+    try:
+        _DS_DIR.mkdir(parents=True, exist_ok=True)
+        stem = path.name[:-7] if path.name.endswith(".nii.gz") else path.stem
+        out = _DS_DIR / f"{stem}__ds2.nii.gz"
+        if not (out.exists() and out.stat().st_mtime >= path.stat().st_mtime):
+            small = nib.load(str(path)).slicer[::2, ::2, ::2]
+            nib.save(small, str(out))
+        return out
+    except Exception:  # noqa: BLE001 - preview is best-effort; serve full-res on failure
+        return path
+
+
 @app.get("/api/volume/{scan_id}/{modality}")
 def get_volume(scan_id: str, modality: str) -> FileResponse:
     try:
@@ -86,7 +109,7 @@ def get_volume(scan_id: str, modality: str) -> FileResponse:
         path = scan.modality_path(modality)
     else:
         raise HTTPException(404, f"{scan_id} has no modality {modality}")
-    return FileResponse(path, media_type="application/gzip", filename=path.name)
+    return FileResponse(_preview_volume(path), media_type="application/gzip", filename=path.name)
 
 
 @app.get("/api/resource/{key}")
