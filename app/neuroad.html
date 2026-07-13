@@ -3200,12 +3200,12 @@ class Component extends React.Component {
       el('div',{key:'vp',onDoubleClick:(e)=>this.onScanDblClick(node,e),style:{position:'relative',borderRadius:'12px',overflow:'hidden',border:'1px solid '+C.edge2,boxShadow:'inset 0 1px 4px rgba(0,0,0,.45)'}},[
         (this.state.guardOpen||this.state.scanFull)
           ? el('div',{key:'nv',style:{height:'236px'}})   // hidden behind a modal — free its WebGL context + volume so the modal's viewer isn't fighting for the GPU
-          : el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, volumeUrl:this.backdropUrl(), overlay:this.pathwayOverlay(node), height:236}),
+          : el(BrainViewer,{key:'nv',ref:(r)=>{this._brainRef=r;},mode:this.state.brainView, flyMm, volumeUrl:this.backdropUrl(), overlay:null, height:236}),   // clean structural MRI; the MNI ROI attention overlay mis-aligned on native-space scans — real per-finding heatmaps live in the full report
         el('button',{key:'exp',onClick:()=>this.setState({scanFull:true}),title:'Expand',style:{position:'absolute',top:'8px',right:'8px',width:'26px',height:'26px',borderRadius:'7px',border:'none',background:'rgba(20,19,15,.55)',color:'#fff',cursor:'pointer',fontSize:'13px',lineHeight:1,display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)'}},'⤢'),
         ...this.scanPins(node)
         // note composer moved to the bottom notes dock (this.noteDock)
       ]),
-      el('div',{key:'cap',style:{marginTop:'7px',fontSize:'10.5px',color:C.mute,lineHeight:1.4}},'Warm overlay = attentive-probe attribution · expected effect, not a measured spatial attention map'),
+      null,   // (was: "Warm overlay = attentive-probe attribution" — overlay removed from the default view)
       el('div',{key:'prov',style:{marginTop:'5px',fontSize:'10.5px',color:C.mute,display:'flex',alignItems:'center',gap:'6px',lineHeight:1.4}},[
         el('span',{key:'d',style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}),
         'Double-click to pin a note · select a region to fly there'
@@ -3659,7 +3659,7 @@ class Component extends React.Component {
     const sv=this.state.sfgView;                 // a flagged real scan, if one was opened
     const flyMm = sv ? sv.flyMm : (selReg?selReg.mni:null);
     const volumeUrl = sv ? sv.volumeUrl : this.backdropUrl();
-    const overlay = sv ? sv.overlay : this.pathwayOverlay(node);
+    const overlay = sv ? sv.overlay : null;   // default expand shows clean MRI; SFG-finding overlays (sv.overlay) still render
     const markers = sv ? sv.markers : null;
     const close=()=>this.setState({scanFull:false, sfgView:null});
     const provText = sv
