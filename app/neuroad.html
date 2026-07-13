@@ -1678,8 +1678,18 @@ class StructViewer extends React.Component {
   componentDidMount(){ try{ this._mount(); }catch(e){ this._fail(); } }
   componentWillUnmount(){
     this._dead = true;
+    try { if (this.host && this._wheelHandler) this.host.removeEventListener('wheel', this._wheelHandler, {passive:false}); } catch(e){}
     try { if (this._viewer){ if (this._viewer.spin) this._viewer.spin(false); if (this._viewer.clear) this._viewer.clear(); } } catch(e){}
     this._viewer = null;
+  }
+  // Keep wheel-zoom INSIDE the structure viewer: 3Dmol reads the wheel delta to
+  // zoom the model but never preventDefaults, so the wheel also scrolls/zooms the
+  // page. A non-passive wheel listener on the host cancels the page default (incl.
+  // ctrl+wheel pinch-zoom) while 3Dmol still receives the event for its own zoom.
+  _lockWheel(){
+    if (!this.host || this._wheelHandler) return;
+    this._wheelHandler = (e)=>{ e.preventDefault(); };
+    this.host.addEventListener('wheel', this._wheelHandler, {passive:false});
   }
   _fail(){ if (!this._dead) this.setState({ status:'failed' }); }
   _mount(){
@@ -1704,6 +1714,7 @@ class StructViewer extends React.Component {
           try {
             const viewer = $3Dmol.createViewer(this.host, { backgroundColor:'#16150F', antialias:true });
             this._viewer = viewer;
+            this._lockWheel();
             viewer.addModel(cif, 'cif');
             viewer.setStyle({}, { cartoon:{ colorfunc:(atom)=>plddtColor(atom.b) } });
             viewer.zoomTo();
@@ -1900,7 +1911,7 @@ class Component extends React.Component {
   state = {
     stage:'entry', railOpen:false, playing:false, stepIndex:0, reasoning:null, showVerdict:false, revealed:null,
     data:null, card:null, claudeLive:false, substrate:'adni',
-    pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
+    pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, trailExplOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
@@ -1994,7 +2005,7 @@ class Component extends React.Component {
   // REAL result that was computed offline from gated ADNI (which cannot be published in the
   // deployed image) and baked into demo_data.json — a frozen seam, not a live recompute.
   provenanceNote(){
-    if(this.state.card) return 'Live: recomputed just now by /api/investigate on the registered cohort.';
+    if(this.state.card) return 'Live: the survivor verdict, AUC, confound tests and anchor were just recomputed by /api/investigate on adni:combat. The unsupervised-discovery panel below is a frozen real-cohort snapshot (OpenBHB · Neuro-JEPA), not part of this recompute.';
     const sub=this.state.substrate||'';
     const src = sub.indexOf('adni')===0 ? 'gated ADNI (cannot be published in the deployed image)'
       : (sub.indexOf('oasis')===0 ? 'the OASIS cohort' : 'the source cohort');
@@ -2148,11 +2159,12 @@ class Component extends React.Component {
     const n=this.nmap[id]; if(!n) return;
     clearTimeout(this._timer); this._playing=false; this._justRevealed=null;
     const ok=this.eligible(n);
-    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?(n.story==='proteins'?'protein':'summary'):'reason', selectedTarget:null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false });
+    this.setState({ revealed:null, pinned: ok?id:null, drawerTab: ok?(n.story==='proteins'?'protein':'summary'):'reason', selectedTarget:null, selRoi:null, noteDraft:'', playing:false, reasoning:null, showVerdict:false, artifactsOpen:false, trailExplOpen:false });
     this.animateTo(this.frameDetail(n, n.role==='clay'?1.05:1.2, ok?150:0));
   };
   setDrawerTab=(t)=>this.setState({drawerTab:t});
   toggleArtifacts=()=>this.setState({artifactsOpen:!this.state.artifactsOpen});
+  toggleTrailExpl=()=>this.setState({trailExplOpen:!this.state.trailExplOpen});
   setBrainView=(v)=>this.setState({brainView:v});
   setSubstrate=(key)=>{ this.setState({substrate:key, card:null}, ()=>{ if(this.state.data) this.applyRealLabels(this.state.data); this.forceUpdate(); }); };
   selectRoi=(id)=>this.setState({selRoi:this.state.selRoi===id?null:id});
@@ -2408,7 +2420,7 @@ class Component extends React.Component {
   expRow(title, tag, tagKind){
     return el('div',{key:title,style:{display:'flex',gap:'9px',alignItems:'flex-start',marginBottom:'10px'}},[
       el('div',{key:'d',style:{flex:'0 0 6px',height:'6px',marginTop:'6px',borderRadius:'50%',background:C.green}}),
-      el('div',{key:'x',style:{flex:1,fontSize:'12px',color:C.ink,lineHeight:1.4}},[title,' ',el('span',{key:'t',style:{marginLeft:'2px'}}, this.chip(tag, tagKind||'plain'))])
+      el('div',{key:'x',style:{flex:1,fontSize:'13px',color:C.ink,lineHeight:1.45}},[title, tag?' ':null, tag?el('span',{key:'t',style:{marginLeft:'2px'}}, this.chip(tag, tagKind||'plain')):null])
     ]);
   }
   disclaimer(text){ return el('div',{style:{marginTop:'12px',fontSize:'11px',lineHeight:1.4,color:C.mute,borderTop:'1px solid '+C.edge,paddingTop:'9px'}}, text); }
@@ -2421,7 +2433,7 @@ class Component extends React.Component {
       if(!co) return null;
       return this.storyShell(node,'Cohort & datasets',[
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'Root of the investigation. Everything below inherits this provenance.'),
-        co.badge? el('div',{key:'bd',style:{marginBottom:'10px'}}, this.chip(co.badge,'real')) : null,
+        co.badge? el('div',{key:'bd',style:{marginBottom:'10px'}}, this.chip(co.badge,'plain')) : null,
         el('div',{key:'grid',style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 12px'}},[
           this.kv('participants', co.n_subjects!=null?String(co.n_subjects):'—'),
           this.kv('sites', co.n_sites!=null?String(co.n_sites):'—'),
@@ -2541,11 +2553,31 @@ class Component extends React.Component {
     if(k==='experiments'){
       const tx=this.heroTx();
       if(tx && tx.wet_lab_experiment){
-        const src=(tx.provenance&&tx.provenance.repurposing)||'offline_snapshot';
+        const lead=(tx.ranked_targets&&tx.ranked_targets[0])||null;
+        const st=tx.structure||{};
+        const uni=st.uniprot||null;
+        const afUrl=uni?('https://alphafold.ebi.ac.uk/entry/'+uni):null;
+        const upUrl=uni?('https://www.uniprot.org/uniprotkb/'+uni):null;
+        const why= lead ? (
+          'Lead target '+lead.gene+(lead.rank!=null?(' · PI4AD rank #'+lead.rank):'')
+          +(lead.evidence_note?(' — '+lead.evidence_note):'')
+          +(st.mean_plddt!=null?(' · AlphaFold pLDDT '+this._num(st.mean_plddt)):'')
+        ) : null;
+        const linkStyle={fontSize:'12px',fontWeight:600,color:C.clayDeep,textDecoration:'none'};
         return this.storyShell(node,'Testable wet-lab experiments',[
-          el('div',{key:'g',style:{fontSize:'12px',color:C.ink2,marginBottom:'12px'}},'Concrete next step that would falsify or support the survivor.'),
-          this.expRow(tx.wet_lab_experiment, this.srcBadge(src),'plain'),
-          this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.')
+          el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,marginBottom:'12px'}},'Concrete next step that would falsify or support the survivor.'),
+          this.expRow(tx.wet_lab_experiment),
+          why?el('div',{key:'why',style:{marginTop:'10px',padding:'10px 11px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px'}},[
+            el('div',{key:'l',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},'Why this target'),
+            el('div',{key:'t',style:{fontSize:'12px',color:C.ink2,lineHeight:1.45,marginBottom:'7px'}}, why),
+            el('div',{key:'cav',style:{fontSize:'11px',color:C.mute,lineHeight:1.45,marginBottom:(afUrl||upUrl)?'7px':0}}, 'Target APP grounded in a real AlphaFold monomer model + STRING PPI evidence (offline snapshot) — STRING interaction evidence, NOT de-novo AlphaFold3 complex folding.'),
+            (afUrl||upUrl)?el('div',{key:'s',style:{display:'flex',gap:'12px',flexWrap:'wrap'}},[
+              afUrl?el('a',{key:'af',href:afUrl,target:'_blank',rel:'noopener',style:linkStyle},'AlphaFold DB →'):null,
+              upUrl?el('a',{key:'up',href:upUrl,target:'_blank',rel:'noopener',style:linkStyle},'UniProt →'):null
+            ]):null
+          ]):null,
+          this.disclaimer('Ordered by cost-to-signal — cheapest disconfirming test first.'),
+          el('div',{key:'prot',style:{marginTop:'8px',fontSize:'11px',lineHeight:1.4,color:C.mute}}, 'Protocol: standard organoid readout for the amyloid-cascade mechanism (template, not individually optimized).')
         ]);
       }
       return null;
@@ -3068,30 +3100,49 @@ class Component extends React.Component {
     const hasStruct=!!(tx.structure||(tx.repurposing&&tx.repurposing.length));
     const val=this._valence(node);
     const layers=[
-      {id:'L1',name:_isJepa?'Embedding':'Morphometry',full:_isJepa?'Neuro-JEPA embedding':(_sub||'FreeSurfer morphometry (weight-free feeder)'),lit:true},
-      {id:'L2',name:'AD probe',full:'Attentive MLP probe',lit:true},
-      {id:'L3',name:'Fusion',full:'Multimodal fusion',lit:hasFusion},
-      {id:'L4',name:'Gauntlet',full:'Confound gauntlet — kill-weak / surface-strong',lit:ranTests},
-      {id:'L5',name:'Ranking',full:'PI4AD network & pathway ranking',lit:hasTargets&&!val.killed},
-      {id:'L6',name:'Structure',full:'Molecular targeting (AlphaFold / Boltz)',lit:hasStruct&&!val.killed}
+      {id:'L1',name:_isJepa?'Embedding':'Morphometry',full:_isJepa?'Neuro-JEPA embedding':(_sub||'FreeSurfer morphometry (weight-free feeder)'),lit:true,
+        expl:'Frozen Neuro-JEPA encoder, pretrained on 1.5M+ brain MRIs, emits latent structural embeddings (inference only, no training). This ADNI case fed FreeSurfer/FastSurfer morphometry as a weight-free feeder; the JEPA-native score is the adjacent frozen-model panel.'},
+      {id:'L2',name:'AD probe',full:'Attentive MLP probe',lit:true,
+        expl:'Attentive MLP probe on the frozen embedding — AD-vs-CN signal plus leave-one-group-out region attribution over FastSurfer hippocampal/cortical volumes.'},
+      {id:'L3',name:'Fusion',full:'Multimodal fusion',lit:hasFusion,
+        expl:'Cross-attention and graph fusion combine the imaging embedding with tabular clinical — cognitive tests, plasma p-tau217, GFAP, demographics.'},
+      {id:'L4',name:'Gauntlet',full:'Confound gauntlet — kill-weak / surface-strong',lit:ranTests,
+        expl:'Kill-weak / surface-strong confound gauntlet — scanner, age/sex, replication and anchor tests prune confounded branches and map structural loss to disease stage.'},
+      {id:'L5',name:'Ranking',full:'PI4AD network & pathway ranking',lit:hasTargets&&!val.killed,
+        expl:'PI4AD multi-omics network propagation and pathway analysis rank proteins by hub centrality (e.g. Ras hubs).'},
+      {id:'L6',name:'Structure',full:'Molecular targeting (AlphaFold / Boltz)',lit:hasStruct&&!val.killed,
+        expl:'AlphaFold / Boltz structure and interaction modelling score druggability and repurposing fits, yielding ranked targets and wet-lab experiments.'}
     ];
     const driving=val.killed?['L4']:(hasTargets?['L5','L6']:['L2','L4']);
-    return { layers, driving, chosen: val.killed?'pruned at L4 — confound ≥ signal':'chosen via L5→L6' };
+    return { layers, driving, jepa:_isJepa, chosen: val.killed?'pruned at L4 — confound ≥ signal':'chosen via L5→L6' };
   }
   _trailEl(node){
-    const tr=this._pipelineTrail(node); const val=this._valence(node); const items=[];
+    const tr=this._pipelineTrail(node); const val=this._valence(node); const items=[]; const open=this.state.trailExplOpen;
     tr.layers.forEach((L,i)=>{
       const drive=tr.driving.indexOf(L.id)>=0;
       items.push(el('div',{key:L.id,title:L.full,style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'5px',flex:'0 0 auto'}},[
         el('div',{key:'d',style:{width:drive?'13px':'11px',height:drive?'13px':'11px',borderRadius:'50%',background:L.lit?(drive?val.accent:C.ink2):C.edge2,boxShadow:drive?('0 0 0 3px '+val.soft):'none'}}),
-        el('div',{key:'i',style:{fontSize:'14px',fontWeight:drive?700:600,color:L.lit?C.ink2:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},L.id),
-        el('div',{key:'n',style:{fontSize:'14px',color:C.ink2,whiteSpace:'nowrap'}},L.name)
+        el('div',{key:'i',style:{fontSize:'13px',fontWeight:drive?700:600,color:L.lit?C.ink2:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},L.id),
+        el('div',{key:'n',style:{fontSize:'13px',color:C.ink2,whiteSpace:'nowrap'}},L.name)
       ]));
-      if(i<tr.layers.length-1) items.push(el('div',{key:'a'+i,style:{flex:'0 0 auto',color:C.edge2,fontSize:'14px',marginTop:'3px'}},'→'));
+      if(i<tr.layers.length-1) items.push(el('div',{key:'a'+i,style:{flex:'0 0 auto',color:C.edge2,fontSize:'13px',marginTop:'3px'}},'→'));
     });
     return el('div',{},[
       el('div',{key:'r',style:{display:'flex',alignItems:'flex-start',gap:'6px',flexWrap:'wrap'}},items),
-      el('div',{key:'c',style:{fontSize:'11px',color:val.accent,marginTop:'9px',fontWeight:600}},tr.chosen)
+      el('div',{key:'c',style:{fontSize:'11px',color:val.accent,marginTop:'9px',fontWeight:600}},tr.chosen),
+      el('div',{key:'sub',style:{fontSize:'12px',color:C.mute,marginTop:'4px',lineHeight:1.4}},
+        tr.jepa ? 'Substrate: frozen Neuro-JEPA embedding.'
+                : 'Substrate: FreeSurfer morphometry this cohort — the weight-free feeder into the frozen Neuro-JEPA stack. JEPA-native AUC is the separate frozen-model panel.'),
+      el('button',{key:'xb',onClick:this.toggleTrailExpl,style:{fontSize:'11px',fontWeight:600,color:C.clayDeep,background:'none',border:'none',padding:'6px 0 0',cursor:'pointer'}}, open?'Hide layer detail ↑':'Explain the 6 layers ↓'),
+      open?el('div',{key:'xp',style:{marginTop:'8px',paddingTop:'10px',borderTop:'1px dashed '+C.edge2,display:'flex',flexDirection:'column',gap:'9px'}},
+        tr.layers.map(L=>el('div',{key:L.id,style:{display:'flex',gap:'9px',alignItems:'flex-start'}},[
+          el('span',{key:'i',style:{flex:'0 0 auto',fontSize:'12px',fontWeight:700,color:C.ink2,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}},L.id),
+          el('div',{key:'t',style:{flex:1}},[
+            el('div',{key:'n',style:{fontSize:'13px',fontWeight:600,color:C.ink}},L.name),
+            el('div',{key:'e',style:{fontSize:'12px',color:C.mute,lineHeight:1.45,marginTop:'1px'}},L.expl)
+          ])
+        ]))
+      ):null
     ]);
   }
   // ≤3 reasoning bullets from real stats, first one comparative ("beats X").
@@ -3131,9 +3182,9 @@ class Component extends React.Component {
     const nj=(this.state.data&&this.state.data.neurojepa_evidence)||null; if(!nj) return null;
     const sc=nj.scanner_leakage||{}; const ad=nj.ad_signal||{};
     const stat=(label,val,sub)=> el('div',{key:label,style:{flex:'1 1 40%',minWidth:'120px',background:C.card,border:'1px solid '+C.edge,borderRadius:'10px',padding:'11px 12px'}},[
-      el('div',{key:'l',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},label),
-      el('div',{key:'v',style:{fontSize:'17px',fontWeight:600,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink,lineHeight:1.05}},val),
-      sub?el('div',{key:'s',style:{fontSize:'10px',color:C.mute,marginTop:'3px'}},sub):null
+      el('div',{key:'l',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px'}},label),
+      el('div',{key:'v',style:{fontSize:'15px',fontWeight:600,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink,lineHeight:1.05}},val),
+      sub?el('div',{key:'s',style:{fontSize:'12px',color:C.mute,marginTop:'3px'}},sub):null
     ]);
     const stats=[];
     if(ad.auc!=null) stats.push(stat('AD vs CN', 'AUC '+this._num(ad.auc), (ad.n!=null?('n='+ad.n+' · '):'')+'real OASIS-1 volumes'));
@@ -3142,7 +3193,7 @@ class Component extends React.Component {
     return el('div',{key:'njepa'},[
       this._secLabel('Frozen foundation model (Neuro-JEPA)'),
       el('div',{key:'s',style:{display:'flex',gap:'9px',flexWrap:'wrap'}},stats),
-      el('div',{key:'n',style:{fontSize:'11px',lineHeight:1.5,color:C.mute,marginTop:'9px'}}, 'Measured on the frozen Neuro-JEPA embedding itself (inference only). Separate from the hero AUC above, which runs on FreeSurfer morphometry. '+(nj.provenance||''))
+      el('div',{key:'n',style:{fontSize:'12px',lineHeight:1.5,color:C.mute,marginTop:'9px'}}, 'Measured on the frozen Neuro-JEPA embedding itself (inference only). Separate from the hero AUC above, which runs on FreeSurfer morphometry. '+(nj.provenance||''))
     ]);
   }
   // LIVE driving-analysis figure: the REAL-cohort unsupervised discovery clustering.
@@ -3152,29 +3203,30 @@ class Component extends React.Component {
     const data=this.state.data; const disc=data&&data.discovery_real; if(!disc||!disc.clusters||!disc.real) return null;
     const phen=(p)=> p?String(p).replace(/_/g,' '):null;
     const rows=disc.clusters.map((cl,i)=>{
-      const promoted=!!cl.promoted; const auc=cl.naive_effect&&cl.naive_effect.value; const score=cl.score!=null?cl.score:0;
-      return el('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 0',borderTop:i?('1px solid '+C.edge):'none'}},[
+      const promoted=!!cl.promoted;
+      return el('div',{key:i,style:{display:'flex',alignItems:'center',gap:'10px',padding:'8px 0',borderTop:i?('1px solid '+C.edge):'none'}},[
         el('span',{key:'d',style:{width:'8px',height:'8px',borderRadius:'50%',background:promoted?C.greenEdge:C.clay,flex:'0 0 auto'}}),
         el('div',{key:'m',style:{flex:1,minWidth:0}},[
-          el('div',{key:'a',style:{fontSize:'13px',color:C.ink,fontWeight:600}}, phen(cl.dominant_phenotype)||('cluster '+cl.cluster)),
-          el('div',{key:'b',style:{fontSize:'11px',color:C.mute,marginTop:'1px'}}, 'n='+cl.n+(auc!=null&&auc!==0.5?(' · AUC '+this._num(auc)):'')+(cl.status?(' · '+cl.status):''))
+          el('div',{key:'a',style:{fontSize:'13px',color:C.ink,fontWeight:600}}, phen(cl.dominant_phenotype)||('Cluster '+(i+1))),
+          cl.status?el('div',{key:'b',style:{fontSize:'12px',color:C.mute,marginTop:'1px'}}, cl.status):null
         ]),
-        el('div',{key:'s',style:{flex:'0 0 auto',textAlign:'right'}},[
-          this.strengthDots(score/100, promoted?C.green:C.clay),
-          el('div',{key:'x',style:{fontSize:'10px',color:C.mute,marginTop:'3px'}}, promoted?'promoted':'flagged')
-        ])
+        el('span',{key:'s',style:{flex:'0 0 auto',fontSize:'12px',fontWeight:600,color:promoted?C.green:C.mute}}, promoted?'promoted':'flagged')
       ]);
     });
+    const nProm=disc.clusters.filter(c=>c.promoted).length;
+    const oneLine=nProm>0
+      ? (nProm+' phenotype'+(nProm>1?'s':'')+' promotable; the rest trace to scanner/site.')
+      : 'No disease-specific phenotype survived — every cluster traces to scanner/site, not biology. Real embeddings, precomputed offline and frozen into the demo (OpenBHB · Neuro-JEPA) — not recomputed by this investigation.';
     return el('div',{},[
-      el('div',{key:'h',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'2px'}},[
+      el('div',{key:'h',style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginBottom:'6px'}},[
         el('div',{key:'a',style:{display:'flex',alignItems:'center',gap:'7px'}},[
-          el('span',{key:'t',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Unsupervised discovery · real cohort'),
-          this.chip('REAL','real')
+          el('span',{key:'t',style:{fontSize:'13px',fontWeight:600,color:C.ink}},'Unsupervised discovery · '+(disc.substrate||'real cohort')),
+          this.chip('REAL','plain')
         ]),
-        el('div',{key:'b',style:{fontSize:'10px',color:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}}, (disc.method||'kmeans')+' · k='+disc.k+' · sil '+this._num(disc.silhouette))
+        el('div',{key:'b',style:{fontSize:'12px',color:C.mute,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'}}, (disc.method||'kmeans')+' · sil '+this._num(disc.silhouette))
       ]),
       el('div',{key:'r'},rows),
-      disc.note?el('div',{key:'n',style:{fontSize:'11px',color:C.mute,marginTop:'9px',lineHeight:1.4,borderTop:'1px solid '+C.edge,paddingTop:'8px'}}, disc.note):null
+      el('div',{key:'n',style:{fontSize:'12px',color:C.mute,marginTop:'9px',lineHeight:1.45,borderTop:'1px solid '+C.edge,paddingTop:'8px'}}, oneLine)
     ]);
   }
   summaryEl(node){
@@ -3188,16 +3240,16 @@ class Component extends React.Component {
     const pill=(title,sub,score)=> el('div',{key:'vl',style:{display:'flex',alignItems:'center',gap:'11px',background:val.soft,border:'1px solid '+C.edge,borderRadius:'11px',padding:'12px 14px'}},[
       el('span',{key:'d',style:{width:'9px',height:'9px',borderRadius:'50%',background:val.dot,flex:'0 0 auto'}}),
       el('div',{key:'t',style:{flex:1,minWidth:0}},[
-        el('div',{key:'a',style:{fontSize:'14px',fontWeight:600,color:val.accent,lineHeight:1.3}},title),
-        el('div',{key:'b',style:{fontSize:'11px',color:C.ink2,marginTop:'2px'}}, sub)
+        el('div',{key:'a',style:{fontSize:'15px',fontWeight:600,color:val.accent,lineHeight:1.3}},title),
+        el('div',{key:'b',style:{fontSize:'12px',color:C.ink2,marginTop:'2px'}}, sub)
       ]),
-      score?el('div',{key:'s',style:{fontSize:'13px',fontWeight:700,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:val.accent,flex:'0 0 auto',textAlign:'right'}},score):null
+      score?el('div',{key:'s',style:{fontSize:'15px',fontWeight:700,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:val.accent,flex:'0 0 auto',textAlign:'right'}},score):null
     ]);
     if(val.killed){
       const lk=c.leakage_margin||{}; const km=(lk.confound?(lk.confound+' confound'):'a confound');
       return el('div',{style:{display:'flex',flexDirection:'column',gap:'16px'}},[
         pill('Branch killed','Pruned during refinement — kept visible for audit.',null),
-        el('div',{key:'note',style:{fontSize:'12.5px',lineHeight:1.5,color:C.ink2}}, 'This branch was pruned because '+km+' could account for it, so it was not carried into candidate generation. Headline metrics (AUC, confounds, anchor) belong to the surviving candidate, not to this pruned branch.'),
+        el('div',{key:'note',style:{fontSize:'13px',lineHeight:1.5,color:C.ink2}}, 'This branch was pruned because '+km+' could account for it, so it was not carried into candidate generation. Headline metrics (AUC, confounds, anchor) belong to the surviving candidate, not to this pruned branch.'),
         el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
         verdictLink
       ]);
@@ -3207,9 +3259,9 @@ class Component extends React.Component {
     // reached by dropping a not-available STAR test is not read as a clean sweep.
     const scoreTxt=(c.score!=null)?(c.score+'/100'+(cf.evald<cf.total?(' · '+cf.pass+'/'+cf.total+' tests'):'')):null;
     const chip=(label,valTxt,sub,tone)=> el('div',{key:label,style:{flex:'1 1 30%',minWidth:'92px',background:C.card,border:'1px solid '+C.edge,borderRadius:'10px',padding:'11px 12px'}},[
-      el('div',{key:'l',style:{fontSize:'10px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},label),
-      el('div',{key:'v',style:{fontSize:'17px',fontWeight:600,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:tone||C.ink,lineHeight:1.05}},valTxt),
-      sub?el('div',{key:'s',style:{fontSize:'10px',color:C.mute,marginTop:'3px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},sub):null
+      el('div',{key:'l',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.06em',color:C.mute,marginBottom:'5px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},label),
+      el('div',{key:'v',style:{fontSize:'15px',fontWeight:600,fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:tone||C.ink,lineHeight:1.05}},valTxt),
+      sub?el('div',{key:'s',style:{fontSize:'12px',color:C.mute,marginTop:'3px',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}},sub):null
     ]);
     const aucChip= auc?chip('AUC', auc.value, auc.ci||(auc.adj?('adj '+auc.adj):(auc.n!=null?('n='+auc.n):null)), C.ink):chip('AUC','—',null);
     const cfTone= cf.pass===cf.total?C.green:(cf.pass>=Math.ceil(cf.total/2)?C.gold:C.clay);
@@ -3237,7 +3289,7 @@ class Component extends React.Component {
     const showTests = !val.killed && tests.length;
     const bulletEl=(b,i)=> el('div',{key:'b'+i,style:{display:'flex',gap:'9px',alignItems:'flex-start',marginBottom:'9px'}},[
       el('span',{key:'d',style:{flex:'0 0 6px',width:'6px',height:'6px',borderRadius:'50%',background:b.cmp?val.accent:C.ink2,marginTop:'6px'}}),
-      el('div',{key:'t',style:{flex:1,fontSize:'12.5px',lineHeight:1.45,color:C.ink}}, b.t)
+      el('div',{key:'t',style:{flex:1,fontSize:'13px',lineHeight:1.45,color:C.ink}}, b.t)
     ]);
     const testLine=(t,i)=>{ const m=this._testMark(t.result); const col=m==='✓'?C.green:(m==='✗'?C.clay:C.mute);
       return el('div',{key:'t'+i,style:{display:'flex',gap:'9px',alignItems:'center',marginBottom:'7px'}},[
@@ -3258,9 +3310,9 @@ class Component extends React.Component {
         ...rows.map((r,i)=>{ const isReal=/real/i.test(r.badge||''); return el('div',{key:i,style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:'10px',padding:'9px 0',borderTop:i?('1px solid '+C.edge):'none'}},[
           el('div',{key:'m',style:{flex:1,minWidth:0}},[
             el('div',{key:'a',style:{fontSize:'13px',fontWeight:600,color:C.ink}}, r.name),
-            el('div',{key:'b',style:{fontSize:'11px',color:C.mute,marginTop:'1px'}}, (r.n!=null?(this._commas(r.n)+' subjects'):'')+((r.n!=null&&r.meta)?' · ':'')+(r.meta||''))
+            el('div',{key:'b',style:{fontSize:'12px',color:C.mute,marginTop:'1px'}}, (r.n!=null?(this._commas(r.n)+' subjects'):'')+((r.n!=null&&r.meta)?' · ':'')+(r.meta||''))
           ]),
-          this.chip(isReal?'REAL':'SNAPSHOT', isReal?'real':'plain')
+          this.chip(isReal?'REAL':'SNAPSHOT','plain')
         ]); })
       ]),
       el('div',{key:'trail'},[ this._secLabel('Pipeline trail'), this._trailEl(node) ]),
@@ -3270,8 +3322,8 @@ class Component extends React.Component {
     ]);
   }
   buildTabs(node){
-    const on={fontSize:'12px',padding:'6px 11px',border:'1px solid '+C.clay,borderRadius:'7px',background:C.clay,color:'#fff',cursor:'pointer',whiteSpace:'nowrap'};
-    const off={fontSize:'12px',padding:'6px 11px',border:'1px solid '+C.edge2,borderRadius:'7px',background:C.card,color:C.ink2,cursor:'pointer',whiteSpace:'nowrap'};
+    const on={fontSize:'14px',fontWeight:600,padding:'6px 11px',border:'1px solid '+C.clay,borderRadius:'7px',background:C.clay,color:'#fff',cursor:'pointer',whiteSpace:'nowrap'};
+    const off={fontSize:'14px',fontWeight:600,padding:'6px 11px',border:'1px solid '+C.edge2,borderRadius:'7px',background:C.card,color:C.ink2,cursor:'pointer',whiteSpace:'nowrap'};
     const cur=this.state.drawerTab; const defs=[];
     defs.push(['summary','Summary']);
     defs.push(['artifacts','Artifacts']);
