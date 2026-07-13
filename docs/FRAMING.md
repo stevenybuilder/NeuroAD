@@ -497,3 +497,127 @@ ranking is an external, citable authority, not a number we tuned.
   never to public GitHub."
 - **Avoid:** "we cached the results and replay them"; "it's not really live"; "the embeddings
   are on GitHub."
+
+## 15. Deep dive — permutations, precompute, and the LLM router (2026-07-13)
+
+*Folded in from a code-grounded review of the real implementation + external best-practice.
+Every claim below traces to a file:line in the repo; the external talking points carry citations.*
+
+### 15a. Permutation testing — how we establish significance (not a bare cutoff)
+
+**Plain version.** The referee turns a frozen-embedding linear probe into a *hypothesis test*.
+It computes an out-of-fold, site-disjoint cross-validated AUROC once, then reuses those frozen
+scores to build (a) a percentile **bootstrap 95% CI** (resample subjects) and (b) a **label-
+permutation null** (shuffle the outcome labels *within each site group*, recompute the AUROC).
+Pointing the same probe at the disease outcome vs. at the scanner/site gives two AUROCs whose
+difference is the **leakage margin**; the same machinery yields `outcome_p_perm`, `scanner_p_perm`,
+and `margin_p`, which are then **Benjamini-Hochberg FDR-corrected** together. The star's verdict is
+stated as **"margin CI excludes zero,"** not a hand-picked threshold. Code: `src/neuroad/probe.py`
+(`auc_ci_perm`, `_shuffle_within_groups`, vectorized rank-AUC), `src/neuroad/leakage.py`
+(`leakage_margin`, margin CI/p, BH-FDR), `src/neuroad/gauntlet.py` (only `test_site_scanner` emits
+the star p's; the other four gate on retained-fraction bands / a Fisher-z CI / a bootstrap CI).
+
+**Q&A.**
+- *What is the permutation null actually testing?* For grouped (outcome) targets it's stronger than
+  plain chance: labels are shuffled **within each site**, so site class-balance is held fixed and the
+  p-value answers "is the label↔score link better than what site membership alone explains?" — not
+  merely "better than random."
+- *How is `margin_p` different from comparing two p-values?* It's its own permutation null on the
+  *difference*: P(outcome_perm − fixed scanner_auc ≥ observed margin), add-one smoothed.
+- *Why isn't the scanner AUROC also site-disjoint — doesn't that inflate it?* Holding out the group
+  you're predicting is degenerate, so scanner uses ordinary stratified CV. That can make scanner
+  *optimistic*, which biases the margin **downward** — the safe direction for a skeptic's tool (the
+  margin can only understate the outcome's edge).
+- *Are the p-values honest given the speed tricks?* The code discloses it: the null fixes the fitted
+  OOF scores (the probe isn't refit per permutation), so `p_perm` is an admitted **lower bound**
+  (anticonservative) — a documented tradeoff, and add-one smoothing means it's never reported as 0.
+- *Which of the 5 gauntlet tests produce permutation p's?* Only the site/scanner star (via
+  `leakage_margin`). Age/sex and brain-age gate on retained-fraction bands (0.70 / 0.40); the
+  biomarker anchor on a Fisher-z CI lower bound; replication on a held-out-site bootstrap CI ≥ 0.65.
+
+### 15b. Precomputing everything — a finite grid of *real* results
+
+**Plain version.** The real cost is the referee (~25-36 s/hypothesis). But any free-text hypothesis
+collapses to a tiny **finite coordinate** — `(dataset, target ∈ {conversion, dx_binary, site,
+scanner}, region, anchor ∈ {amyloid, p_tau217, gfap, nfl, none})` — so the whole answerable space is
+a small enumerable grid. We sweep it **offline** (`scripts/warm_investigate_cache.py`) running the
+*real engine* per cell, and a live `/api/investigate` becomes an **O(1) dict lookup** of that cell
+(`app/investigate_cache.py`). Two honesty properties: every cached cell is a genuine full-rigor
+engine output (the `demo_data.json` **"frozen-seam"** pattern generalized from one cell to the whole
+grid — never a fabricated number), and a **miss still computes live and back-fills**. A live miss is
+itself ~53× cheaper because `orchestrator._base_memo` caches the anchor-*invariant* referee base, so
+switching anchor re-applies only the ~0.5 s translation, not another ~30 s referee.
+
+**Q&A.**
+- *How does a 25-36 s recompute become O(1)?* The text is reduced to the coordinate key
+  `dataset|target|region|anchor|want_api`; the handler does a plain in-memory dict `.get` on the
+  preloaded grid and returns the personalized real cell before ever entering the referee.
+- *Isn't a cached cell a fake?* No — the warmer calls the **identical** `compute_investigate →
+  orchestrator.investigate` code path the live server uses on a miss, so cache and live are
+  byte-identical by construction.
+- *If it just serves a cell, is the displayed hypothesis wrong?* `personalize()` deep-copies the cell
+  and overwrites **only display text** (`_meta.hypothesis`, `claim_text`); the score/verdict/tests/
+  effect stay the coordinate's genuine values. Two wordings that route to the same coordinate legitimately
+  share one real result, each shown with its own text.
+- *What's the ~53× speedup?* It's the *miss* path: the anchor only routes read-only translation
+  artifacts — never a probe input, gauntlet test, score, verdict, or promotion — so one base is the
+  genuine result for every anchor (verified byte-identical), turning ~36.8 s into ~0.7-2.2 s.
+- *Can it desync from the shipped grid?* Only via staleness: if the engine math changes, the grid must
+  be **re-warmed** (as it was this session after the translation + invariance changes). A routing
+  mismatch is at worst a miss, never a wrong number. Out-of-scope hypotheses bypass both cache get and
+  put so they can't collide with a promoted cell — they hit the honest refusal.
+
+### 15c. LLM-as-router, *not* judge
+
+**Plain version.** We use the model as a **router**: it maps free text to one of the finite enum
+`{conversion, dx_binary, site, scanner}` — it never produces or changes a number. A judge *evaluates
+an output after the fact*; a router *classifies the input before work happens*, and intent-routing
+over a bounded enum is a router problem. `route_target()` goes normalized-text route-cache hit →
+one Sonnet-5 **enum-constrained** structured call on a miss (temp 0, reason-before-label) → keyword
+regex **backstop** on no-key/low-confidence/error, and never raises. One canonical function feeds
+**both** the engine target (`claim_parser._fallback`) and the cache key
+(`investigate_cache._infer_target`), so they can't drift. It fixes the exact bug: "p-tau217 predicts
+hippocampal atrophy in preclinical AD" is a cross-sectional `dx_binary` claim (0.92) that the keyword
+regex misrouted to conversion (0.64). Backed by a 58-item golden set + a CI eval (offline
+no-regression + a gated live eval that hard-asserts LLM ≥ keyword per class and materially better on
+the adversarial collision bucket).
+
+**Q&A.**
+- *Why "router" not "judge"?* Its output space is a four-value enum enforced at the API grammar level
+  (strict tool call). It classifies intent into a coordinate; it doesn't adjudicate anything — the
+  verdict/scoring is deterministic Python.
+- *If the LLM picks the wrong target, does it corrupt the result?* No. It only selects which precomputed
+  cell is looked up; a wrong/novel route is at worst a cache miss that recomputes the genuine result live.
+- *How do you guarantee the cache-key target matches the engine target?* By construction — both call the
+  identical `route_target`. One router, so no drift.
+- *What stops it being worse than the old regex?* The regex **is** the backstop; the always-on test
+  asserts `route_target == keyword` exactly when offline, so the router is a strict superset.
+- *Is determinism guaranteed?* We don't overclaim it. Temperature 0 is *near*-deterministic, not
+  bit-guaranteed (floating-point / GPU nondeterminism). Determinism actually comes from the **route
+  cache** + the keyword backstop, not the model.
+
+### 15d. External best-practice — defensible talking points (cited)
+
+- **Significance:** reporting the margin above a **label-permutation null** with p = (C+1)/(N+1) is the
+  scikit-learn `permutation_test_score` / Ojala-Garriga (JMLR 2010) method and the Nichols-Holmes
+  (2002) neuroimaging standard — strictly stronger than an "AUROC > 0.7" cutoff.
+- **Leakage:** the permutation null doubles as a leakage detector (a null centered *above* chance flags
+  a site/scanner shortcut). Fitting ComBat/feature-selection outside the CV loop can inflate performance
+  by Δr up to ~0.47 (Rosenblatt et al., *Nat Commun* 2024; ComBat class-imbalance leakage, arXiv
+  2410.19643) — we fit fold-wise and audit site-predictability, which is exactly why our margin is
+  credible.
+- **Precompute:** a precomputed finite grid behind one semantic-layer definition is the dbt/AtScale
+  "metrics layer + intelligent cache" pattern — every displayed number is a real computed result served
+  from cache (memoized truth, one source, many read-only consumers), not a mock.
+- **Routing:** classify-before-act over a bounded enum with **constrained decoding** at temp 0, plus a
+  **routing cache** and a deterministic keyword backstop, is the standard production ensemble
+  (heuristics → lightweight classifier → LLM escalation on low confidence). A small classify model adds
+  ~5-100 ms vs 500-2000 ms for a full LLM call, and the cache means the model is hit at most once per
+  novel hypothesis.
+
+**Language — use vs avoid (this cluster):**
+- **Use:** "the referee reports how far above a permutation null the effect sits"; "every cached cell is
+  a real full-rigor engine output"; "the LLM is a router over a finite enum — it never touches a number";
+  "determinism comes from the route cache + keyword backstop, not from temp 0."
+- **Avoid:** "the AUROC clears our threshold" (we don't use a bare cutoff); "the LLM judges the
+  hypothesis"; "temperature 0 makes it deterministic"; "the grid is mocked/hardcoded."
