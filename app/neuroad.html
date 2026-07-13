@@ -12,6 +12,8 @@
   @keyframes stickyOut { 30%{transform:rotate(-1deg) scale(1.03)} 100%{opacity:0;transform:rotate(7deg) scale(.7) translateY(150px)} }
   @keyframes pinDrop { from{transform:translate(-50%,-50%) scale(0) rotate(-30deg)} to{transform:translate(-50%,-50%) scale(1) rotate(0)} }
   @keyframes noteCardIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:none} }
+  @keyframes pinFly { 0%{transform:translate(-50%,-50%) scale(1);opacity:1} 70%{opacity:.85} 100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.22);opacity:0} }
+  @keyframes dockPop { 0%{transform:scale(1)} 40%{transform:scale(1.35)} 100%{transform:scale(1)} }
   .r-verb { background:linear-gradient(90deg,#8A877D 20%,#26241F 45%,#C96442 50%,#26241F 55%,#8A877D 80%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:rshimmer 2.1s linear infinite; }
   * { box-sizing:border-box; }
   html, body { margin:0; height:100%; }
@@ -1835,7 +1837,6 @@ class Component extends React.Component {
             el('button',{key:'s',onClick:v.onChatSend,style:{fontSize:'13px',padding:'0 12px',border:'1px solid var(--edge2)',borderRadius:'8px',background:'none',color:'var(--ink2)',cursor:'pointer'}},'→')
           ])
         ]),
-        el('button',{key:'handle',onClick:v.toggleRail,style:v.handleStyle},'Ask Claude'),
         el('div',{key:'canvas',ref:v.setCanvas,onDoubleClick:this.onCanvasDblClick,style:{flex:'1 1 auto',position:'relative',overflow:'hidden',background:'radial-gradient(120% 90% at 50% 8%, #FAF9F4 0%, #F5F4EE 46%, #EEECE2 100%)',cursor:'grab'}},[
           el('svg',{key:'svg',style:{position:'absolute',inset:0,width:'100%',height:'100%',display:'block'}},
             el('g',{transform:v.camTransform},v.sceneEls)
@@ -1942,7 +1943,7 @@ class Component extends React.Component {
     pinned:null, drawerTab:'reason', brainView:'multi', selRoi:null, notes:{}, noteDraft:'', extra:[], extraEdges:[], flagAdj:{}, flagsOpen:false, artifactsOpen:false, scanNote:null, scanNoteSaving:false, scanPinsHidden:false,
     sfgFlags:null, sfgStatus:'idle', sfgView:null,
     guardOpen:false, guardSel:null, guardGroupOpen:{}, qcChecks:null, qcSummary:null, qcSummaryStatus:'idle',
-    dockHover:false, dockDraft:'', dockPin:null, dockAgent:null, dockCardOpen:false,
+    dockHover:false, dockDraft:'', dockPin:null, dockAgent:null, dockFly:null, dockPulse:0,
     entryValue:'p-tau217 plasma level predicts hippocampal atrophy in preclinical AD',
     chatDraft:'',
     composerOpen:false, composerBiomarker:'p_tau217', composerDraft:'', anchorFocus:null, structOpen:false,
@@ -2206,14 +2207,14 @@ class Component extends React.Component {
     const r=el0.getBoundingClientRect();
     const x=Math.max(2,Math.min(98,(e.clientX-r.left)/r.width*100));
     const y=Math.max(2,Math.min(98,(e.clientY-r.top)/r.height*100));
-    this.setState({dockPin:{x,y,card:this.cardKey()}, dockDraft:'', dockAgent:null, dockCardOpen:false});
+    this.setState({dockPin:{x,y,card:this.cardKey()}, dockDraft:'', dockAgent:null});
   };
   onCanvasDblClick=(e)=>{ this.makePin(e); };
   onScanDblClick=(node,e)=>{ e.preventDefault(); e.stopPropagation(); this.makePin(e); };  // block NiiVue zoom, pin at canvas coords
-  cancelPin=()=>this.setState({dockPin:null, dockDraft:'', dockAgent:null, dockCardOpen:false});
-  // Identity of the card/modal currently open (or null for the bare board). A pin
-  // remembers this at creation; its canvas marker only shows while that same card is
-  // open, otherwise the pin lives solely in the bottom "Pinned notes" pill.
+  cancelPin=()=>this.setState({dockPin:null, dockDraft:'', dockAgent:null});
+  // Identity of the sidebar/card open when a pin is dropped (or null for the bare
+  // board). A pin's canvas marker only shows while that same card is open; once it
+  // closes the pin lives solely in the bottom "Pinned notes" tab.
   cardKey=()=>{
     const s=this.state;
     if(s.guardOpen) return 'guard';
@@ -2221,10 +2222,6 @@ class Component extends React.Component {
     if(s.pinned) return 'node:'+s.pinned;
     return null;
   };
-  // The morphing "Ask Claude" affordance in the composer: the pill expands into a
-  // card and fires the request the first time it opens.
-  openDockCard=()=>{ this.setState({dockCardOpen:true}); if(!this.state.dockAgent) this.askDockAgent(); };
-  collapseDockCard=()=>this.setState({dockCardOpen:false});
   // Ask Claude from the composer popup, BEFORE the pin is saved. Screenshot the MRI
   // if it's on screen; reply is held in dockAgent and carried onto the pin.
   askDockAgent=()=>{
@@ -2245,7 +2242,12 @@ class Component extends React.Component {
     const agent=(this.state.dockAgent && this.state.dockAgent.status!=='loading')?this.state.dockAgent:undefined;
     notes[this.PIN_KEY]=cur.concat([{text, ts:Date.now(), x:pin.x, y:pin.y, card:pin.card||null, n:maxN+1, agent}]);
     this.saveNotes(notes);
-    this.setState({notes, dockPin:null, dockDraft:'', dockAgent:null, dockCardOpen:false, dockHover:true});
+    // Fly the note from its pin into the bottom-left button: measure the delta from
+    // the pin (% of canvas) to the button glyph, hand it to the pinFly keyframe.
+    let fly=null;
+    if(!this.reduced){ try{ const r=this.canvasEl.getBoundingClientRect(); const px=r.width*(pin.x||0)/100, py=r.height*(pin.y||0)/100; const bx=34, by=r.height-38; fly={x:pin.x, y:pin.y, dx:Math.round(bx-px), dy:Math.round(by-py), id:(this.state.dockPulse||0)+1}; }catch(e){} }
+    this.setState({notes, dockPin:null, dockDraft:'', dockAgent:null, dockFly:fly, dockPulse:(this.state.dockPulse||0)+1});
+    if(fly) setTimeout(()=>{ if(this.state.dockFly&&this.state.dockFly.id===fly.id) this.setState({dockFly:null}); }, 560);
   };
   setScanDraft=(e)=>{ const sn=this.state.scanNote; if(!sn) return; this.setState({scanNote:{...sn, draft:e.target.value}}); };
   cancelScanNote=()=>this.setState({scanNote:null, scanNoteSaving:false});
@@ -2871,7 +2873,7 @@ class Component extends React.Component {
   // history of every pin you've dropped (with or without a Claude conversation).
   noteDock(){
     const list=(this.state.notes[this.PIN_KEY]||[]); const nodeRef={id:this.PIN_KEY};
-    const open=this.state.dockHover; const PANEL=320, HANDLE=34, W=340;
+    const open=this.state.dockHover;
     const fmt=(ts)=>{ try{ return new Date(ts).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
     const noteRow=(n,i)=>el('div',{key:i,style:{border:'1px solid '+C.edge,borderRadius:'9px',padding:'8px 10px',background:'#FBF6E9'}},[
       el('div',{key:'t',style:{fontSize:'12.5px',lineHeight:1.45,color:C.ink,whiteSpace:'pre-wrap',wordBreak:'break-word'}},n.text),
@@ -2885,77 +2887,50 @@ class Component extends React.Component {
       ])
     ]);
     const rows=list.map((n,i)=>({n,i})).reverse();  // newest first, keep original index
-    const body=el('div',{key:'body',style:{flex:1,display:'flex',flexDirection:'column',minHeight:0,padding:'8px 12px 12px'}},[
+    // Collapsed = a clay-badged button the note flies into; hover morphs it into a
+    // side panel (same width/height/radius transition as the composer card).
+    const glyph=el('span',{key:'g'+(this.state.dockPulse||0),style:{flex:'0 0 auto',width:'24px',height:'24px',borderRadius:'50% 50% 50% 3px',background:C.clay,color:'#fff',fontSize:'11px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 6px rgba(201,100,66,.4)',animation:this.reduced?'none':'dockPop .4s ease'}}, list.length?String(list.length):'✎');
+    const face=el('div',{key:'face',style:{flex:'0 0 auto',height:'44px',display:'flex',alignItems:'center',gap:'10px',padding:'0 13px',cursor:'pointer',whiteSpace:'nowrap'}},[
+      glyph,
+      el('span',{key:'l',style:{fontSize:'12px',fontWeight:600,color:C.ink}},'Pinned notes'),
+      el('span',{key:'n',style:{marginLeft:'auto',fontSize:'11px',color:list.length?C.clayDeep:C.mute,paddingLeft:'6px'}}, list.length?('· '+list.length):'')
+    ]);
+    const body=el('div',{key:'body',style:{flex:1,minHeight:0,display:'flex',flexDirection:'column',padding:'2px 12px 12px',opacity:open?1:0,transition:this.reduced?'none':('opacity .18s ease'+(open?' .08s':''))}},[
       el('div',{key:'hint',style:{fontSize:'10.5px',color:C.mute,margin:'0 2px 8px',lineHeight:1.4}},'Double-click anywhere to drop a pin and ask Claude.'),
       el('div',{key:'list',style:{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:'7px'}}, rows.length?rows.map(({n,i})=>noteRow(n,i)):[el('div',{key:'e',style:{fontSize:'11.5px',color:C.mute,textAlign:'center',padding:'18px 8px',lineHeight:1.5}}, 'No pins yet.')])
     ]);
-    return el('div',{key:'notedock',style:{position:'absolute',left:'16px',bottom:0,zIndex:32,pointerEvents:'none'}},
-      el('div',{onMouseEnter:()=>this.setState({dockHover:true}),onMouseLeave:()=>this.setState({dockHover:false}),style:{pointerEvents:'auto',width:W+'px',background:C.card,border:'1px solid '+C.edge,borderTopLeftRadius:'14px',borderTopRightRadius:'14px',boxShadow:'0 -16px 44px rgba(40,36,28,.16)',height:PANEL+'px',display:'flex',flexDirection:'column',overflow:'hidden',transform:'translateY('+(open?0:(PANEL-HANDLE))+'px)',transition:this.reduced?'none':'transform .26s cubic-bezier(.2,.9,.3,1)'}},[
-        el('div',{key:'handle',style:{flex:'0 0 auto',height:HANDLE+'px',display:'flex',alignItems:'center',gap:'9px',padding:'0 14px',cursor:'pointer',borderBottom:open?'1px solid '+C.edge:'none'}},[
-          el('span',{key:'g',style:{width:'22px',height:'4px',borderRadius:'3px',background:C.edge2}}),
-          el('span',{key:'l',style:{fontSize:'11.5px',fontWeight:600,color:C.ink}},'Pinned notes'),
-          el('span',{key:'n',style:{fontSize:'10.5px',color:list.length?C.clayDeep:C.mute,marginLeft:'auto'}}, list.length?('· '+list.length):'· hover')
-        ]),
-        body
-      ])
-    );
+    return el('div',{key:'notedock',onMouseEnter:()=>this.setState({dockHover:true}),onMouseLeave:()=>this.setState({dockHover:false}),style:{position:'absolute',left:'16px',bottom:'16px',zIndex:32,pointerEvents:'auto',overflow:'hidden',display:'flex',flexDirection:'column',background:C.card,border:'1px solid '+C.edge,width:open?'340px':'176px',height:open?'min(70vh,540px)':'44px',borderRadius:open?'16px':'100px',boxShadow:open?'0 22px 55px rgba(40,36,28,.22)':'0 8px 22px rgba(40,36,28,.14)',transition:this.reduced?'none':'width .32s cubic-bezier(.2,.9,.25,1), height .32s cubic-bezier(.2,.9,.25,1), border-radius .3s ease, box-shadow .3s ease'}},[face, body]);
   }
-  // The floating composer popup shown at a pending pin (double-click). Write the
-  // note; the clay pill morphs open into a Claude card (popover-style); Pin commits
-  // to the shared list, Esc/Cancel discards.
+  // The floating composer popup shown at a pending pin (double-click). Write + Ask
+  // Claude here; Pin commits it to the shared list, Esc/Cancel discards.
   pinComposer(){
     const pin=this.state.dockPin; if(!pin) return null;
     const ag=this.state.dockAgent; const asking=ag&&ag.status==='loading';
-    const cardOpen=this.state.dockCardOpen; const done=ag&&ag.status!=='loading';
-    const bad=ag&&ag.status==='error'; const w=248;
-    const badge = asking?{t:'thinking…',c:C.mute} : bad?{t:'offline',c:C.clayDeep} : (ag&&ag.status==='offline')?{t:'offline',c:C.mute} : done?{t:'Claude',c:C.green} : {t:'',c:C.mute};
+    const w=ag?280:206;
     const left='clamp(6px, calc('+pin.x+'% + 10px), calc(100% - '+(w+12)+'px))';
-    const top='clamp(6px, calc('+pin.y+'% + 10px), calc(100% - '+(cardOpen?300:150)+'px))';
+    const top='clamp(6px, calc('+pin.y+'% + 10px), calc(100% - '+(ag?250:150)+'px))';
     const onKey=(e)=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); this.commitPin(); } else if(e.key==='Escape'){ e.preventDefault(); this.cancelPin(); } };
-    // The morphing affordance: a clay pill that expands into a card in place.
-    const morphInner = cardOpen ? [
-      el('div',{key:'h',style:{display:'flex',alignItems:'center',gap:'6px',padding:'7px 9px 4px'}},[
-        el('span',{key:'l',style:{fontSize:'9.5px',fontWeight:700,letterSpacing:'.05em',color:badge.c}}, 'ASK CLAUDE'+(badge.t?(' · '+badge.t):'')),
-        (ag&&ag.hadImage&&!asking)?el('span',{key:'i',style:{fontSize:'9px',color:C.mute}},'· saw the scan'):null,
-        el('button',{key:'c',onMouseDown:(e)=>{e.preventDefault();this.collapseDockCard();},style:{marginLeft:'auto',fontSize:'14px',lineHeight:1,color:C.mute,background:'none',border:'none',cursor:'pointer',padding:0}},'×')
-      ]),
-      el('div',{key:'b',style:{maxHeight:'150px',overflowY:'auto',padding:'0 10px 7px',fontSize:'12px',lineHeight:1.5,color:bad?C.clayDeep:C.ink2,whiteSpace:'pre-wrap',wordBreak:'break-word',animation:this.reduced?'none':'noteCardIn .3s ease both'}}, asking?'Reading the note + MRI region…':(ag?ag.response:'')),
-      el('div',{key:'a',style:{padding:'0 10px 8px'}},
-        el('button',{key:'re',onMouseDown:(e)=>{e.preventDefault();this.askDockAgent();},disabled:asking,style:{fontSize:'11px',fontWeight:600,color:asking?'#a98c4a':C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer'}}, asking?'Asking…':'Re-ask'))
-    ] : [
-      el('div',{key:'pill',style:{height:'30px',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',fontSize:'11.5px',fontWeight:600,whiteSpace:'nowrap'}},[
-        el('span',{key:'s',style:{fontSize:'12px'}},'✦'),
-        done?'Claude ✓':'Ask Claude'
-      ])
-    ];
-    const morph = el('div',{key:'morph',onMouseDown: cardOpen?undefined:(e)=>{e.preventDefault();this.openDockCard();},style:{
-      marginTop:'7px', overflow:'hidden', boxSizing:'border-box',
-      width: cardOpen?'100%':'128px', maxHeight: cardOpen?'260px':'30px',
-      background: cardOpen?'#FFFDF6':C.clay, color: cardOpen?C.ink2:'#fff',
-      border: cardOpen?'1px solid #EADFC2':'1px solid transparent',
-      borderRadius: cardOpen?'11px':'100px',
-      boxShadow: cardOpen?'0 8px 22px rgba(40,36,28,.15)':'0 3px 10px rgba(201,100,66,.32)',
-      cursor: cardOpen?'default':'pointer',
-      transition:this.reduced?'none':'width .34s cubic-bezier(.22,.9,.24,1), max-height .34s cubic-bezier(.22,.9,.24,1), border-radius .3s ease, background .3s ease, box-shadow .3s ease, color .2s ease'
-    }}, morphInner);
     return el('div',{key:'composer',style:{position:'absolute',left:left,top:top,width:w+'px',background:'#FBF6E9',border:'1px solid #EADFC2',borderRadius:'4px 4px 10px 4px',boxShadow:'0 16px 36px rgba(40,36,28,.32)',padding:'10px 11px 9px',zIndex:72,transform:'rotate(-1.6deg)',transformOrigin:'top left',animation:this.reduced?'none':'stickyIn .26s cubic-bezier(.2,1.15,.35,1) both'}},[
       el('div',{key:'tape',style:{position:'absolute',top:'-7px',left:'20px',width:'32px',height:'13px',background:'rgba(201,132,21,.16)',borderRadius:'2px',transform:'rotate(-3deg)'}}),
       el('textarea',{key:'ta',autoFocus:true,value:this.state.dockDraft,onChange:(e)=>this.setState({dockDraft:e.target.value}),onKeyDown:onKey,placeholder:'Note on this spot…',style:{width:'100%',border:'none',outline:'none',resize:'none',background:'transparent',fontFamily:'inherit',fontSize:'12.5px',lineHeight:1.45,color:'#5b4a1f',height:'48px',boxSizing:'border-box'}}),
-      morph,
-      el('div',{key:'row',style:{display:'flex',alignItems:'center',gap:'8px',marginTop:'7px'}},[
+      this.noteAgentBox({agent:ag}),
+      el('div',{key:'row',style:{display:'flex',alignItems:'center',gap:'8px',marginTop:'5px'}},[
         el('button',{key:'x',onMouseDown:(e)=>{e.preventDefault();this.cancelPin();},style:{fontSize:'11px',color:C.mute,background:'none',border:'none',padding:0,cursor:'pointer'}},'Cancel'),
-        el('button',{key:'s',onMouseDown:(e)=>{e.preventDefault();this.commitPin();},style:{fontSize:'11px',fontWeight:600,color:'#fff',background:C.clay,border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer',marginLeft:'auto'}},'Pin')
+        el('button',{key:'ask',onMouseDown:(e)=>{e.preventDefault();this.askDockAgent();},disabled:asking,style:{fontSize:'11px',fontWeight:600,color:asking?'#a98c4a':C.clayDeep,background:'none',border:'none',padding:0,cursor:'pointer',marginLeft:'auto'}}, asking?'Asking…':(ag?'Re-ask':'Ask Claude')),
+        el('button',{key:'s',onMouseDown:(e)=>{e.preventDefault();this.commitPin();},style:{fontSize:'11px',fontWeight:600,color:'#fff',background:C.clay,border:'none',borderRadius:'6px',padding:'4px 10px',cursor:'pointer'}},'Pin')
       ])
     ]);
   }
   // Pin markers on the canvas: every saved pin + the pending one.
   canvasPins(){
     const list=(this.state.notes[this.PIN_KEY]||[]); const nowCard=this.cardKey();
-    // A pin's marker only shows on the board pin (no card) or while its own card is
-    // open; otherwise it collapses into the bottom pill until that card reopens.
-    const out=list.map((n,i)=> (typeof n.x==='number' && (!n.card || n.card===nowCard))?el('div',{key:'cp'+i,title:n.text,style:{position:'absolute',left:n.x+'%',top:n.y+'%',transform:'translate(-50%,-50%)',width:'19px',height:'19px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 0 2px #F7F5EF, 0 2px 6px rgba(0,0,0,.35)',zIndex:70,pointerEvents:'auto',cursor:'default'}}, (n.agent?'✦':String(n.n||(i+1)))):null).filter(Boolean);
+    // Only render a marker on the bare board (no card) or while its own card is open.
+    const out=list.map((n,i)=> (typeof n.x==='number' && (!n.card || n.card===nowCard))?el('div',{key:'cp'+i,title:n.text,style:{position:'absolute',left:n.x+'%',top:n.y+'%',transform:'translate(-50%,-50%)',width:'19px',height:'19px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 0 2px '+(n.agent?C.green:'#F7F5EF')+', 0 2px 6px rgba(0,0,0,.35)',zIndex:70,pointerEvents:'auto',cursor:'default'}}, String(n.n||(i+1))):null).filter(Boolean);
     const pin=this.state.dockPin;
     if(pin) out.push(el('div',{key:'cpPending',style:{position:'absolute',left:pin.x+'%',top:pin.y+'%',transform:'translate(-50%,-50%)',width:'22px',height:'22px',borderRadius:'50% 50% 50% 2px',background:C.clayDeep,color:'#fff',fontSize:'12px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 0 2px #F7F5EF, 0 3px 8px rgba(0,0,0,.45)',zIndex:71,pointerEvents:'none',animation:this.reduced?'none':'pinDrop .3s cubic-bezier(.2,1.3,.4,1) both'}},'•'));
+    // The committed note flying from its pin into the bottom-left button (pinFly reads --dx/--dy).
+    const fly=this.state.dockFly;
+    if(fly) out.push(el('div',{key:'fly'+fly.id,style:{position:'absolute',left:fly.x+'%',top:fly.y+'%',width:'19px',height:'19px',borderRadius:'50% 50% 50% 2px',background:C.clay,color:'#fff',fontSize:'10px',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 3px 9px rgba(0,0,0,.4)',zIndex:73,pointerEvents:'none','--dx':fly.dx+'px','--dy':fly.dy+'px',animation:'pinFly .56s cubic-bezier(.4,0,.55,1) forwards'}},'✎'));
     return out;
   }
   scanNotesSection(node){
@@ -3950,7 +3925,6 @@ class Component extends React.Component {
       verdictLede: 'From “'+(st.entryValue||'your hypothesis')+'” — confounds cleared, survivors ranked into testable next steps.',
 
       railStyle:{flex:'0 0 auto',width:st.railOpen?'300px':'0px',overflow:'hidden',background:C.card,borderRight:st.railOpen?'1px solid '+C.edge:'none',display:'flex',flexDirection:'column',transition:'width .28s cubic-bezier(.2,.7,.2,1)',zIndex:35},
-      handleStyle:{position:'absolute',left:'20px',bottom:'20px',display:st.railOpen?'none':'flex',alignItems:'center',gap:'8px',fontSize:'13px',fontWeight:500,letterSpacing:'-.005em',color:'#fff',background:C.clay,border:'none',borderRadius:'100px',padding:'11px 18px',cursor:'pointer',boxShadow:'0 6px 22px rgba(201,100,66,.28)',zIndex:24},
       toggleRail:this.toggleRail,
       chatMsgs:chat, chatDraft:st.chatDraft, setChatDraft:this.setChatDraft, onChatSend:this.onChatSend, onChatKey:this.onChatKey,
       composerOpen:st.composerOpen, composerBiomarker:st.composerBiomarker, composerDraft:st.composerDraft,
