@@ -99,11 +99,14 @@ class RegistrationCheck:
         # cleanly (shared grid) rather than tinting the whole FOV.
         orig_shape, orig_affine = grid
         residual_grid = resample_to_grid(residual, caffine, orig_shape, orig_affine)
-        # Background -> NaN so the viewer leaves the skull untinted (NiiVue never
-        # draws NaN voxels); only meaningful residual shows as the heatmap.
-        residual_grid = np.where(residual_grid < 0.02, np.nan, residual_grid).astype(np.float32)
+        # Background -> 0 (NOT NaN): this NiiVue build renders NaN voxels as an
+        # opaque wash, so zero the low-residual background instead. The viewer pairs
+        # this with colormapType ZERO_TO_MAX_TRANSPARENT_BELOW_MIN + cal_min 0.15 so
+        # everything below threshold is fully transparent and only the mismatch
+        # hot-spots tint.
+        residual_grid = np.where(residual_grid < 0.02, 0.0, residual_grid).astype(np.float32)
         key = store.put_volume(make_key(ref.scan_id, "reg-residual", label), residual_grid, orig_affine, np.float32)
-        peak = np.unravel_index(int(np.nanargmax(residual_grid)), residual_grid.shape)
+        peak = np.unravel_index(int(np.argmax(residual_grid)), residual_grid.shape)
         world = vox_to_world(orig_affine, peak)
 
         ok = d >= DICE_OK
