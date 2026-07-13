@@ -1,4 +1,6 @@
 .venv/
+.venv
+mri_visualizations/.venv-sfg
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -59,5 +61,9 @@ data/real/fixtures/
 
 # The LONI/IDA image-ID manifests + crosswalks (ida_imageids_*, ad_expansion_imageid_*,
 # oasis*_manifest.csv, adni*.csv) carry subject-level gated identifiers under the LONI
-# DUA — same class as data/real/_gated/. Never commit; kept local only.
+# DUA — same class as data/real/_gated/. Never commit; kept local only. The whole
+# _manifests/ dir is ignored, which subsumes the ADNI image manifest (p-tau217/GFAP/
+# NfL/amyloid per RID) and every adni*.csv crosswalk.
 data/real/_manifests/
+.claude/
+private-context/

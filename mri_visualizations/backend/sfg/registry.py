@@ -127,19 +127,46 @@ class Registry:
             if modality == "T1":
                 scan.default_modality = "T1"
 
+    def _load_adni_meta(self) -> dict[str, dict]:
+        """Real per-subject acquisition metadata (site/scanner/dx) derived from the
+        Neuro-JEPA embedding export, keyed by subject_id. This is what makes the
+        cross-scanner intensity check (1.3) group ADNI by its *real* acquisition
+        sites and stay traceable back to the analysis table, instead of treating
+        each subject as its own singleton site. Absent file -> empty map (the
+        registry then falls back to the filename, so the backend stays runnable
+        with no sidecar)."""
+        meta_path = self.adni_root / "_adni_meta.csv"
+        if not meta_path.exists():
+            return {}
+        import csv
+
+        out: dict[str, dict] = {}
+        with meta_path.open() as fh:
+            for row in csv.DictReader(fh):
+                sid = (row.get("subject_id") or "").strip()
+                if sid:
+                    out[sid] = row
+        return out
+
     def _discover_adni(self) -> None:
         if not self.adni_root.is_dir():
             return
+        meta = self._load_adni_meta()
         for f in sorted(self.adni_root.glob("*.nii.gz")):
-            stem = f.name[: -len(".nii.gz")]           # e.g. DEMO_0001_T1
+            stem = f.name[: -len(".nii.gz")]           # e.g. 10006_T1
             subj = stem[: -len("_T1")] if stem.endswith("_T1") else stem
-            site_code = subj.split("_")[0]              # ADNI site number, e.g. 003
+            m = meta.get(subj, {})
+            # Real acquisition site from the embedding export when available;
+            # otherwise fall back to the subject id (self-contained default).
+            site_code = (m.get("site") or subj.split("_")[0]).strip()
             self._scans[f"ADNI_{subj}"] = Scan(
                 scan_id=f"ADNI_{subj}",
                 source="adni",
                 modalities={"T1": f},
                 default_modality="T1",
                 site=f"ADNI-{site_code}",
+                extra={k: m[k] for k in ("scanner", "field_strength", "dx")
+                       if m.get(k)},
             )
 
     def _discover_fixtures(self) -> None:

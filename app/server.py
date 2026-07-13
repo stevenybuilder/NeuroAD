@@ -95,6 +95,96 @@ _ASK_SYSTEM = (
     "needs it."
 )
 
+# Appended to the Ask system prompt ONLY when a screenshot is attached (note
+# review). It authorizes Claude to actually read the MRI frame it was handed.
+_ASK_IMAGE_ADDENDUM = (
+    "\n\nAN IMAGE IS ATTACHED: a screenshot of the structural-MRI viewer in THIS "
+    "investigation, showing the region a researcher pinned a note on. Treat it as "
+    "legitimate context - you may describe what is visible in the scan (anatomy, "
+    "orientation, obvious artifacts) and relate it to the note and the case. Stay "
+    "grounded: do not invent measurements the image cannot support, and say so if "
+    "the frame is ambiguous or too coarse to judge."
+)
+
+# --- QC summary rail: a plain-language read of the silent-failure guard flags ---
+# Given the live imaging-QC flags (+ prior investigation context), Claude returns a
+# short, ranked list of the major data-quality problems, each tagged with the check
+# that found it and why it matters. JSON-only so the frontend renders a clean list.
+_QC_SUMMARY_SYSTEM = (
+    "You are Claude, an expert in structural-MRI quality control for an "
+    "imaging-biomarker discovery pipeline (frozen Neuro-JEPA embeddings of T1w "
+    "brain MRI). A deterministic Silent-Failure Guard has run a suite of checks "
+    "over a real cohort and emitted located, severity-ranked flags. Your job is to "
+    "distill the CURRENT flags (plus any prior investigation context) into the "
+    "major problems a scientist must know about before trusting a downstream "
+    "analysis.\n\n"
+    "Return ONLY a JSON array (no prose, no markdown fences). Each element is an "
+    "object: {\"problem\": a short noun phrase naming the issue, \"tool\": the "
+    "check_id that detected it (e.g. \"1.3.intensity_consistency\"), \"meaning\": "
+    "one plain sentence on why it matters for the science (e.g. a scanner-intensity "
+    "confound is learned instead of biology; an L/R flip corrupts laterality), "
+    "\"severity\": one of \"fail\" | \"warn\" | \"info\"}. Order most-severe first, "
+    "dedupe near-identical issues, and NEVER invent a problem, number, or check that "
+    "is not grounded in the flags/context given. If there are no flags, return []. "
+    "Keep each field terse; at most ~8 items."
+)
+
+
+def _build_qc_summary_prompt(payload: dict) -> str:
+    """Compact user content for the QC summary: the current flags plus any prior
+    investigation context (case digest, prior adjudications, notes). Bounded."""
+    blocks: list[str] = []
+    flags = payload.get("flags")
+    if isinstance(flags, list) and flags:
+        keep = [{k: f[k] for k in ("check_id", "severity", "scan_id",
+                                   "explanation", "extra_digest") if k in f}
+                for f in flags if isinstance(f, dict)]
+        blocks.append("CURRENT SILENT-FAILURE FLAGS:\n"
+                      + json.dumps(keep, default=str)[:6000])
+    ctx = payload.get("context")
+    if isinstance(ctx, dict) and ctx:
+        blocks.append("PRIOR INVESTIGATION CONTEXT (case, adjudications, notes):\n"
+                      + json.dumps(ctx, default=str)[:4000])
+    return "\n\n".join(blocks) if blocks else "(no flags provided)"
+
+
+def _parse_qc_items(text: str) -> list:
+    """Extract the JSON array from the model reply, tolerating fences/stray prose.
+    Returns [] if nothing parseable is found (caller then falls back)."""
+    if not text:
+        return []
+    s = text.strip()
+    if s.startswith("```"):
+        s = s.strip("`")
+        s = s[s.find("\n") + 1:] if "\n" in s else s
+    lo, hi = s.find("["), s.rfind("]")
+    if lo == -1 or hi == -1 or hi < lo:
+        return []
+    try:
+        parsed = json.loads(s[lo:hi + 1])
+        return parsed if isinstance(parsed, list) else []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _image_block(data_url: object) -> dict | None:
+    """Turn a `data:image/...;base64,...` URL (a viewer screenshot) into an
+    Anthropic image content block, or None if absent/oversized/malformed. Bounded
+    at ~5 MB base64 so a stray frame can't blow up the request."""
+    if not isinstance(data_url, str) or not data_url.startswith("data:image"):
+        return None
+    try:
+        header, b64 = data_url.split(",", 1)
+    except ValueError:
+        return None
+    if len(b64) > 5_000_000:
+        return None
+    media_type = header.split(";")[0].split(":", 1)[1] or "image/png"
+    if media_type not in ("image/png", "image/jpeg", "image/webp", "image/gif"):
+        return None
+    return {"type": "image",
+            "source": {"type": "base64", "media_type": media_type, "data": b64}}
+
 
 def _build_ask_context(payload: dict) -> str:
     """Assemble a compact, grounded knowledge context from the passed case + the
@@ -394,7 +484,8 @@ class Handler(BaseHTTPRequestHandler):
             raw = self.rfile.read(length) if length else b""
             self._proxy_sfg("POST", raw)
             return
-        if route not in ("/api/investigate", "/api/orchestrate", "/api/ask"):
+        if route not in ("/api/investigate", "/api/orchestrate", "/api/ask",
+                         "/api/sfg-summary"):
             self._send_json({"error": f"not found: {route}"}, 404)
             return
         try:
@@ -410,6 +501,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if route == "/api/ask":
             self._handle_ask(payload)
+            return
+
+        if route == "/api/sfg-summary":
+            self._handle_qc_summary(payload)
             return
 
         hypothesis = str(payload.get("hypothesis", "")).strip()
@@ -528,15 +623,25 @@ class Handler(BaseHTTPRequestHandler):
                 "live": False, "model": None})
             return
         context = _build_ask_context(payload)
+        # Optional screenshot (a data: URL of the MRI area a note was pinned on) so
+        # Claude can SEE the region, not just read the note text. Multimodal content
+        # when present; plain text otherwise. Bounded so a huge frame can't blow up
+        # the request.
+        qtext = f"CONTEXT:\n{context}\n\n---\n\nQUESTION: {question}"
+        image_block = _image_block(payload.get("image"))
+        user_content = ([image_block, {"type": "text", "text": qtext}]
+                        if image_block else qtext)
+        # When a screenshot is attached, relax the "grounded ONLY in text context"
+        # rule so Claude will actually read the MRI frame it was given.
+        system = _ASK_SYSTEM + (_ASK_IMAGE_ADDENDUM if image_block else "")
         try:
             import anthropic  # lazy import: offline path needs no dependency
             client = anthropic.Anthropic()
             msg = client.messages.create(
                 model=_ASK_MODEL,
                 max_tokens=1024,
-                system=_ASK_SYSTEM,
-                messages=[{"role": "user",
-                           "content": f"CONTEXT:\n{context}\n\n---\n\nQUESTION: {question}"}],
+                system=system,
+                messages=[{"role": "user", "content": user_content}],
             )
             answer = "".join(
                 b.text for b in msg.content if getattr(b, "type", None) == "text").strip()
@@ -545,6 +650,37 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as exc:  # noqa: BLE001
             _log.exception("ask failed")
             self._send_json({"error": f"ask failed: {exc}", "live": False}, 500)
+
+    def _handle_qc_summary(self, payload: dict) -> None:
+        """QC summary rail: Claude distills the current silent-failure flags (+ prior
+        context) into a ranked list of major problems. Live iff a key is set; with no
+        key returns an empty list so the frontend renders its own deterministic list
+        (never a faked AI voice)."""
+        if not _claude_live():
+            self._send_json({"items": [], "live": False, "model": None})
+            return
+        content = _build_qc_summary_prompt(payload)
+        try:
+            import anthropic  # lazy import: offline path needs no dependency
+            client = anthropic.Anthropic()
+            msg = client.messages.create(
+                model=_ASK_MODEL,
+                max_tokens=900,
+                system=_QC_SUMMARY_SYSTEM,
+                messages=[{"role": "user", "content": content}],
+            )
+            text = "".join(
+                b.text for b in msg.content if getattr(b, "type", None) == "text").strip()
+            items = _parse_qc_items(text)
+            if not items and text:
+                # Model answered but not as parseable JSON — surface the raw text as
+                # a single item rather than dropping the answer.
+                items = [{"problem": text[:200], "tool": "", "meaning": "",
+                          "severity": "info"}]
+            self._send_json({"items": items, "live": True, "model": _ASK_MODEL})
+        except Exception as exc:  # noqa: BLE001
+            _log.exception("qc summary failed")
+            self._send_json({"error": f"qc summary failed: {exc}", "live": False}, 500)
 
 
 def main(argv: list[str] | None = None) -> int:
