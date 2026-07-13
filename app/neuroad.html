@@ -1598,6 +1598,7 @@ class BrainViewer extends React.Component {
       const o={ url:ov.url, name:'overlay.nii.gz', colormap:ov.colormap||(ov.kind==='mask'?'red':'warm'), opacity:(ov.opacity!=null?ov.opacity:0.5) };
       if(ov.cal_min!=null) o.cal_min=ov.cal_min;
       if(ov.cal_max!=null) o.cal_max=ov.cal_max;
+      if(ov.colormapType!=null) o.colormapType=ov.colormapType;  // heatmaps: transparent below cal_min
       if(ov.alphaThreshold) o.alphaThreshold=true;   // only the masked voxels tint (teammate's technique)
       try { await nv.addVolumeFromUrl(o); } catch(e){ /* overlay is best-effort; base stays up */ }
     }
@@ -1633,7 +1634,7 @@ class BrainViewer extends React.Component {
     ms.forEach(m=>{
       if(!m || !m.coord_mm) return;
       const rgba=(m.rgba&&m.rgba.length===4)?m.rgba:[1.0,0.82,0.2,1.0];
-      try { nv.addLabel(m.text||'', {textColor:rgba, textScale:1.6, lineWidth:3, lineColor:rgba, bulletScale:4, bulletColor:rgba}, m.coord_mm); } catch(e){}
+      try { nv.addLabel(m.text||'', {textColor:rgba, textScale:1.6, lineWidth:3, lineColor:rgba, bulletScale:1.4, bulletColor:rgba}, m.coord_mm); } catch(e){}
     });
     try { nv.drawScene && nv.drawScene(); } catch(e){}
   }
@@ -2939,8 +2940,16 @@ class Component extends React.Component {
   // overlay (none/point/points/bbox live in the flag's location/markers instead).
   flagOverlay(f){
     const p=(f&&f.payload)||{};
-    if((p.kind==='mask'||p.kind==='heatmap') && p.resource)
-      return {kind:p.kind, url:'/api/sfg/resource/'+encodeURIComponent(p.resource), colormap:p.colormap, opacity:p.opacity, cal_min:p.cal_min, cal_max:p.cal_max, alphaThreshold:p.alphaThreshold};
+    if((p.kind==='mask'||p.kind==='heatmap') && p.resource){
+      const o={kind:p.kind, url:'/api/sfg/resource/'+encodeURIComponent(p.resource), colormap:p.colormap, opacity:p.opacity, cal_min:p.cal_min, cal_max:p.cal_max};
+      // Heatmaps (registration residual, intensity) must make everything below
+      // cal_min FULLY transparent so only the hot spots tint — NiiVue's default
+      // colormapType (MIN_TO_MAX=0) paints an opaque wash over the whole volume.
+      // 1 = ZERO_TO_MAX_TRANSPARENT_BELOW_MIN.
+      if(p.kind==='heatmap') o.colormapType=1;
+      else if(p.alphaThreshold) o.alphaThreshold=true;
+      return o;
+    }
     if(p.kind==='mesh' && p.resource)
       return {kind:'mesh', url:'/api/sfg/resource/'+encodeURIComponent(p.resource), rgba:p.rgba};
     return null;
