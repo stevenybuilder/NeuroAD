@@ -2,13 +2,20 @@
 # (The static ./Dockerfile only COPYs nginx.conf + app/index.html + app/demo_data.json,
 #  none of which are excluded here, so it is unaffected.)
 
-# Never ship gated / non-commercial-licensed data into a deployable image.
+# Never ship gated / non-commercial-licensed data into a deployable image...
 data/real/_gated/
 data/real/_stubs/
 data/real/fixtures/
+data/real/_manifests/
 *neurojepa*.csv
 data/raw/
 data/processed/
+# ...EXCEPT the de-identified ADNI compute tables (anonymized integer subject_id,
+# ZERO PTIDs — verified). These ship so /api/investigate runs ADNI live; they stay
+# gitignored (never on public GitHub). Negations override the rules just above.
+!data/real/_gated/adni.csv
+!data/real/adni_neurojepa_embeddings.csv
+!data/real/adni_conversion_neurojepa_embeddings.csv
 
 # Secrets / local env
 .env

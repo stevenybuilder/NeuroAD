@@ -148,16 +148,14 @@ const DS_ORDER = ['adni','oasis1','oasis2','openbhb'];
 let REGISTRY = null;          // [{id, hypothesis, dataset:{name,n,cohort}, demo_priority}]
 let REGISTRY_DEFAULT = null;  // the lead entry we prefill
 // dataset names the live backend can actually load (never synthetic:*).
-// Deploy-live only: OASIS tabular cohorts run live on the public Cloud Run image.
-// ADNI + embedding cohorts are DUA-gated / not in the public image, so they 500 on
-// the deploy — they are shown as precomputed real evidence, never live-investigated.
-const LOADABLE_DS = ['oasis:oasis1','oasis','oasis:oasis2'];
+// Live-loadable on the deploy: ADNI (de-identified compute tables now shipped to the
+// private Cloud Run image) + OASIS / OpenBHB tabular. The non-ADNI *:neurojepa cohorts
+// need embedding files not shipped, so they are omitted to avoid a 500.
+const LOADABLE_DS = ['adni:neurojepa','adni:conversion','adni','adni:combat','oasis','oasis:oasis1','oasis:oasis2','openbhb'];
 function loadableDs(name){ return LOADABLE_DS.indexOf(name)!==-1; }
 function pickDefaultEntry(list){
   const ok=(e)=> e && e.dataset && loadableDs(e.dataset.name);
-  // Fall back to null (not list[0]) so a registry with no live-loadable lead does
-  // NOT override the OASIS-appropriate default prefill with a non-live ADNI hypothesis.
-  return list.filter(e=>e.demo_priority==='lead' && ok(e))[0] || list.filter(ok)[0] || null;
+  return list.filter(e=>e.demo_priority==='lead' && ok(e))[0] || list.filter(ok)[0] || list[0] || null;
 }
 function loadRegistry(){
   fetch('hypothesis_registry.json').then(r=>r.ok?r.json():null).then(d=>{
@@ -176,7 +174,7 @@ function loadRegistry(){
 function realDatasetFor(hypothesis){
   const t=(hypothesis||'').toLowerCase();
   if(REGISTRY){
-    if(REGISTRY_DEFAULT && REGISTRY_DEFAULT.dataset && (REGISTRY_DEFAULT.hypothesis||'').toLowerCase()===t){ const d=REGISTRY_DEFAULT.dataset.name; return loadableDs(d)?d:'oasis:oasis1'; }
+    if(REGISTRY_DEFAULT && REGISTRY_DEFAULT.dataset && (REGISTRY_DEFAULT.hypothesis||'').toLowerCase()===t) return REGISTRY_DEFAULT.dataset.name;
     const KW=['conversion','mci','p-tau217','ptau','anchor','oasis','generaliz','external','fusion','plasma','decodable','embedding','biomarker','target'];
     let best=null, bestScore=0;
     REGISTRY.forEach(e=>{
@@ -187,9 +185,9 @@ function realDatasetFor(hypothesis){
     });
     if(best) return best.dataset.name;
   }
-  // Deploy-live fallbacks: only OASIS cohorts run live on the public image.
-  if(/(conversion|mci|progress)/.test(t)) return 'oasis:oasis2';
-  return 'oasis:oasis1';
+  if(/(conversion|mci|progress)/.test(t)) return 'adni:conversion';
+  if(/(oasis|external|generaliz)/.test(t)) return 'oasis:oasis1';
+  return 'adni:neurojepa';
 }
 
 // keyword -> dataset matching (scripted demo; Beat D of the handoff doc)
@@ -327,7 +325,7 @@ function render(){
 }
 
 // ---- interaction ----
-let PREFILL = 'AD-related atrophy is decodable from OASIS-1 structural MRI';   // deploy-live default: routes to oasis:oasis1, which runs live on the public deploy. A registry lead overrides only if it maps to a live-loadable cohort.
+let PREFILL = 'p-tau217 predicts hippocampal atrophy';   // overridden by the registry lead entry once it loads (ADNI runs live on the deploy)
 function connectNeuroAD(){
   state.connected = true;
   state.phase = 'connected';
