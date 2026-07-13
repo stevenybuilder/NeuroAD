@@ -1868,7 +1868,7 @@ class Component extends React.Component {
         ])
       ]),
       el('div',{key:'main',style:{flex:'1 1 auto',display:'flex',position:'relative',overflow:'hidden'}},[
-        el('aside',{key:'aside',style:v.railStyle},[
+        null /* Claude·ask conversational rail removed per product decision — match teammate's dock-only layout. Dormant code kept for easy restore. */ && el('aside',{key:'aside',style:v.railStyle},[
           el('div',{key:'h',style:{padding:'16px 16px 10px',borderBottom:'1px solid var(--edge)',display:'flex',alignItems:'center',justifyContent:'space-between'}},[
             el('div',{key:'t',style:{fontSize:'11px',letterSpacing:'.1em',textTransform:'uppercase',color:'var(--mute)'}},'Claude · ask'),
             el('button',{key:'x',onClick:v.toggleRail,style:{fontSize:'15px',color:'var(--mute)',background:'none',border:'none',cursor:'pointer',lineHeight:1}},'‹')
@@ -2779,7 +2779,7 @@ class Component extends React.Component {
         el('div',{key:'g',style:{fontSize:'13px',color:C.ink2,lineHeight:1.5,marginBottom:'10px'}},'p-tau217 alone was underpowered here, so Claude re-anchored the branch to GFAP astrocyte reactivity and re-checked the anchor.'),
         gfap!=null ? el('div',{key:'a'},[ this.auc('GFAP astrocyte anchor · r', gfap, C.green) ])
                    : el('div',{key:'na',style:{fontSize:'12px',color:C.mute}},'GFAP re-anchor not evaluated for this cohort.'),
-        this.disclaimer('A follow-up question spawns exactly this kind of gold offshoot — try the Claude · ask rail.')
+        this.disclaimer('Claude re-anchors a branch automatically when the primary anchor underpowers — this gold offshoot records that pivot.')
       ]);
     }
     if(k==='proteins'){
@@ -3531,7 +3531,7 @@ class Component extends React.Component {
     const a=this.state.flagAdj[f._id];
     return el('div',{key:'pane'},[
       head, viewer,
-      el('div',{key:'cap',style:{fontSize:'10.5px',color:C.mute,margin:'8px 0 10px',display:'flex',alignItems:'center',gap:'6px'}},[el('span',{style:{width:'5px',height:'5px',borderRadius:'50%',background:C.green,flex:'0 0 auto'}}), f.scan_id + ' · ' + annKind + ' · live from the guard']),
+      el('div',{key:'cap',style:{fontSize:'10.5px',color:C.mute,margin:'8px 0 10px',display:'flex',alignItems:'center',gap:'6px'}},[el('span',{style:{width:'5px',height:'5px',borderRadius:'50%',background:cached?C.gold:C.green,flex:'0 0 auto'}}), f.scan_id + ' · ' + annKind + (cached?' · cached QC run — not live':' · live from the guard')]),
       el('div',{key:'ex',style:{fontSize:'12.5px',lineHeight:1.5,color:C.ink,marginBottom:'8px'}}, f.explanation||''),
       el('div',{key:'adj',style:{display:'flex',gap:'16px',marginBottom:'14px'}},[
         el('button',{key:'c',onClick:()=>this.setFlagAdj(f,'confirm'),style:{fontSize:'11px',color:a==='confirm'?C.green:C.ink2,background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:a==='confirm'?600:400}}, a==='confirm'?'✓ Confirmed':'✓ Confirm'),

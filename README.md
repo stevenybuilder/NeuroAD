@@ -218,9 +218,12 @@ Claude runs in exactly three live roles, each a real, consequential decision:
   chooses which precomputed cell is read; it never produces or alters a number.
 - **Orchestrator (Claude Sonnet)** — a tool-runner that sequences the engine's tools
   toward a goal (`/api/orchestrate`); it drives the pipeline but can never override a verdict.
-- **Ask Claude (Claude Opus)** — the grounded Q&A rail (`/api/ask`) that answers a
-  scientist's follow-ups and drills into the decision tree, grounded in the live case
-  plus a curated knowledge base.
+- **Ask Claude (Claude Opus)** — a grounded, multimodal per-scan agent (`/api/ask`). A
+  scientist double-clicks to pin a note on the structural MRI and asks Claude; the request
+  carries a screenshot of that scan region plus the live case, so the read is grounded in
+  both the image and the investigation. The same model writes the auto "Summary of issues"
+  QC digest (`/api/sfg-summary`). (The earlier free-text Q&A conversation rail was retired
+  in favor of these in-context, pinned-to-the-evidence interactions.)
 
 Everything else — the confound gauntlet, scoring, and verdict — is our own custom-built
 Python harness. The build itself was contract-first multi-agent Claude Code; see
