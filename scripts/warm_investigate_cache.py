@@ -50,10 +50,17 @@ def _region_cells() -> list[tuple[str, str, object]]:
     except Exception as exc:  # noqa: BLE001
         print(f"[warm] adni:roi unavailable, skipping region grid: {exc}")
         return []
+    # Both computable outcomes per region now that the cohort carries metadata:
+    #   dx_binary  <- "...separates Alzheimer's dementia from controls"
+    #   conversion <- "baseline ... predicts MCI to AD conversion"
     cells = []
     for slug in sorted(singles):
-        hyp = f"{slug} atrophy separates Alzheimer's dementia from controls"
-        cells.append(("adni:roi", hyp, None))
+        cells.append(("adni:roi",
+                      f"{slug} atrophy separates Alzheimer's dementia from controls",
+                      None))
+        cells.append(("adni:roi",
+                      f"Baseline {slug} atrophy predicts MCI to AD conversion",
+                      None))
     return cells
 
 
