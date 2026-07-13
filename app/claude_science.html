@@ -108,7 +108,7 @@ body{background:var(--cream);font-family:var(--sans);color:var(--ink);
 .dsrow{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-top:1px solid var(--edge)}
 .dsrow:first-child{border-top:none;padding-top:2px}
 .dsname{font-size:13px;font-weight:600;color:var(--ink)}
-.dsmeta{margin-left:auto;font-size:11.5px;color:var(--mute);font-family:var(--mono);white-space:nowrap}
+.dsmeta{margin-left:auto;font-size:11.5px;color:var(--ink);font-family:var(--mono);white-space:nowrap}
 .dsnote{font-size:10.5px;color:var(--mute);margin-top:8px}
 @media (prefers-reduced-motion: reduce){
   .shim{animation:none;background:none;-webkit-text-fill-color:var(--ink2);color:var(--ink2)}
@@ -256,7 +256,7 @@ function conversationHTML(){
 
 // scan phrases keyed by stage
 const SCAN_PHRASE = {
-  pulling:    'Pulling in relevant datasets…',
+  pulling:    'Pulling your relevant datasets…',
   researching:'Researching…',
   connecting: 'Connecting to NeuroAD…'
 };
@@ -267,7 +267,7 @@ function resultFlowHTML(){
   if(stage!=='ready'){
     // shimmer status + (from 'connecting' on) the datasets appearing as they connect
     const chips = (stage==='connecting')
-      ? '<div class="dschips">'+state.matched.map(k=>
+      ? '<div class="dschips">'+DS_ORDER.map(k=>
           '<span class="dschip"><span class="ck">✓</span>'+esc(DATASETS[k].name)+'</span>').join('')+'</div>'
       : '';
     return '<div class="scanblk">'+
@@ -289,7 +289,6 @@ function resultFlowHTML(){
       '<div class="st">✓ connected</div></div>'+
     '<div class="res">'+
       rows+
-      '<div class="dsnote">demo workspace · real ADNI/OASIS/OpenBHB cohorts</div>'+
     '</div>'+
   '</div>';
   const investigate = '<div class="toolcard">'+
@@ -378,9 +377,9 @@ function startTimeline(){
   clearTimeline();
   // pulling shown immediately by render(); advance through the sequence, then reveal.
   const steps = [
-    [800,  'researching'],  // pull ~0.8s
-    [1650, 'connecting'],   // research ~0.85s, then chips appear as they connect
-    [2450, 'ready']         // connecting ~0.8s, then banner + open widget
+    [1300, 'researching'],  // pull ~1.3s (readable, not blink-and-miss)
+    [2700, 'connecting'],   // research ~1.4s, then chips appear as they connect
+    [4000, 'ready']         // connecting ~1.3s, then banner + open widget
   ];
   steps.forEach(([ms,stage])=> timelineTimers.push(setTimeout(()=>setStage(stage), ms)));
 }
