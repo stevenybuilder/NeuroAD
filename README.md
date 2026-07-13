@@ -8,7 +8,7 @@ multi-omics target layer — all the way to a **ranked list of wet-lab-testable
 protein targets.** It bridges the imaging world and the molecular world, and it
 refuses to hand you a target it can't defend.
 
-> **Imaging finds it. Confounds try to fake it. The engine proves what's real, then tells you which protein to test.**
+> **Imaging finds it. Confounds try to fake it. The engine proves what's real, then tells you which protein to test — compressing months of artifact-chasing into a wet-lab-ready experiment.**
 
 ---
 
@@ -107,7 +107,7 @@ every layer.
 |---|---|---|
 | **1. Foundation** | **NeuroJEPA** — frozen 3D **Vision Transformer** (ViT-Base-MoE, 768-d, V-JEPA-2 latent prediction), used **frozen** under CC BY-NC-ND | Turns a raw 3D brain volume into a 768-dimensional structural embedding. Standing on a frozen encoder is the deliberate, published-best-practice choice (see rigor parity below). *This is transformer #1 in the stack.* |
 | **2. Probe** | **Attentive MLP** on the frozen embedding | Yields the AD-vs-CN signal plus **leave-one-group-out attribution** — interpretable grounding of *what* drives the signal (embedding vs plasma). Exact hippocampal/cortical volumes come from FastSurfer. |
-| **3. Fusion** | **Multi-head cross-attention** + softmax attention-gate | A from-scratch implementation of the core transformer operation — scaled-dot-product attention, multiple heads, layernorm, per-subject tokenization — over imaging × plasma tokens, producing data-dependent cross-modal weights. *Transformer #2, disclosed honestly: a **fixed, non-trained feature map** (seeded Q/K/V; only a downstream linear head is fitted, under leakage-honest CV).* It needs ≥2 modalities, so it runs for plasma-bearing cohorts (ADNI) and is **N/A** for plasma-less ones (OASIS). |
+| **3. Fusion** | **Multi-head cross-attention** + softmax attention-gate | A from-scratch implementation of the core transformer operation — scaled-dot-product attention, multiple heads, layernorm, per-subject tokenization — over imaging × plasma tokens, producing data-dependent cross-modal weights. *Transformer #2: a **fixed, non-trained feature map** (seeded Q/K/V; only a downstream linear head is fitted, under leakage-honest CV).* It needs ≥2 modalities, so it runs for plasma-bearing cohorts (ADNI) and is **N/A** for plasma-less ones (OASIS). |
 | **4. Rigor gauntlet** | Custom adversarial referee | Five confound tests (below) that try to falsify every signal before it is reported. |
 | **5. Multi-omics** | **PI4AD** (Priority Index for AD) + Open Targets network propagation | Routes a surviving imaging signal through the protein interactome to ranked candidate genes/pathways. |
 | **6. Molecular targeting** | **AlphaFold DB** (live precomputed structures) + **Boltz-2** (open, MIT-licensed GPU folding) | Structure-guides the ranked targets. AlphaFold3 de-novo complex folding is account/weight-gated; open Boltz-2 is the license-clean substitute for the complex step. |
@@ -210,8 +210,7 @@ either way, and hypothesis routing falls back to a keyword classifier.
 
 ## How Claude is used
 
-The referee's verdict is deterministic by design — Claude never sets a score. Claude
-runs in exactly three live roles, each a real, consequential decision:
+Claude runs in exactly three live roles, each a real, consequential decision:
 
 - **Intent router (Claude Sonnet)** — classifies a free-text hypothesis into the finite
   target enum {conversion, dx_binary, site, scanner} with enum-constrained output, so a
@@ -223,8 +222,8 @@ runs in exactly three live roles, each a real, consequential decision:
   scientist's follow-ups and drills into the decision tree, grounded in the live case
   plus a curated knowledge base.
 
-Everything else in the referee — the confound gauntlet, scoring, and verdict prose — is
-deterministic Python. The build itself was contract-first multi-agent Claude Code; see
+Everything else — the confound gauntlet, scoring, and verdict — is our own custom-built
+Python harness. The build itself was contract-first multi-agent Claude Code; see
 `BUILD_WITH_CLAUDE.md`.
 
 ---
@@ -260,9 +259,11 @@ The insight that frozen foundation-model embeddings leak scanner/site is
 **published prior art**, cited openly (*Batch Effects in Brain Foundation Model
 Embeddings*, arXiv:2604.14441; *Pretrained, Frozen, Still Leaking*,
 arXiv:2606.09189; *PathoROB*, Nat. Commun. 2026). Our contribution is
-**productization**: a runnable, agent-orchestrated referee that chains the full
-adversarial gauntlet, issues a fragile/robust verdict, and routes survivors to one
-falsifiable next experiment. We own the **referee / auditor / gauntlet** layer.
+**productization that collapses the path from a neuroimaging finding to a wet-lab
+experiment**: a runnable, agent-orchestrated referee that chains the full adversarial
+gauntlet, issues a fragile/robust verdict, and routes each survivor straight to one
+falsifiable wet-lab experiment — turning a quarter of chasing artifacts into a
+defensible next step at the bench.
 
 ## License
 
