@@ -110,11 +110,14 @@ class RegistrationCheck:
         world = vox_to_world(orig_affine, peak)
 
         ok = d >= DICE_OK
+        # The failed case never registered, so its overlap is a pre-alignment Dice;
+        # only the recovered case has a genuine post-alignment Dice.
+        stage = "post-alignment" if do_register else "pre-alignment"
         return Flag(
             check_id=self.check_id, scan_id=ref.scan_id,
             severity="info" if ok else "error",
             explanation=(
-                f"Registration {label}: post-alignment Dice {d:.2f} "
+                f"Registration {label}: {stage} Dice {d:.2f} "
                 + ("- verified, residual mismatch is low." if ok else
                    "- FAILED to align (Dice below "
                    f"{DICE_OK}); the heatmap shows large residual mismatch. A pipeline that trusted "

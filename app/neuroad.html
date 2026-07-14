@@ -3071,7 +3071,7 @@ class Component extends React.Component {
     if(e.dice_vs_synthstrip!=null) return 'Dice '+e.dice_vs_synthstrip+' vs SynthStrip';
     if(e.weak_volume_cc!=null) return 'weak-strip volume '+e.weak_volume_cc+' cc';
     if(e.n_nonfinite!=null) return e.n_nonfinite+' non-finite voxels';
-    if(e.post_registration_dice!=null) return 'post-registration Dice '+e.post_registration_dice;
+    if(e.post_registration_dice!=null) return ((e.case&&e.case.indexOf('missing')>=0)?'pre-alignment Dice ':'post-alignment Dice ')+e.post_registration_dice;
     return '';
   }
   ensureQcSummary(){
@@ -3312,7 +3312,7 @@ class Component extends React.Component {
       e.zooms_mm?row('spacing mm', (e.zooms_mm||[]).join(' × ')):null
     ]);
     if(cid.includes('registration')) return el('div',{key:'ev'},[
-      e.post_registration_dice!=null?row('post-registration Dice', e.post_registration_dice+'  (ok ≥ 0.85)'):null,
+      e.post_registration_dice!=null?row(((e.case&&e.case.indexOf('missing')>=0)?'pre-alignment Dice':'post-alignment Dice'), e.post_registration_dice+'  (ok ≥ 0.85)'):null,
       e.case?row('case', e.case):null
     ]);
     return null;
@@ -3327,7 +3327,7 @@ class Component extends React.Component {
       el('div',{key:'c',style:{fontSize:'10.5px',fontFamily:MONO,color:C.mute,margin:'2px 0 6px'}}, cid),
       desc&&desc.description?el('div',{key:'d',style:{fontSize:'12px',color:C.ink2,lineHeight:1.5}}, desc.description):null
     ]);
-    if(!f) return el('div',{key:'nr'},[head, el('div',{key:'x',style:{marginTop:'10px',padding:'12px 14px',background:C.paper2,borderRadius:'10px',fontSize:'12px',color:C.ink2,lineHeight:1.5}},'This check produced no flag on the current cohort. The registration check (1.5) and the SynthStrip reference in the skull-strip check need the SynthStrip model weights, which are not installed in this environment.')]);
+    if(!f) return el('div',{key:'nr'},[head, el('div',{key:'x',style:{marginTop:'10px',padding:'12px 14px',background:C.paper2,borderRadius:'10px',fontSize:'12px',color:C.ink2,lineHeight:1.5}}, this.state.sfgStatus==='cached' ? 'This check is not part of the cached snapshot. Start the live guard to run it over the cohort and review its result in 3D.' : 'This check produced no flag on the current cohort — every scan it inspected passed its test.')]);
     const cached=this.state.sfgStatus==='cached';
     const mm=f.location&&f.location.world_mm?f.location.world_mm:null; const ov=this.flagOverlay(f); const mk=this.flagMarkers(f);
     const annKind = ov?(ov.kind+' overlay') : (mk?(f.payload&&f.payload.kind==='points'?'L/R markers':'point marker') : 'no spatial annotation — see evidence');
@@ -3351,6 +3351,7 @@ class Component extends React.Component {
     const MONO='ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
     const flags=this.state.sfgFlags||[]; const checks=this.state.qcChecks||[];
     const counts=this.qcCounts(); const close=()=>this.setState({guardOpen:false});
+    const cached=this.state.sfgStatus==='cached';
     const selFlag=flags.find(f=>f._id===this.state.guardSel);
     const selCheck=selFlag?null:checks.find(c=>c.check_id===this.state.guardSel);
     const GROUPS=[{key:'fail',label:'Fail',col:C.clay,bg:C.claySoft},{key:'warn',label:'Warn',col:C.gold,bg:'#F6ECD2'},{key:'pass',label:'Pass',col:C.green,bg:C.greenSoft},{key:'notRun',label:'Not run',col:C.mute,bg:C.paper2}];
@@ -3367,7 +3368,7 @@ class Component extends React.Component {
             const id=isFlag?it._id:it.check_id; const on=this.state.guardSel===id;
             return el('button',{key:id+i,onClick:()=>this.setState({guardSel:id}),style:{textAlign:'left',padding:'6px 8px',borderRadius:'7px',border:'1px solid '+(on?C.clay:C.edge2),background:on?C.clay:C.card,color:on?'#fff':C.ink,cursor:'pointer'}},[
               el('div',{key:'t',style:{fontSize:'11.5px',fontWeight:600}}, this.sfgTitle(isFlag?it:{check_id:it.check_id})),
-              el('div',{key:'s',style:{fontSize:'9.5px',fontFamily:MONO,color:on?'rgba(255,255,255,.82)':C.mute,marginTop:'1px',wordBreak:'break-all'}}, isFlag?it.scan_id:'needs SynthStrip')
+              el('div',{key:'s',style:{fontSize:'9.5px',fontFamily:MONO,color:on?'rgba(255,255,255,.82)':C.mute,marginTop:'1px',wordBreak:'break-all'}}, isFlag?it.scan_id:(cached?'not in snapshot':'no flag'))
             ]);
           })):null
         ]);
