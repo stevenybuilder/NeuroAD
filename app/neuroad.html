@@ -1882,7 +1882,7 @@ class Component extends React.Component {
                 el('div',{key:'t',style:{fontSize:'15px',fontWeight:600,color:'var(--ink)',lineHeight:1.25}},v.drawerTitle),
                 el('button',{key:'x',onClick:v.onCloseDrawer,style:{flex:'0 0 auto',fontSize:'16px',color:'var(--mute)',background:'none',border:'none',cursor:'pointer',lineHeight:1,marginTop:'1px'}},'×')
               ]),
-              el('div',{key:'tabs',style:{display:'flex',gap:'4px',marginTop:'12px'}},
+              el('div',{key:'tabs',style:{display:'flex',flexWrap:'wrap',gap:'4px',marginTop:'12px'}},
                 v.drawerTabs.map((t,i)=>el('button',{key:i,onClick:t.onClick,style:t.style},t.label))
               )
             ]),
