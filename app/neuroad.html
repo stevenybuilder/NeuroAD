@@ -3776,10 +3776,10 @@ class Component extends React.Component {
     const cur=this.state.drawerTab; const defs=[];
     defs.push(['summary','Summary']);
     defs.push(['artifacts','Artifacts']);
-    // Protein-target nodes surface their AlphaFold structure under a dedicated
-    // "Protein data" tab (from origin/main); other story nodes keep "Reasoning".
+    if(node.story) defs.push(['reason','Reasoning']);
+    // Protein-target nodes ALSO get a dedicated "Protein data" tab (from
+    // origin/main) focused on the AlphaFold structure.
     if(node.story==='proteins') defs.push(['protein','Protein data']);
-    else if(node.story) defs.push(['reason','Reasoning']);
     defs.push(['data','Brain data']);
     return defs.map(d=>({ label:d[1], onClick:()=>this.setDrawerTab(d[0]), style:cur===d[0]?on:off }));
   }
@@ -3788,7 +3788,34 @@ class Component extends React.Component {
     if(t==='summary') return this.summaryEl(node);
     if(t==='artifacts') return this.artifactsEl(node);
     if(t==='data') return this.brainDataEl(node);
+    if(t==='protein') return this.proteinEl(node) || this.storyEl(node) || this.summaryEl(node);
     return this.storyEl(node) || this.summaryEl(node);
+  }
+  // Focused AlphaFold-structure panel for the "Protein data" tab (the Reasoning tab
+  // keeps the full ranked-targets story). Reuses the same StructViewer + pLDDT
+  // fallback as the story renderer.
+  proteinEl(node){
+    const tx=this.heroTx(); const stc=(tx&&tx.structure)||{}; const plddt=stc.mean_plddt;
+    if(!tx || (!stc.model_url && plddt==null && !stc.gene_symbol)) return null;  // no structure yet -> fall back to story
+    const afFallback = el('div',{key:'af',style:{padding:'10px',background:C.paper2,borderRadius:'8px'}},[
+      el('div',{key:'l',style:{display:'flex',justifyContent:'space-between',fontSize:'12px',color:C.ink2,marginBottom:'6px'}},[el('span',{key:'a'},'AlphaFold pLDDT · '+(stc.gene_symbol||stc.uniprot||'—')),el('span',{key:'b',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}}, plddt!=null?plddt.toFixed(1):'—')]),
+      this.bar(plddt!=null? plddt/100 : 0, C.green),
+      stc.model_url ? el('div',{key:'m',style:{marginTop:'7px',fontSize:'11px'}}, el('a',{href:stc.model_url,target:'_blank',rel:'noopener',style:{fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.clayDeep,textDecoration:'none'}}, (stc.uniprot||'model')+' · AlphaFold '+(stc.model_version||'')+' →')) : null
+    ]);
+    return el('div',{key:'proteinpane'},[
+      el('div',{key:'h',style:{fontSize:'13px',fontWeight:600,color:C.ink,marginBottom:'4px'}}, 'AlphaFold structure'+(stc.gene_symbol?(' · '+stc.gene_symbol):'')),
+      el('div',{key:'sub',style:{fontSize:'12px',color:C.ink2,marginBottom:'10px',lineHeight:1.45}},'Real AlphaFold DB fold for the top-ranked target, colored by per-residue confidence (pLDDT).'),
+      el('div',{key:'sv'},[
+        el('button',{key:'tg',onClick:this.toggleStruct,style:{display:'flex',alignItems:'center',gap:'6px',width:'100%',padding:'9px 10px',background:C.paper2,border:'1px solid '+C.edge,borderRadius:'8px',cursor:'pointer',fontSize:'12px',color:C.ink2,fontFamily:'inherit',textAlign:'left'}},[
+          el('span',{key:'a',style:{flex:1}}, this.state.structOpen?'Hide 3D structure':'View 3D structure — real AlphaFold fold'),
+          el('span',{key:'c',style:{color:C.mute,transform:this.state.structOpen?'rotate(180deg)':'none',transition:'transform .18s'}},'⌄')
+        ]),
+        this.state.structOpen
+          ? el(StructViewer,{ key:'v', gene:(stc.gene_symbol||''), plddt:plddt, uniprot:stc.uniprot, modelVersion:stc.model_version, modelUrl:stc.model_url, boltz:stc.boltz_targeting, fallback:afFallback })
+          : afFallback
+      ]),
+      this.disclaimer('Candidate target structure — not validated.')
+    ]);
   }
 
   kv(k,v){ return el('div',{key:k},[ el('div',{key:'k',style:{fontSize:'11px',textTransform:'uppercase',letterSpacing:'.08em',color:C.mute}},k), el('div',{key:'v',style:{fontSize:'15px',fontFamily:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',color:C.ink}},v) ]); }
