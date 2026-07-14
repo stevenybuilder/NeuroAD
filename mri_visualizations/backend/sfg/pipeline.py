@@ -45,8 +45,18 @@ def run_pipeline(
     scan_ids: Optional[list[str]] = None,
     check_ids: Optional[list[str]] = None,
 ) -> list[Flag]:
-    scans = (
-        [registry.get(s) for s in scan_ids] if scan_ids else registry.scans()
-    )
+    if scan_ids:
+        # Resolve requested ids TOLERANTLY: an id that isn't registered (e.g. a
+        # cohort curated on another machine) must be skipped, not 500 the whole run.
+        scans = []
+        for s in scan_ids:
+            try:
+                sc = registry.get(s)
+            except Exception:  # noqa: BLE001 - a bad id must not sink valid ones
+                sc = None
+            if sc is not None:
+                scans.append(sc)
+    else:
+        scans = registry.scans()
     checks = [get_check(c) for c in check_ids] if check_ids else None
     return run_checks(scans, store, checks)

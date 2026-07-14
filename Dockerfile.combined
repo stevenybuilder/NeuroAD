@@ -1,0 +1,52 @@
+# Combined live backend for Cloud Run: the NeuroAD engine (app/server.py, live
+# /api/ask + /api/investigate) AND the Silent-Failure Guard MRI-QC backend
+# (mri_visualizations) in ONE container — a faithful replica of the local
+# run_demo.sh two-server setup, so the deployed link behaves exactly like
+# localhost:8080 (brain-viz volumes + registration heatmap + live QC flags).
+#
+# Build:  gcloud builds submit --config cloudbuild.combined.yaml .
+# Run:    docker run -p 8080:8080 -e ANTHROPIC_API_KEY=... <image>
+#
+# NEVER baked in (see .dockerignore / .gcloudignore): gated ADNI (_gated except the
+# de-identified adni.csv/adni_roi.csv compute tables), Neuro-JEPA weights, the
+# _manifests PTID crosswalks, SynthStrip weights (torch stays out), or any venv/secret.
+FROM python:3.12-slim
+
+WORKDIR /srv
+
+# --- main engine deps (offline core) + live Claude adjudicator ---
+COPY requirements.txt pyproject.toml README.md ./
+COPY src/ ./src/
+RUN pip install --no-cache-dir -e . anthropic
+
+# --- SFG imaging-backend deps (numpy/scipy already resolved above). No torch:
+# SynthStrip degrades to the classical weak_strip, so the checks still fire. ---
+RUN pip install --no-cache-dir \
+    fastapi "uvicorn[standard]" nibabel scikit-image "pydantic>=2" SimpleITK
+
+# --- main app + the vendored open data / policy the referee reads at runtime ---
+COPY app/ ./app/
+COPY policy/ ./policy/
+COPY data/registry.yaml ./data/registry.yaml
+COPY data/real/ ./data/real/
+
+# --- SFG backend code + curated real cohort + prewarmed derived cache ---
+# config.py resolves REPO_ROOT to /srv/mri_visualizations, so preserve this layout:
+#   backend/ (code + .cache),  data/{adni,ixi,fixtures} (scans).
+COPY mri_visualizations/backend/ ./mri_visualizations/backend/
+COPY mri_visualizations/data/adni/ ./mri_visualizations/data/adni/
+COPY mri_visualizations/data/ixi/ ./mri_visualizations/data/ixi/
+COPY mri_visualizations/data/fixtures/ ./mri_visualizations/data/fixtures/
+
+# --- two-server entrypoint (mirrors run_demo.sh) ---
+COPY deploy/start_combined.sh ./deploy/start_combined.sh
+RUN chmod +x ./deploy/start_combined.sh
+
+ENV PYTHONPATH=/srv/src
+ENV PORT=8080
+# The demo entry page (same as the live service today); SFG_BACKEND is left at its
+# app default of http://127.0.0.1:8091, which is the in-container SFG server.
+ENV ROOT_PAGE=claude_science.html
+EXPOSE 8080
+
+CMD ["./deploy/start_combined.sh"]

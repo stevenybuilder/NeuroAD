@@ -22,8 +22,9 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from scipy import stats as sstats
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import cross_val_predict
+from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from . import contract
@@ -63,6 +64,11 @@ _ANCHOR_CI_WEAK = 0.0                               # CI lower bound > this   ->
 # PASS. 0.10 = the model must explain at least ~10% of age variance out-of-fold
 # to be treated as a working age predictor whose residualization means something.
 _BRAIN_AGE_R2_FLOOR = 0.10
+# RidgeCV penalty grid for the brain-age model. Unregularized OLS on a high-dim
+# structural feeder overfits so hard out-of-fold that R2<<0, spuriously NAing a
+# control that is in fact computable; a CV-penalized ridge is the standard
+# brain-age estimator (Franke/Gaser).
+_BRAIN_AGE_ALPHAS = np.logspace(1, 5, 20)
 
 
 def _retained_fraction(auc_before: float, auc_after: float) -> float:
@@ -186,10 +192,16 @@ def test_brain_age(df: pd.DataFrame, target: str) -> TestEvidence:
         return TestEvidence("brain_age", TestResult.NA,
                             "too few healthy subjects with age to fit a brain-age model")
 
-    reg = LinearRegression()
+    # Regularized brain-age estimator. Unregularized OLS on a 323-dim feeder
+    # overfits out-of-fold (R2<<0, worse than the cohort mean), which spuriously
+    # trips the R2 floor below and NAs a control that is in fact computable. A
+    # CV-penalized ridge on standardized features is the standard brain-age model;
+    # shuffled KFold so the out-of-fold R2 is not an artifact of source-row order.
+    reg = make_pipeline(StandardScaler(), RidgeCV(alphas=_BRAIN_AGE_ALPHAS))
     n_splits = int(min(5, train.sum() // 3))
     yhat_cv = cross_val_predict(reg, Xall[train], age_all[train],
-                                cv=max(n_splits, 2))
+                                cv=KFold(max(n_splits, 2), shuffle=True,
+                                         random_state=0))
     ss_res = float(((age_all[train] - yhat_cv) ** 2).sum())
     ss_tot = float(((age_all[train] - age_all[train].mean()) ** 2).sum())
     r2 = float(1 - ss_res / ss_tot) if ss_tot > 0 else 0.0
@@ -304,6 +316,55 @@ def _anchor_corr(score: np.ndarray, marker: np.ndarray) -> tuple[Optional[float]
     return float(r), n, ci_lo
 
 
+def _anchor_enrichment(
+    score: np.ndarray, marker: np.ndarray, n_boot: int = 2000, seed: int = 0
+) -> tuple[Optional[float], Optional[float], int, Optional[int], Optional[int], Optional[float]]:
+    """Amyloid-positivity ENRICHMENT anchor for a BINARY marker (0/1 positivity).
+
+    Pearson correlation is the wrong statistic against a binary label — a two-point
+    x-axis makes its magnitude an artifact of class balance, and the survivor
+    narrative claims the probe is "enriched in amyloid-POSITIVE subjects", a
+    group-contrast claim, not a linear-trend one. So we report a group-difference:
+    the mean probe score in amyloid-positive minus amyloid-negative subjects
+    (``delta``), the equivalent point-biserial correlation ``r`` (Pearson against
+    the 0/1 label, reported for a scale-free companion number), and a bootstrap
+    95% CI LOWER BOUND on the delta. Gating elsewhere stays on p-tau217; this is an
+    ADDITIONAL reported anchor, so the CI lower bound is surfaced for evidence, not
+    used to pass/fail the hard gate.
+
+    Returns (delta, r, n, n_pos, n_neg, delta_ci_lo). Any of delta/r/ci_lo is None
+    when the marker has too few complete cases or lacks both classes.
+    """
+    ok = np.isfinite(marker) & np.isfinite(score)
+    n = int(ok.sum())
+    s = score[ok]
+    m = marker[ok]
+    pos = m > 0.5
+    neg = ~pos
+    n_pos, n_neg = int(pos.sum()), int(neg.sum())
+    if n < _ANCHOR_MIN_N or n_pos < 2 or n_neg < 2:
+        return None, None, n, n_pos or None, n_neg or None, None
+    delta = float(s[pos].mean() - s[neg].mean())
+    # Point-biserial r == Pearson(score, 0/1 label); finite because both vary here.
+    r, _ = sstats.pearsonr(s, m.astype(float))
+    r = float(r) if np.isfinite(r) else None
+    # Bootstrap the group difference: resample subjects with replacement, keep only
+    # draws that retain both classes, take the 2.5th percentile as the CI lower
+    # bound. This is the same "don't trust a single small-n point estimate" posture
+    # the replication and leakage stars already use.
+    rng = np.random.default_rng(seed)
+    idx = np.arange(n)
+    boot: list[float] = []
+    for _ in range(n_boot):
+        b = rng.choice(idx, size=n, replace=True)
+        pb = m[b] > 0.5
+        if pb.sum() < 2 or (~pb).sum() < 2:
+            continue
+        boot.append(float(s[b][pb].mean() - s[b][~pb].mean()))
+    ci_lo = float(np.percentile(boot, 2.5)) if boot else None
+    return delta, r, n, n_pos, n_neg, ci_lo
+
+
 def _oof_scores(X: np.ndarray, y: np.ndarray,
                 groups: Optional[np.ndarray] = None) -> np.ndarray:
     """Out-of-fold P(positive) so the anchor cannot correlate with overfit
@@ -375,6 +436,23 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
     else:
         pct_r, pct_n, pct_lo = None, 0, None
 
+    # Amyloid-positivity ENRICHMENT anchor. amyloid is BINARY (0/1 positivity), so
+    # a Pearson r against it is the wrong statistic — we report the group
+    # difference (probe score in amyloid-positive vs amyloid-negative subjects)
+    # with a bootstrap CI lower bound, plus the equivalent point-biserial r. This
+    # is an ADDITIONAL reported anchor that flows through the stats dict alongside
+    # p-tau217/GFAP; the hard gate below still keys on p-tau217 (primary). It
+    # directly answers the survivor narrative's claim that the probe is "enriched
+    # in amyloid-positive subjects".
+    if "amyloid" in sub.columns:
+        amy_marker = pd.to_numeric(sub["amyloid"], errors="coerce").to_numpy(float)
+        (amy_delta, amy_r, amy_n, amy_n_pos,
+         amy_n_neg, amy_lo) = _anchor_enrichment(score, amy_marker)
+    else:
+        amy_delta = amy_r = amy_lo = None
+        amy_n = 0
+        amy_n_pos = amy_n_neg = None
+
     # Provenance: on a synthetic cohort the plasma markers are CALIBRATION TARGETS
     # drawn to sit inside a literature range (calibration.CAL), NOT measured plasma.
     # Badge them so no downstream artifact can present a fabricated r as a
@@ -387,6 +465,14 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
              "pct_ptau217_r": None if pct_r is None else round(pct_r, 3),
              "pct_ptau217_n": pct_n,
              "pct_ptau217_ci_lo": None if pct_lo is None else round(pct_lo, 3),
+             # Amyloid-positivity enrichment (binary marker -> group difference +
+             # point-biserial r + bootstrap CI lower bound), reported alongside the
+             # ptau/gfap anchors. amyloid_r is the point-biserial companion number.
+             "amyloid_delta": None if amy_delta is None else round(amy_delta, 3),
+             "amyloid_r": None if amy_r is None else round(amy_r, 3),
+             "amyloid_n": amy_n,
+             "amyloid_n_pos": amy_n_pos, "amyloid_n_neg": amy_n_neg,
+             "amyloid_ci_lo": None if amy_lo is None else round(amy_lo, 3),
              "synthetic": synthetic_anchor,
              "provenance": ("SYNTHETIC HARNESS — p-tau217/GFAP are calibration "
                             "targets (calibration.CAL), not measured plasma"
@@ -416,6 +502,10 @@ def test_biomarker_anchor(df: pd.DataFrame, target: str) -> TestEvidence:
         res = TestResult.FAILED            # data present but unanchored -> gate fails
     detail = (f"{marker} correlation r={primary:+.2f} "
               f"(95% CI lower {ci_lo:+.2f}, n={n_used})")
+    if amy_delta is not None:
+        detail += (f"; amyloid-enrichment Δ={amy_delta:+.3f} "
+                   f"(point-biserial r={amy_r:+.2f}, 95% CI lower {amy_lo:+.3f}, "
+                   f"n={amy_n}: {amy_n_pos}+/{amy_n_neg}−)")
     if synthetic_anchor:
         detail += " [SYNTHETIC HARNESS: calibration target, not measured plasma]"
     return TestEvidence("biomarker_anchor", res, detail, stats)
@@ -479,7 +569,7 @@ def test_replication(df: pd.DataFrame, target: str) -> TestEvidence:
     # not clear the threshold; FAILED when the CI includes chance. A lucky small-n
     # site whose CI straddles the threshold can therefore no longer be PASSED.
     REPL_PASS = 0.65        # AUC the CI lower bound must clear to PASS
-    n_boot = 1000
+    n_boot = N_BOOT
     rng = np.random.default_rng(0)
     n_te = int(te.sum())
     idx = np.arange(n_te)

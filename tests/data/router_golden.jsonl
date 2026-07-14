@@ -1,0 +1,59 @@
+{"text": "structural embeddings predict MCI to AD conversion", "target": "conversion", "bucket": "clean", "why": "explicit MCI->AD progression"}
+{"text": "baseline hippocampal volume predicts conversion to Alzheimer's over 24 months", "target": "conversion", "bucket": "clean", "why": "future onset over time"}
+{"text": "cortical thinning tracks who will progress from MCI to dementia", "target": "conversion", "bucket": "clean", "why": "will progress = time axis"}
+{"text": "entorhinal atrophy at baseline forecasts cognitive decline three years later", "target": "conversion", "bucket": "clean", "why": "forecasts decline over time"}
+{"text": "amyloid burden predicts longitudinal progression to AD dementia", "target": "conversion", "bucket": "clean", "why": "longitudinal progression"}
+{"text": "which MCI patients convert to AD is decodable from frozen embeddings", "target": "conversion", "bucket": "clean", "why": "convert to AD"}
+{"text": "faster hippocampal atrophy rate predicts earlier onset of dementia", "target": "conversion", "bucket": "clean", "why": "earlier onset, rate over time"}
+{"text": "the model separates future converters from stable MCI at baseline", "target": "conversion", "bucket": "clean", "why": "future converters"}
+{"text": "p-tau217 slope predicts time to AD diagnosis in MCI", "target": "conversion", "bucket": "clean", "why": "time to diagnosis"}
+{"text": "baseline signal predicts progression risk over the follow-up window", "target": "conversion", "bucket": "clean", "why": "progression over follow-up"}
+{"text": "atrophy separates Alzheimer's disease from cognitively normal", "target": "dx_binary", "bucket": "clean", "why": "AD vs CN cross-section"}
+{"text": "AD vs CN diagnosis is decodable from ADNI 3T structural features", "target": "dx_binary", "bucket": "clean", "why": "explicit AD vs CN"}
+{"text": "hippocampal volume distinguishes Alzheimer's patients from healthy controls", "target": "dx_binary", "bucket": "clean", "why": "distinguishes AD from controls"}
+{"text": "the structural probe classifies dementia versus cognitively normal", "target": "dx_binary", "bucket": "clean", "why": "dementia vs CN classification"}
+{"text": "p-tau217-anchored hippocampal atrophy separates Alzheimer's disease from cognitively normal", "target": "dx_binary", "bucket": "clean", "why": "the flagship hypothesis, AD vs CN"}
+{"text": "cortical morphometry discriminates AD from control brains at a single visit", "target": "dx_binary", "bucket": "clean", "why": "single visit = cross-sectional"}
+{"text": "brain structure tells apart Alzheimer's disease and normal aging", "target": "dx_binary", "bucket": "clean", "why": "AD vs normal, no time"}
+{"text": "a linear probe on FreeSurfer features detects Alzheimer's diagnosis", "target": "dx_binary", "bucket": "clean", "why": "detects diagnosis"}
+{"text": "the embedding encodes disease status: AD or cognitively normal", "target": "dx_binary", "bucket": "clean", "why": "disease status AD/CN"}
+{"text": "grey matter density separates dementia cases from controls", "target": "dx_binary", "bucket": "clean", "why": "cases vs controls"}
+{"text": "the acquisition site is decodable from the frozen embeddings", "target": "site", "bucket": "clean", "why": "site decodable"}
+{"text": "London vs Berlin acquisition site drives the apparent effect", "target": "site", "bucket": "clean", "why": "site A vs B"}
+{"text": "the signal is really the imaging center, not the disease", "target": "site", "bucket": "clean", "why": "center leakage"}
+{"text": "embeddings leak which hospital collected the scan", "target": "site", "bucket": "clean", "why": "which hospital = site"}
+{"text": "site membership can be read off the structural features", "target": "site", "bucket": "clean", "why": "site membership"}
+{"text": "the probe is picking up study site rather than pathology", "target": "site", "bucket": "clean", "why": "study site"}
+{"text": "collection center identity is encoded in the morphometry", "target": "site", "bucket": "clean", "why": "collection center"}
+{"text": "acquisition location, not biology, explains the separation", "target": "site", "bucket": "clean", "why": "acquisition location"}
+{"text": "the scanner model is decodable from the frozen embeddings", "target": "scanner", "bucket": "clean", "why": "scanner model decodable"}
+{"text": "the effect is just 3T vs 1.5T field strength", "target": "scanner", "bucket": "clean", "why": "field strength"}
+{"text": "embeddings encode magnetic field strength rather than atrophy", "target": "scanner", "bucket": "clean", "why": "field strength encoded"}
+{"text": "the signal reflects the scanner vendor, not Alzheimer's", "target": "scanner", "bucket": "clean", "why": "scanner vendor"}
+{"text": "field-strength leakage inflates the reported AUROC", "target": "scanner", "bucket": "clean", "why": "field-strength leakage"}
+{"text": "Siemens vs GE scanner is what the probe actually reads", "target": "scanner", "bucket": "clean", "why": "scanner make"}
+{"text": "the model discriminates 1.5 Tesla from 3 Tesla acquisitions", "target": "scanner", "bucket": "clean", "why": "1.5T vs 3T"}
+{"text": "magnet strength confound is decodable at near-perfect AUC", "target": "scanner", "bucket": "clean", "why": "magnet strength"}
+{"text": "p-tau217 predicts hippocampal atrophy in preclinical AD", "target": "dx_binary", "bucket": "collision", "why": "predicts, but cross-sectional AD -> dx_binary NOT conversion"}
+{"text": "plasma GFAP predicts cortical thinning in Alzheimer's disease", "target": "dx_binary", "bucket": "collision", "why": "predicts biomarker->structure at cross-section"}
+{"text": "amyloid positivity predicts a diagnostic structural signature of AD", "target": "dx_binary", "bucket": "collision", "why": "predicts a diagnosis contrast"}
+{"text": "hippocampal shape predicts whether a subject has Alzheimer's", "target": "dx_binary", "bucket": "collision", "why": "predicts has AD = current diagnosis"}
+{"text": "the biomarker predicts AD versus control status", "target": "dx_binary", "bucket": "collision", "why": "predicts AD vs control status"}
+{"text": "site-adjusted structural signal still separates AD from CN", "target": "dx_binary", "bucket": "collision", "why": "site only adjusted-for; outcome is AD vs CN"}
+{"text": "after ComBat harmonization the probe still diagnoses Alzheimer's", "target": "dx_binary", "bucket": "collision", "why": "scanner harmonized away; outcome is diagnosis"}
+{"text": "controlling for scanner, atrophy still distinguishes dementia from controls", "target": "dx_binary", "bucket": "collision", "why": "scanner controlled; outcome is dx"}
+{"text": "converter-like cortical thinning predicts faster decline", "target": "conversion", "bucket": "collision", "why": "predicts decline over time -> conversion"}
+{"text": "a diagnosis-trained probe predicts who later converts to AD", "target": "conversion", "bucket": "collision", "why": "later converts = time -> conversion despite 'diagnosis'"}
+{"text": "even after removing age, the signal predicts progression to dementia", "target": "conversion", "bucket": "collision", "why": "age adjusted; outcome is progression"}
+{"text": "the scanner-corrected embedding predicts MCI-to-AD conversion", "target": "conversion", "bucket": "collision", "why": "scanner corrected; outcome is conversion"}
+{"text": "acquisition-site residualized features predict future decline", "target": "conversion", "bucket": "collision", "why": "site residualized; outcome is future decline"}
+{"text": "is the AD-vs-CN separation actually driven by scanner field strength", "target": "scanner", "bucket": "collision", "why": "the QUESTION is whether scanner drives it -> scanner"}
+{"text": "does the diagnostic signal collapse to acquisition site", "target": "site", "bucket": "collision", "why": "asks if it collapses to site -> site"}
+{"text": "tau-PET SUVR trajectory in the entorhinal cortex", "target": "unsupported", "bucket": "unsupported", "why": "PET modality/target not in the grid"}
+{"text": "resting-state functional connectivity predicts sleep quality", "target": "unsupported", "bucket": "unsupported", "why": "off-domain outcome"}
+{"text": "does eating fish reduce Alzheimer's risk", "target": "unsupported", "bucket": "unsupported", "why": "diet/epidemiology, not a probe target"}
+{"text": "what is the capital of France", "target": "unsupported", "bucket": "unsupported", "why": "off-domain entirely"}
+{"text": "genome-wide association of APOE with amyloid load", "target": "unsupported", "bucket": "unsupported", "why": "genetics outcome, not the imaging grid"}
+{"text": "the something separates the other thing somehow", "target": "unsupported", "bucket": "unsupported", "why": "too vague to route"}
+{"text": "predict the price of the drug", "target": "unsupported", "bucket": "unsupported", "why": "off-domain 'predict'"}
+{"text": "measure cortical thickness across the whole cohort", "target": "unsupported", "bucket": "unsupported", "why": "no contrast/outcome specified"}

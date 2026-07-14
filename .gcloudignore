@@ -1,7 +1,14 @@
 # Cloud Build upload allowlist-by-exclusion. When a .gcloudignore exists, gcloud
 # uses ONLY this file (it does NOT fall back to .gitignore), so every sensitive
-# path must be named here explicitly. The Dockerfile only serves the two static
-# assets; nothing else is needed to build or run the demo.
+# path must be named here explicitly.
+#
+# NOTE: this governs ONLY what is uploaded to Cloud Build (which builds the PRIVATE
+# Cloud Run image) — it is NOT .gitignore and has no bearing on the public GitHub
+# repo (that is governed by .gitignore, which excludes _manifests/ + _gated/). The
+# combined backend build (Dockerfile.combined) ships the main engine AND the SFG
+# imaging backend (mri_visualizations/) with its de-identified real cohort, so
+# mri_visualizations/ is UPLOADED here — except its local venv/caches/weights,
+# which are excluded below. Nothing with a PTID/IMAGEUID or gated weights uploads.
 
 # --- secrets / credentials (never upload) ---
 .env
@@ -44,8 +51,15 @@ data/real/_manifests/
 # integer subject_id, ZERO PTIDs / IMAGEUIDs (verified) — and stay gitignored (never
 # on public GitHub). These negations override the *embeddings*.csv + _gated rules above.
 !data/real/_gated/adni.csv
+!data/real/_gated/adni_roi.csv
 !data/real/adni_neurojepa_embeddings.csv
 !data/real/adni_conversion_neurojepa_embeddings.csv
+# Open-cohort Neuro-JEPA embeddings so oasis:neurojepa / openbhb:neurojepa also run
+# live. OASIS = public OAS* IDs, OpenBHB = anonymized integer IDs (no gated IDs,
+# verified). Openly licensed vs ADNI's DUA; stay gitignored (never on public GitHub).
+!data/real/oasis1_neurojepa_embeddings.csv
+!data/real/oasis2_neurojepa_embeddings.csv
+!data/real/openbhb_neurojepa_embeddings.csv
 
 # --- everything not needed to serve the static demo ---
 .git/
@@ -60,7 +74,6 @@ notebooks/
 reports/
 docs/
 design/
-mri_visualizations/
 audit/
 scratch/
 skills/
@@ -71,5 +84,16 @@ app/README.md
 Makefile
 *.egg-info/
 
-# Uploaded to Cloud Build: Dockerfile, nginx.conf, .gcloudignore,
-# app/index.html, app/demo_data.json  (nothing else)
+# --- SFG imaging backend (mri_visualizations/): ship code + de-identified cohort,
+# but NEVER the local virtualenv (~900 MB of Mac binaries), the derived caches are
+# small and prewarm the viewer so they DO ship. SynthStrip weights (*.pt) already
+# excluded globally above. No PTID crosswalk lives under mri_visualizations/.
+mri_visualizations/.venv-sfg/
+mri_visualizations/**/__pycache__/
+mri_visualizations/backend/.pytest_cache/
+
+# Uploaded to Cloud Build (combined backend): the Dockerfiles, src/, app/, policy/,
+# data/registry.yaml, the de-identified data/real/ compute tables, and the SFG
+# backend under mri_visualizations/ (code + adni/ixi/fixtures scans + prewarmed
+# .cache). Excluded: secrets, gated weights, *embeddings*.csv (except negated),
+# _manifests/, and the mri_visualizations venv.

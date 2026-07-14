@@ -216,7 +216,15 @@ def _kill_criterion_format() -> str:
 
 
 def _fallback(text: str, df: Optional[pd.DataFrame]) -> Claim:
-    target = _infer_target(text, df)
+    # Route via the canonical router (LLM-on-miss, keyword backstop), so the
+    # engine target and the cache key's target are chosen by the SAME function and
+    # can never diverge. router.route_target falls back to _infer_target below on
+    # no-key / low-confidence / any error, so the offline path is unchanged.
+    try:
+        from .router import route_target
+        target = route_target(text, df)
+    except Exception:  # noqa: BLE001 — never let routing break the parse
+        target = _infer_target(text, df)
     ga, gb = _GROUPS.get(target, ("group A", "group B"))
     return Claim(
         claim_id=_claim_id(text),

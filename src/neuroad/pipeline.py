@@ -18,6 +18,7 @@ module imports cleanly even before the rest of the engine has landed.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional, Union
 
 import pandas as pd
@@ -77,15 +78,26 @@ def _propose_biology(card: ClaimCard, df: pd.DataFrame) -> Optional[dict]:
     return None
 
 
-def _translate(card: ClaimCard, df: pd.DataFrame) -> Optional[dict]:
+def _translate(card: ClaimCard, df: pd.DataFrame,
+               anchor: Optional[str] = None) -> Optional[dict]:
     """Promoted survivors ONLY -> chain PI4AD/AlphaFold/repurposing off the
     Bridge's mechanism routing. Offline-first and exception-safe: a failure here
-    NEVER affects the score/verdict — translation is a read-only side artifact."""
+    NEVER affects the score/verdict — translation is a read-only side artifact.
+
+    ``anchor`` is the researcher-chosen fluid biomarker; when given it routes the
+    mechanism and selects the anchor-congruent lead + organoid readout."""
     try:
         from neuroad.claude import bridge
         from neuroad.harness import translation
-        mechanism = bridge._route(df)
-        result = translation.translate(mechanism, df)
+        mechanism = bridge._route(df, anchor)
+        # NOTE: called WITHOUT include_cross_attention (and the other opt-in
+        # layers), so the live referee card carries cross_attention_fusion={} by
+        # default. Cross-attention fusion needs >=2 modalities (imaging x plasma),
+        # so it is meaningful only for plasma-bearing cohorts (ADNI) and is N/A
+        # ({}) for plasma-less cohorts like OASIS. It is populated for the demo
+        # via the offline enrichment path (app/build_demo_data.py, with
+        # include_cross_attention=has_plasma) — never always-on here.
+        result = translation.translate(mechanism, df, anchor=anchor)
         if isinstance(result, dict):
             return result
     except Exception as exc:
@@ -145,8 +157,20 @@ def _naive_effect(df: pd.DataFrame, claim: Claim) -> dict:
     from neuroad import probe
     target = claim.target if claim.target in contract.LABEL_TARGETS else "conversion"
     X, y, groups = probe.point_head(df, target)
-    auc = probe.cross_val_auc(X, y, groups=groups,
-                              n_repeats=probe.N_REPEATS_ENSEMBLE)
+    # n_reps budget lever for the live-miss path. Default = full N_REPEATS_ENSEMBLE
+    # rigor (identical to the warmed grid); an operator may cap it via
+    # NEUROAD_LIVE_N_REPEATS ONLY to speed a genuinely cold coordinate — at the
+    # cost of a slightly noisier ensemble AUC than a warmed cell. N_BOOT is NOT
+    # this lever (gauntlet bootstrap time is flat in N_BOOT). Off by default so no
+    # displayed number changes unless the knob is explicitly set.
+    n_reps = probe.N_REPEATS_ENSEMBLE
+    try:
+        _override = int(os.environ.get("NEUROAD_LIVE_N_REPEATS", "0"))
+        if _override > 0:
+            n_reps = _override
+    except (TypeError, ValueError):
+        pass
+    auc = probe.cross_val_auc(X, y, groups=groups, n_repeats=n_reps)
 
     # Age/sex-residualized primary AUC (fold-honest: the nuisance regression is
     # fit inside each fold on train rows only). Reported ALONGSIDE the naive AUC
@@ -185,7 +209,42 @@ def _naive_effect(df: pd.DataFrame, claim: Claim) -> dict:
 # The referee.
 # ---------------------------------------------------------------------------
 
-def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
+def _region_attribution(df: pd.DataFrame, claim: Claim) -> Optional[list]:
+    """Per-region single-ROI CN-vs-AD AUROC over the FULL (un-restricted) panel — an
+    honest 'which region carries the signal' readout (an OUTPUT, not a probe input).
+    Cheap (3-fold x the single-ROI regions). None if the cohort has no region map."""
+    region_map = df.attrs.get("region_columns") or {}
+    dx = df.get("dx")
+    if not region_map or dx is None:
+        return None
+    try:
+        from sklearn.linear_model import LogisticRegression
+        from sklearn.model_selection import cross_val_score
+        mask = dx.isin(["CN", "AD"])
+        if int(mask.sum()) < 30:
+            return None
+        y = (dx[mask] == "AD").astype(int).to_numpy()
+        rows = []
+        for slug, cols in region_map.items():
+            if len(cols) != 1 or cols[0] not in df.columns:
+                continue
+            X = df.loc[mask, [cols[0]]].to_numpy(float)
+            try:
+                auc = float(cross_val_score(
+                    LogisticRegression(class_weight="balanced", max_iter=1000),
+                    X, y, cv=3, scoring="roc_auc").mean())
+            except Exception:  # noqa: BLE001
+                continue
+            rows.append({"region": slug, "auroc": round(auc, 3),
+                         "queried": slug == claim.region})
+        rows.sort(key=lambda r: r["auroc"], reverse=True)
+        return rows or None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def run_referee(df: pd.DataFrame, claim: Union[Claim, str], use_claude: bool = True,
+                anchor: Optional[str] = None) -> ClaimCard:
     """Run the full referee loop and return the exported ClaimCard.
 
     `claim` may be a structured `contract.Claim` or a raw NL string (which is
@@ -198,8 +257,28 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     if isinstance(claim, str):
         claim = _parse_claim(claim, df)
 
+    # 0. Region conditioning — the ONE seam where a brain region touches compute.
+    #    Parse the region from the hypothesis text (deterministic; no-op unless the
+    #    cohort carries a region map, i.e. adni:roi) and restrict the feature matrix
+    #    to that region's ROI column(s). Because _naive_effect, the gauntlet and
+    #    leakage all read features via contract.embedding_matrix, this one subset
+    #    makes every downstream AUROC region-specific — no probe/gauntlet edits.
+    from .harness import region as _region
+    region_attr = None
+    if not claim.region_columns:
+        slug, cols = _region.extract_region(claim.claim_text, df)
+        if cols:
+            claim.region, claim.region_columns = slug, cols
+    if claim.region_columns:
+        region_attr = _region_attribution(df, claim)   # full panel, pre-restrict
+        df = contract.restrict_to_region(df, claim.region_columns)
+
     # 1. Naive effect (before any challenge).
     naive_effect = _naive_effect(df, claim)
+    if claim.region:
+        naive_effect["region"] = claim.region
+        if region_attr:
+            naive_effect["region_attribution"] = region_attr
 
     # 2. The adversarial gauntlet.
     tests = gauntlet.run_gauntlet(df, claim)
@@ -212,12 +291,13 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     biology = None
     translation = None
     if card.promoted:
-        adjudication = _adjudicate(claim, tests)
-        biology = _propose_biology(card, df)
-        translation = _translate(card, df)
+        adjudication = _adjudicate(claim, tests) if use_claude else None
+        biology = _propose_biology(card, df) if use_claude else None
+        translation = _translate(card, df, anchor)
 
-    # 5. Reviewer argues against the verdict (always runs).
-    reviewer_out = _review(card)
+    # 5. Reviewer argues against the verdict (live Claude critique — only when
+    #    use_claude; the interactive drawer path skips it to stay fast).
+    reviewer_out = _review(card) if use_claude else None
 
     # 6. Rebuild the card so scoring folds in biology + reviewer caveats.
     card = scoring.build_claim_card(
@@ -228,7 +308,7 @@ def run_referee(df: pd.DataFrame, claim: Union[Claim, str]) -> ClaimCard:
     #    (ClaimCard has no dedicated slots; set as dynamic attributes so the
     #    exporter/UI can pick them up without changing the frozen contract.)
     try:
-        card.narration = _narrate(card)
+        card.narration = _narrate(card) if use_claude else _fallback_narration(card)
     except Exception:
         card.narration = _fallback_narration(card)
     if adjudication is not None:

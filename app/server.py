@@ -36,12 +36,23 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
+
+from app import investigate_cache
 
 _APP_DIR = Path(__file__).resolve().parent
 _ROOT = _APP_DIR.parent
 # Make the src/ layout importable when run as `python -m app.server` from root.
 sys.path.insert(0, str(_ROOT / "src"))
+
+# Live /api/investigate is an INTERACTIVE recompute — dial the bootstrap-CI and
+# permutation-null budgets down so it returns fast (was ~40s at 1000 iters). Set
+# BEFORE neuroad is imported (probe.py reads these at import). Offline
+# demo_data.json generation (build_demo_data.py, run without these) keeps the full
+# 1000-iteration rigor, so the baked-in numbers are unchanged.
+os.environ.setdefault("NEUROAD_N_BOOT", "200")
+os.environ.setdefault("NEUROAD_N_PERM", "200")
 
 _log = logging.getLogger("neuroad.server")
 
@@ -283,6 +294,14 @@ def _enrich_case(xcard, hypothesis: str, dataset: str, seed: int) -> dict:
     df = loaders.load(dataset, seed=seed)
     card = xcard.card
     claim = card.claim
+    # Region conditioning must ALSO apply to the enrichment recompute (leakage
+    # margin, confound leaderboard, double dissociation) so the FE header AUROC
+    # (leakage_margin.outcome_auc) is region-specific and matches the card's
+    # region-restricted naive_effect — not the whole-panel number. The claim
+    # carries region_columns resolved in the referee; a no-op on non-ROI cohorts.
+    region_cols = list(getattr(claim, "region_columns", []) or [])
+    if region_cols:
+        df = contract.restrict_to_region(df, region_cols)
     badge = loaders.honest_substrate(dataset)
     promoted = bool(card.to_dict().get("promoted"))
     scaffold = {
@@ -312,8 +331,8 @@ def _enrich_case(xcard, hypothesis: str, dataset: str, seed: int) -> dict:
         "scatter": {"n": 90, "n_scanners": 2, "seed": seed,
                     "outcome_gap": 2.0, "scanner_gap": 1.0, "converter_frac": 0.35},
     }
-    case = B._real_case(scaffold, card, df)  # real tests/leakage/score/courtroom/…
-    case["investigate"] = B._investigate_block(hypothesis, dataset, seed, case)
+    case = B._real_case(scaffold, card, df, live=True)  # real tests/leakage/score/courtroom/… (skips ~40s unrendered grounding)
+    case["investigate"] = B._investigate_block(hypothesis, dataset, seed, case, xcard=xcard)
     cohort = contract.cohort_summary(df)
     # Short cohort stamp ("REAL ADNI" / "REAL OASIS"), matching the demo_data
     # payload so the frontend badge chip renders identically on the live path;
@@ -324,6 +343,26 @@ def _enrich_case(xcard, hypothesis: str, dataset: str, seed: int) -> dict:
     case["cohort"] = cohort
     case["tree"] = B._derive_tree(case)  # UI ignores it, but honest / audit-complete
     return case
+
+
+def compute_investigate(hypothesis: str, dataset: str, *, seed: int = 0,
+                        anchor: Optional[str] = None, want_api: bool = False) -> dict:
+    """Run the full engine + case enrichment and return the /api/investigate
+    payload. Extracted so both the live POST handler and the offline cache-warmer
+    (``scripts/warm_investigate_cache.py``) share ONE code path."""
+    from neuroad.harness import orchestrator
+    xcard = orchestrator.investigate(
+        hypothesis, dataset, api=want_api, seed=seed, anchor=anchor)
+    result = xcard.to_dict()
+    result["_meta"] = {"claude_live": want_api, "dataset": dataset,
+                       "hypothesis": hypothesis}
+    # Additive: the rich `case` shape the tree / story UI renders. A failure here
+    # degrades to the plain card (never a 500 regression).
+    try:
+        result["case"] = _enrich_case(xcard, hypothesis, dataset, seed)
+    except Exception:  # noqa: BLE001
+        _log.exception("investigate case enrichment failed; plain card")
+    return result
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -470,6 +509,11 @@ class Handler(BaseHTTPRequestHandler):
 
         hypothesis = str(payload.get("hypothesis", "")).strip()
         dataset = str(payload.get("dataset", "")).strip()
+        # The fluid biomarker the researcher CHOSE to anchor on (amyloid /
+        # p_tau217 / gfap / nfl). Optional; routes the molecular follow-up.
+        anchor = str(payload.get("anchor", "")).strip().lower() or None
+        if anchor not in (None, "amyloid", "p_tau217", "gfap", "nfl"):
+            anchor = None
         if not hypothesis:
             self._send_json({"error": "hypothesis is required"}, 400)
             return
@@ -493,23 +537,38 @@ class Handler(BaseHTTPRequestHandler):
         # source of truth — an unknown name raises ValueError -> 400, everything
         # else is a genuine 500.
         try:
-            from neuroad.harness import orchestrator
-            xcard = orchestrator.investigate(
-                hypothesis, dataset, api=want_api, seed=seed)
-            result = xcard.to_dict()
-            result["_meta"] = {
-                "claude_live": want_api,
-                "dataset": dataset,
-                "hypothesis": hypothesis,
-            }
-            # Additive: attach the rich `case` shape the tree / story UI renders
-            # (tests[], cohort, leakage_margin, courtroom, narration, translation,
-            # tree). Every existing top-level key of the plain card is preserved;
-            # a failure here degrades to the plain card (never a 500 regression).
+            # Out-of-scope guard BEFORE the cache: an unsupported target
+            # (e.g. "tau-PET SUVR trajectory") keyword-infers to the default
+            # "conversion" and would otherwise COLLIDE with a legit promoted
+            # conversion cell — serving a SURVIVOR result for a question the
+            # engine cannot answer. Route it straight to compute_investigate, which
+            # returns the honest refusal (promoted=False, no fabricated effect).
+            out_of_scope = False
             try:
-                result["case"] = _enrich_case(xcard, hypothesis, dataset, seed)
+                from neuroad.harness.orchestrator import _out_of_scope_reason
+                out_of_scope = bool(_out_of_scope_reason(hypothesis))
             except Exception:  # noqa: BLE001
-                _log.exception("investigate case enrichment failed; plain card")
+                out_of_scope = False
+
+            # Precomputed-grid FAST PATH: every hypothesis maps to a finite
+            # coordinate (dataset, target, anchor), so a preloaded cell is a real
+            # result served by lookup (<1s) instead of a ~25s recompute. Miss ->
+            # compute live and back-fill the cell (self-warming).
+            cached = None if out_of_scope else investigate_cache.get(
+                dataset, hypothesis, anchor, want_api)
+            if cached is not None:
+                self._send_json(investigate_cache.personalize(cached, hypothesis, dataset))
+                return
+            result = compute_investigate(
+                hypothesis, dataset, seed=seed, anchor=anchor, want_api=want_api)
+            # Never back-fill an out-of-scope refusal: its keyword-inferred key
+            # collides with a legit conversion cell, so persisting it would
+            # overwrite a real SURVIVOR result with the refusal.
+            if not out_of_scope:
+                try:
+                    investigate_cache.put(dataset, hypothesis, anchor, want_api, result)
+                except Exception:  # noqa: BLE001
+                    _log.debug("investigate cache back-fill failed", exc_info=True)
             self._send_json(result)
         except ValueError as exc:  # unknown dataset name from loaders.load
             self._send_json(

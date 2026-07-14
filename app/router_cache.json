@@ -1,0 +1,72 @@
+{
+"d50032bc5f2695111b051c771169a683f2d27013": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "p-tau217-anchored hippocampal atrophy separates alzheimer's disease from cognitively normal"
+},
+"6867796b7394dee08c3d6655c9b72ea06717b3c2": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "p-tau217 predicts hippocampal atrophy"
+},
+"069686a1103fc1de041723d15a746004e75f6e2c": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "medium",
+"text": "gfap astrocyte reactivity drives cortical thinning"
+},
+"a3269058df1cfc756fe544387d7e30cc5e2d59a1": {
+"target": "scanner",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "scanner field strength inflates atrophy estimates"
+},
+"c51e79e1ca3ac711a8801b005291bbe264fc17f1": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "p-tau217 predicts hippocampal atrophy in alzheimer's disease"
+},
+"a76c90a724c1e6e47de82205dc794422477909f7": {
+"target": "conversion",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "structural embeddings predict mci to ad conversion"
+},
+"e22f7394cb70ee273bdd40691e82a7766d6d7493": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "structural atrophy separates dementia from controls"
+},
+"41150a16e797b288bfad06f136578a28a4bf59a8": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "p-tau217 predicts hippocampal atrophy in preclinical ad"
+},
+"1eab87b27f49146b3e8b1d74abcfc32ee64bb50e": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "high",
+"text": "site-adjusted structural signal still separates ad from cn"
+},
+"4227a165d591e7c82a05ae17b8ce3b5d99ba9159": {
+"target": "dx_binary",
+"source": "llm",
+"model": "claude-sonnet-5",
+"confidence": "medium",
+"text": "alzheimer's disease is linked with increased amyloid volume in neocortex"
+}
+}

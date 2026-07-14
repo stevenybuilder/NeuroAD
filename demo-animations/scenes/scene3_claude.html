@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeuroAD — Orchestrated by Claude</title>
+<!--
+  NeuroAD Demo Animation · scene3_claude
+  "Orchestrated by Claude" — radial agent topology (REF B) in the NeuroAD palette.
+  Central Claude hub · 6 TOOLS IN (left) · 3 ARTIFACTS OUT (right).
+  Connectors draw in, then pulses ("real tokens of work") stream inward + outward; hub breathes.
+  Standalone: all CSS/JS inline, no external requests, system fonts only. Auto-plays + loops.
+-->
+<style>
+  :root{
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+    --gold:#C08415; --gold-edge:#D69A1F; --gold-soft:#FBF2DD;
+    --gray:#B0ABA1; --gray-edge:#CBC7BC;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--paper);
+    background-image:radial-gradient(1100px 620px at 60% 22%,#FBFAF6 0%,#F5F4EE 62%);
+    color:var(--ink); font-family:var(--sans);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+
+  /* fixed-size design stage, scaled to fit the viewport (composed for 1920x1080).
+     Absolutely centered THEN scaled around its center, so it never clips a side
+     when the window is narrower/shorter than 1920x1080 (e.g. browser chrome). */
+  #stage{
+    position:absolute; left:50%; top:50%; width:1920px; height:1080px;
+    transform:translate(-50%,-50%) scale(var(--scale,1)); transform-origin:center center;
+    background-image:radial-gradient(rgba(40,36,28,.05) 1px, transparent 1px);
+    background-size:26px 26px; background-position:center;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* --- header --- */
+  .wordmark{position:absolute; top:44px; left:56px; font-size:22px; font-weight:700; letter-spacing:-.02em}
+  .wordmark b{color:var(--ink)} .wordmark span{color:var(--clay)}
+  .head{position:absolute; top:56px; left:0; right:0; text-align:center}
+  .kicker{font-size:14px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--clay); margin-bottom:12px}
+  .title{font-size:48px; font-weight:700; letter-spacing:-.02em; color:var(--ink)}
+  .title .dot{color:var(--clay)}
+
+  /* --- connector svg layer --- */
+  #wires{position:absolute; inset:0; width:1920px; height:1080px; pointer-events:none}
+  path.conn{fill:none; stroke-linecap:round; transition:stroke-dashoffset .72s cubic-bezier(.4,0,.2,1)}
+  #pulses{opacity:0}
+
+  /* --- column headers --- */
+  .colhead{
+    position:absolute; transform:translateX(-50%);
+    background:var(--card); border:1px solid var(--edge2); border-radius:8px;
+    padding:7px 16px; font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink2); box-shadow:0 1px 2px rgba(40,36,28,.04);
+    display:flex; align-items:center; gap:9px; white-space:nowrap;
+  }
+  .colhead .arw{color:var(--clay); font-weight:700}
+  .colhead .cnt{font-family:var(--mono); font-size:12px; color:var(--mute); font-weight:600; letter-spacing:0}
+
+  /* --- cards --- */
+  .card{
+    position:absolute; background:var(--card);
+    border:1.5px solid var(--edge2); border-radius:14px;
+    box-shadow:0 6px 0 rgba(40,36,28,.045), 0 10px 24px rgba(40,36,28,.08);
+  }
+  .card .pill{
+    position:absolute; top:10px; left:12px;
+    font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    padding:2px 8px; border-radius:6px;
+  }
+  .card .handle{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:11px; height:11px; border-radius:50%; background:var(--card);
+    border:2px solid currentColor;
+  }
+  .card .handle.r{right:-6px} .card .handle.l{left:-6px}
+  .card .body{position:absolute; left:14px; right:16px; top:34px; display:flex; gap:12px; align-items:center}
+  .card .glyph{
+    flex:0 0 auto; width:38px; height:38px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; line-height:1;
+  }
+  .card .txt{min-width:0}
+  .card .ct{font-size:23px; font-weight:700; color:var(--ink); letter-spacing:-.01em; line-height:1.15}
+  .card .cs{font-size:17px; color:var(--ink2); margin-top:4px; line-height:1.3}
+  .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+  /* right artifact cards a touch taller / richer */
+  .card.out .ct{font-size:23px}
+  .card.out .cs{font-size:17px}
+
+  /* --- hub --- */
+  #hublabel{
+    position:absolute; left:960px; top:548px; transform:translate(-50%,-50%);
+    text-align:center; width:200px; pointer-events:none;
+  }
+  #hublabel .h1{font-size:23px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
+  #hublabel .h2{font-size:15px; color:var(--ink2); margin-top:4px; font-weight:600}
+  #hublabel .h3{font-size:16px; color:var(--mute); margin-top:6px; line-height:1.34}
+
+  /* --- hypothesis in (Claude's claim-parser / router) --- */
+  #hypoIn{
+    position:absolute; left:960px; top:214px; transform:translateX(-50%);
+    width:392px; text-align:center; pointer-events:none;
+    background:var(--card); border:1.5px solid var(--clay-soft); border-radius:14px;
+    box-shadow:0 1px 2px rgba(40,36,28,.04), 0 10px 30px rgba(40,36,28,.08);
+    padding:13px 18px 14px;
+  }
+  #hypoIn .hk{font-size:13px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--clay-deep)}
+  #hypoIn .hx{font-size:21px; font-weight:600; color:var(--ink); margin-top:8px; line-height:1.3}
+  #hypoIn .hr{font-size:15px; color:var(--ink2); margin-top:9px; line-height:1.36}
+  #hypoIn .hr b{color:var(--clay-deep); font-weight:700}
+  #stage.playing #hypoIn{animation:fadeUp .6s ease both; animation-delay:.3s}
+
+  /* --- caption --- */
+  .caption{
+    position:absolute; left:0; right:0; bottom:52px; text-align:center;
+    font-size:18px; color:var(--mute); letter-spacing:.01em;
+  }
+  .caption b{color:var(--ink2); font-weight:600}
+
+  /* --- replay (viewport-fixed, unscaled) --- */
+  #replay{
+    position:fixed; right:22px; bottom:20px; z-index:20;
+    font-family:var(--sans); font-size:12px; color:var(--mute);
+    background:var(--card); border:1px solid var(--edge); border-radius:8px;
+    padding:7px 13px; cursor:pointer; display:flex; align-items:center; gap:7px;
+    box-shadow:0 1px 2px rgba(40,36,28,.05); transition:color .2s, border-color .2s;
+  }
+  #replay:hover{color:var(--ink2); border-color:var(--edge2)}
+
+  /* ---------- reveal animation state ---------- */
+  /* DEFAULT = composed final state (always legible even if animations never run,
+     e.g. a background/hidden tab that pauses the animation timeline). The entrance
+     only *hides-then-reveals* while #stage.playing is set, which JS adds only when
+     the document is actually visible. */
+  #hubGroup{transform-box:view-box; transform-origin:960px 548px}
+  .glow{opacity:.55}
+  #pulses{opacity:0}
+
+  #stage.playing .wordmark{animation:fadeUp .55s cubic-bezier(.4,0,.2,1) both}
+  #stage.playing .head    {animation:fadeDown .6s cubic-bezier(.4,0,.2,1) both}
+  #stage.playing .colhead {animation:fadeUp .55s cubic-bezier(.4,0,.2,1) both}
+  #stage.playing .card    {animation:cardIn .55s cubic-bezier(.4,0,.2,1) both}
+  #stage.playing #hublabel{animation:fadeIn .6s ease both; animation-delay:.4s}
+  #stage.playing .caption {animation:fadeUp .6s ease both; animation-delay:.35s}
+  #stage.playing path.conn{animation:draw .72s cubic-bezier(.4,0,.2,1) both}
+  #stage.playing #pulses  {animation:fadeIn .9s ease both; animation-delay:3.1s}
+  #stage.playing .glow    {animation:glowIn .8s ease both, glowpulse 4.6s ease-in-out infinite; animation-delay:.2s, 1s}
+  #stage.playing #hubGroup{animation:hubIn .7s cubic-bezier(.4,0,.2,1) both, breathe 4.6s ease-in-out infinite; animation-delay:.15s, 1s}
+
+  @keyframes fadeUp  {from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  @keyframes fadeDown{from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:none}}
+  @keyframes fadeIn  {from{opacity:0} to{opacity:1}}
+  @keyframes cardIn  {from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+  @keyframes hubIn   {from{opacity:0; transform:scale(.9)} to{opacity:1; transform:scale(1)}}
+  @keyframes glowIn  {from{opacity:0} to{opacity:.55}}
+  @keyframes draw    {from{stroke-dashoffset:var(--len,1200)} to{stroke-dashoffset:0}}
+  @keyframes breathe {0%,100%{transform:scale(1)} 50%{transform:scale(1.028)}}
+  @keyframes glowpulse{0%,100%{opacity:.5} 50%{opacity:.78}}
+
+  /* ---------- reduced motion: hold the composed final state, no travel/particle motion ---------- */
+  @media (prefers-reduced-motion: reduce){
+    #stage.playing *{animation:none !important}
+    #pulses{display:none}
+  }
+</style>
+</head>
+<body>
+  <div id="stage" aria-label="Orchestrated by Claude — agent topology">
+    <div class="wordmark"><b>Neuro</b><span>AD</span></div>
+    <div class="head">
+      <div class="kicker">How I built it with Claude</div>
+      <div class="title">Orchestrated by Claude<span class="dot">.</span></div>
+    </div>
+
+    <svg id="wires" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <defs>
+        <radialGradient id="hubfill" cx="42%" cy="34%" r="72%">
+          <stop offset="0%" stop-color="#FBFAF6"/>
+          <stop offset="55%" stop-color="#F5E4DA"/>
+          <stop offset="100%" stop-color="#F0DACF"/>
+        </radialGradient>
+        <radialGradient id="glowgrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#C96442" stop-opacity="0.20"/>
+          <stop offset="60%" stop-color="#C96442" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#C96442" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="pglow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.4"/>
+        </filter>
+      </defs>
+
+      <!-- soft glow behind hub -->
+      <circle class="glow" cx="960" cy="548" r="168" fill="url(#glowgrad)"/>
+
+      <!-- connectors (paths injected by JS as children of this group, kept behind hub) -->
+      <g id="connGroup"></g>
+
+      <!-- travelling pulses -->
+      <g id="pulses"></g>
+
+      <!-- hub (ticks + ring + fill) drawn on top -->
+      <g id="hubGroup"></g>
+    </svg>
+
+    <!-- column headers -->
+    <div class="colhead" id="headL"><span class="arw">→</span>Tools in <span class="cnt">6</span></div>
+    <div class="colhead" id="headR">Artifacts out <span class="arw">→</span><span class="cnt">3</span></div>
+
+    <!-- hypothesis in — Claude's claim-parser / router (the "LLM as judge" step) -->
+    <div id="hypoIn">
+      <div class="hk">Hypothesis · free text</div>
+      <div class="hx">"Does a hippocampal subtype track plasma p-tau217?"</div>
+      <div class="hr">Claude <b>parses &amp; routes</b> it — named contrast → probe · novel pattern → detective</div>
+    </div>
+
+    <!-- cards injected here -->
+    <div id="cards"></div>
+
+    <!-- hub label -->
+    <div id="hublabel">
+      <div class="h1">Claude</div>
+      <div class="h3">parses &amp; routes the hypothesis · calls the tools · synthesizes</div>
+    </div>
+
+    <div class="caption">
+      <b>Built in days with Claude Code</b> — auto-mode, subagents, skills, and Claude Design — one cohesive system.
+    </div>
+  </div>
+
+  <button id="replay" aria-label="Replay animation">&#8635; Replay</button>
+
+<script>
+(function(){
+  "use strict";
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var HUBX = 960, HUBY = 548;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- data ---------- */
+  var LEFT = [
+    {pill:"Encoder",   glyph:"⬡", color:"var(--ink2)",  soft:"var(--paper2)", ct:"Neuro-JEPA encoder", cs:'Latent embedding · frozen, <span class="mono">1.5M</span> scans'},
+    {pill:"Data",      glyph:"▦", color:"var(--ink2)",  soft:"var(--paper2)", ct:"Clinical + biomarker table", cs:'Cognitive tests · plasma <span class="mono">p-tau217</span>'},
+    {pill:"Stats",     glyph:"⊹", color:"var(--ink2)",  soft:"var(--paper2)", ct:"Probe + referee stats", cs:'AUCs · r-values · <span class="mono">5</span>-test gauntlet'},
+    {pill:"Omics",     glyph:"⬢", color:"var(--ink2)",  soft:"var(--paper2)", ct:"PI4AD multi-omics", cs:"GWAS · QTL · STRING networks"},
+    {pill:"Structure", glyph:"∿", color:"var(--ink2)",  soft:"var(--paper2)", ct:"AlphaFold 3 / Boltz", cs:'3D structure · <span class="mono">pLDDT</span>'},
+    {pill:"Retrieval", glyph:"⌕", color:"var(--ink2)",  soft:"var(--paper2)", ct:"Literature / RAG", cs:"Grounding search over papers"}
+  ];
+  var RIGHT = [
+    {pill:"Target",     glyph:"◆", color:"var(--clay)",  soft:"var(--clay-soft)", ct:"Ranked protein target", cs:'PI4AD <span class="mono">0–10</span> · e.g. HRAS / MAPK1'},
+    {pill:"Experiment", glyph:"✦", color:"var(--green)", soft:"var(--green-soft)", ct:"Falsifiable experiment card", cs:'iPSC / organoid readout · <span class="mono">~6-week</span> turnaround'},
+    {pill:"Provenance", glyph:"⊚", color:"var(--ink2)",  soft:"var(--paper2)", ct:"Provenance / audit trail", cs:"Every claim paired to its evidence"}
+  ];
+
+  /* ---------- layout ---------- */
+  var LW = 348, LH = 104, LGAP = 16, LX = 148;
+  var Ltot = LEFT.length*LH + (LEFT.length-1)*LGAP;
+  var Lstart = HUBY - Ltot/2;
+  var RW = 352, RH = 142, RGAP = 28, RX = 1420;
+  var Rtot = RIGHT.length*RH + (RIGHT.length-1)*RGAP;
+  var Rstart = HUBY - Rtot/2;
+
+  var cards = document.getElementById("cards");
+  var connGroup = document.getElementById("connGroup");
+  var pulsesG = document.getElementById("pulses");
+
+  var paths = [];   // {el,len,color,dir}
+  var revealDelays = [];
+
+  function makeCard(d, x, y, w, h, side, idx){
+    var el = document.createElement("div");
+    el.className = "card " + (side==="left" ? "in" : "out");
+    el.style.left = x+"px"; el.style.top = y+"px"; el.style.width = w+"px"; el.style.height = h+"px";
+    var handleSide = side==="left" ? "r" : "l";
+    el.innerHTML =
+      '<span class="pill" style="background:'+d.soft+';color:'+d.color+'">'+d.pill+'</span>'+
+      '<span class="handle '+handleSide+'" style="color:'+d.color+'"></span>'+
+      '<div class="body">'+
+        '<span class="glyph" style="background:'+d.soft+';color:'+d.color+'">'+d.glyph+'</span>'+
+        '<div class="txt"><div class="ct">'+d.ct+'</div><div class="cs">'+d.cs+'</div></div>'+
+      '</div>';
+    cards.appendChild(el);
+    return el;
+  }
+
+  // build a cubic bezier path 'd' string
+  function bez(x0,y0,x1,y1){
+    var dx = Math.abs(x1-x0);
+    var c1x = x0 + dx*0.55, c2x = x1 - dx*0.55;
+    return "M"+x0+" "+y0+" C"+c1x+" "+y0+" "+c2x+" "+y1+" "+x1+" "+y1;
+  }
+
+  function addPath(dstr, color, dir){
+    var p = document.createElementNS(SVGNS,"path");
+    p.setAttribute("d", dstr);
+    p.setAttribute("class","conn");
+    p.setAttribute("stroke", color);
+    p.setAttribute("stroke-width","2.4");
+    p.setAttribute("stroke-opacity","0.5");
+    connGroup.appendChild(p);
+    var len = p.getTotalLength();
+    // default = fully drawn (dashoffset 0); the draw-in animation runs from var(--len)->0
+    p.style.strokeDasharray = len;
+    p.style.strokeDashoffset = 0;
+    p.style.setProperty("--len", len);
+    paths.push({el:p, len:len, color:color, dir:dir});
+    return p;
+  }
+
+  // LEFT cards + connectors (card -> hub, inward)
+  LEFT.forEach(function(d,i){
+    var y = Lstart + i*(LH+LGAP);
+    makeCard(d, LX, y, LW, LH, "left", i);
+    var cy = y + LH/2;
+    var sx = LX + LW + 5;           // right handle
+    var spread = (i - (LEFT.length-1)/2);
+    var ex = 866, ey = HUBY + spread*10;   // arrive at hub left arc
+    addPath(bez(sx, cy, ex, ey), d.color, "in");
+  });
+
+  // RIGHT cards + connectors (hub -> card, outward)
+  RIGHT.forEach(function(d,i){
+    var y = Rstart + i*(RH+RGAP);
+    makeCard(d, RX, y, RW, RH, "right", i);
+    var cy = y + RH/2;
+    var ex = RX - 5;                // left handle
+    var spread = (i - (RIGHT.length-1)/2);
+    var sx = 1054, sy = HUBY + spread*13;   // leave hub right arc
+    addPath(bez(sx, sy, ex, cy), d.color, "out");
+  });
+
+  // HYPOTHESIS -> hub (the claim-parser / router flowing the free-text hypothesis in)
+  addPath("M960 306 C960 360 960 392 960 452", "var(--clay)", "in");
+
+  /* ---------- hub (ticked bezel + ring + fill) ---------- */
+  var hubGroup = document.getElementById("hubGroup");
+  var NTICKS = 48, tickInner = 100, tickOuter = 111, tickLong = 116, R = 90;
+  var svgHTML = "";
+  for(var t=0;t<NTICKS;t++){
+    var a = (t/NTICKS)*Math.PI*2 - Math.PI/2;
+    var major = (t % 4 === 0);
+    var ro = major ? tickLong : tickOuter;
+    var op = major ? 0.72 : 0.4;
+    var w  = major ? 2.2 : 1.5;
+    var x1 = HUBX + Math.cos(a)*tickInner, y1 = HUBY + Math.sin(a)*tickInner;
+    var x2 = HUBX + Math.cos(a)*ro,        y2 = HUBY + Math.sin(a)*ro;
+    svgHTML += '<line x1="'+x1.toFixed(2)+'" y1="'+y1.toFixed(2)+'" x2="'+x2.toFixed(2)+'" y2="'+y2.toFixed(2)+
+               '" stroke="var(--clay)" stroke-opacity="'+op+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+  }
+  // outer faint ring + main hub circle
+  svgHTML =
+    '<circle cx="'+HUBX+'" cy="'+HUBY+'" r="97" fill="none" stroke="var(--clay)" stroke-opacity="0.18" stroke-width="1"/>' +
+    svgHTML +
+    '<circle cx="'+HUBX+'" cy="'+HUBY+'" r="'+R+'" fill="url(#hubfill)" stroke="var(--clay)" stroke-width="2"/>' +
+    '<circle cx="'+HUBX+'" cy="'+HUBY+'" r="'+(R-9)+'" fill="none" stroke="var(--clay)" stroke-opacity="0.16" stroke-width="1"/>';
+  hubGroup.innerHTML = svgHTML;
+
+  /* ---------- position column headers ---------- */
+  var headL = document.getElementById("headL");
+  var headR = document.getElementById("headR");
+  headL.style.left = (LX + LW/2) + "px";
+  headL.style.top  = (Lstart - 46) + "px";
+  headR.style.left = (RX + RW/2) + "px";
+  headR.style.top  = (Rstart - 46) + "px";
+
+  /* ---------- travelling pulses ---------- */
+  var pulseObjs = [];
+  paths.forEach(function(pd){
+    for(var k=0;k<2;k++){
+      var g = document.createElementNS(SVGNS,"g");
+      var halo = document.createElementNS(SVGNS,"circle");
+      halo.setAttribute("r","6"); halo.setAttribute("fill",pd.color);
+      halo.setAttribute("fill-opacity","0.22"); halo.setAttribute("filter","url(#pglow)");
+      var core = document.createElementNS(SVGNS,"circle");
+      core.setAttribute("r","3.3"); core.setAttribute("fill",pd.color);
+      g.appendChild(halo); g.appendChild(core);
+      // init at the path's start point so nothing can ever paint at SVG origin (0,0)
+      try{ var sp = pd.el.getPointAtLength(0); g.setAttribute("transform","translate("+sp.x+","+sp.y+")"); }catch(e){}
+      g.setAttribute("opacity","0");
+      pulsesG.appendChild(g);
+      pulseObjs.push({g:g, core:core, halo:halo, path:pd.el, len:pd.len, offset:k*0.5});
+    }
+  });
+
+  var SPEED = 0.42; // fraction per second (~2.4s travel)
+  var running = false, startT = 0;
+  function frame(now){
+    if(!running) return;
+    var t = (now - startT)/1000;
+    for(var i=0;i<pulseObjs.length;i++){
+      var p = pulseObjs[i];
+      var frac = (t*SPEED + p.offset) % 1;
+      var pt = p.path.getPointAtLength(p.len * frac);
+      p.g.setAttribute("transform","translate("+pt.x.toFixed(2)+","+pt.y.toFixed(2)+")");
+      var op = 1;
+      if(frac < 0.1) op = frac/0.1;
+      else if(frac > 0.9) op = (1-frac)/0.1;
+      p.g.setAttribute("opacity", op.toFixed(3));
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- reveal choreography ---------- */
+  var stage = document.getElementById("stage");
+  var cardEls = Array.prototype.slice.call(cards.children);
+
+  // stagger delays are baked as animation-delay (ignored until #stage.playing).
+  var CARD_BASE = 0.7, CARD_STEP = 0.105;
+  cardEls.forEach(function(c,i){ c.style.animationDelay = (CARD_BASE + i*CARD_STEP) + "s"; });
+  var CONN_BASE = CARD_BASE + cardEls.length*CARD_STEP + 0.2;
+  paths.forEach(function(pd,i){ pd.el.style.animationDelay = (CONN_BASE + i*0.085) + "s"; });
+
+  // start the continuous pulse loop (harmless while hidden; throttled by the browser)
+  function ensurePulses(){
+    if(reduce || running) return;
+    running = true; startT = performance.now(); requestAnimationFrame(frame);
+  }
+
+  // Re-run the entrance. Only ever called when the document is visible.
+  function startEntrance(){
+    if(reduce){ return; } // composed final state is already the default
+    stage.classList.remove("playing");
+    // force reflow so removing + re-adding restarts the CSS animations
+    // eslint-disable-next-line no-unused-expressions
+    stage.offsetWidth;
+    stage.classList.add("playing");
+    ensurePulses();
+  }
+
+  /* compute scale to fit viewport */
+  function fit(){
+    var s = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+    stage.style.setProperty("--scale", s);
+  }
+  window.addEventListener("resize", fit);
+  fit();
+
+  document.getElementById("replay").addEventListener("click", startEntrance);
+
+  // Autoplay: the composed scene is the DEFAULT, so a hidden/background tab (whose
+  // animation timeline is paused) still shows the full, legible scene. We only play
+  // the hide-then-reveal entrance once the document is genuinely visible.
+  function autoplay(){
+    if(reduce) return; // already showing final state
+    if(document.hidden){
+      document.addEventListener("visibilitychange", function onVis(){
+        if(!document.hidden){
+          document.removeEventListener("visibilitychange", onVis);
+          startEntrance();
+        }
+      });
+    } else {
+      requestAnimationFrame(function(){ requestAnimationFrame(startEntrance); });
+    }
+  }
+  autoplay();
+})();
+</script>
+</body>
+</html>

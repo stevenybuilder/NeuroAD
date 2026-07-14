@@ -1,8 +1,9 @@
 # Built with Claude Code — the multi-agent, contract-first build
 
-NeuroAD Discovery Engine was built the way it runs: Claude is not just the coder, it is
-the reasoning engine inside the product *and* the orchestration method behind the
-repo. This document is the "creative Claude use" evidence.
+NeuroAD Discovery Engine was built the way it runs: Claude is the intent router,
+orchestrator, and Q&A rail inside the product — over a deterministic referee — *and*
+the multi-agent method behind the repo. This document is the "creative Claude use"
+evidence.
 
 ## 1. Contract-first, then parallel agents
 
@@ -19,8 +20,8 @@ against the contract, never against another agent's code:
 | Agent | Module | Owns |
 |---|---|---|
 | M1 | `probe/gauntlet/leakage/scoring/detective` | the referee engine |
-| M2 | `data/` | synthetic harness, OASIS adapter, loaders, stubs |
-| M3 | `claude/` | claim parser, courtroom, narrator, bridge, reviewer |
+| M2 | `data/` | real cohort loaders (OASIS/ADNI), adapters, seeded test fixtures |
+| M3 | `claude/` | router, claim parser, courtroom, narrator, bridge, reviewer |
 | M4 | `app/` | offline visual workbench |
 | M5 | `pipeline/cli` + docs | orchestration, packaging, this write-up |
 
@@ -30,26 +31,32 @@ before its siblings exist. The orchestration layer (this agent's `pipeline.py`)
 imports siblings lazily and wraps the whole Claude layer in safe fallbacks, so a
 half-finished tree still runs.
 
-## 2. Claude as the adjudicator (inside the product)
+## 2. Claude inside the product — three live roles, a deterministic referee
 
-The Claude reasoning layer is `src/neuroad/claude/`. Every module speaks live
-Anthropic API when `ANTHROPIC_API_KEY` is set and falls back to a **deterministic
-template** otherwise, so the demo is fully offline and reproducible.
+The referee's verdict is deterministic arithmetic (`contract.py`) — **Claude never
+sets a score.** That is the honesty contract (`_client.model_badge` reports
+`referee: deterministic`). Claude runs live (when `ANTHROPIC_API_KEY` is set) in
+three real, consequential roles:
 
-- **Courtroom** (`courtroom.adjudicate`): a **Prosecution** subagent argues the
-  signal is an artifact, a **Defense** subagent argues it is real biology, and a
-  **Judge** subagent renders the verdict with reasoning. Each makes a
-  *consequential* decision — this defeats the "Claude is decoration" failure mode.
-- **Reviewer** (`reviewer.review`): a peer-review agent that argues **against**
-  the final verdict — flags the proxy brain-age control, p-tau217 missingness,
-  and "partially robust ≠ robust." A referee that referees itself.
-- **Bridge** (`bridge.propose_biology`): survivors only → one biomarker-routed
-  mechanism + one falsifiable experiment + falsification criteria.
-- **Claim parser** and **narrator** turn a plain-language hunch into a structured
-  `Claim` and the final card into plain-language verdict prose.
+- **Intent router** (`claude/router.py`, Claude Sonnet) — the LLM-as-judge. It
+  classifies a free-text hypothesis into the finite target enum
+  {conversion, dx_binary, site, scanner} via an enum-constrained structured call,
+  with a keyword classifier as the backstop on a cache hit or offline. It picks
+  *which* precomputed cell is read — never a number — and fixes the
+  "predicts → conversion" misroute. One canonical `route_target` feeds both the
+  engine target and the cache key, so they can't drift.
+- **Orchestrator** (`harness/agent.py`, Claude Sonnet) — a tool-runner that
+  sequences the engine's tools toward a goal (`/api/orchestrate`); it drives the
+  pipeline but can never override a verdict.
+- **Ask Claude** (`/api/ask`, Claude Opus) — a grounded Q&A rail that answers a
+  scientist's follow-ups and drills into the decision tree, grounded in the live
+  case + a curated knowledge base; with no key it returns an honest offline notice,
+  never a fabricated answer.
 
-`pipeline.run_referee` chains these so the consequential Claude steps only fire
-for *promoted* survivors, and never crash a run if the layer is missing/offline.
+The rest of `claude/` — the courtroom (prosecution/defense/judge), reviewer,
+bridge, narrator, and claim parser — is **deterministic Python** synthesized from
+the gauntlet's real stats, not an LLM call. The engine refuses to launder a
+template as a Claude verdict.
 
 ## 3. Gauntlet stages as drop-in Agent Skills
 
@@ -60,9 +67,8 @@ the whole referee, without us in the room.
 
 ## 4. Why this is the honest version
 
-We ran Claude's own "does this already exist?" test against July-2026 literature
-and it told us the leakage insight is **published prior art**. So we repositioned:
-cite arXiv:2604.14441 / 2606.09189 / PathoROB openly, drop "co-scientist" and
-"discovery platform," and own the parts nobody shipped — the runnable referee,
-the closed loop, the biomarker gate, and Claude-as-adjudicator. Using Claude to
-red-team our own novelty claim is itself part of the build story.
+We checked the leakage insight against July-2026 literature and it is **published
+prior art**. So we repositioned: cite arXiv:2604.14441 / 2606.09189 / PathoROB
+openly, drop "co-scientist" and "discovery platform," and own the parts nobody
+shipped — the runnable referee, the closed loop, the biomarker gate, and Claude as
+router + orchestrator over a deterministic engine.

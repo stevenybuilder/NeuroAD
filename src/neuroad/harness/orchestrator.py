@@ -33,9 +33,13 @@ malformed, so this module never depends on the L3 docs being present.
 """
 from __future__ import annotations
 
+import collections
+import copy
 import json
 import logging
+import os
 import re
+import threading
 from typing import Optional, Union
 
 import pandas as pd
@@ -53,6 +57,64 @@ from . import discovery_router, experiment_card, policy
 from .experiment_card import ExperimentCard, HONESTY_LADDER
 
 _log = logging.getLogger("neuroad.harness.orchestrator")
+
+
+# ===========================================================================
+# Stage-level base-card memo — the live-compute fallback for genuine cache
+# MISSES. The referee's expensive work (naive_effect ~11-17s + gauntlet
+# ~15-19s + leakage) is ANCHOR-INVARIANT: the chosen fluid biomarker only
+# routes the read-only translation/atn side artifacts, never a probe input,
+# a gauntlet test, the score, the verdict, or the promotion decision. So one
+# base card computed with anchor=None is the genuine engine result for EVERY
+# anchor at the same coordinate (dataset, target, region, seed, api); a
+# different-anchor request deep-copies it and re-applies ONLY the ~0.5s
+# translation. This is exact reuse, not an approximation — the frozen-seam
+# honesty pattern, one rung below the disk grid: a disk MISS that shares its
+# (dataset,target,region) with any already-computed anchor now costs ~0.5s
+# instead of ~30s. N_BOOT is NOT the lever here (gauntlet time is flat in
+# N_BOOT); reusing the whole anchor-invariant stage is.
+# ===========================================================================
+
+#: LRU cap on distinct (dataset,target,region,seed,api) base cards held in RAM.
+_BASE_MEMO_CAP = int(os.environ.get("NEUROAD_BASE_MEMO_CAP", "256"))
+_base_memo: "collections.OrderedDict[tuple, ClaimCard]" = collections.OrderedDict()
+_base_memo_lock = threading.Lock()
+
+
+def _base_memo_key(dataset: str, target: str, region: str, seed: int,
+                   api: bool) -> tuple:
+    return (dataset, target or "", region or "", int(seed), bool(api))
+
+
+def _base_memo_get(key: tuple) -> Optional[ClaimCard]:
+    with _base_memo_lock:
+        card = _base_memo.get(key)
+        if card is not None:
+            _base_memo.move_to_end(key)          # LRU touch
+            return copy.deepcopy(card)           # caller mutates (gate); keep ours pristine
+    return None
+
+
+def _base_memo_put(key: tuple, card: ClaimCard) -> None:
+    with _base_memo_lock:
+        _base_memo[key] = copy.deepcopy(card)    # store a pristine snapshot
+        _base_memo.move_to_end(key)
+        while len(_base_memo) > _BASE_MEMO_CAP:
+            _base_memo.popitem(last=False)       # evict least-recently-used
+
+
+def _region_slug_for_key(claim: Claim, df: pd.DataFrame) -> str:
+    """The region slug the referee would resolve (deterministic, ~0ms; a "" for
+    non-ROI cohorts). Used only as a memo-key axis, so a mismatch can only ever
+    cause a recompute, never a wrong number."""
+    if getattr(claim, "region", None):
+        return claim.region
+    try:
+        from .region import extract_region
+        slug, _cols = extract_region(claim.claim_text or "", df)
+        return slug or ""
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 # ===========================================================================
@@ -180,7 +242,8 @@ def _classify_novelty(text: str) -> str:
     return guess if guess in allowed else (allowed[0] if allowed else "adjacent")
 
 
-def _mechanism_enrichment(df: Optional[pd.DataFrame]) -> tuple:
+def _mechanism_enrichment(df: Optional[pd.DataFrame],
+                          anchor: Optional[str] = None) -> tuple:
     """Pre-register (mechanism, expected_direction, kill_criterion).
 
     Routes to a mechanism with the same biomarker-dominance rule the Bridge uses,
@@ -190,7 +253,7 @@ def _mechanism_enrichment(df: Optional[pd.DataFrame]) -> tuple:
     mech = "amyloid_cascade"
     try:
         from ..claude.bridge import _route
-        mech = _route(df)
+        mech = _route(df, anchor)
     except Exception as exc:  # pragma: no cover - fallback path
         _log.debug("bridge routing unavailable, defaulting mechanism: %r", exc)
 
@@ -314,10 +377,57 @@ def _unsupported_card(hypothesis: str, dataset: str, reason: str) -> ClaimCard:
     )
 
 
-def _run_supervised(df: pd.DataFrame, claim: Claim) -> ClaimCard:
-    """Named-contrast: point the reused head at the target via the full referee."""
+def _run_supervised(df: pd.DataFrame, claim: Claim, use_claude: bool = True,
+                    anchor: Optional[str] = None, *, dataset: str = "",
+                    seed: int = 0) -> ClaimCard:
+    """Named-contrast: point the reused head at the target via the full referee.
+
+    Fast path: a base card for this coordinate (dataset, target, region, seed,
+    api) — computed once with anchor=None — is memoized. Because the anchor only
+    routes the read-only translation/atn artifacts (never a number, score, or
+    verdict), a second anchor at the same coordinate deep-copies the base and
+    re-applies ONLY the ~0.5s translation instead of re-running the ~30s referee.
+    The key is region-aware, so a per-region hypothesis reuses its own base, not
+    another region's. ``dataset=""`` (e.g. a direct unit-test call) disables the
+    memo and always computes live — identical numbers, just no reuse."""
     from .. import pipeline
-    return pipeline.run_referee(df, claim)
+
+    if not dataset:
+        return pipeline.run_referee(df, claim, use_claude=use_claude, anchor=anchor)
+
+    region = _region_slug_for_key(claim, df)
+    key = _base_memo_key(dataset, claim.target, region, seed, use_claude)
+    base = _base_memo_get(key)
+    if base is None:
+        # Cold coordinate: compute the anchor-invariant base ONCE (anchor=None),
+        # memoize a pristine snapshot, then work on the freshly-computed card
+        # directly. (Don't re-get from the memo — a pathological cap<1 would evict
+        # the just-put entry and hand back None, crashing the downstream gate.)
+        base = pipeline.run_referee(df, claim, use_claude=use_claude, anchor=None)
+        _base_memo_put(key, base)                # stores its own deepcopy; `base` stays ours to mutate
+
+    # Re-apply the anchor-specific translation onto the reused base. A promoted
+    # base already carries the anchor=None (cohort-dominance) translation; only
+    # overwrite it when the researcher chose a specific anchor. Never touches the
+    # score/verdict/tests — those are the base's genuine anchor-invariant result.
+    if anchor and getattr(base, "translation", None) is not None:
+        try:
+            tx = pipeline._translate(base, df, anchor)
+            if isinstance(tx, dict):
+                base.translation = tx
+        except Exception as exc:  # noqa: BLE001
+            _log.debug("anchor translation re-apply failed, keeping base: %r", exc)
+
+    # Display-only personalisation: the base card carries the FIRST requester's
+    # phrasing at this coordinate. Carry the current hypothesis text onto it so
+    # the rendered claim matches what the user typed. The computed target/region/
+    # region_columns are the base's genuine values and are left untouched.
+    try:
+        if getattr(base, "claim", None) is not None and claim.claim_text:
+            base.claim.claim_text = claim.claim_text
+    except Exception:  # noqa: BLE001
+        pass
+    return base
 
 
 def _card_from_cluster(claim: Claim, cluster: dict) -> ClaimCard:
@@ -573,7 +683,7 @@ def _atn_profile(card: ClaimCard, mechanism: str) -> dict:
 # ===========================================================================
 
 def investigate(hypothesis: str, dataset: str, *, api: bool = False,
-                seed: int = 0) -> ExperimentCard:
+                seed: int = 0, anchor: Optional[str] = None) -> ExperimentCard:
     """Turn a plain-language hypothesis into a refereed, honesty-stamped card.
 
     Parameters
@@ -589,6 +699,12 @@ def investigate(hypothesis: str, dataset: str, *, api: bool = False,
         back on any failure.
     seed : int, default 0
         Seed forwarded to the (synthetic) feeder.
+    anchor : str, optional
+        The fluid biomarker the researcher CHOSE to anchor on (amyloid /
+        p_tau217 / gfap / nfl). When given it routes the molecular follow-up
+        mechanism (overriding cohort-dominance) and selects the anchor-congruent
+        lead + organoid readout — a read-only side artifact that never touches
+        the score/verdict.
 
     Returns
     -------
@@ -618,14 +734,15 @@ def investigate(hypothesis: str, dataset: str, *, api: bool = False,
     claim = _parse_claim(hypothesis, df, api=api)
     claim.substrate = loaders.honest_substrate(dataset)   # truthful per-feeder label
     novelty = _classify_novelty(claim.claim_text or hypothesis)
-    mechanism, expected_direction, kill_criterion = _mechanism_enrichment(df)
+    mechanism, expected_direction, kill_criterion = _mechanism_enrichment(df, anchor)
 
     # 2. Route to a discovery mode.
     decision = discovery_router.route(claim, df)
 
     # 3. Referee for that mode.
     if decision.supervised:
-        card = _run_supervised(df, claim)
+        card = _run_supervised(df, claim, use_claude=api, anchor=anchor,
+                               dataset=dataset, seed=seed)
         provenance = {
             "mode": "supervised",
             "engine": decision.engine,

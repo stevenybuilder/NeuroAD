@@ -1,0 +1,461 @@
+<!-- ===================================================================
+     NeuroAD Demo — Scene 2: "The discovery flywheel"
+     Kicker: THE LOOP  ·  Title: The discovery flywheel.
+     One standalone, self-animating HTML file. No external requests.
+     Auto-plays, spins up, then holds a steady clockwise loop forever.
+     ================================================================== -->
+<meta charset="utf-8">
+<title>NeuroAD — The discovery flywheel</title>
+<style>
+  :root{
+    --paper:#F5F4EE; --paper2:#EFEDE4; --card:#FFFFFF;
+    --edge:#E6E3D8; --edge2:#D9D5C7;
+    --ink:#26241F; --ink2:#5B584F; --mute:#8A877D;
+    --clay:#C96442; --clay-soft:#F0DACF; --clay-deep:#A94E30;
+    --green:#12936A; --green-edge:#1BA97A; --green-soft:#DCF0E7;
+    --gold:#C08415; --gold-edge:#D69A1F; --gold-soft:#FBF2DD;
+    --gray:#B0ABA1; --gray-edge:#CBC7BC; --gray-soft:#ECEAE2;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:var(--paper);
+    background-image:radial-gradient(1100px 620px at 60% 24%,#FBFAF6 0%,#F5F4EE 62%);
+    overflow:hidden;
+  }
+  /* faint engineering dot-grid canvas */
+  .grid{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:radial-gradient(rgba(40,36,28,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+  .stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center;
+    padding:36px 48px 30px;
+  }
+
+  /* ---- brand wordmark ---- */
+  .wordmark{
+    position:fixed; top:34px; left:48px; z-index:3;
+    font-size:15px; font-weight:700; letter-spacing:-.01em; color:var(--ink);
+  }
+  .wordmark b{color:var(--clay); font-weight:700}
+  .wordmark .dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:var(--clay); margin-left:7px; vertical-align:middle;
+    box-shadow:0 0 0 3px rgba(201,100,66,.14);
+  }
+
+  /* ---- header (kicker + title) ---- */
+  header{
+    text-align:center; z-index:2;
+    opacity:0; transform:translateY(-8px);
+    transition:opacity .6s cubic-bezier(.4,0,.2,1), transform .6s cubic-bezier(.4,0,.2,1);
+  }
+  header.in{opacity:1; transform:none}
+  .kicker{
+    display:inline-block; font-size:12px; font-weight:700; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--clay-deep);
+    background:var(--clay-soft); border:1px solid #EAD3C6;
+    padding:5px 12px; border-radius:8px;
+  }
+  h1{
+    margin-top:14px; font-size:40px; font-weight:700; letter-spacing:-.02em;
+    color:var(--ink); line-height:1.04;
+  }
+
+  /* ---- the ring composition ---- */
+  .ringwrap{
+    flex:1; width:100%;
+    display:flex; align-items:center; justify-content:center;
+    min-height:0;
+  }
+  svg.flywheel{
+    width:auto; height:min(82vh,940px); max-width:96vw;
+    overflow:visible;
+    opacity:0; transform:scale(.965);
+    transition:opacity .7s cubic-bezier(.4,0,.2,1), transform .8s cubic-bezier(.4,0,.2,1);
+  }
+  svg.flywheel.in{opacity:1; transform:none}
+
+  text{font-family:var(--sans)}
+  .num{font-family:var(--mono)}
+
+  /* ---- caption ---- */
+  .caption{
+    z-index:2; text-align:center; color:var(--mute); font-size:13px;
+    letter-spacing:.005em; max-width:760px;
+    opacity:0; transition:opacity .6s ease .25s;
+  }
+  .caption.in{opacity:1}
+  .caption b{color:var(--ink2); font-weight:600}
+
+  /* ---- replay control ---- */
+  .replay{
+    position:fixed; right:26px; bottom:22px; z-index:4;
+    font-family:var(--sans); font-size:12px; letter-spacing:.02em;
+    color:var(--mute); background:var(--card);
+    border:1px solid var(--edge); border-radius:8px;
+    padding:7px 12px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px;
+    box-shadow:0 1px 2px rgba(40,36,28,.04);
+    transition:color .2s ease, border-color .2s ease, background .2s ease;
+  }
+  .replay:hover{color:var(--ink2); border-color:var(--edge2); background:#FCFBF7}
+  .replay .g{font-size:13px; line-height:1}
+
+  @media (prefers-reduced-motion: reduce){
+    svg.flywheel, header, .caption{transition:opacity .45s ease !important; transform:none !important}
+  }
+</style>
+
+<div class="grid"></div>
+
+<div class="wordmark">Neuro<b>AD</b><span class="dot"></span></div>
+
+<div class="stage">
+  <header id="hdr">
+    <span class="kicker">The loop</span>
+    <h1>The discovery flywheel.</h1>
+  </header>
+
+  <div class="ringwrap">
+    <svg class="flywheel" id="fw" viewBox="135 150 730 730" role="img"
+         aria-label="A six-station discovery loop: hypothesis, falsify, survivor, route, rank, experiment.">
+      <defs>
+        <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="5"/>
+        </filter>
+        <filter id="softbig" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="9"/>
+        </filter>
+        <radialGradient id="hubglow" cx="50%" cy="42%" r="62%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="70%" stop-color="#FDFBF7"/>
+          <stop offset="100%" stop-color="#F7F5EF"/>
+        </radialGradient>
+      </defs>
+
+      <!-- static scaffold: rings -->
+      <circle cx="500" cy="500" r="252" fill="none" stroke="var(--edge)" stroke-width="1" opacity=".7"/>
+      <circle cx="500" cy="500" r="240" fill="none" stroke="var(--edge2)" stroke-width="2"/>
+      <circle cx="500" cy="500" r="150" fill="none" stroke="var(--edge)" stroke-width="1"
+              stroke-dasharray="2 8" opacity=".55"/>
+
+      <!-- return-loop group (Experiment -> sharper Hypothesis) -->
+      <g id="returnG"></g>
+
+      <!-- travelling sweep / comet -->
+      <g id="sweepG"></g>
+
+      <!-- central hub -->
+      <g id="hub">
+        <circle cx="500" cy="500" r="126" fill="none" stroke="var(--clay-soft)"
+                stroke-width="2" stroke-dasharray="1.5 7" opacity=".9"/>
+        <circle cx="500" cy="500" r="118" fill="url(#hubglow)"
+                stroke="var(--clay)" stroke-width="2.5"/>
+        <circle cx="500" cy="500" r="118" fill="none" stroke="var(--clay)"
+                stroke-width="8" opacity=".07"/>
+        <text x="500" y="474" text-anchor="middle" font-size="13" font-weight="700"
+              letter-spacing=".12em" fill="var(--clay-deep)">THE ENGINE</text>
+        <text x="500" y="502" text-anchor="middle" font-size="15" font-weight="700"
+              letter-spacing="-.01em" fill="var(--ink)">Kill weak · surface strong</text>
+        <text x="500" y="526" text-anchor="middle" font-size="12" fill="var(--ink2)">every survivor sharpens</text>
+        <text x="500" y="543" text-anchor="middle" font-size="12" fill="var(--ink2)">the next question</text>
+      </g>
+
+      <!-- station nodes (built in JS) -->
+      <g id="stations"></g>
+    </svg>
+  </div>
+
+  <div class="caption" id="cap">
+    <b>Claude</b> routes the hypothesis in and synthesizes each survivor's target + experiment — the loop feeds back a sharper question.
+  </div>
+</div>
+
+<button class="replay" id="replay" aria-label="Replay animation">
+  <span class="g">↻</span> Replay
+</button>
+
+<script>
+(function(){
+  "use strict";
+  const CX=500, CY=500, R=240;
+  const svg=document.getElementById('fw');
+  const NS="http://www.w3.org/2000/svg";
+  const el=(n,a)=>{const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); return e;};
+  const pol=(a,r)=>[CX+r*Math.cos(a*Math.PI/180), CY+r*Math.sin(a*Math.PI/180)];
+  function arc(a0,a1,r){
+    const [x0,y0]=pol(a0,r), [x1,y1]=pol(a1,r);
+    const large=Math.abs(a1-a0)>180?1:0;
+    return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  }
+
+  // semantic palette per state
+  const C={
+    gold: {soft:'#FBF2DD', edge:'#D69A1F', deep:'#C08415'},
+    green:{soft:'#DCF0E7', edge:'#1BA97A', deep:'#12936A'},
+    clay: {soft:'#F0DACF', edge:'#C96442', deep:'#A94E30'},
+    ink:  {soft:'#EFEDE4', edge:'#D9D5C7', deep:'#5B584F'},
+    gray: {soft:'#ECEAE2', edge:'#CBC7BC', deep:'#B0ABA1'}
+  };
+
+  // six stations, clockwise from top (-90deg). Order = flow order.
+  const STATIONS=[
+    {n:'1', label:'Hypothesis', metric:'',      glyph:'◇', state:'gold',  a:-90, kill:false},
+    {n:'2', label:'Falsify',    metric:'×5',    glyph:'⊘', state:'ink',   a:-30, kill:true },
+    {n:'3', label:'Survivor',   metric:'robust+',glyph:'✦', state:'green', a: 30, kill:false},
+    {n:'4', label:'Route',      metric:'r ≥ 0.2',glyph:'⬡', state:'green', a: 90, kill:false},
+    {n:'5', label:'Rank',       metric:'0–10',  glyph:'▣', state:'green', a:150, kill:false},
+    {n:'6', label:'Experiment', metric:'~6-wk readout',glyph:'⌾', state:'clay',  a:210, kill:false}
+  ];
+  const norm=d=>((d%360)+360)%360;
+
+  const stationsG=document.getElementById('stations');
+  const sweepG=document.getElementById('sweepG');
+  const returnG=document.getElementById('returnG');
+
+  // ---------- build return loop (short inner arc, Experiment(210)->Hypothesis(270)) ----------
+  const RR=150;
+  returnG.appendChild(el('path',{d:arc(212,268,RR),fill:'none',stroke:C.gold.edge,
+    'stroke-width':2,'stroke-linecap':'round','stroke-dasharray':'6 7',opacity:.42}));
+  // arrowhead pointing up into Hypothesis
+  const [hx,hy]=pol(268,RR);
+  returnG.appendChild(el('path',{d:`M ${hx-6} ${hy+7} L ${hx+3} ${hy-6} L ${hx+8} ${hy+4} Z`,
+    fill:C.gold.deep,opacity:.6}));
+  const retDot=el('circle',{r:4.5,fill:C.gold.deep,opacity:.9,filter:'url(#soft)'});
+  returnG.appendChild(retDot);
+  const retDotCore=el('circle',{r:3,fill:C.gold.edge});
+  returnG.appendChild(retDotCore);
+  // faint label
+  const [lx,ly]=pol(232,RR);
+  returnG.appendChild(el('text',{x:lx,y:ly,'text-anchor':'middle','dominant-baseline':'central',
+    'font-size':11,'font-style':'italic',fill:C.gold.deep,opacity:.62},)).textContent='sharper question';
+
+  // ---------- build sweep (comet) ----------
+  const trailSpecs=[[54,.10,7],[42,.16,7],[30,.24,7],[20,.42,7],[11,.9,7.5]];
+  const trailArcs=trailSpecs.map(([len,op,w])=>{
+    const p=el('path',{fill:'none',stroke:C.clay.edge,'stroke-width':w,
+      'stroke-linecap':'round',opacity:op}); sweepG.appendChild(p); return {p,len};
+  });
+  const glowArc=el('path',{fill:'none',stroke:C.clay.edge,'stroke-width':11,
+    'stroke-linecap':'round',opacity:.16,filter:'url(#softbig)'});
+  sweepG.insertBefore(glowArc, sweepG.firstChild);
+  const headGlow=el('circle',{r:15,fill:C.clay.edge,opacity:.32,filter:'url(#soft)'});
+  const headDot=el('circle',{r:7.5,fill:C.clay.edge});
+  const headCore=el('circle',{r:3.4,fill:'#FBEDE6'});
+  sweepG.appendChild(headGlow); sweepG.appendChild(headDot); sweepG.appendChild(headCore);
+
+  // ---------- build stations ----------
+  const nodes=STATIONS.map(s=>{
+    const col=C[s.state];
+    const [x,y]=pol(s.a,R);
+    const g=el('g',{transform:`translate(${x.toFixed(2)} ${y.toFixed(2)})`});
+
+    // ping ring (drawn first, under disc, not scaled)
+    const ping=el('circle',{r:30,fill:'none',stroke:col.deep,'stroke-width':2,opacity:0});
+    g.appendChild(ping);
+
+    // disc group (this one scales)
+    const disc=el('g',{});
+    disc.appendChild(el('circle',{r:30,fill:col.soft}));
+    const overlay=el('circle',{r:30,fill:col.deep,opacity:0});
+    disc.appendChild(overlay);
+    const border=el('circle',{r:30,fill:'none',stroke:col.edge,'stroke-width':2});
+    disc.appendChild(border);
+    disc.appendChild(el('text',{'text-anchor':'middle','dominant-baseline':'central',
+      'font-size':29,fill:col.deep,y:1},)).textContent=s.glyph;
+    g.appendChild(disc);
+
+    // label block outside the ring — positioned RELATIVE to the node group
+    const cosA=Math.cos(s.a*Math.PI/180), sinA=Math.sin(s.a*Math.PI/180);
+    const ox=52*cosA, oy=52*sinA;
+    const anchor = cosA>0.3?'start':(cosA<-0.3?'end':'middle');
+    const lg=el('g',{});
+    const lbl=el('text',{x:ox.toFixed(2),y:(oy-3).toFixed(2),'text-anchor':anchor,
+      'font-size':17,'font-weight':700,'letter-spacing':'-.01em',fill:'var(--ink)',opacity:.95});
+    // small mono step prefix inside label
+    const stepT=el('tspan',{class:'num',fill:col.deep,'font-weight':700});
+    stepT.textContent=s.n+'  ';
+    lbl.appendChild(stepT);
+    lbl.appendChild(document.createTextNode(s.label));
+    lg.appendChild(lbl);
+    let met=null;
+    if(s.metric){
+      met=el('text',{x:ox.toFixed(2),y:(oy+18).toFixed(2),'text-anchor':anchor,
+        'font-size':14,fill:'var(--ink2)',opacity:1});
+      const isNum=/[0-9]/.test(s.metric);
+      met.setAttribute('class', isNum?'num':'');
+      met.textContent=s.metric;
+      lg.appendChild(met);
+    }
+    g.appendChild(lg);
+
+    // killed branch (only Falsify) — radially outward, flickers gray
+    let killG=null;
+    if(s.kill){
+      killG=el('g',{opacity:.5});
+      // fan the pruned branch clockwise off the radial so it falls clear of the label
+      const ba=(s.a+54)*Math.PI/180;
+      const bx=Math.cos(ba), by=Math.sin(ba);
+      killG.appendChild(el('line',{x1:(bx*33).toFixed(1),y1:(by*33).toFixed(1),
+        x2:(bx*66).toFixed(1),y2:(by*66).toFixed(1),stroke:C.gray.deep,'stroke-width':1.6,
+        'stroke-dasharray':'4 4','stroke-linecap':'round'}));
+      killG.appendChild(el('circle',{cx:(bx*80).toFixed(1),cy:(by*80).toFixed(1),r:11,
+        fill:C.gray.soft,stroke:C.gray.edge,'stroke-width':1.5}));
+      killG.appendChild(el('text',{x:(bx*80).toFixed(1),y:(by*80+.5).toFixed(1),
+        'text-anchor':'middle','dominant-baseline':'central','font-size':13,
+        fill:C.gray.deep},)).textContent='✕';
+      g.appendChild(killG);
+    }
+
+    stationsG.appendChild(g);
+    return {s,col,g,ping,disc,overlay,border,lbl,met,killG,litT:-1e9,killT:-1e9,prevSd:1};
+  });
+
+  // ---------- animation state ----------
+  const REV=16;                     // steady seconds per revolution
+  const wSteady=360/REV;            // deg/s
+  const wStart=wSteady*0.55;
+  const rampAngle=1.5*360;          // accelerate over ~1.5 revs
+  let theta=0, phi=0, last=0, running=false, startT=0;
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function omega(travelled){
+    if(travelled>=rampAngle) return wSteady;
+    const t=travelled/rampAngle;
+    // smoothstep ease of the velocity ramp
+    const e=t*t*(3-2*t);
+    return wStart+(wSteady-wStart)*e;
+  }
+  const smooth=k=>{k=Math.max(0,Math.min(1,k)); return k*k*(3-2*k);};
+
+  function paintStation(nd,now){
+    const k=smooth(1-(now-nd.litT)/950);
+    // disc scale
+    const sc=1+0.17*k;
+    nd.disc.setAttribute('transform',`scale(${sc.toFixed(3)})`);
+    // ping ring expands + fades
+    nd.ping.setAttribute('r',(30+36*(1-k)).toFixed(1));
+    nd.ping.setAttribute('opacity',(0.55*k).toFixed(3));
+    nd.ping.setAttribute('stroke-width',(2+1.4*k).toFixed(2));
+    // overlay saturate + border weight + label brighten
+    nd.overlay.setAttribute('opacity',(0.16*k).toFixed(3));
+    nd.border.setAttribute('stroke-width',(2+1.6*k).toFixed(2));
+    nd.lbl.setAttribute('opacity',(0.9+0.1*k).toFixed(3));
+    if(nd.met) nd.met.setAttribute('opacity',(0.85+0.15*k).toFixed(3));
+    // killed-branch flicker
+    if(nd.killG){
+      const kk=(now-nd.killT)/720;
+      let op=.5;
+      if(kk>=0 && kk<1){ op=0.28+0.55*Math.abs(Math.sin(now*0.028)); }
+      nd.killG.setAttribute('opacity',op.toFixed(3));
+    }
+  }
+
+  function paintSweep(){
+    const tip=norm(theta-90);
+    trailArcs.forEach(t=> t.p.setAttribute('d', arc(tip-t.len, tip, R)));
+    glowArc.setAttribute('d', arc(tip-40, tip, R));
+    const [hx,hy]=pol(tip,R);
+    headGlow.setAttribute('cx',hx); headGlow.setAttribute('cy',hy);
+    headDot.setAttribute('cx',hx);  headDot.setAttribute('cy',hy);
+    headCore.setAttribute('cx',hx); headCore.setAttribute('cy',hy);
+  }
+
+  function frame(ts){
+    if(!running) return;
+    if(!last) last=ts;
+    let dt=(ts-last)/1000; last=ts;
+    if(dt>0.05) dt=0.05;               // clamp after tab-hide
+    const w=omega(phi);
+    const dth=w*dt;
+    theta+=dth; phi+=dth;
+    const now=ts;
+
+    // station crossing detection + lighting
+    const tip=norm(theta-90);
+    nodes.forEach(nd=>{
+      const sd=((tip - norm(nd.s.a) + 540)%360)-180;   // signed distance, (-180,180]
+      if(nd.prevSd<0 && sd>=0 && sd<40){
+        nd.litT=now;
+        if(nd.killG) nd.killT=now;
+      }
+      nd.prevSd=sd;
+      paintStation(nd,now);
+    });
+
+    paintSweep();
+
+    // return-loop travelling dot (independent gentle loop)
+    const rt=(ts*0.00013)%1;
+    const ra=212+ (268-212)*rt;
+    const [rx,ry]=pol(ra,RR);
+    retDot.setAttribute('cx',rx); retDot.setAttribute('cy',ry);
+    retDotCore.setAttribute('cx',rx); retDotCore.setAttribute('cy',ry);
+    const rop=Math.sin(rt*Math.PI);
+    retDot.setAttribute('opacity',(0.15+0.7*rop).toFixed(3));
+    retDotCore.setAttribute('opacity',(0.2+0.8*rop).toFixed(3));
+
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- static (reduced motion) composition ----------
+  function paintStatic(){
+    const now=performance.now();
+    nodes.forEach(nd=>{ nd.litT=now-260; paintStation(nd,now); });   // gentle mid-lit
+    theta=90; paintSweep();                                          // park comet near top-right
+    glowArc.setAttribute('opacity',.10);
+    [headGlow,headDot,headCore].forEach(e=>e.setAttribute('opacity',
+      e===headGlow?'.2':(e===headDot?'.9':'1')));
+    retDot.setAttribute('opacity',.5); retDotCore.setAttribute('opacity',.7);
+    const [rx,ry]=pol(240,RR); retDot.setAttribute('cx',rx); retDot.setAttribute('cy',ry);
+    retDotCore.setAttribute('cx',rx); retDotCore.setAttribute('cy',ry);
+  }
+
+  // ---------- run / replay ----------
+  function reset(){
+    theta=0; phi=0; last=0;
+    nodes.forEach(nd=>{ nd.litT=-1e9; nd.killT=-1e9; nd.prevSd=1;
+      nd.disc.setAttribute('transform','scale(1)');
+      nd.ping.setAttribute('opacity',0);
+      nd.overlay.setAttribute('opacity',0);
+      nd.border.setAttribute('stroke-width',2);
+      nd.lbl.setAttribute('opacity',.9);
+      if(nd.killG) nd.killG.setAttribute('opacity',.5);
+    });
+  }
+
+  function reveal(){
+    document.getElementById('hdr').classList.add('in');
+    document.getElementById('cap').classList.add('in');
+    void svg.getBoundingClientRect();      // force reflow so the fade transition triggers
+    svg.classList.add('in');
+  }
+
+  function play(){
+    reset(); reveal();
+    if(reduce){ paintStatic(); return; }
+    paintSweep();                          // draw the initial comet frame synchronously
+    running=true; last=0;
+    requestAnimationFrame(frame);
+  }
+
+  document.getElementById('replay').addEventListener('click', ()=>{
+    running=false;
+    svg.classList.remove('in');
+    document.getElementById('hdr').classList.remove('in');
+    document.getElementById('cap').classList.remove('in');
+    setTimeout(play,140);
+  });
+
+  // autoplay — call play() directly (not via rAF, which is paused on hidden tabs)
+  if(document.readyState!=='loading') play();
+  else window.addEventListener('DOMContentLoaded', play);
+})();
+</script>

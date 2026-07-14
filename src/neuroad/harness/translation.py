@@ -52,8 +52,8 @@ MECHANISM_GENES: dict[str, list[str]] = {
 _ORGANOID_READOUT = {
     "amyloid_cascade": (
         "In Tanzi-style 3D human neural organoids, knock down the lead target "
-        "(CRISPRi) and read out Aβ42/40 ratio + p-tau217 by MSD at 6 weeks; "
-        "kill if neither moves beyond vehicle ±2SD."
+        "(CRISPRi) and read out Aβ42/40 ratio by MSD at 6 weeks; "
+        "kill if it does not move beyond vehicle ±2SD."
     ),
     "glial": (
         "In iPSC-microglia + neuron co-culture organoids, perturb the lead "
@@ -66,6 +66,59 @@ _ORGANOID_READOUT = {
         "integrity and NfL are unchanged."
     ),
 }
+
+#: Fluid-biomarker anchor the researcher CHOSE -> mechanism key. The chosen
+#: anchor ROUTES the molecular follow-up, overriding cohort-dominance routing.
+#: amyloid and p-tau217 are the A and T poles of the SAME amyloid-cascade axis
+#: (shared candidate-gene set on purpose); GFAP is glial, NfL is vascular.
+#: (Mirrors the 4-entry map in claude.bridge._route — kept inline both places to
+#: avoid a bridge<->translation import cycle.)
+_ANCHOR_MECHANISM = {
+    "amyloid": "amyloid_cascade",
+    "p_tau217": "amyloid_cascade",
+    "gfap": "glial",
+    "nfl": "vascular",
+}
+
+#: Anchor -> the congruent LEAD gene to emphasise WITHIN the mechanism's gene set,
+#: WITHOUT reordering the PI4AD-ranked panel (which stays fixed by each gene's
+#: PI4AD priority). Only meaningful where two anchors share a mechanism: amyloid
+#: leads on APP (the A pole), p-tau217 on MAPT (the tau/T pole). Both genes
+#: already live in MECHANISM_GENES["amyloid_cascade"]. gfap/nfl carry no override
+#: and fall through to their mechanism's PI4AD-top gene.
+_ANCHOR_LEAD = {
+    "amyloid": "APP",
+    "p_tau217": "MAPT",
+    "gfap": "TREM2",
+}
+
+#: Anchor -> a concrete, falsifiable organoid readout keyed to the ANCHORED
+#: biomarker. Falls back to the mechanism readout when no anchor is supplied.
+_ANCHOR_READOUT = {
+    "amyloid": _ORGANOID_READOUT["amyloid_cascade"],
+    "p_tau217": (
+        "In Tanzi-style 3D human neural organoids, knock down the lead target "
+        "(CRISPRi) and read out p-tau217 + total-tau by MSD with AT8 neuritic-tau "
+        "burden at 6 weeks; kill if tau species do not move beyond vehicle ±2SD."
+    ),
+    "gfap": _ORGANOID_READOUT["glial"],
+    "nfl": _ORGANOID_READOUT["vascular"],
+}
+
+
+def _anchor_readout(anchor: Optional[str], mechanism: str, lead_gene: str = "") -> str:
+    """The organoid readout for the chosen anchor, else the mechanism default.
+
+    When ``lead_gene`` is the real routed lead (``top_target`` / ``_ANCHOR_LEAD``
+    / ``ranked_targets[0].gene``), name it in place of the generic "the lead
+    target" wording. Falls back to the generic wording when no lead is known yet
+    (e.g. no PI4AD-ranked target) — it never invents a gene.
+    """
+    text = _ANCHOR_READOUT.get(anchor, "") if anchor else ""
+    text = text or _ORGANOID_READOUT.get(mechanism, "")
+    if lead_gene:
+        text = text.replace("the lead target", lead_gene)
+    return text
 
 
 @dataclass
@@ -266,9 +319,18 @@ def _biomarker_fusion(df: Optional[pd.DataFrame], *,
             "model": model,
             "source": source,
             "features_used": sorted(used),
-            "note": ("multimodal fusion transformer (vkola-lab/ncomms2025) predicted "
-                     "amyloid/tau PET positivity over the cohort — the L3 fusion box; "
-                     "surfaced as pathology corroboration, NOT a referee gate"),
+            "note": (
+                ("real vkola-lab/ncomms2025 multimodal fusion transformer predicted "
+                 "amyloid/tau PET positivity over the cohort — the L3 fusion box; "
+                 "surfaced as pathology corroboration, NOT a referee gate")
+                if source == "live" else
+                ("offline surrogate logistic (hand-set coefficients, NOT fitted) "
+                 "estimated amyloid/tau PET positivity over the cohort — the L3 fusion "
+                 "box; the real vkola-lab/ncomms2025 multimodal transformer is a "
+                 "wired-ready seam NOT run by default (needs torch + GPU + gated weights "
+                 "via NEUROAD_REAL_FUSION=1); surfaced as pathology corroboration, NOT a "
+                 "referee gate")
+            ),
         }
     except Exception as exc:  # noqa: BLE001
         _log.debug("biomarker fusion failed: %r", exc)
@@ -338,6 +400,7 @@ def translate(
     mechanism: str,
     df: Optional[pd.DataFrame] = None,
     *,
+    anchor: Optional[str] = None,
     prefer_offline: bool = True,
     top_n_compounds: int = 5,
     include_grounding: bool = False,
@@ -351,7 +414,18 @@ def translate(
     empty/annotated result rather than raising. Returns a serializable dict
     (``TranslationLead.to_dict``). ``prefer_offline=True`` keeps the whole chain
     on bundled, provenance-labeled snapshots (no network) — the referee's default.
+
+    ``anchor`` is the fluid biomarker the researcher CHOSE (amyloid / p_tau217 /
+    gfap / nfl). When given it (1) ROUTES the mechanism (overriding the passed
+    ``mechanism``), (2) selects the anchor-congruent LEAD gene to emphasise —
+    WITHOUT reordering the PI4AD-ranked panel — and (3) picks an organoid readout
+    keyed to that biomarker. It never manufactures a ranking signal or reorders
+    ``ranked_targets``; the anchor only influences routing + display emphasis.
     """
+    anc = (str(anchor).strip().lower() or None) if anchor else None
+    # The chosen anchor routes the mechanism (overrides cohort-dominance routing).
+    if anc and anc in _ANCHOR_MECHANISM:
+        mechanism = _ANCHOR_MECHANISM[anc]
     mech = mechanism if mechanism in MECHANISM_GENES else "amyloid_cascade"
     lead = TranslationLead(mechanism=mech, dominant_biomarker=_dominant_biomarker(df))
 
@@ -364,13 +438,23 @@ def translate(
     scored = [r for r in ranked if r.get("priority_score") is not None]
     if not scored:
         lead.status = "no PI4AD-ranked target for this mechanism"
-        lead.wet_lab_experiment = _ORGANOID_READOUT.get(mech, "")
-        lead.provenance = {"pi4ad": ranked[0]["source"] if ranked else "none"}
+        lead.wet_lab_experiment = _anchor_readout(anc, mech)
+        lead.provenance = {"pi4ad": ranked[0]["source"] if ranked else "none",
+                           "anchor": anc or ""}
         return lead.to_dict()
 
+    # Anchor-congruent LEAD: emphasise the anchor's gene (amyloid->APP,
+    # p_tau217->MAPT) when it is in the scored set, else the mechanism's PI4AD-top
+    # gene. This shifts the wet-lab lead + structure + repurposing legs to the
+    # tau/amyloid pole the researcher anchored on; it does NOT reorder the
+    # PI4AD-ranked panel (ranked_targets stays priority-sorted above).
     top = scored[0]["gene"]
+    if anc and _ANCHOR_LEAD.get(anc):
+        cand = _ANCHOR_LEAD[anc]
+        if any(r.get("gene") == cand for r in scored):
+            top = cand
     lead.top_target = top
-    prov = {"pi4ad": scored[0].get("source", "offline_snapshot")}
+    prov = {"pi4ad": scored[0].get("source", "offline_snapshot"), "anchor": anc or ""}
 
     # AlphaFold structure for the top target (offline snapshot by default).
     try:
@@ -506,7 +590,7 @@ def translate(
             prov["pathway_enrichment"] = lead.pathway_enrichment[0].get(
                 "snapshot_source", "ad_pathway_snapshot_v1")
 
-    lead.wet_lab_experiment = _ORGANOID_READOUT.get(mech, "")
+    lead.wet_lab_experiment = _anchor_readout(anc, mech, lead.top_target)
     lead.status = "translated"
     lead.provenance = prov
     return lead.to_dict()

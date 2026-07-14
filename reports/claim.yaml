@@ -13,7 +13,7 @@ claim:
   head: linear probe
 naive_effect:
   metric: AUC
-  value: 0.932
+  value: 0.925
   value_adjusted: 0.905
   adjusted_note: age/sex-residualized (fold-honest)
   target: dx_binary
@@ -21,8 +21,12 @@ naive_effect:
   head: linear probe
   substrate: ADNI z-standardized FreeSurfer morphometry (UCSFFSX7 ST regions; weight-free
     feeder)
+  value_note: fold-honest ComBat (batch params fit on train rows per fold); whole-cohort
+    ComBat differs by <0.003 AUC
 leakage_margin:
   outcome_auc: 0.922
+  outcome_auc_icv_adj: null
+  icv_adjusted: false
   scanner_auc: 0.374
   margin: 0.549
   confound: scanner
@@ -42,13 +46,24 @@ leakage_margin:
   margin_ci_hi: 0.575
   margin_p: 0.001
   margin_ci_excludes_zero: true
+  field_strength_invariance:
+    confound: scanner
+    pooled_auc: 0.9225
+    strata:
+    - level: 3T
+      auc: 0.9253
+      n: 1193
+    - level: 1.5T
+      auc: 0.9351
+      n: 422
+    max_abs_delta: 0.0126
+    band: 0.05
+    within_band: true
 leakage_margin_note: Leakage-margin 95% CI 0.522..0.575 (excludes zero).
 verdict: strong candidate
 score: 100
 promoted: true
 caveats:
-- 'Completeness: 1/5 gauntlet tests could not run; score is renormalized over the
-  tests that did.'
 - "p-tau217 measured on a partial subset (~45% missing in a realistic cohort) \u2014\
   \ anchor is suggestive, not confirmatory."
 - Verdict is provisional and conditional on the scanner/site distribution of any replication
@@ -61,6 +76,9 @@ caveats:
 - Promotion authorizes one confirmatory experiment, not adoption of the finding.
 - "A \u2018strong candidate\u2019 verdict is a licence to follow up, not to conclude\
   \ \u2014 the referee promotes hypotheses, it does not confirm them."
+- 'The brain-age control is a proxy, not a gold standard: it is embedding-derived
+  (this cohort''s fit: R2=0.48, MAE=4.0yr), so residual generic-aging signal can survive
+  the adjustment and masquerade as disease-specific.'
 - The biomarker anchor likely rests on a partial complete-case subset; with realistic
   p-tau217 missingness the correlation is estimated on far fewer subjects than the
   headline cohort.
@@ -71,3 +89,5 @@ caveats:
   \ this is the mechanic quantified in \u2018Pretrained, Frozen, Still Leaking: Auditing\
   \ Cross-Encoder Attribute Transfer in EEG Foundation Models\u2019 (arXiv:2606.09189\
   \ (2026)), which we cite rather than claim."
+- "ComBat is fit fold-honestly (train-only per CV fold), not on the whole cohort \u2014\
+  \ the displayed AD-vs-CN AUC is not inflated by harmonization leakage."

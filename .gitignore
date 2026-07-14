@@ -59,9 +59,11 @@ data/real/_gated/
 *neurojepa*.csv
 data/real/fixtures/
 
-# ADNI image manifest carries subject-level gated biomarkers (p-tau217/GFAP/NfL/
-# amyloid per RID) under the LONI DUA — same class as data/real/_gated/. Never commit.
-data/real/_manifests/adni_image_manifest.csv
-data/real/_manifests/adni*.csv
+# The LONI/IDA image-ID manifests + crosswalks (ida_imageids_*, ad_expansion_imageid_*,
+# oasis*_manifest.csv, adni*.csv) carry subject-level gated identifiers under the LONI
+# DUA — same class as data/real/_gated/. Never commit; kept local only. The whole
+# _manifests/ dir is ignored, which subsumes the ADNI image manifest (p-tau217/GFAP/
+# NfL/amyloid per RID) and every adni*.csv crosswalk.
+data/real/_manifests/
 .claude/
 private-context/

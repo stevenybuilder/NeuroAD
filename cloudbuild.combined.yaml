@@ -1,0 +1,19 @@
+# Builds the COMBINED live backend image (Dockerfile.combined) — NeuroAD engine +
+# live Claude + the SFG imaging backend in one container. Submit with:
+#   gcloud builds submit --config cloudbuild.combined.yaml .
+# Then deploy the resulting :combined tag to the neuroad-demo Cloud Run service.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.combined
+      - -t
+      - us-central1-docker.pkg.dev/project-flash-490419/cloud-run-source-deploy/neuroad-demo:combined
+      - .
+images:
+  - us-central1-docker.pkg.dev/project-flash-490419/cloud-run-source-deploy/neuroad-demo:combined
+options:
+  logging: GCS_ONLY
+  machineType: E2_HIGHCPU_8
+timeout: 1800s
