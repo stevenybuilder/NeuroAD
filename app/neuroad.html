@@ -3776,7 +3776,10 @@ class Component extends React.Component {
     const cur=this.state.drawerTab; const defs=[];
     defs.push(['summary','Summary']);
     defs.push(['artifacts','Artifacts']);
-    if(node.story) defs.push(['reason','Reasoning']);
+    // Protein-target nodes surface their AlphaFold structure under a dedicated
+    // "Protein data" tab (from origin/main); other story nodes keep "Reasoning".
+    if(node.story==='proteins') defs.push(['protein','Protein data']);
+    else if(node.story) defs.push(['reason','Reasoning']);
     defs.push(['data','Brain data']);
     return defs.map(d=>({ label:d[1], onClick:()=>this.setDrawerTab(d[0]), style:cur===d[0]?on:off }));
   }
